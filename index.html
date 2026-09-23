@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – прототип</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/icons.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/screens/map.css">
+  <link rel="stylesheet" href="styles/screens/friends.css">
+  <link rel="stylesheet" href="styles/screens/chats.css">
+  <link rel="stylesheet" href="styles/screens/chat.css">
+  <link rel="stylesheet" href="styles/screens/profile.css">
+  <link rel="stylesheet" href="styles/screens/checkins.css">
+</head>
+<body>
+<div class="device">
+  <main class="app" id="app" data-status="light" data-home="light">
+
+    <!-- Статус-бар iOS: только для превью в рамке, на телефоне скрыт -->
+    <div class="status-bar" aria-hidden="true">
+      <img class="status-bar__time" src="assets/system/status-time.png" alt="">
+      <img class="status-bar__island" src="assets/system/live-activity.png" alt="">
+      <img class="status-bar__icons" src="assets/system/status-icons.png" alt="">
+    </div>
+
+    <!-- ═════════════ КАРТА ═════════════ -->
+    <section class="screen map" id="screen-map" aria-label="карта" hidden>
+      <div class="map__canvas">
+        <img class="map__tiles" src="assets/map/map.webp" alt="">
+        <div class="map__pins" id="map-pins"></div>
+      </div>
+
+      <header class="map__header">
+        <h1 class="map__city" id="map-city"></h1>
+        <p class="map__weather">
+          <time id="map-time"></time>
+          <span class="map__weather-temp"><span id="map-weather" aria-hidden="true"></span><span id="map-temperature"></span></span>
+        </p>
+        <button class="map-chip map__steps pressable" type="button">
+          <i class="icon icon--steps" aria-hidden="true"></i><span id="map-steps"></span>
+        </button>
+      </header>
+
+      <div class="map__tools">
+        <button class="icon-button icon-button--map pressable" type="button" aria-label="места"><i class="icon icon--places" aria-hidden="true"></i></button>
+        <button class="icon-button icon-button--map pressable" type="button" aria-label="пространства"><i class="icon icon--space" aria-hidden="true"></i></button>
+        <button class="icon-button icon-button--map pressable" type="button" aria-label="игры"><i class="icon icon--games" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="map__actions">
+        <button class="map-button map-button--world pressable" type="button">
+          <i class="icon icon--globe" aria-hidden="true"></i>мой мир
+        </button>
+        <button class="map-button map-button--locate pressable" type="button" aria-label="показать, где я">
+          <i class="icon icon--crosshair" aria-hidden="true"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- ═════════════ ДРУЗЬЯ ═════════════ -->
+    <section class="screen friends" id="screen-friends" aria-label="друзья" hidden>
+      <div class="screen__scroll">
+        <div class="friends__content">
+          <header class="friends__header">
+            <h1 class="screen-title friends__title">друзья</h1>
+            <button class="requests-button pressable" type="button">
+              заявки
+              <span class="badge-star badge-star--ink">
+                <i class="icon icon--badge-star" aria-hidden="true"></i>
+                <span class="badge-star__value" id="requests-count"></span>
+              </span>
+            </button>
+          </header>
+
+          <h2 class="caps-label friends__add-label">добавить с помощью</h2>
+          <div class="add-tiles">
+            <button class="add-tile pressable" type="button"><i class="icon icon--bump" aria-hidden="true"></i>трях</button>
+            <button class="add-tile pressable" type="button"><i class="icon icon--phone" aria-hidden="true"></i>номер</button>
+            <button class="add-tile pressable" type="button"><i class="icon icon--link" aria-hidden="true"></i>ссылка</button>
+            <button class="add-tile pressable" type="button"><i class="icon icon--contacts" aria-hidden="true"></i>тел книга</button>
+          </div>
+
+          <div class="friends__section-head friends__section-head--mine">
+            <h2 class="section-title">мои друзья <span class="section-title__count" id="friends-count"></span></h2>
+          </div>
+          <ul class="friends__list" id="friends-list" role="list"></ul>
+
+          <div class="friends__section-head friends__section-head--suggested">
+            <h2 class="section-title">возможные</h2>
+            <button class="more-link caps-label pressable" type="button">ещё <i class="icon icon--chevron" aria-hidden="true"></i></button>
+          </div>
+          <ul class="suggestions" id="suggestions" role="list"></ul>
+        </div>
+      </div>
+
+      <img class="bottom-glow" src="assets/chat/bottom-glow.webp" alt="">
+      <label class="search-field">
+        <i class="icon icon--search" aria-hidden="true"></i>
+        <span class="visually-hidden">поиск друзей</span>
+        <input class="search-field__input" id="friends-search" type="search" placeholder="имя или ник"
+               autocomplete="off" autocapitalize="none" autocorrect="off" enterkeyhint="search">
+      </label>
+    </section>
+
+    <!-- ═════════════ ЧАТЫ ═════════════ -->
+    <section class="screen chats" id="screen-chats" aria-label="чаты" hidden>
+      <div class="screen__scroll">
+        <div class="chats__content">
+          <header class="chats__header">
+            <h1 class="screen-title">чаты</h1>
+            <button class="chats__compose pressable" type="button" aria-label="новый чат">
+              <i class="icon icon--compose" aria-hidden="true"></i>
+            </button>
+          </header>
+
+          <div class="folders" id="folders" role="tablist" aria-label="папки">
+            <i class="icon icon--folder folders__icon" aria-hidden="true"></i>
+          </div>
+
+          <aside class="birthday-banner" id="birthday-banner" aria-label="день рождения друга">
+            <img class="birthday-banner__art" src="assets/chat/birthday-gift.png" alt="">
+            <div class="birthday-banner__body">
+              <p class="birthday-banner__title ellipsis">у maxklumchuk др!</p>
+              <p class="birthday-banner__text ellipsis">отправь подарок</p>
+            </div>
+            <button class="birthday-banner__close pressable" id="birthday-close" type="button" aria-label="скрыть">
+              <i class="icon icon--close" aria-hidden="true"></i>
+            </button>
+          </aside>
+
+          <ul class="chat-list" id="chat-list" role="list"></ul>
+        </div>
+      </div>
+
+      <img class="bottom-glow" src="assets/chat/bottom-glow.webp" alt="">
+      <label class="search-field">
+        <i class="icon icon--search" aria-hidden="true"></i>
+        <span class="visually-hidden">поиск по чатам</span>
+        <input class="search-field__input" id="chats-search" type="search" placeholder="поиск по чатам"
+               autocomplete="off" autocapitalize="none" autocorrect="off" enterkeyhint="search">
+      </label>
+    </section>
+
+    <!-- ═════════════ ЧЕКИНЫ (экрана нет в референсах) ═════════════ -->
+    <section class="screen checkins" id="screen-checkins" aria-label="чекины" hidden>
+      <div class="screen__scroll">
+        <div class="checkins__content">
+          <header class="chats__header">
+            <h1 class="screen-title">чекины</h1>
+          </header>
+          <div class="empty-state">
+            <img class="empty-state__sticker" src="assets/stickers/blink.webp" alt="">
+            <p class="empty-state__title">тут пока пусто</p>
+            <p class="empty-state__text">отметь место, где ты сейчас, и друзья увидят его на карте</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════ ТЫ (ПРОФИЛЬ) ═════════════ -->
+    <section class="screen profile" id="screen-profile" aria-label="профиль" hidden>
+      <div class="screen__scroll">
+        <div class="profile__content">
+          <div class="profile__theme" aria-hidden="true"></div>
+
+          <div class="profile__topbar">
+            <div class="profile__tools">
+              <button class="icon-button icon-button--glass pressable" type="button" aria-label="тема профиля"><i class="icon icon--palette" aria-hidden="true"></i></button>
+              <button class="icon-button icon-button--glass pressable" type="button" aria-label="редактировать"><i class="icon icon--edit" aria-hidden="true"></i></button>
+              <button class="icon-button icon-button--glass pressable" type="button" aria-label="настройки"><i class="icon icon--settings" aria-hidden="true"></i></button>
+            </div>
+            <button class="market-pill pressable" type="button">
+              маркет
+              <span class="market-pill__coins">
+                <img class="market-pill__coin" src="assets/profile/coin.png" alt="">
+                <span id="profile-coins"></span>
+              </span>
+            </button>
+          </div>
+
+          <div class="profile__hero">
+            <div class="profile__gifts" id="profile-gifts"></div>
+            <img class="profile__avatar" id="profile-avatar" src="" alt="фото профиля">
+            <button class="username-pill pressable" type="button">
+              <span class="share-button" aria-hidden="true"><i class="icon icon--share"></i></span>
+              <span id="profile-username"></span>
+              <span class="visually-hidden">поделиться профилем</span>
+            </button>
+          </div>
+
+          <h1 class="profile__name" id="profile-name"></h1>
+          <p class="profile__bio" id="profile-bio"></p>
+          <p class="profile__location"><i class="icon icon--location" aria-hidden="true"></i><span id="profile-city"></span></p>
+          <div class="profile__entry">
+            <button class="chip pressable" type="button"><i class="icon icon--school" aria-hidden="true"></i>где учишься?</button>
+          </div>
+
+          <div class="profile-stats">
+            <button class="stat stat--friends pressable" id="stat-friends" type="button" data-go="#/friends">
+              <img class="stat__art" src="assets/profile/profile-friends.webp" alt="">
+              <span class="stat__badge"><img src="assets/profile/beautiful-profile-counter.webp" alt=""><span id="stat-friends-new"></span></span>
+              <span class="stat__label">друзья</span>
+            </button>
+            <button class="stat stat--views pressable" id="stat-views" type="button">
+              <img class="stat__art" src="assets/profile/profile-views.webp" alt="">
+              <img class="stat__eyes" src="assets/stickers/eyes.webp" alt="">
+            </button>
+            <button class="stat stat--stars pressable" id="stat-stars" type="button">
+              <img class="stat__glow" src="assets/profile/image-stars-profile-light.webp" alt="">
+              <img class="stat__art" src="assets/profile/image-stars-profile.webp" alt="">
+              <span class="stat__badge"><img src="assets/profile/beautiful-profile-counter.webp" alt=""><span id="stat-stars-new"></span></span>
+            </button>
+            <button class="stat stat--checkins pressable" id="stat-checkins" type="button" data-go="#/checkins">
+              <img class="stat__art" src="assets/profile/profile-checkins.webp" alt="">
+              <span class="stat__label">чекины</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════ ТАБ-БАР ═════════════ -->
+    <nav class="tabbar" aria-label="разделы">
+      <button class="tabbar__item pressable" type="button" data-tab="map"><i class="icon icon--pin" aria-hidden="true"></i>карта</button>
+      <button class="tabbar__item pressable" type="button" data-tab="friends"><i class="icon icon--friends" aria-hidden="true"></i>друзья</button>
+      <button class="tabbar__item pressable" type="button" data-tab="chats"><i class="icon icon--chat" aria-hidden="true"></i>чаты</button>
+      <button class="tabbar__item pressable" type="button" data-tab="checkins"><i class="icon icon--checkin" aria-hidden="true"></i>чекины</button>
+      <button class="tabbar__item pressable" type="button" data-tab="profile"><img class="tabbar__avatar" id="tab-avatar" src="" alt="">ты</button>
+    </nav>
+
+    <!-- ═════════════ ЧАТ (поверх табов) ═════════════ -->
+    <section class="screen screen--push chat" id="screen-chat" aria-label="чат" hidden>
+      <div class="chat__scroll" id="chat-scroll">
+        <div class="chat__feed" id="chat-feed" aria-live="polite"></div>
+      </div>
+
+      <header class="chat__header">
+        <button class="icon-button icon-button--header pressable" id="chat-back" type="button" aria-label="назад">
+          <i class="icon icon--back" aria-hidden="true"></i>
+        </button>
+        <div class="chat__peer">
+          <span class="avatar" id="chat-peer-avatar"><img class="avatar__img" id="chat-avatar" src="" alt=""></span>
+          <span class="chat__peer-text">
+            <span class="chat__peer-name ellipsis" id="chat-name"></span>
+            <span class="chat__peer-status ellipsis" id="chat-status"></span>
+          </span>
+        </div>
+        <button class="icon-button icon-button--header pressable" type="button" aria-label="позвонить">
+          <i class="icon icon--phone" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <footer class="chat__footer">
+        <button class="chat-location pressable" id="chat-location" type="button" hidden>
+          <i class="icon icon--location" aria-hidden="true"></i>
+          <span class="ellipsis" id="chat-location-text"></span>
+          <i class="icon icon--chevron chat-location__chevron" aria-hidden="true"></i>
+        </button>
+
+        <div class="composer" id="composer">
+          <button class="icon-button icon-button--field pressable" id="composer-style" type="button"
+                  aria-label="крупный текст" aria-pressed="false">
+            <i class="icon icon--text-style" id="composer-style-icon" aria-hidden="true"></i>
+          </button>
+          <label class="composer__field">
+            <span class="visually-hidden">сообщение</span>
+            <textarea class="composer__input" id="composer-input" rows="1" placeholder="написать..."
+                      enterkeyhint="send"></textarea>
+            <button class="composer__sticker pressable" id="composer-sticker" type="button"
+                    aria-label="стикеры" aria-pressed="false">
+              <i class="icon icon--sticker" id="composer-sticker-icon" aria-hidden="true"></i>
+            </button>
+          </label>
+          <button class="icon-button icon-button--field pressable" id="composer-photo" type="button" aria-label="фото">
+            <i class="icon icon--photo" aria-hidden="true"></i>
+          </button>
+          <button class="icon-button icon-button--field icon-button--send pressable" id="composer-send" type="button"
+                  aria-label="отправить" hidden>
+            <i class="icon icon--send" aria-hidden="true"></i>
+          </button>
+          <button class="icon-button icon-button--field pressable" type="button" aria-label="голосовое">
+            <i class="icon icon--mic" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="sticker-panel" id="sticker-panel" aria-label="стикеры"></div>
+      </footer>
+    </section>
+
+    <div class="home-indicator" aria-hidden="true"></div>
+  </main>
+</div>
+
+<script src="scripts/data.js"></script>
+<script src="scripts/pin.js"></script>
+<script src="scripts/app.js"></script>
+</body>
+</html>

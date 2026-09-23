@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Пин – состояние для сверки</title>
+  <!-- Служебная страница compare.py pins: один пин в холсте размера эталона pin/*.png.
+       Параметры – JSON в адресе после #: {"w":63,"h":69,"fx":5,"fy":11.33,"pin":{…}} -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&display=swap">
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/base.css">
+  <link rel="stylesheet" href="../styles/components.css">
+  <style>
+    body { min-height: 0; margin: 0; background: var(--color-map-land); }
+    .cell { position: relative; overflow: hidden; }
+    .cell .pin { left: calc(var(--ax) * 1px); top: calc(var(--ay) * 1px); }
+  </style>
+</head>
+<body>
+  <div class="cell" id="cell"></div>
+  <script src="../scripts/pin.js"></script>
+  <script>
+    (() => {
+      const cfg = JSON.parse(decodeURIComponent(location.hash.slice(1)));
+      const cell = document.getElementById("cell");
+      cell.style.setProperty("width", `${cfg.w}px`);
+      cell.style.setProperty("height", `${cfg.h}px`);
+      // точка пина – низ кадра по центру
+      cell.innerHTML = window.BlinkPin.markup({
+        name: "эталон",
+        photo: "../assets/people/live-5.webp",
+        assets: "../assets",
+        attrs: `style="--ax:${cfg.fx + 26};--ay:${cfg.fy + 52}"`,
+        ...cfg.pin,
+      });
+    })();
+  </script>
+</body>
+</html>

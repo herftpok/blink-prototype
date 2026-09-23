@@ -1,0 +1,1076 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Общие компоненты Blink. Каждый компонент – один блок с модификаторами
+   (BEM: .block__element--modifier). Экраны собираются только из них;
+   стили конкретного экрана живут в styles/screens/*.css.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Экран и скролл ──────────────────────────────────────────────────── */
+
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.screen[hidden] {
+  display: none;
+}
+
+.screen__scroll {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.screen__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Экран, въезжающий справа поверх табов (чат) */
+.screen--push {
+  z-index: 40;
+  transform: translateX(100%);
+  transition: transform var(--duration-screen) var(--ease-emphasized);
+  box-shadow: var(--shadow-screen-push);
+}
+
+.screen--push.is-open {
+  transform: translateX(0);
+}
+
+.screen--push.is-dragging {
+  transition: none;
+}
+
+/* Табы под открытым чатом чуть уходят влево, как в iOS */
+.app.has-push .screen:not(.screen--push),
+.app.has-push .tabbar {
+  transform: translateX(-30%);
+  transition: transform var(--duration-screen) var(--ease-emphasized);
+}
+
+.app .screen:not(.screen--push),
+.app .tabbar {
+  transition: transform var(--duration-screen) var(--ease-emphasized);
+}
+
+/* ── Нажатие: у всего кликабельного есть отклик на press ─────────────── */
+
+.pressable {
+  transition: transform var(--duration-press) ease, opacity var(--duration-state) ease;
+}
+
+.pressable:active {
+  transform: scale(var(--press-scale, var(--press-scale-button)));
+}
+
+/* ── Таб-бар ─────────────────────────────────────────────────────────── */
+
+.tabbar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) - 3px);
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  width: var(--tabbar-width);
+  height: var(--tabbar-height);
+  margin-left: calc(var(--tabbar-width) / -2);
+  padding: 0 11px;
+  border: 1px solid var(--color-tabbar-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-tabbar);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+}
+
+.tabbar__item {
+  --press-scale: var(--press-scale-small);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  color: var(--color-text-dim);
+  font: var(--type-tab);
+  white-space: nowrap;
+}
+
+.tabbar__item[aria-current="page"] {
+  color: var(--color-text);
+}
+
+.tabbar__item .icon {
+  --icon-size: 28px;
+}
+
+.tabbar__avatar {
+  width: var(--avatar-tab);
+  height: var(--avatar-tab);
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 20%;
+  background: var(--color-surface-raised);
+}
+
+.tabbar__item[aria-current="page"] .tabbar__avatar {
+  box-shadow: 0 0 0 2px var(--color-text);
+}
+
+/* ── Кнопки (Buttons/*.png, Button styles.md) ────────────────────────── */
+
+.button {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  height: var(--button-height);
+  padding: 0 var(--space-16);
+  border-radius: var(--radius-20);
+  font: var(--type-button);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.button--primary {
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+.button--primary:active {
+  background: var(--color-button-pressed);
+}
+
+.button--secondary {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.button--ghost {
+  background: transparent;
+  color: var(--color-text);
+}
+
+/* Кнопка, которая прекращает или удаляет („перестать делиться гео“): красный текст на прозрачной,
+   под главной кнопкой. Красный #FF4A31 – только для таких действий */
+.button--danger {
+  background: transparent;
+  color: var(--color-danger);
+}
+
+.button--pink {
+  background: var(--color-pink);
+  color: var(--color-text-on-light);
+}
+
+.button:disabled {
+  background: transparent;
+  color: var(--color-text-muted);             /* Button-8.png */
+  cursor: not-allowed;
+}
+
+.button--outline-small {
+  height: 36px;
+  padding: 0 var(--space-12);
+  border: 2px solid currentColor;
+  border-radius: var(--radius-12);
+  background: transparent;
+}
+
+/* Квадратные иконки-кнопки */
+
+.icon-button {
+  --press-scale: var(--press-scale-button);
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--color-text);
+}
+
+/* 48×36: „написать“ и „маршрут“ в строке друга (SendButton.png, GeoButton.png) */
+.icon-button--row {
+  width: 48px;
+  height: 36px;
+  border-radius: var(--radius-12);
+  background: var(--color-surface);
+}
+
+.icon-button--row .icon {
+  --icon-size: 20px;
+}
+
+.icon-button--row-outline .icon {
+  --icon-size: 18px;
+}
+
+.icon-button--row-outline {
+  background: transparent;
+  border: 1px solid var(--color-outline);
+  color: var(--color-text-dim);
+}
+
+/* 46×46 с рамкой 2 pt: шапка чата */
+.icon-button--header {
+  width: 46px;
+  height: 46px;
+  border: 2px solid var(--color-header-button-border);
+  border-radius: var(--radius-14);
+}
+
+/* 44×44 композер (Button_M*.png) */
+.icon-button--field {
+  width: var(--control-44);
+  height: var(--control-44);
+  border: 2px solid var(--color-field-border);
+  border-radius: var(--radius-14);
+  background: var(--color-field);
+}
+
+.icon-button--field .icon {
+  --icon-size: 26px;
+}
+
+.icon-button--send {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+/* 40×40 полупрозрачная поверх свечения профиля (SquareBtn40.png) */
+.icon-button--glass {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-12);
+  background: var(--color-glass-button);
+  color: var(--color-text-on-light);
+}
+
+.icon-button--glass .icon {
+  --icon-size: 21px;
+}
+
+/* 44 круг: тулбар карты (toolbar.png) */
+.icon-button--map {
+  width: var(--control-44);
+  height: var(--control-44);
+  border-radius: 50%;
+  background: var(--color-map-button);
+  color: var(--color-text);
+}
+
+.icon-button--map .icon {
+  --icon-size: 26px;
+}
+
+/* ── Аватары ─────────────────────────────────────────────────────────── */
+
+.avatar {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--avatar-size, var(--avatar-list));
+  height: var(--avatar-size, var(--avatar-list));
+}
+
+.avatar__img {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-squircle);
+  object-fit: cover;
+  background: var(--color-surface-raised);
+}
+
+/* Точка „в сети“: зелёная с чёрным кольцом, в правом нижнем углу */
+.avatar--online::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid var(--color-bg);
+  border-radius: 50%;
+  background: var(--color-online);
+}
+
+/* Вырезка без фона на свечении (строка друга): зелёное – в сети, серое – нет.
+   Размер – --cutout-size (64 в строке друга), пропорции вырезки считаются от него */
+.cutout {
+  --cutout-size: 64px;
+  position: relative;
+  flex-shrink: 0;
+  width: var(--cutout-size);
+  height: var(--cutout-size);
+}
+
+.cutout__glow,
+.cutout__rim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Человек целиком – до плеч, подбородок никогда не срезаем. Низ вырезки стоит на светлой
+   дуге свечения (строка 177 из 192 в Friends/*_avatar_background.png); ниже дуги маска
+   прячет прямые углы: верх открыт, низ повторяет эллипс дуги (52 % × 15.6 %, центр 76.6 %) */
+.cutout__person {
+  position: absolute;
+  inset: 0;
+  -webkit-mask:
+    linear-gradient(#000 0 0) top / 100% 76.6% no-repeat,
+    radial-gradient(52% 15.6% at 50% 76.6%, #000 98%, transparent 100%);
+          mask:
+    linear-gradient(#000 0 0) top / 100% 76.6% no-repeat,
+    radial-gradient(52% 15.6% at 50% 76.6%, #000 98%, transparent 100%);
+}
+
+.cutout__img {
+  position: absolute;
+  left: 50%;
+  bottom: 7.8%;                                    /* низ картинки – на дуге */
+  width: 90.6%;                                    /* 58 при 64 */
+  height: 90.6%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  transform: translateX(-50%);
+}
+
+/* Дуга поверх вырезки: закрывает её прямой нижний край (build_assets.py → rim) */
+.cutout__rim {
+  pointer-events: none;
+}
+
+/* Стопка мини-аватаров „7 общих“: сквирклы 18 с тонкой чёрной рамкой, плотный наезд */
+.face-stack {
+  display: flex;
+  padding-left: 4.5px;
+}
+
+.face-stack__img {
+  width: 18px;
+  height: 18px;
+  margin-left: -4.5px;
+  border: 1px solid var(--color-bg);
+  border-radius: var(--radius-squircle);
+  object-fit: cover;
+}
+
+/* ── Типографические блоки ───────────────────────────────────────────── */
+
+.screen-title {
+  font: var(--type-screen-title);
+  letter-spacing: var(--tracking-title);
+}
+
+.section-title {
+  font: var(--type-section-title);
+  letter-spacing: var(--tracking-section);
+}
+
+.section-title__count {
+  color: var(--color-text-muted);
+}
+
+.caps-label {
+  font: var(--type-caps-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.ellipsis {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Стикер-число: прямой Montserrat 800, чёрный, со скруглённой белой обводкой 3 pt.
+   Наклон даёт поворот всего стикера (transform: rotate), а не курсив. */
+.sticker-number {
+  display: inline-block;
+  font: var(--sticker-number-font);
+  font-size: var(--sticker-size, 27px);
+  letter-spacing: -0.02em;
+  color: var(--color-text-on-light);
+  text-shadow: var(--outline-number-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+/* Звезда-счётчик: розовая – непрочитанные, чёрная – на розовой кнопке.
+   Звезда с числом повёрнута целиком, как наклейка. */
+.badge-star {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--badge-size, 34px);
+  height: var(--badge-size, 34px);
+  color: var(--color-pink);
+  transform: rotate(-14deg);
+}
+
+.badge-star .icon {
+  --icon-size: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.badge-star__value {
+  position: relative;
+  font: var(--type-counter);
+  color: var(--color-text-on-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.badge-star--ink {
+  color: var(--color-text-on-light);
+  transform: rotate(-8deg);
+}
+
+.badge-star--ink .badge-star__value {
+  color: var(--color-text);
+  font-size: 20px;
+}
+
+/* ── Поиск (плавает над таб-баром) ───────────────────────────────────── */
+
+.search-field {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--safe-bottom) + 73px);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  height: var(--search-height);
+  padding: 0 var(--space-14) 0 var(--space-12);
+  border: 2px solid var(--color-search-border);
+  border-radius: var(--radius-16);
+  background: var(--color-search-fill);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  color: var(--color-text-dim);
+}
+
+.search-field .icon {
+  --icon-size: 22px;
+}
+
+.search-field__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  font: var(--type-search);
+  color: var(--color-text);
+  text-transform: lowercase;
+}
+
+.search-field__input:focus-visible {
+  outline: none;
+}
+
+.search-field__input::placeholder {
+  color: var(--color-text-dim);
+  opacity: 1;
+}
+
+/* Цветное свечение под таб-баром (messanger/chat list/Group 2.png) */
+.bottom-glow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  height: 209px;
+  width: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+
+/* ── Строка списка ───────────────────────────────────────────────────── */
+
+.row {
+  --press-scale: var(--press-scale-row);
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  width: 100%;
+  padding: 10px var(--gutter);
+  text-align: left;
+}
+
+.row__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.row__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-width: 0;
+  font: var(--type-row-title);
+  color: var(--color-text);
+}
+
+.row__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-width: 0;
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+.row__meta .icon {
+  --icon-size: 16px;
+}
+
+.row__meta-accent {
+  color: var(--color-pink);
+}
+
+.row__meta-you {
+  color: var(--color-text);
+}
+
+.row__dot {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.row__trailing {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: 24px;
+}
+
+.row__unread-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text);
+}
+
+.row__pinned {
+  --icon-size: 24px;
+  color: var(--color-outline);
+}
+
+.gradient-text {
+  background: var(--gradient-ambassador);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+
+/* ── Пузыри сообщений (messanger/chat inside/bubbles-token.md) ──────── */
+
+.message-row {
+  display: flex;
+  padding: 0 var(--gutter);
+}
+
+.message-row--out {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: 85%;                             /* 304 из 358: „блин сорри я заснул вчера,“ влезает в строку */
+  padding: 6px 12px 8px;
+  border-radius: var(--radius-18);
+  font: var(--type-message);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--color-text-on-light);
+}
+
+.bubble--in {
+  background: var(--gradient-bubble-incoming);
+}
+
+.bubble--out {
+  background: var(--color-bubble-outgoing);
+}
+
+.bubble--big {
+  font: var(--type-message-big);
+}
+
+.bubble--sticker {
+  padding: 0;
+  background: none;
+}
+
+.bubble--sticker img {
+  width: 120px;
+  height: 120px;
+}
+
+/* Подряд от одного автора – 2 pt, смена автора – 8 pt */
+.message-row + .message-row {
+  margin-top: 8px;
+}
+
+.message-row + .message-row.is-continued {
+  margin-top: 2px;
+}
+
+.chat-divider {
+  padding: 16px 0 18px;
+  font: var(--type-caption);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* ── Пин друга на карте (pin/*.png – все состояния, pin/Pin.svg – кадр) ─ */
+/* Пин собран в размере 52 и масштабируется целиком, со всеми деталями: 52 → 36 → 20
+   (.pin--36, .pin--20). Других размеров нет. Точка на карте – низ кадра по центру.
+   Анатомия при 52 (pt, от левого верхнего угла кадра):
+   кадр 52×52, r21: белый с тенью, в сети – зелёная подложка со свечением;
+   живая аватарка – маска 62×80, r26, по центру, низ на 3.5 выше низа кадра;
+   бейдж 24 (домик или стрелки) – на 6 левее кадра, низ вровень с кадром;
+   число курсивом 700 13 и подпись 700 9 серым – колонкой с центром на x 43.5;
+   хвост 90×60 – с x −70, верх вровень с кадром. */
+
+.pin {
+  --pin-scale: 1;
+  --press-scale: var(--press-scale-small);
+  position: absolute;
+  width: var(--pin-frame);
+  height: var(--pin-frame);
+  transform: translate(-50%, -100%) scale(var(--pin-scale));
+  transform-origin: 50% 100%;
+}
+
+.pin--36 {
+  --pin-scale: calc(36 / 52);
+}
+
+.pin--20 {
+  --pin-scale: calc(20 / 52);
+}
+
+.pin:active {
+  transform: translate(-50%, -100%) scale(calc(var(--pin-scale) * var(--press-scale)));
+}
+
+.pin__frame {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-pin);
+  background: var(--color-text);
+  box-shadow: var(--shadow-pin);
+}
+
+/* В сети: вместо белого кадра – зелёная подложка (pin/Pin_online.png) со свечением */
+.pin--online .pin__frame {
+  background: url("../assets/pin/online.png") center / 100% 100% no-repeat;
+  box-shadow: var(--shadow-pin-online);
+}
+
+/* Живая аватарка: маска 62×80 по центру кадра. Картинка заполняет маску (cover):
+   квадратная обрезается по бокам, голова выходит над кадром */
+.pin__photo {
+  position: absolute;
+  left: calc((var(--pin-frame) - var(--pin-avatar-width)) / 2);
+  bottom: var(--pin-avatar-bottom);
+  width: var(--pin-avatar-width);
+  height: var(--pin-avatar-height);
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 50%;
+  border-radius: var(--radius-pin-avatar);
+  pointer-events: none;
+}
+
+/* Бейдж слева внизу: домик – „дома“, стрелки – „в пути“ (смотрят туда, куда человек едет) */
+.pin__badge {
+  position: absolute;
+  left: -6px;
+  bottom: 0;
+  width: var(--pin-badge);
+  height: var(--pin-badge);
+  max-width: none;
+  pointer-events: none;
+}
+
+.pin__badge--arrows {
+  transform: rotate(var(--heading, 0deg));
+}
+
+/* Стикер-число справа внизу: „22 мин“ – сколько на месте, „120 км/ч“ – скорость */
+.pin__time {
+  position: absolute;
+  left: 43.5px;                                 /* центр колонки – замер pin/*.png */
+  bottom: 3.1px;                                /* низ подписи – на 4 выше низа кадра */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.pin__time-value {
+  font: var(--type-pin-number);
+  color: var(--color-text-on-light);
+  text-shadow: var(--outline-number-2);
+  white-space: nowrap;
+}
+
+.pin__time-unit {
+  margin-top: -2.4px;                            /* строки числа и подписи заходят друг на друга, как на эталоне */
+  font: var(--type-pin-unit);
+  color: var(--color-sticker-unit);
+  text-shadow: var(--outline-number-2);
+  white-space: nowrap;
+}
+
+/* Хвост „в пути“ (pin/Trail.png) – позади пина, слева от кадра */
+.pin__trail {
+  position: absolute;
+  left: -70px;
+  top: 0;
+  width: 90px;
+  height: 60px;
+  max-width: none;
+  pointer-events: none;
+}
+
+/* Направление движения: хвост поворачивается вокруг центра кадра, 0° – вправо */
+.pin__motion {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  transform: rotate(var(--heading, 0deg));
+  transition: opacity var(--duration-state) ease;
+  pointer-events: none;
+}
+
+/* Пин вне карты (герой шторки, баннер): стоит в потоке. Масштаб не меняет места
+   в раскладке, поэтому поля отнимают разницу – пин занимает 52 × масштаб */
+.pin--static {
+  position: relative;
+  flex-shrink: 0;
+  margin: calc(var(--pin-frame) * (var(--pin-scale) - 1)) calc(var(--pin-frame) * (var(--pin-scale) - 1) / 2) 0;
+  transform: scale(var(--pin-scale));
+}
+
+.pin--static:active {
+  transform: scale(var(--pin-scale));
+}
+
+/* Появление героя: пин друга „выпрыгивает“ на карту один раз (пружина – только для него) */
+.pin--pop {
+  animation: pin-pop 0.45s var(--ease-spring) both;
+}
+
+@keyframes pin-pop {
+  from { opacity: 0; transform: translate(-50%, -100%) scale(calc(var(--pin-scale) * 0.2)); }
+  to { opacity: 1; transform: translate(-50%, -100%) scale(var(--pin-scale)); }
+}
+
+/* Данные устарели (нет связи, трансляция закончилась): пин серый и полупрозрачный */
+/* Человек делится геопозицией (pin/other_pin_sharing.png, @4x): над пином – имя чёрным Montserrat
+   с белой обводкой 4.5, под кадром – плашка заряда Map/Battery.png как есть. Всё по центру кадра */
+.pin__title {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + var(--pin-title-bottom));
+  color: var(--color-text-on-map);
+  font: var(--type-pin-title);
+  letter-spacing: var(--tracking-pin-title);
+  text-shadow: var(--outline-pin-title);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.pin__battery {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + var(--pin-battery-gap));
+  width: var(--pin-battery-width);
+  max-width: none;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* Данные устарели: сам пин (кадр, аватарка, заряд) серый и прозрачный, а имя и бейдж
+   „место примерное“ остаются чёткими – их надо прочитать */
+.pin--stale .pin__frame,
+.pin--stale .pin__photo,
+.pin--stale .pin__battery {
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+
+/* у тусклого пина нет ни хвоста, ни чисел: скорость и минуты на месте тоже устарели */
+.pin--stale .pin__motion,
+.pin--stale .pin__badge--arrows,
+.pin--stale .pin__time {
+  opacity: 0;
+}
+
+/* ── Live-точка: что-то происходит прямо сейчас (трансляция геопозиции) ── */
+
+.live-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-online);
+  animation: live-pulse var(--duration-live) ease-in-out infinite;
+}
+
+.live-dot--off {
+  background: var(--color-text-muted);
+  animation: none;
+}
+
+@keyframes live-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--color-online-halo); }
+  50% { box-shadow: 0 0 0 6px var(--color-online-halo-far); }
+}
+
+/* ── Шторка (main-design-system.md 4.6 и 5.2) ────────────────────────── */
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: var(--color-scrim);
+  -webkit-backdrop-filter: blur(var(--blur-scrim));
+          backdrop-filter: blur(var(--blur-scrim));
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-screen) ease, visibility 0s linear var(--duration-screen);
+}
+
+.scrim.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--duration-screen) ease, visibility 0s;
+}
+
+/* Прозрачная подложка: шторка у контекста, который должно быть видно (свой пин на карте
+   над шторкой „поделиться“). Нажатие мимо шторки закрывает её, но карта не темнеет */
+.scrim--clear {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+}
+
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - var(--safe-top));
+  padding: 0 var(--gutter) calc(var(--safe-bottom) + var(--space-8));
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sheet);
+  transform: translateY(102%);                   /* 102 %, а не 100: тень уезжает за край целиком */
+  visibility: hidden;
+  transition: transform var(--duration-sheet) var(--ease-emphasized), visibility 0s linear var(--duration-sheet);
+}
+
+.sheet.is-open {
+  transform: translateY(0);
+  visibility: visible;
+  transition: transform var(--duration-sheet) var(--ease-emphasized), visibility 0s;
+}
+
+.sheet.is-dragging {
+  transition: none;
+}
+
+/* Шторка поверх шторки: выезжает снизу, как любая шторка, и накрывает первую.
+   Только translateY – без сдвига вбок, иначе вместе с подъёмом это выезд из угла */
+.sheet--stacked {
+  z-index: 62;
+}
+
+/* Фокус переводится на саму шторку при открытии – рамка вокруг неё не нужна */
+.sheet:focus {
+  outline: none;
+}
+
+/* Фон шторки продолжается вниз за край: когда её высота меняется с анимацией,
+   снизу не видно щели */
+.sheet::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 100%;
+  background: inherit;
+  pointer-events: none;
+}
+
+/* Зона захвата: за грэббер и шапку шторку тянут вниз */
+.sheet__handle {
+  flex-shrink: 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.sheet__grabber {
+  width: 36px;
+  height: 5px;
+  margin: var(--space-8) auto var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-grabber);
+}
+
+.sheet__title {
+  font: var(--type-section-title);
+  letter-spacing: var(--tracking-section);
+  text-wrap: balance;                            /* без одинокого слова на второй строке */
+}
+
+.sheet__text {
+  margin-top: var(--space-4);
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+/* ── Кольцо-таймер: сколько ещё что-то длится (геопозиция по ссылке) ──
+   Розовая дуга – оставшееся время: начинается в 12 часов и убывает. Размер и толщину
+   задаёт разметка (viewBox и stroke-width у svg), доля – --progress от 0 до 1. Дугу
+   не анимируем: за секунду она сдвигается на доли градуса. Внутри – стикер или пусто. */
+
+.ring {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.ring__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform: rotate(-90deg);                      /* начало дуги – 12 часов */
+}
+
+.ring__track,
+.ring__fill {
+  fill: none;
+}
+
+.ring__track {
+  stroke: var(--color-track-on-dark);
+}
+
+.ring__fill {
+  stroke: var(--color-pink);
+  stroke-linecap: round;
+  stroke-dasharray: 100 100;                      /* у circle pathLength="100" */
+  stroke-dashoffset: calc(100 - var(--progress, 1) * 100);
+}
+
+/* время вышло: от круглого конца дуги не остаётся точки */
+.ring--empty .ring__fill {
+  opacity: 0;
+}
+
+.ring--on-light .ring__track {
+  stroke: var(--color-track-on-light);
+}
+
+/* ── Выбор одного варианта: плитки в ряд (время шеринга) ─────────────── */
+
+.choice-tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--choice-count, 3), 1fr);
+  gap: var(--space-6);
+}
+
+.choice-tile {
+  --press-scale: var(--press-scale-button);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  box-shadow: inset 0 0 0 2px transparent;
+  transition:
+    transform var(--duration-press) ease,
+    color var(--duration-state) ease,
+    box-shadow var(--duration-state) ease;
+}
+
+.choice-tile[aria-checked="true"] {
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 2px var(--color-text);
+}
+
+.choice-tile__value {
+  font: var(--type-section-title);
+  font-variant-numeric: tabular-nums;
+}
+
+.choice-tile__unit {
+  font: var(--type-tile);
+}
+
+/* ── Пустое состояние: 3D-стикер, заголовок, текст ───────────────────── */
+
+.empty-state {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.empty-state__sticker {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 8px;
+  transform: rotate(-8deg);
+}
+
+.empty-state__title {
+  font: var(--type-section-title);
+  letter-spacing: var(--tracking-title);
+  text-wrap: balance;
+}
+
+.empty-state__text {
+  max-width: 280px;
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}

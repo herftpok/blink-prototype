@@ -1,0 +1,768 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Шеринг геопозиции по ссылке. Общие токены и компоненты – в ../../styles,
+   здесь только раскладка фичи и стенд с двумя телефонами.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Стенд (только для показа, в продукт не идёт) ────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-16);
+  min-height: 100dvh;
+  padding: var(--space-20) var(--space-24);
+}
+
+.stage__head {
+  text-align: center;
+}
+
+.stage__title {
+  font: var(--type-section-title);
+}
+
+.stage__lead {
+  margin-top: var(--space-4);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+/* Два телефона, между ними ссылка и управление; весь ряд уменьшается под окно (--stage-zoom из JS) */
+.stage__phones {
+  display: grid;
+  grid-template-columns: 390px 200px 390px;
+  align-items: center;
+  column-gap: var(--space-24);
+  zoom: var(--stage-zoom, 1);
+}
+
+.stage__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-14);
+}
+
+.stage__middle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
+  padding-top: 30px;                              /* по центру телефонов, а не подписей над ними */
+}
+
+.stage__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  text-align: center;
+}
+
+.stage__link-arrow {
+  font: var(--type-screen-title);
+  color: var(--color-outline);
+  transition: color var(--duration-state) ease;
+}
+
+.stage__link[data-state="ready"] .stage__link-arrow,
+.stage__link[data-state="open"] .stage__link-arrow {
+  color: var(--color-text);
+}
+
+.stage__link-status {
+  font: var(--type-label);
+  color: var(--color-text-secondary);
+}
+
+.stage__link-url {
+  max-width: 100%;
+  font: var(--type-compact);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.stage__controls {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-8);
+  text-align: center;
+}
+
+.stage__group-label {
+  margin-top: var(--space-8);
+}
+
+.stage__group-label:first-child {
+  margin-top: 0;
+}
+
+.stage__button--reset {
+  margin-top: var(--space-16);
+}
+
+.stage__button {
+  --press-scale: var(--press-scale-wide);
+  height: 32px;
+  padding: 0 var(--space-14);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-map-chip);
+  white-space: nowrap;
+}
+
+.stage__button[aria-pressed="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.stage__button--accent {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+/* Перематывать нечего, пока ссылки нет */
+.stage__button:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stage__button:hover {
+    border-color: var(--color-text-dim);
+    color: var(--color-text);
+  }
+
+  .stage__button--accent:hover {
+    background: var(--color-button-pressed);
+    color: var(--color-text-on-light);
+  }
+}
+
+/* ── Общее для обоих телефонов: карта с камерой ──────────────────────── */
+
+/* Подложка крупнее экрана (--map-zoom), камера – --cam-x/--cam-y в px; переходы задаёт JS
+   (--cam-duration, --cam-ease). Точки на карте – в pt подложки 390×844, --k – во сколько
+   раз подложка крупнее */
+.geo-camera {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.geo-camera__layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% * var(--map-zoom, 1.35));
+  transform: translate3d(calc(var(--cam-x, 0) * 1px), calc(var(--cam-y, 0) * 1px), 0);
+  transition: transform var(--cam-duration, 0s) var(--cam-ease, linear);
+}
+
+.geo-camera__tiles {
+  width: 100%;
+  pointer-events: none;
+}
+
+.geo-camera__pins .pin {
+  left: calc(var(--x) * var(--k, 1) * 1px);
+  top: calc(var(--y) * var(--k, 1) * 1px);
+}
+
+/* Точка, которая едет: только transform, координаты – в px слоя */
+.geo-mover {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  transform: translate(calc(var(--x, 0) * 1px), calc(var(--y, 0) * 1px));
+  transition: transform var(--move-duration, 0s) linear;
+}
+
+.geo-mover .pin {
+  left: 0;
+  top: 0;
+}
+
+/* ── Ты: карта ───────────────────────────────────────────────────────── */
+
+/* Пока тебя видно по ссылке – плашка над твоим пином: там же, где у друга имя над пином
+   (низ – на --pin-title-bottom выше кадра). Едет вместе с пином, шапка карты не растёт */
+.geo-mover__chip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  transform: translate(-50%, calc(-100% - var(--pin-frame) - var(--pin-title-bottom)));
+}
+
+.geo-mover__chip:active {
+  transform: translate(-50%, calc(-100% - var(--pin-frame) - var(--pin-title-bottom))) scale(var(--press-scale));
+}
+
+/* пока открыта шторка, время – в ней самой: плашка над пином не дублирует его и не лезет под шапку */
+.app.has-sheet .geo-mover__chip {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Ты: шторки „поделиться“ ─────────────────────────────────────────── */
+
+.share-sheet {
+  padding-bottom: calc(var(--safe-bottom) + var(--space-16));
+}
+
+/* шапка шторки: заголовок слева, „закрыть“ справа (main-design-system.md 4.6) */
+.share-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-8);
+}
+
+.share-sheet .icon-button--header .icon {
+  --icon-size: 16px;
+}
+
+/* у шторок поверх первой заголовок под героем – „закрыть“ стоит в углу */
+.share-sheet__close {
+  position: absolute;
+  top: var(--space-20);
+  right: var(--gutter);
+  z-index: 1;
+}
+
+.share-sheet__center {
+  text-align: center;
+}
+
+/* Главная карточка – геопозиция по ссылке. Глаза-стикер наклеен на край: тебя увидят */
+.share-card {
+  --press-scale: var(--press-scale-wide);
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 112px;
+  margin-top: var(--space-28);
+  padding: var(--space-20) 116px var(--space-20) var(--space-20);
+  border-radius: var(--radius-24);
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.share-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.share-card__title {
+  font: var(--type-banner-title);
+  color: var(--color-text);
+}
+
+.share-card__text {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.share-card__sticker {
+  position: absolute;
+  right: var(--space-8);
+  top: -26px;
+  width: 104px;
+  height: 104px;
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.share-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-12);
+  margin-top: var(--space-12);
+}
+
+.share-tile {
+  --press-scale: var(--press-scale-wide);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  height: 96px;
+  padding: var(--space-16);
+  border-radius: var(--radius-24);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--type-label);
+  text-align: left;
+}
+
+.share-tile .icon {
+  --icon-size: 24px;
+  color: var(--color-text-secondary);
+}
+
+/* сам QR вместо иконки: чёрные модули на тёмной плитке – светлыми */
+.share-tile__qr {
+  width: 24px;
+  height: 24px;
+  filter: invert(1);
+  opacity: 0.8;
+}
+
+/* Герой шторки геопозиции: глаза – „тебя видно“. Пока идёт трансляция, вокруг них розовое
+   кольцо-таймер, а на кольце, как стикер, – сколько осталось */
+.share-hero {
+  position: relative;
+  height: 128px;
+  margin: var(--space-16) 0 var(--space-12);
+}
+
+.share-hero[data-live="true"] {
+  height: 184px;
+  margin-bottom: calc(var(--space-20) * 2);        /* половина стикера со временем + 20 */
+}
+
+.share-hero__ring,
+.share-hero__eyes {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.share-hero__ring {
+  width: 184px;
+  height: 184px;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.8);
+  transition:
+    opacity var(--duration-screen) ease,
+    transform var(--duration-sheet) var(--ease-emphasized);
+}
+
+.share-hero__eyes {
+  width: 128px;
+  height: 128px;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  transition: transform var(--duration-sheet) var(--ease-emphasized);
+  pointer-events: none;
+}
+
+.share-hero__time {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  padding: var(--space-2) var(--space-14);
+  border-radius: var(--radius-pill);
+  background: var(--color-pink);
+  color: var(--color-text-on-light);
+  font: var(--type-section-title);
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transform: translate(-50%, 50%) rotate(-6deg) scale(0.6);
+  transition:
+    opacity var(--duration-screen) ease,
+    transform var(--duration-sheet) var(--ease-emphasized);
+}
+
+.share-hero[data-live="true"] .share-hero__ring {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+.share-hero[data-live="true"] .share-hero__eyes {
+  transform: translate(-50%, -50%) rotate(-8deg) scale(0.86);
+}
+
+.share-hero[data-live="true"] .share-hero__time {
+  opacity: 1;
+  transform: translate(-50%, 50%) rotate(-6deg);
+}
+
+
+/* последняя минута: стикер со временем стучит, как сердце */
+.share-hero.is-urgent .share-hero__time {
+  animation: share-urgent 1s var(--ease-out-soft) infinite;
+}
+
+@keyframes share-urgent {
+  0%, 100% { transform: translate(-50%, 50%) rotate(-6deg); }
+  30% { transform: translate(-50%, 50%) rotate(-6deg) scale(1.08); }
+}
+
+.share-sheet__setup {
+  margin-top: var(--space-28);
+}
+
+.share-sheet__error {
+  margin-top: var(--space-12);
+  font: var(--type-distance);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.share-sheet__cta {
+  width: 100%;
+  margin-top: var(--space-28);
+}
+
+.share-sheet__cta .icon {
+  --icon-size: 22px;
+}
+
+.share-sheet__cta[aria-busy="true"] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* вторая кнопка под главной – сама по себе действие, не подпись */
+.share-sheet__stop {
+  width: 100%;
+  margin-top: var(--space-8);
+}
+
+/* Пока идёт трансляция, внизу две кнопки: они стоят ниже – красная почти у home indicator
+   (её текст по центру высоты 56), над ними больше воздуха */
+.share-sheet[data-live="true"] {
+  padding-bottom: calc(var(--safe-bottom) - var(--space-8));
+}
+
+.share-sheet[data-live="true"] .share-sheet__cta {
+  margin-top: calc(var(--space-20) * 2);
+}
+
+/* Подтверждение без модалки: первое нажатие заливает кнопку красным и спрашивает
+   „точно перестать?“, второе – останавливает. Через 4 s кнопка возвращается */
+.share-sheet__stop.is-confirming {
+  background: var(--color-danger);
+  color: var(--color-text-on-light);
+}
+
+/* QR: белая карточка с кодом, в центре кода – аватар, на углу – звезда-маскот */
+.qr-card {
+  position: relative;
+  align-self: center;
+  width: 224px;
+  height: 224px;
+  margin-top: var(--space-28);
+  padding: var(--space-20);
+  border-radius: var(--radius-24);
+  background: var(--color-text);
+}
+
+.qr-card__code {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+/* код собран с коррекцией ошибок H (30 %): аватар закрывает ~8 % модулей, код читается */
+.qr-card__avatar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52px;
+  height: 52px;
+  border: 4px solid var(--color-text);
+  border-radius: var(--radius-squircle);
+  background: var(--color-text);
+  object-fit: cover;
+  transform: translate(-50%, -50%);
+}
+
+/* звезда – на левом углу: справа сверху у шторки „закрыть“ */
+.qr-card__sticker {
+  position: absolute;
+  top: -30px;
+  left: -34px;
+  width: 88px;
+  height: 88px;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
+#s-qr-sheet .sheet__title {
+  margin-top: var(--space-28);
+}
+
+/* ── Друг: до ссылки (часть стенда) ──────────────────────────────────── */
+
+.viewer-idle {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--space-32);
+  background: var(--color-bg);
+}
+
+.viewer-idle__hint {
+  padding: var(--space-24);
+  border: 2px dashed var(--color-outline);
+  border-radius: var(--radius-24);
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* Без blink на телефоне нет его live activity: остров пустой */
+.status-bar__island--plain {
+  left: 50%;
+  width: 122px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+  transform: translateX(-50%);
+}
+
+/* ── Друг: рамка браузера ────────────────────────────────────────────── */
+
+/* Нижняя панель Safari (browser.png) лежит поверх страницы; страница под ней
+   продолжается, а всё, что прижато к низу, стоит над панелью */
+.browser-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 250;
+  height: var(--browser-bar);
+  background: url("../../assets/web/safari-toolbar.png") center bottom / 100% auto no-repeat;
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  pointer-events: none;
+}
+
+/* домен страницы вместо вшитого в рамку: замок и адрес по центру поля */
+.browser-bar__address {
+  position: absolute;
+  top: 19px;                                      /* поле адреса: 720–764 pt экрана, панель с 711 */
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  color: var(--color-text-on-light);
+  font: var(--type-browser-address);
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.browser-bar__lock {
+  width: auto;
+  height: 13px;
+}
+
+/* ── Друг: карта ─────────────────────────────────────────────────────── */
+
+.viewer-map {
+  background: var(--color-map-land);
+}
+
+/* у друга карту двигают пальцем – жест свой, а не скролл страницы */
+.viewer .geo-camera {
+  touch-action: none;
+  cursor: grab;
+}
+
+.viewer .geo-camera.is-dragging {
+  cursor: grabbing;
+}
+
+/* сколько ещё идёт трансляция – на месте плашки шагов */
+.viewer-map__chip {
+  margin-top: 11.4px;                             /* как плашка шагов под погодой (map__steps) */
+}
+
+/* „показать“ – над баннером, баннер – над панелью браузера */
+.viewer-map__actions {
+  bottom: calc(var(--browser-bar) + var(--tabbar-height) + var(--space-28));
+  transition: opacity var(--duration-state) ease;
+}
+
+.viewer.is-ended .viewer-map__actions {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Друг: баннер „скачай blink“ ─────────────────────────────────────── */
+
+.install-banner {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--browser-bar) + var(--space-10));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: var(--tabbar-height);
+  padding: 0 var(--space-12) 0 80px;              /* слева место под аватар */
+  border: 1px solid var(--color-tabbar-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-tabbar);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  transition:
+    transform var(--duration-sheet) var(--ease-emphasized),
+    opacity var(--duration-state) ease;
+}
+
+.viewer.is-ended .install-banner {
+  opacity: 0;
+  transform: translateY(var(--space-24));
+  pointer-events: none;
+}
+
+/* Аватар в баннере: вырезка крупная, но целиком внутри – лицо не режем. За нижний край
+   уходит только низ вырезки с прямым срезом. Рамка аватара повторяет форму баннера
+   (пилюля) и прячет всё, что за ней */
+.install-banner__avatar {
+  position: absolute;
+  inset: -1px;                                    /* от внешнего края рамки баннера */
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* 60 – голова целиком в левом полукруге баннера (r35): скругление не заходит ни на лицо,
+   ни на волосы, срезаны только плечи у нижнего края */
+.install-banner__person {
+  position: absolute;
+  left: 44px;
+  bottom: -1px;                                   /* низ вырезки – чуть за краем баннера, голова выше */
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  object-position: 50% 100%;
+  transform: translateX(-50%) rotate(-4deg);
+  transform-origin: 50% 100%;
+}
+
+.install-banner__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* кегли – чтобы „общение и друзья на карте“ помещалась целиком уже на 375 */
+.install-banner__title {
+  font: var(--type-friend-name);
+}
+
+.install-banner__text {
+  font: var(--type-compact);
+  color: var(--color-text-muted);
+}
+
+/* Вложенное скругление: баннер – пилюля r35, кнопка на 12 от его краёв,
+   значит её радиус 35 − 12 = 23, то есть тоже пилюля высотой 46 */
+.install-banner__button {
+  height: 46px;
+  padding: 0 var(--space-10);
+  border-radius: var(--radius-pill);
+  font: var(--type-button-compact);
+  letter-spacing: 0;
+}
+
+/* ── Друг: трансляция закончилась ────────────────────────────────────── */
+
+/* веб-шторка стоит на панели браузера, а не под ней */
+.viewer-ended {
+  bottom: var(--browser-bar);
+  align-items: center;
+  padding-top: var(--space-20);
+  padding-bottom: var(--space-24);
+  text-align: center;
+}
+
+.viewer-ended__art {
+  --cutout-size: 112px;
+  margin-bottom: var(--space-8);
+}
+
+.viewer-ended__cta {
+  width: 100%;
+  margin-top: var(--space-28);
+}
+
+/* ── Друг: ссылка не работает ────────────────────────────────────────── */
+
+.viewer-invalid {
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + var(--space-16)) var(--gutter) calc(var(--browser-bar) + var(--space-16));
+}
+
+.viewer-invalid__cta {
+  width: 100%;
+}
+
+/* ── Телефон: телефоны друг под другом, каждый на весь экран ─────────── */
+
+@media (max-width: 480px) {
+  .stage {
+    gap: 0;
+    padding: 0;
+  }
+
+  .stage__head {
+    padding: var(--space-20) var(--gutter);
+  }
+
+  .stage__phones {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    zoom: 1;
+  }
+
+  .stage__side {
+    width: 100%;
+    gap: 0;
+  }
+
+  .stage__caption {
+    align-self: stretch;
+    padding: var(--space-12) var(--gutter);
+  }
+
+  .stage__link {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: var(--space-16) var(--gutter);
+  }
+
+  .stage__link-arrow {
+    transform: rotate(90deg);
+  }
+
+  .stage__middle {
+    padding: var(--space-8) var(--gutter) var(--space-24);
+  }
+
+  /* телефоны идут друг под другом: по карте друга листаем страницу, а не двигаем карту */
+  .viewer .geo-camera {
+    touch-action: pan-y;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .share-hero.is-urgent .share-hero__time {
+    animation: none;
+  }
+}

@@ -1,0 +1,282 @@
+/* Экран „друзья“ – референс Friends/Друзья.png */
+
+.friends__content {
+  padding: calc(var(--safe-top) + 12px) 0 200px;
+}
+
+.friends__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46px;
+  padding: 0 var(--gutter);
+}
+
+.friends__title {
+  margin-top: -4px;
+}
+
+/* „ЗАЯВКИ 2“: розовая плашка с чёрной звездой-счётчиком */
+.requests-button {
+  --press-scale: var(--press-scale-button);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 4px 0 12px;
+  border-radius: var(--radius-20);
+  background: var(--color-pink);
+  color: var(--color-text-on-light);
+  font: var(--type-button-small);
+  letter-spacing: var(--tracking-button-small);
+  text-transform: uppercase;
+}
+
+.requests-button .badge-star {
+  --badge-size: 38px;
+}
+
+.friends__add-label {
+  padding: 25px var(--gutter) 12px;
+}
+
+/* Плитки „трях / номер / ссылка / тел книга“ */
+.add-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 0 var(--gutter);
+}
+
+.add-tile {
+  --press-scale: var(--press-scale-button);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 54px;
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--type-tile);
+}
+
+.add-tile .icon {
+  --icon-size: 24px;
+}
+
+.friends__section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 var(--gutter);
+}
+
+.friends__section-head--mine {
+  padding-top: 21.5px;
+  padding-bottom: 8px;
+}
+
+.friends__section-head--suggested {
+  padding-top: 16px;
+  padding-bottom: 14.5px;
+}
+
+.more-link {
+  --press-scale: var(--press-scale-small);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-muted);
+}
+
+.more-link .icon {
+  --icon-size: 13px;
+}
+
+/* Строка друга: вырезка на свечении или сквиркл-фото, имя, дистанция, две кнопки */
+.friend-row {
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 var(--gutter) 0 10px;
+}
+
+.friend-row__avatar {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+}
+
+.friend-row__avatar .avatar {
+  --avatar-size: 46px;
+}
+
+.friend-row__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 0 12px 0 9px;
+}
+
+.friend-row__name {
+  font: var(--type-friend-name);
+}
+
+.friend-row__distance {
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.friend-row__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.friends__empty {
+  padding: 8px var(--gutter) 0;
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+/* Карусель „возможные“ */
+.suggestions {
+  display: flex;
+  gap: 8px;
+  padding: 0 var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--gutter);
+}
+
+.suggestions::-webkit-scrollbar {
+  display: none;
+}
+
+.suggestion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 114px;
+  gap: 6px;
+  scroll-snap-align: start;
+}
+
+.suggestion__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 114px;
+  height: 168px;
+  padding: 14px 6px 6px;
+  overflow: hidden;
+  border: 1px solid var(--color-surface-raised);
+  border-radius: var(--radius-20);
+  background: var(--color-surface-card);
+}
+
+.suggestion__pattern {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;                                   /* звёзды – фон, а не рисунок: в SVG 15 %, итого ~8 % */
+  pointer-events: none;
+}
+
+.suggestion__name {
+  position: relative;
+  z-index: 1;
+  padding: 0 6px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  width: 100%;
+  overflow: hidden;
+  font: var(--type-card-name);
+  text-align: center;
+}
+
+.suggestion__photo {
+  position: absolute;
+  top: 24px;
+  left: 5px;
+  width: 104px;
+  height: 100px;
+  object-fit: cover;
+  object-position: 64% 0;
+  -webkit-mask: linear-gradient(180deg, #000 70%, transparent);
+          mask: linear-gradient(180deg, #000 70%, transparent);
+}
+
+/* Нет фото: сквиркл с ником, как „maxkli…“ на референсе */
+.suggestion__placeholder {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  margin-top: 6px;
+  padding: 0 4px;
+  border-radius: var(--radius-24);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card-avatar);
+  font: var(--type-compact-strong);
+}
+
+.suggestion__placeholder span {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.suggestion__action {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 32px;
+  margin-top: auto;
+  padding: 0;
+  border-radius: var(--radius-12);
+  font: var(--type-button-compact);
+  letter-spacing: 0;
+}
+
+.suggestion__action .icon {
+  --icon-size: 17px;
+}
+
+.suggestion__card--all {
+  justify-content: center;
+  gap: 10px;
+  padding-top: 26px;
+}
+
+.suggestion__eyes {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.suggestion__all-label {
+  position: relative;
+  font: var(--type-card-link);
+  text-align: center;
+}
+
+.suggestion__mutual {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font: var(--type-compact);
+  color: var(--color-text-muted);
+}

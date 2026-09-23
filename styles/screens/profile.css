@@ -1,0 +1,272 @@
+/* Экран „ты“ (профиль) – референс profile/profile.png.
+   Композиция героя и коллажей статистики собрана по координатам, найденным
+   сопоставлением ассетов со скриншотом. По горизонтали всё считается от центра
+   экрана (--dx), поэтому на ширине 375–430 композиция не разъезжается. */
+
+.profile__content {
+  position: relative;
+  min-height: 100%;
+  padding: calc(var(--safe-top) + 2px) 0 150px;   /* верх кнопок – 56 pt */
+}
+
+/* Свечение-тема. Тему выбирает пользователь (кнопка с палитрой), поэтому это картинка:
+   фон восстановлен со скриншота профиля (tools/build_assets.py → theme-glow.webp).
+   Для новых тем – формула из main-design-system.md 3.2 C (три радиальных пятна
+   с маской в чёрный). */
+.profile__theme {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 450px;
+  background: url("../../assets/profile/theme-glow.webp") center top / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.profile__topbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding-left: var(--gutter);
+  padding-right: 13px;
+}
+
+.profile__tools {
+  display: flex;
+  gap: 10px;
+}
+
+/* „маркет 50k“: чёрная плашка с рамкой 3 pt и монетой (profile/market.png, 159×46).
+   Скругление – как у кнопок 40×40 слева. */
+.market-pill {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  gap: 11.7px;
+  height: 46px;
+  padding: 0 4.3px 0 11.3px;
+  border: 3px solid var(--color-market-border);
+  border-radius: var(--radius-12);
+  background: var(--color-bg);
+  background-clip: padding-box;
+  font: var(--type-label);
+  color: var(--color-text);
+}
+
+.market-pill__coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 8.3px;
+  height: 34px;
+  padding: 0 9.7px 0 4.3px;
+  border-radius: var(--radius-10);
+  background: var(--color-coin-pill);
+  font-variant-numeric: tabular-nums;
+}
+
+.market-pill__coin {
+  width: 20px;
+  height: 20px;
+}
+
+/* Герой: элементы стоят по координатам экрана – --dy от верха героя (96 pt), --dx от центра */
+.profile__hero {
+  position: relative;
+  height: 194px;                                  /* 96 → 290 pt: имя начинается на 290 */
+}
+
+.profile__hero > * {
+  position: absolute;
+  left: calc(50% + var(--dx, 0) * 1px);
+  top: calc(var(--dy, 0) * 1px);
+}
+
+.profile__avatar {
+  --dx: -75;
+  --dy: 30;
+  width: 132px;
+  height: 132px;
+}
+
+.profile__gifts {
+  display: contents;                              /* подарки позиционируются от героя, как прямые дети */
+}
+
+.gift {
+  position: absolute;
+  left: calc(50% + var(--dx) * 1px);
+  top: calc(var(--dy) * 1px);
+  width: calc(var(--w) * 1px);
+  pointer-events: none;
+}
+
+.username-pill {
+  --press-scale: var(--press-scale-wide);
+  --dx: -68.7;
+  --dy: 143.8;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 41px;
+  padding: 0 12px 0 2px;
+  border-radius: 14px;
+  background: var(--gradient-chip-light);
+  box-shadow: var(--shadow-chip);
+  color: var(--color-text-on-chip);
+  font: var(--type-username);
+  transform: rotate(-3deg);
+  transform-origin: 0 50%;
+}
+
+.username-pill:active {
+  transform: rotate(-3deg) scale(var(--press-scale));
+}
+
+/* Кнопка „поделиться“ 36 pt (profile/Icon.png) */
+.share-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-outline);
+  border-radius: 11px;
+  background: var(--gradient-share-button);
+  color: var(--color-text);
+}
+
+.share-button .icon {
+  --icon-size: 19px;
+}
+
+.profile__name {
+  position: relative;
+  padding: 0 var(--gutter);
+  font: var(--type-profile-name);
+  text-align: center;
+}
+
+.profile__bio {
+  position: relative;
+  margin-top: 10px;
+  padding: 0 30px;
+  font: var(--type-bio);
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.profile__location {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7.5px;                                     /* 10 pt от пина до текста: 2.5 pt – поле внутри квадратной иконки */
+  margin-top: 13px;
+  font: var(--type-label);
+  color: var(--color-text-muted);
+}
+
+/* Вход в школы – тёмная плашка-чип под городом */
+.profile__entry {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.chip {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 32px;
+  padding: 0 13px 0 12px;
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-label);
+}
+
+.chip .icon {
+  --icon-size: 16px;
+  color: var(--color-text-dim);
+}
+
+.profile__location .icon {
+  --icon-size: 15px;
+}
+
+/* Коллажи статистики: 2 × 2. Каждый блок – кнопка-квадрант 195 × 165 со своими
+   локальными координатами, снятыми со скриншота (profile/profile_without_nav.png,
+   верх блока – 474 pt). Подписи есть только у „друзья“ и „чекины“. */
+.profile-stats {
+  position: relative;
+  height: 345px;
+  margin-top: 8px;
+}
+
+.stat {
+  --press-scale: var(--press-scale-button);
+  position: absolute;
+  width: 195px;
+  height: 165px;
+  color: var(--color-text);
+}
+
+.stat--friends { left: calc(50% - 195px); top: 0; }
+.stat--views { left: 50%; top: 0; }
+.stat--stars { left: calc(50% - 195px); top: 165px; }
+.stat--checkins { left: 50%; top: 165px; }
+
+.stat > * {
+  position: absolute;
+  left: calc(var(--x) * 1px);
+  top: calc(var(--y) * 1px);
+  pointer-events: none;
+}
+
+.stat__label {
+  font: var(--type-stat-label);
+  white-space: nowrap;
+}
+
+.stat__badge {
+  display: grid;
+  place-items: center;
+}
+
+.stat__badge img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.stat__badge span {
+  position: relative;
+  font: var(--type-badge-number);
+  letter-spacing: -0.02em;
+  color: var(--color-text-on-light);
+}
+
+/* друзья */
+.stat--friends .stat__art { --x: 39.3; --y: 0; width: 140px; }
+.stat--friends .sticker-number { --x: 58; --y: 46; transform: rotate(-9deg); }
+.stat--friends .stat__badge { --x: 116; --y: 31; width: 58px; height: 60px; transform: rotate(8deg); }
+.stat--friends .stat__label { --x: 67; --y: 142; transform: rotate(3deg); }
+
+/* просмотры */
+.stat--views .stat__art { --x: 24.3; --y: 26; width: 131px; }
+.stat--views .stat__eyes { --x: 45.3; --y: 18.7; width: 83px; height: 83px; }
+.stat--views .sticker-number { --x: 73; --y: 101; transform: rotate(-6deg); }
+
+/* звёзды */
+.stat--stars .stat__glow { --x: 35; --y: -7; width: 173px; }
+.stat--stars .stat__art { --x: 48.7; --y: 9; width: 149px; }             /* масштаб 1:1, звезда видна ~83 pt */
+.stat--stars .stat__badge { --x: 40; --y: 27; width: 60px; height: 62px; transform: rotate(-8deg); }
+.stat--stars .sticker-number { --x: 127; --y: 100; transform: rotate(-4deg); }
+
+/* чекины */
+.stat--checkins .stat__art { --x: 13; --y: 1; width: 144px; }
+.stat--checkins .sticker-number { --x: 59; --y: 11; transform: rotate(3deg); }
+.stat--checkins .stat__label { --x: 48.5; --y: 144; transform: rotate(-3deg); }

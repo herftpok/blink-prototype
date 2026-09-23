@@ -1,0 +1,203 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   База: сброс, нативное поведение на телефоне (mobile-native.md),
+   рамка телефона для просмотра на десктопе.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;   /* без серой вспышки при тапе */
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;                  /* страница не тянется, скроллятся только экраны */
+  background: var(--color-bg);
+}
+
+body {
+  min-height: 100dvh;
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background:
+    radial-gradient(1200px 600px at 20% 0%, #1b1b1f 0%, transparent 60%),
+    radial-gradient(900px 600px at 90% 100%, #16161a 0%, transparent 60%),
+    #0c0c0d;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  -webkit-user-drag: none;
+}
+
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;                 /* без задержки 300 мс */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  outline: 0;
+  font-size: max(16px, 1em);                  /* iOS не зумит поле меньше 16 px */
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+/* hidden всегда прячет, даже если у компонента свой display */
+[hidden] {
+  display: none !important;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Рамка телефона (только десктоп) ─────────────────────────────────── */
+
+.device {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+}
+
+.app {
+  position: relative;
+  width: 390px;
+  height: 844px;
+  overflow: hidden;
+  overflow: clip;                             /* clip, а не hidden: закрытые шторки под краем не делают телефон прокручиваемым */
+  isolation: isolate;
+  background: var(--color-bg);
+  border-radius: 55px;
+  box-shadow:
+    0 0 0 1px #1f1f22,
+    0 0 0 7px #18181b,
+    0 30px 80px rgba(0, 0, 0, 0.6);
+  container-type: size;
+}
+
+/* Статус-бар iOS нарисован только для превью: в разработку не идёт */
+.status-bar {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 300;
+  height: 54px;
+  pointer-events: none;
+  color: var(--color-text);
+}
+
+.status-bar__time,
+.status-bar__icons,
+.status-bar__island {
+  position: absolute;
+}
+
+.status-bar__time {
+  top: 19.3px;
+  left: 36px;
+  width: 36.7px;
+}
+
+.status-bar__icons {
+  top: 18.7px;
+  left: 286px;
+  width: 78.3px;
+}
+
+.status-bar__island {
+  top: 11px;
+  left: 154px;
+  width: 82px;
+  height: 26px;
+}
+
+/* Белые глифы статус-бара инвертируются в чёрные на светлых экранах */
+.app[data-status="dark"] .status-bar__time,
+.app[data-status="dark"] .status-bar__icons {
+  filter: invert(1);
+}
+
+.home-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  z-index: 300;
+  width: 134px;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--color-text);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.app[data-home="dark"] .home-indicator {
+  background: var(--color-text-on-light);
+}
+
+/* На телефоне прототип раскрывается на весь экран, системный статус-бар настоящий */
+@media (max-width: 480px) {
+  body {
+    background: var(--color-bg);
+  }
+
+  .device {
+    padding: 0;
+    display: block;
+  }
+
+  .app {
+    width: 100%;
+    height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+    --safe-top: max(env(safe-area-inset-top, 0px), 20px);
+    --safe-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+  }
+
+  .status-bar,
+  .home-indicator {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

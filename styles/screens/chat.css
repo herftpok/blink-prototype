@@ -1,0 +1,214 @@
+/* Экран чата – референс messanger/chat inside/основной.png, композер – Bottom_messenger.png */
+
+.chat {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Шапка висит над лентой, лента уходит под неё с затемнением */
+.chat__header {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: calc(var(--safe-top) + 74px);
+  padding: calc(var(--safe-top) + 12px) var(--gutter) 16px;
+}
+
+/* Лента уходит под шапку: чёрный до низа кнопок, дальше линейно в прозрачный за 103 pt
+   (замер по пузырю „хай!“ на референсе: 62 % затемнения на 136 pt, 27 % на 172 pt) */
+.chat__header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: calc(var(--safe-top) + 146px);
+  background: linear-gradient(180deg, var(--color-bg) calc(var(--safe-top) + 43px), rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+}
+
+.chat__peer {
+  --press-scale: var(--press-scale-wide);
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.chat__peer .avatar {
+  --avatar-size: 46px;
+}
+
+.chat__peer-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+}
+
+.chat__peer-name {
+  font: var(--type-header-name);
+}
+
+.chat__peer-status {
+  font: var(--type-status);
+  color: var(--color-text-secondary);
+}
+
+.chat__header .icon-button--header .icon {
+  --icon-size: 20px;
+}
+
+/* Лента прижата к низу, как в мессенджерах */
+.chat__scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.chat__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.chat__feed {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100%;
+  padding: calc(var(--safe-top) + 66px) 0 143px;   /* низ пересчитывается по высоте футера в app.js */
+}
+
+.chat__empty {
+  margin: auto var(--gutter) 0;
+  font: var(--type-caption);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* Низ: локация собеседника и композер */
+.chat__footer {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px var(--gutter) calc(var(--safe-bottom) + 6px);
+  background: var(--gradient-fade-bottom);
+}
+
+.chat-location {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin-bottom: 13px;
+  font: var(--type-caption);
+  color: var(--color-text);
+  text-shadow: var(--shadow-text-on-media);
+}
+
+.chat-location .icon {
+  --icon-size: 16px;
+  filter: drop-shadow(0 1px 2px var(--color-glass-button));
+}
+
+.chat-location .chat-location__chevron {
+  --icon-size: 11px;
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.composer__field {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  min-width: 0;
+  min-height: var(--control-44);
+  border: 2px solid var(--color-field-border);
+  border-radius: var(--radius-14);
+  background: var(--color-field);
+}
+
+.composer__input {
+  flex: 1;
+  min-width: 0;
+  max-height: 120px;
+  padding: 9px 4px 9px 11px;
+  font: var(--type-composer);
+  color: var(--color-text);
+  resize: none;
+}
+
+.composer__input:focus-visible {
+  outline: none;                                  /* фокус видно по каретке, рамка у поля своя */
+}
+
+.composer__input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.composer.is-big .composer__input {
+  font-size: 24px;
+  line-height: 22px;
+}
+
+.composer__sticker {
+  --press-scale: var(--press-scale-small);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  color: var(--color-text-muted);
+}
+
+.composer__sticker .icon {
+  --icon-size: 24px;
+}
+
+/* Панель 3D-стикеров вместо клавиатуры */
+.sticker-panel {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-height: 0;
+  overflow: hidden;
+  scrollbar-width: none;
+  transition:
+    max-height var(--duration-screen) var(--ease-emphasized),
+    margin var(--duration-screen) var(--ease-emphasized);
+}
+
+.sticker-panel.is-open {
+  max-height: 140px;
+  margin-top: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.sticker-panel__item {
+  --press-scale: var(--press-scale-small);
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+}
+
+.sticker-panel__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

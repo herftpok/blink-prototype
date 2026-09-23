@@ -1,0 +1,9 @@
+/* Таб „чекины“ – экрана нет в референсах, стоит пустое состояние по правилам системы
+   (компонент .empty-state – в components.css) */
+
+.checkins__content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: calc(var(--safe-top) + 10px) var(--gutter) 150px;
+}

@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – шеринг геопозиции</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/screens/map.css">
+  <link rel="stylesheet" href="geo-share.css">
+</head>
+<body>
+<div class="stage">
+
+  <!-- Стенд: всё вне телефонов – подписи и управление показом, в продукт не идёт -->
+  <header class="stage__head">
+    <h1 class="stage__title">шеринг геопозиции</h1>
+    <p class="stage__lead">наташка делится геопозицией с&nbsp;другом, у&nbsp;которого нет blink</p>
+  </header>
+
+  <div class="stage__phones" id="stage-phones">
+
+    <!-- ═════════════ ТЫ: приложение blink ═════════════ -->
+    <section class="stage__side" aria-labelledby="side-sender">
+      <h2 class="stage__caption caps-label" id="side-sender">ты · приложение blink</h2>
+
+      <div class="app" id="sender" data-status="dark" data-home="dark">
+        <div class="status-bar" aria-hidden="true">
+          <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+          <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+          <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+        </div>
+
+        <section class="screen map" aria-label="карта">
+          <!-- Карта с камерой: по нажатию на свой пин камера поднимает его чуть выше центра -->
+          <div class="map__canvas geo-camera" id="s-canvas">
+            <div class="geo-camera__layer" id="s-layer">
+              <img class="geo-camera__tiles" src="../../assets/map/map-hd.webp" alt="">
+              <div class="geo-camera__pins" id="s-pins"></div>
+              <!-- Твоя точка: пин и, пока тебя видно по ссылке, плашка над ним. Нажатие на плашку –
+                   шторка геопозиции -->
+              <div class="geo-mover" id="s-mover">
+                <button class="map-chip map-chip--live geo-mover__chip pressable" id="s-live" type="button" aria-haspopup="dialog" hidden>
+                  <span class="live-dot" aria-hidden="true"></span><span id="s-live-text"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <header class="map__header">
+            <h1 class="map__city" id="s-city"></h1>
+            <p class="map__weather">
+              <time id="s-time"></time>
+              <span class="map__weather-temp"><span id="s-weather" aria-hidden="true"></span><span id="s-temperature"></span></span>
+            </p>
+            <button class="map-chip map__steps pressable" type="button">
+              <i class="icon icon--steps" aria-hidden="true"></i><span id="s-steps"></span>
+            </button>
+          </header>
+
+          <div class="map__tools">
+            <button class="icon-button icon-button--map pressable" type="button" aria-label="места"><i class="icon icon--places" aria-hidden="true"></i></button>
+            <button class="icon-button icon-button--map pressable" type="button" aria-label="пространства"><i class="icon icon--space" aria-hidden="true"></i></button>
+            <button class="icon-button icon-button--map pressable" type="button" aria-label="игры"><i class="icon icon--games" aria-hidden="true"></i></button>
+          </div>
+
+          <div class="map__actions">
+            <button class="map-button map-button--world pressable" type="button">
+              <i class="icon icon--globe" aria-hidden="true"></i>мой мир
+            </button>
+            <button class="map-button map-button--locate pressable" id="s-locate" type="button" aria-label="показать, где я">
+              <i class="icon icon--crosshair" aria-hidden="true"></i>
+            </button>
+          </div>
+        </section>
+
+        <nav class="tabbar" aria-label="разделы">
+          <button class="tabbar__item pressable" type="button" aria-current="page"><i class="icon icon--pin" aria-hidden="true"></i>карта</button>
+          <button class="tabbar__item pressable" type="button"><i class="icon icon--friends" aria-hidden="true"></i>друзья</button>
+          <button class="tabbar__item pressable" type="button"><i class="icon icon--chat" aria-hidden="true"></i>чаты</button>
+          <button class="tabbar__item pressable" type="button"><i class="icon icon--checkin" aria-hidden="true"></i>чекины</button>
+          <button class="tabbar__item pressable" type="button"><img class="tabbar__avatar" id="s-tab-avatar" src="" alt="">ты</button>
+        </nav>
+
+        <!-- Подложка прозрачная: над шторкой должно быть видно твой пин -->
+        <div class="scrim scrim--clear" id="s-scrim"></div>
+
+        <!-- Шторка своего пина: что пошарить -->
+        <div class="sheet share-sheet" id="s-sheet" role="dialog" aria-modal="true" aria-labelledby="s-menu-title" tabindex="-1">
+          <div class="sheet__handle" data-drag>
+            <div class="sheet__grabber" aria-hidden="true"></div>
+          </div>
+          <header class="share-sheet__head">
+            <h2 class="sheet__title" id="s-menu-title">поделиться</h2>
+            <button class="icon-button icon-button--header pressable" type="button" data-close aria-label="закрыть">
+              <i class="icon icon--close" aria-hidden="true"></i>
+            </button>
+          </header>
+
+          <button class="share-card pressable" id="s-geo-card" type="button" aria-haspopup="dialog" aria-describedby="s-geo-card-text">
+            <span class="share-card__body">
+              <span class="share-card__title">геопозиция по&nbsp;ссылке</span>
+              <span class="share-card__text" id="s-geo-card-text"></span>
+            </span>
+            <img class="share-card__sticker" src="../../assets/stickers/eyes.webp" alt="">
+          </button>
+
+          <div class="share-tiles">
+            <button class="share-tile pressable" id="s-profile" type="button">
+              <i class="icon" id="s-profile-icon" aria-hidden="true"></i>
+              <span id="s-profile-label"></span>
+            </button>
+            <button class="share-tile pressable" id="s-qr" type="button" aria-haspopup="dialog">
+              <img class="share-tile__qr" src="../../assets/share/qr-natashka.svg" alt="">
+              <span>qr-код</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Шторка поверх первой: геопозиция по ссылке. Выезжает снизу, как любая шторка -->
+        <div class="sheet sheet--stacked share-sheet" id="s-geo-sheet" role="dialog" aria-modal="true" aria-labelledby="s-geo-title" tabindex="-1">
+          <div class="sheet__handle" data-drag>
+            <div class="sheet__grabber" aria-hidden="true"></div>
+          </div>
+          <button class="icon-button icon-button--header share-sheet__close pressable" type="button" data-close aria-label="закрыть">
+            <i class="icon icon--close" aria-hidden="true"></i>
+          </button>
+
+          <!-- Глаза – „тебя видно“. В трансляции вокруг них кольцо-таймер, на кольце – сколько осталось -->
+          <div class="share-hero" id="s-hero" data-live="false">
+            <span class="ring share-hero__ring" id="s-ring">
+              <svg class="ring__svg" viewBox="0 0 184 184" aria-hidden="true">
+                <circle class="ring__track" cx="92" cy="92" r="86" stroke-width="12" pathLength="100"/>
+                <circle class="ring__fill" cx="92" cy="92" r="86" stroke-width="12" pathLength="100"/>
+              </svg>
+            </span>
+            <img class="share-hero__eyes" src="../../assets/stickers/eyes.webp" alt="">
+            <span class="share-hero__time" id="s-time-badge" role="timer" aria-live="off"></span>
+          </div>
+
+          <h2 class="sheet__title share-sheet__center" id="s-geo-title"></h2>
+          <p class="sheet__text share-sheet__center" id="s-geo-text"></p>
+
+          <div class="share-sheet__setup" id="s-setup">
+            <div class="choice-tiles" id="s-durations" role="radiogroup" aria-label="на сколько"></div>
+            <p class="share-sheet__error" id="s-error" role="alert" hidden>ссылка не&nbsp;создалась – попробуй ещё раз</p>
+          </div>
+
+          <button class="button button--primary share-sheet__cta pressable" id="s-cta" type="button">
+            <i class="icon" id="s-cta-icon" aria-hidden="true"></i><span id="s-cta-label"></span>
+          </button>
+          <!-- Подтверждение без модалки: первое нажатие – „точно перестать?“ на залитой красной, второе – стоп -->
+          <button class="button button--danger share-sheet__stop pressable" id="s-stop" type="button" hidden>перестать делиться гео</button>
+        </div>
+
+        <!-- Шторка поверх первой: QR-код профиля – показать другу рядом -->
+        <div class="sheet sheet--stacked share-sheet" id="s-qr-sheet" role="dialog" aria-modal="true" aria-labelledby="s-qr-name" tabindex="-1">
+          <div class="sheet__handle" data-drag>
+            <div class="sheet__grabber" aria-hidden="true"></div>
+          </div>
+          <button class="icon-button icon-button--header share-sheet__close pressable" type="button" data-close aria-label="закрыть">
+            <i class="icon icon--close" aria-hidden="true"></i>
+          </button>
+          <figure class="qr-card">
+            <img class="qr-card__code" src="../../assets/share/qr-natashka.svg" alt="qr-код профиля">
+            <img class="qr-card__avatar" id="s-qr-avatar" src="" alt="">
+            <img class="qr-card__sticker" src="../../assets/stickers/blink.webp" alt="">
+          </figure>
+          <h2 class="sheet__title share-sheet__center" id="s-qr-name"></h2>
+          <p class="sheet__text share-sheet__center" id="s-qr-link"></p>
+        </div>
+
+        <p class="visually-hidden" id="s-announce" aria-live="polite"></p>
+        <div class="home-indicator" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- Стенд: ссылка едет от тебя к другу; ниже – перемотка времени и сценарии,
+         которые сами по себе не случатся -->
+    <div class="stage__middle">
+      <div class="stage__link" id="stage-link" data-state="none" aria-live="polite">
+        <span class="stage__link-arrow" aria-hidden="true">→</span>
+        <p class="stage__link-status" id="stage-link-status"></p>
+        <p class="stage__link-url" id="stage-link-url"></p>
+        <button class="stage__button stage__button--accent pressable" id="stage-send" type="button" hidden>отправить другу</button>
+      </div>
+
+      <div class="stage__controls" role="group" aria-label="управление показом">
+        <p class="stage__group-label caps-label">время</p>
+        <button class="stage__button pressable" type="button" data-demo="minute">осталась минута</button>
+        <button class="stage__button pressable" type="button" data-demo="expire">время вышло</button>
+        <button class="stage__button pressable" type="button" data-demo="arrive">наташка дошла</button>
+        <p class="stage__group-label caps-label">что может пойти не так</p>
+        <button class="stage__button pressable" type="button" data-demo="fail" aria-pressed="false">ссылка не создалась</button>
+        <button class="stage__button pressable" type="button" data-demo="lost" aria-pressed="false">гео перестало приходить</button>
+        <button class="stage__button pressable" type="button" data-demo="old">старая ссылка</button>
+        <button class="stage__button stage__button--reset pressable" type="button" data-demo="reset">с начала</button>
+      </div>
+    </div>
+
+    <!-- ═════════════ ДРУГ: браузер, blink не установлен ═════════════ -->
+    <section class="stage__side" aria-labelledby="side-viewer">
+      <h2 class="stage__caption caps-label" id="side-viewer">друг · браузер, blink не установлен</h2>
+
+      <div class="app viewer" id="viewer" data-status="light" data-home="light">
+        <div class="status-bar" aria-hidden="true">
+          <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+          <span class="status-bar__island status-bar__island--plain"></span>
+          <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+        </div>
+
+        <!-- До ссылки: телефон друга ещё ничего не открыл (часть стенда) -->
+        <div class="viewer-idle" id="v-idle">
+          <p class="viewer-idle__hint">здесь откроется ссылка, когда наташка ей поделится</p>
+        </div>
+
+        <!-- Веб-страница по ссылке. Всё ниже – внутри браузера: панель Safari – рамка (browser.png) -->
+        <section class="screen viewer-map" id="v-map" aria-label="геопозиция друга" hidden>
+          <div class="geo-camera" id="v-canvas">
+            <div class="geo-camera__layer" id="v-layer">
+              <img class="geo-camera__tiles" src="../../assets/map/map-hd.webp" alt="">
+              <div class="geo-mover" id="v-mover"></div>
+            </div>
+          </div>
+
+          <!-- Шапка как у карты в приложении: город, время и погода там, где человек.
+               Вместо шагов – сколько ещё идёт трансляция. Имя и заряд – у самого пина -->
+          <header class="map__header viewer-map__header">
+            <h1 class="map__city" id="v-city"></h1>
+            <p class="map__weather" id="v-weather">
+              <time id="v-time"></time>
+              <span class="map__weather-temp"><span id="v-weather-icon" aria-hidden="true"></span><span id="v-temperature"></span></span>
+            </p>
+            <p class="map-chip map-chip--live viewer-map__chip" id="v-left" role="timer" aria-live="off">
+              <span class="live-dot" id="v-left-dot" aria-hidden="true"></span><span id="v-left-text"></span>
+            </p>
+          </header>
+
+          <div class="map__actions viewer-map__actions" id="v-actions">
+            <button class="map-button map-button--locate pressable" id="v-recenter" type="button">
+              <i class="icon icon--crosshair" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <!-- Баннер: плавает над панелью браузера, стекло как у таб-бара приложения.
+               Аватар целиком внутри баннера, за нижний край уходит только низ вырезки с плечами -->
+          <aside class="install-banner" id="v-banner" aria-label="приложение blink">
+            <span class="install-banner__avatar" aria-hidden="true">
+              <img class="install-banner__person" id="v-banner-photo" src="" alt="">
+            </span>
+            <span class="install-banner__body">
+              <span class="install-banner__title ellipsis" id="v-banner-title"></span>
+              <span class="install-banner__text ellipsis">общение и&nbsp;друзья на&nbsp;карте</span>
+            </span>
+            <button class="button button--primary install-banner__button pressable" type="button" data-install>скачать</button>
+          </aside>
+        </section>
+
+        <!-- Трансляция закончилась, пока друг смотрел -->
+        <div class="sheet viewer-ended" id="v-ended" role="dialog" aria-labelledby="v-ended-title">
+          <span class="cutout viewer-ended__art" aria-hidden="true">
+            <img class="cutout__glow" src="../../assets/friends/glow-offline.webp" alt="">
+            <span class="cutout__person"><img class="cutout__img" id="v-ended-photo" src="" alt=""></span>
+            <img class="cutout__rim" src="../../assets/friends/rim-offline.png" alt="">
+          </span>
+          <h2 class="sheet__title" id="v-ended-title">трансляция закончилась</h2>
+          <p class="sheet__text" id="v-ended-text"></p>
+          <button class="button button--primary viewer-ended__cta pressable" type="button" data-install>скачать blink</button>
+        </div>
+
+        <!-- Ссылку открыли после конца трансляции: данных о человеке уже нет -->
+        <section class="screen viewer-invalid" id="v-invalid" aria-label="ссылка не работает" hidden>
+          <div class="empty-state">
+            <img class="empty-state__sticker" src="../../assets/stickers/blink.webp" alt="">
+            <h1 class="empty-state__title">ссылка больше не&nbsp;работает</h1>
+            <p class="empty-state__text">время вышло или трансляцию остановили. попроси друга поделиться снова</p>
+          </div>
+          <button class="button button--primary viewer-invalid__cta pressable" type="button" data-install>скачать blink</button>
+        </section>
+
+        <!-- Рамка браузера (browser.png): панель Safari, домен – текстом страницы -->
+        <div class="browser-bar" id="v-browser" aria-hidden="true" hidden>
+          <span class="browser-bar__address">
+            <img class="browser-bar__lock" src="../../assets/web/lock.png" alt="">web.blinkmap.com
+          </span>
+        </div>
+
+        <div class="home-indicator" aria-hidden="true"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="../../scripts/pin.js"></script>
+<script src="geo-share.js"></script>
+</body>
+</html>

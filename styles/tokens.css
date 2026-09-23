@@ -1,0 +1,220 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Blink – токены дизайн-системы.
+   Значения сняты с референсных экранов (@3x → pt) и сверены с
+   main-design-system.md. Единственный источник значений для прототипов:
+   компоненты берут всё отсюда через var(--…), свои hex и px не пишут.
+   Если нужного значения нет – сначала добавь токен сюда и в blink-design.md.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Фон и поверхности ─────────────────────────────────────────────── */
+  --color-bg: #000000;                         /* фон всех тёмных экранов */
+  --color-surface: #1a1a1a;                    /* плитки „добавить с помощью“, кнопка „написать“, счётчик папки */
+  --color-surface-raised: #242424;             /* кнопка „добавлен“ (галочка), рамка баннера */
+  --color-surface-card: #111111;               /* карточка „возможные“ под звёздным паттерном */
+  --color-field: #414141;                      /* композер: поле и квадратные кнопки */
+  --color-field-border: #5e5e5e;               /* рамка 2 pt у поля и кнопок композера */
+  --color-outline: #494949;                    /* обводка „маршрута“, скрепка закрепа, рамка кнопки „поделиться“ */
+  --color-header-button-border: #242424;       /* рамка 2 pt у кнопок шапки чата */
+  --color-divider: #2b2b2b;                    /* разделитель закреплённых чатов */
+  --color-banner-fill: rgba(255, 255, 255, 0.1);
+  --color-banner-border: #242424;
+  --color-button-pressed: #ececec;             /* белая кнопка под пальцем (Buttons/Button-6.png) */
+  --color-glass-button: rgba(0, 0, 0, 0.25);   /* кнопки 40×40 поверх свечения профиля (SquareBtn40.png) */
+  --color-market-border: rgba(255, 255, 255, 0.25);
+  --gradient-chip-light: linear-gradient(180deg, #ffffff 0%, #d5d5d5 100%);   /* плашка ника */
+  --gradient-share-button: linear-gradient(180deg, #646464 0%, #030303 100%); /* profile/Icon.png */
+  --gradient-fade-bottom: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, #000 30%);
+  --color-chip-fill: #202020;                  /* плашка-вход „где учишься?“ */
+  --color-chip-border: rgba(255, 255, 255, 0.1);
+
+  /* Шторка (main-design-system.md 1.6, 4.6): подложка затемняет и чуть размывает экран */
+  --color-scrim: rgba(0, 0, 0, 0.5);
+  --blur-scrim: 3px;
+  --color-grabber: rgba(235, 235, 245, 0.3);
+
+  /* Стекло: таб-бар и поиск висят над контентом */
+  --color-tabbar: rgba(0, 0, 0, 0.86);
+  --color-tabbar-border: rgba(255, 255, 255, 0.15);
+  --color-search-fill: rgba(255, 255, 255, 0.15);
+  --color-search-border: rgba(255, 255, 255, 0.45);
+  --blur-glass: 20px;
+
+  /* Светлые плашки поверх карты */
+  --color-map-chip: rgba(255, 255, 255, 0.55);               /* поверх карты с блюром */
+  --color-map-button-light: rgba(255, 255, 255, 0.92);
+  --color-map-button: #000000;
+  --color-map-land: #ecebe3;                   /* подложка, пока грузятся тайлы */
+  --color-track-on-dark: rgba(255, 255, 255, 0.15);   /* дорожка кольца-таймера на чёрном */
+  --color-track-on-light: rgba(0, 0, 0, 0.1);         /* дорожка кольца-таймера на карте */
+
+  /* ── Текст ─────────────────────────────────────────────────────────── */
+  --color-text: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.8);   /* „5 мин назад“ в шапке чата */
+  --color-text-muted: #808080;                        /* мета, дистанция, подписи секций */
+  --color-text-dim: rgba(255, 255, 255, 0.5);         /* неактивный таб, плейсхолдер поиска */
+  --color-text-on-light: #000000;                     /* текст на белом, зелёном, розовом */
+  --color-text-on-map: #000000;
+  --color-text-on-chip: #151515;                      /* ник на светлой плашке */
+  --color-sticker-unit: #808080;                      /* „мин“, „км/ч“ под числом на пине (pin/*.png) */
+
+  /* ── Смысловые акценты ─────────────────────────────────────────────── */
+  --color-danger: #ff4a31;                     /* кнопки, которые прекращают или удаляют: „перестать делиться гео“ */
+  --color-pink: #ff75e1;                       /* новое и непрочитанное: счётчик-звезда, „заявки“, медиа в мете */
+  --color-pink-halo: rgba(255, 117, 225, 0.25);  /* пульс подсветки „смотри сюда“ в онбординге */
+  --color-online: #96e732;                     /* точка „в сети“ на аватаре */
+  --color-online-glow: #b6fe4f;                /* свечение под вырезкой друга в сети (glow-online.webp) */
+  --color-online-halo: rgba(150, 231, 50, 0.3);       /* пульс live-точки: ближнее кольцо */
+  --color-online-halo-far: rgba(150, 231, 50, 0.06);  /* пульс live-точки: дальнее кольцо */
+  --gradient-bubble-incoming: linear-gradient(180deg, #ccff39 0%, #a0ff65 100%);  /* пузырь собеседника */
+  --color-bubble-outgoing: #ffffff;            /* твой пузырь */
+  --gradient-ambassador: linear-gradient(90deg, #ff6ac8 0%, #30e593 100%);        /* имя амбассадора */
+  --color-coin-pill: #272727;
+
+  /* ── Шрифты ────────────────────────────────────────────────────────── */
+  --font-ui: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", sans-serif;
+
+  /* Кегли (px = pt на холсте 390×844) */
+  --type-screen-title: 600 36px/44px var(--font-ui);        /* „друзья“, „чаты“ */
+  --type-city: 700 36px/44px var(--font-ui);                /* „москва“ на карте – как заголовок экрана */
+  --type-section-title: 700 24px/30px var(--font-ui);       /* „мои друзья 2“, „возможные“ */
+  --type-profile-name: 700 24px/30px var(--font-ui);        /* „андрей зиновьев“ */
+  --type-header-name: 500 20px/24px var(--font-ui);         /* имя в шапке чата */
+  --type-folder: 600 20px/24px var(--font-ui);              /* вкладки папок чатов */
+  --type-row-title: 600 16px/20px var(--font-ui);           /* имя в строке чата */
+  --type-friend-name: 600 15px/20px var(--font-ui);         /* имя в строке друга */
+  --type-banner-title: 600 18px/22px var(--font-ui);        /* „у maxklumchuk др!“ */
+  --type-card-name: italic 700 12px/14px var(--font-ui);    /* имя на карточке „возможные“ (компактная карточка – весь текст 12) */
+  --type-stat-label: 700 20px/24px var(--font-ui);          /* подпись коллажа: только „друзья“ и „чекины“ */
+  --type-badge-number: 700 19px/1 var(--font-ui);           /* „+37“ на голографической звезде, прямой */
+  --type-caps-label: 700 13px/16px var(--font-ui);          /* „ДОБАВИТЬ С ПОМОЩЬЮ“, „ЕЩЁ“ */
+  --type-button: 700 14.5px/20px var(--font-ui);            /* основной CTA 56 pt: вес 700 – решение дизайнера (как 700 в main-design-system.md); кегль и трекинг при 700 – fit-font по Buttons/Button.png */
+  --type-button-small: 600 12px/16px var(--font-ui);        /* „ЗАЯВКИ“, трекинг +0.02em */
+  --type-button-compact: 700 12px/14px var(--font-ui);      /* „ДОБАВИТЬ“ в карточке */
+  --type-search: 600 20px/24px var(--font-ui);              /* плейсхолдер поиска */
+  --type-label: 600 15px/20px var(--font-ui);               /* „маркет 50k“, город, „где учишься?“, время на карте */
+  --type-username: 600 17px/22px var(--font-ui);            /* ник на светлой плашке профиля */
+  --type-meta: 400 16px/20px var(--font-text);              /* мета в строке чата */
+  --type-distance: 400 15px/19px var(--font-text);          /* „2.3 км“ в строке друга */
+  --type-compact: 400 12px/14px var(--font-text);           /* „7 общих“ */
+  --type-compact-strong: 700 12px/14px var(--font-text);    /* ник-заглушка вместо фото */
+  --type-card-link: 700 12px/15px var(--font-ui);           /* „посмотреть всех“ */
+  --type-bio: 400 17px/20px var(--font-text);               /* био профиля, трекинг −0.01em */
+  --type-status: 400 15px/19px var(--font-text);            /* „5 мин назад“ в шапке чата */
+  --type-composer: 600 20px/22px var(--font-text);          /* поле „написать...“ */
+  --type-count-pill: 600 16px/1 var(--font-text);           /* „3“ у папки „все чаты“ */
+  --type-message: 400 22px/24px var(--font-text);           /* текст пузыря: пузырь 38 pt = 6 + 24 + 8 */
+  --type-message-big: 400 44px/48px var(--font-text);       /* пузырь со стилем „крупно“: 62 pt = 6 + 48 + 8 */
+  --type-tab: 600 12px/14px var(--font-text);               /* подписи таб-бара */
+  --type-tile: 500 12px/14px var(--font-text);              /* подписи плиток */
+  --type-map-chip: 500 13px/16px var(--font-text);          /* „345 шагов · 9 место“ */
+  --type-map-chip-strong: 600 13px/16px var(--font-text);   /* плашка со временем трансляции: тот же кегль, что у шагов, потолще */
+  --type-pin-title: 700 15px/1 var(--font-ui);              /* имя над пином того, кто делится (pin/other_pin_sharing.png), fit-font */
+  --type-map-button: 500 15px/20px var(--font-text);        /* „мой мир“ */
+  --type-caption: 600 15px/18px var(--font-text);           /* „сегодня“, локация над композером */
+  --type-counter: 600 16px/1 var(--font-ui);                /* число в звезде-счётчике: прямой Montserrat, повёрнут вместе со звездой */
+  --type-pin-number: italic 700 13px/1 var(--font-ui);      /* „22“, „120“ на пине 52 – курсив, как на эталонах pin/*.png и карты */
+  --type-pin-unit: italic 700 9px/1 var(--font-ui);         /* „мин“, „км/ч“ под числом */
+  --type-browser-address: 400 17px/22px var(--font-text);   /* домен в адресной строке Safari (рамка браузера, превью) */
+  --tracking-title: -0.02em;                   /* заголовок экрана */
+  --tracking-city: -0.04em;                    /* „москва“ на карте (карту ещё не пересматривали) */
+  --tracking-section: 0;                       /* заголовок секции */
+  --tracking-caps: 0.08em;
+  --tracking-button: 0.02em;                   /* КАПС в CTA 56 pt при 700 (Buttons/Button.png) */
+  --tracking-button-small: 0.02em;             /* КАПС в кнопках 12 pt: „ЗАЯВКИ“ */
+  --tracking-pin-title: -0.02em;               /* имя над пином */
+
+  /* Стикер-число: прямой Montserrat 800, чёрный, со скруглённой белой обводкой (профиль, пины).
+     Обводка – кольцо из 16 теней: -webkit-text-stroke рисует острые шипы на углах цифр. */
+  --sticker-number-font: 800 27px/1 var(--font-ui);
+  --outline-number-3: 3px 0 0 #fff, 2.77px 1.15px 0 #fff, 2.12px 2.12px 0 #fff, 1.15px 2.77px 0 #fff,
+    0 3px 0 #fff, -1.15px 2.77px 0 #fff, -2.12px 2.12px 0 #fff, -2.77px 1.15px 0 #fff,
+    -3px 0 0 #fff, -2.77px -1.15px 0 #fff, -2.12px -2.12px 0 #fff, -1.15px -2.77px 0 #fff,
+    0 -3px 0 #fff, 1.15px -2.77px 0 #fff, 2.12px -2.12px 0 #fff, 2.77px -1.15px 0 #fff;
+  /* обводка имени над пином: белое кольцо 4.5 pt (pin/other_pin_sharing.png), кольца 3 и 1.5 закрывают щели */
+  --outline-pin-title: 4.50px 0 0 #fff, 4.35px 1.16px 0 #fff, 3.90px 2.25px 0 #fff, 3.18px 3.18px 0 #fff, 2.25px 3.90px 0 #fff, 1.16px 4.35px 0 #fff, 0 4.50px 0 #fff, -1.16px 4.35px 0 #fff, -2.25px 3.90px 0 #fff, -3.18px 3.18px 0 #fff, -3.90px 2.25px 0 #fff, -4.35px 1.16px 0 #fff, -4.50px 0 0 #fff, -4.35px -1.16px 0 #fff, -3.90px -2.25px 0 #fff, -3.18px -3.18px 0 #fff, -2.25px -3.90px 0 #fff, -1.16px -4.35px 0 #fff, 0px -4.50px 0 #fff, 1.16px -4.35px 0 #fff, 2.25px -3.90px 0 #fff, 3.18px -3.18px 0 #fff, 3.90px -2.25px 0 #fff, 4.35px -1.16px 0 #fff, 3.00px 0 0 #fff, 2.77px 1.15px 0 #fff, 2.12px 2.12px 0 #fff, 1.15px 2.77px 0 #fff, 0 3.00px 0 #fff, -1.15px 2.77px 0 #fff, -2.12px 2.12px 0 #fff, -2.77px 1.15px 0 #fff, -3.00px 0 0 #fff, -2.77px -1.15px 0 #fff, -2.12px -2.12px 0 #fff, -1.15px -2.77px 0 #fff, 0px -3.00px 0 #fff, 1.15px -2.77px 0 #fff, 2.12px -2.12px 0 #fff, 2.77px -1.15px 0 #fff, 1.50px 0 0 #fff, 1.06px 1.06px 0 #fff, 0 1.50px 0 #fff, -1.06px 1.06px 0 #fff, -1.50px 0 0 #fff, -1.06px -1.06px 0 #fff, 0px -1.50px 0 #fff, 1.06px -1.06px 0 #fff;
+  --outline-number-2: 2px 0 0 #fff, 1.85px 0.77px 0 #fff, 1.41px 1.41px 0 #fff, 0.77px 1.85px 0 #fff,
+    0 2px 0 #fff, -0.77px 1.85px 0 #fff, -1.41px 1.41px 0 #fff, -1.85px 0.77px 0 #fff,
+    -2px 0 0 #fff, -1.85px -0.77px 0 #fff, -1.41px -1.41px 0 #fff, -0.77px -1.85px 0 #fff,
+    0 -2px 0 #fff, 0.77px -1.85px 0 #fff, 1.41px -1.41px 0 #fff, 1.85px -0.77px 0 #fff;
+
+  /* ── Отступы (сетка 4 pt, полушаг 2) ───────────────────────────────── */
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-28: 28px;
+  --space-32: 32px;
+  --gutter: 16px;                              /* боковое поле всех экранов */
+  --safe-top: 54px;                            /* статус-бар + Dynamic Island */
+  --safe-bottom: 34px;                         /* home indicator */
+
+  /* ── Радиусы ───────────────────────────────────────────────────────── */
+  --radius-6: 6px;
+  --radius-10: 10px;
+  --radius-12: 12px;                           /* кнопки 40×40 и 48×36, „добавить“ */
+  --radius-14: 14px;                           /* кнопки композера и шапки чата */
+  --radius-16: 16px;                           /* аватар 46 pt, поиск */
+  --radius-18: 18px;                           /* пузырь сообщения */
+  --radius-20: 20px;                           /* плитки, CTA 56 pt, карточки „возможные“ */
+  --radius-24: 24px;
+  --radius-pill: 999px;
+  --radius-squircle: 36%;                      /* аватары-сквирклы: 46 → 16, 56 → 20 */
+  --radius-pin: 21px;                          /* кадр пина 52 (Pin.svg: rx 21) */
+  --radius-pin-avatar: 26px;                   /* маска живой аватарки в пине */
+  --radius-sheet: 18px;                        /* верхние углы шторки (main-design-system.md 4.6) */
+
+  /* ── Размеры компонентов ───────────────────────────────────────────── */
+  --tabbar-width: 303px;
+  --tabbar-height: 70px;
+  --search-height: 46px;
+  --button-height: 56px;                       /* основной CTA (Buttons/Button styles.md) */
+  --control-44: 44px;
+  --avatar-list: 46px;
+  --avatar-header: 46px;
+  --avatar-tab: 28px;
+  --browser-bar: 133px;                        /* нижняя панель Safari в рамке браузера (browser.png) */
+
+  /* Пин на карте (pin/*.png): всё задано для размера 52, пины 36 и 20 – тот же пин в масштабе */
+  --pin-frame: 52px;                           /* кадр; других размеров, кроме 52 / 36 / 20, нет */
+  --pin-avatar-width: 62px;                    /* маска живой аватарки: шире кадра, по центру */
+  --pin-avatar-height: 80px;
+  --pin-avatar-bottom: 3.5px;                  /* низ маски выше низа кадра */
+  --pin-badge: 24px;                           /* домик или стрелки слева внизу */
+  --pin-title-bottom: 19.25px;                 /* низ строки имени – над верхом кадра (pin/other_pin_sharing.png) */
+  --pin-battery-gap: 3.5px;                    /* плашка заряда – под кадром */
+  --pin-battery-width: 36.75px;                /* Map/Battery.png снят @4x: 147 px → 36.75 pt */
+
+  /* ── Тени ──────────────────────────────────────────────────────────── */
+  --shadow-pin: 0 1px 5px rgba(27, 10, 46, 0.4);            /* из Pin.svg */
+  --color-pin-glow: #05ff32;                                  /* свечение пина „в сети“ (pin/staying_online.png) */
+  --shadow-pin-online: 0 0 18px 4px var(--color-pin-glow);    /* спадает к нулю за ~22 pt от кадра */
+  --shadow-map-chip: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-card-avatar: 0 12px 24px rgba(0, 0, 0, 0.6);
+  --shadow-chip: 0 6px 14px rgba(0, 0, 0, 0.25);
+  --shadow-screen-push: -20px 0 60px rgba(0, 0, 0, 0.5);
+  --shadow-text-on-media: 0 0 6px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-sheet: 0 -20px 60px rgba(0, 0, 0, 0.4);
+  --outline-sticker: drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff);
+
+  /* ── Движение ──────────────────────────────────────────────────────── */
+  --ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);        /* экраны, шторки */
+  --ease-out-soft: cubic-bezier(0.2, 0.9, 0.25, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);         /* только появление одного героя: пин друга */
+  --duration-press: 0.08s;
+  --duration-state: 0.15s;
+  --duration-screen: 0.28s;
+  --duration-sheet: 0.38s;
+  --duration-live: 1.8s;                       /* пульс live-точки */
+  --press-scale-row: 0.99;
+  --press-scale-wide: 0.98;
+  --press-scale-button: 0.96;
+  --press-scale-small: 0.92;
+}

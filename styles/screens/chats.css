@@ -1,0 +1,180 @@
+/* Экран „чаты“ – референс messanger/chat list/Список чатов.png */
+
+.chats__content {
+  padding: calc(var(--safe-top) + 10px) 0 200px;
+}
+
+.chats__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 var(--gutter);
+}
+
+.chats__compose {
+  --press-scale: var(--press-scale-small);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+}
+
+.chats__compose .icon {
+  --icon-size: 24px;
+}
+
+/* Папки: горизонтальный скролл без скроллбара */
+.folders {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 31px;
+  padding: 0 var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.folders::-webkit-scrollbar {
+  display: none;
+}
+
+.folders__icon {
+  --icon-size: 20px;
+  margin-right: 2px;
+  color: var(--color-text);
+}
+
+.folder-tab {
+  --press-scale: var(--press-scale-button);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font: var(--type-folder);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.folder-tab[aria-selected="true"] {
+  color: var(--color-text);
+}
+
+.folder-tab__count {
+  display: grid;
+  place-items: center;
+  min-width: 27px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--type-count-pill);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Баннер „у друга др“ */
+.birthday-banner {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 61px;
+  margin: 19px var(--gutter) 0;
+  padding: 0 8px 0 12px;
+  border: 1px solid var(--color-banner-border);
+  border-radius: 30px;
+  background: var(--color-banner-fill);
+  transition:
+    height var(--duration-screen) var(--ease-emphasized),
+    margin var(--duration-screen) var(--ease-emphasized),
+    opacity var(--duration-state) ease;
+  overflow: hidden;
+}
+
+.birthday-banner.is-dismissed {
+  height: 0;
+  margin-top: 0;
+  opacity: 0;
+  border-width: 0;
+}
+
+.birthday-banner__art {
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: 43.3px;
+  height: 46.7px;
+  margin-top: 2px;
+}
+
+.birthday-banner__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.birthday-banner__title {
+  font: var(--type-banner-title);
+}
+
+.birthday-banner__text {
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+.birthday-banner__close {
+  --press-scale: var(--press-scale-small);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--color-text-muted);
+}
+
+.birthday-banner__close .icon {
+  --icon-size: 15px;
+}
+
+.chat-list {
+  margin-top: 10px;
+  list-style: none;
+}
+
+.chat-list .row {
+  height: 66px;
+}
+
+.chat-list__divider {
+  height: 1px;
+  margin: 4px var(--gutter) 3px;
+  background: var(--color-divider);
+}
+
+.chats__empty {
+  padding: 40px var(--gutter);
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.row__thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.row__ambassador {
+  width: 16px;
+  height: 16px;
+}
+
+.row__audio {
+  width: 16px;
+  height: 16px;
+}
+
+/* Скрепка закрепа стоит на уровне меты, счётчики – по центру строки */
+.row__trailing:has(.row__pinned) {
+  align-self: flex-end;
+  margin-bottom: 4px;
+}
