@@ -1,0 +1,462 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Ночлеги. Эталон данных – overnight.jpg. Общие токены и компоненты –
+   в ../../styles, здесь только раскладка экрана и сторис-картинка.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.overnights__scroll {
+  padding: calc(var(--safe-top) + var(--space-12)) 0 calc(var(--safe-bottom) + 120px);
+  scroll-padding-bottom: calc(var(--safe-bottom) + 120px);   /* фокус и прокрутка к элементу – над кнопкой „поделиться“ */
+}
+
+.overnights__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--gutter);
+}
+
+.overnights__header .icon-button--header .icon {
+  --icon-size: 16px;
+}
+
+/* ── Герой: ночная карта ─────────────────────────────────────────────── */
+
+/* Карта без рамки: края растворяются в чёрном холсте, остаются только огни мест */
+.night-map {
+  position: relative;
+  height: 420px;
+  margin-top: var(--space-8);
+}
+
+.night-map__tiles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 42%;
+  -webkit-mask-image: radial-gradient(ellipse 58% 50% at 50% 50%, #000 35%, transparent 100%);
+          mask-image: radial-gradient(ellipse 58% 50% at 50% 50%, #000 35%, transparent 100%);
+  pointer-events: none;
+  animation: night-map-in 0.7s ease both;
+}
+
+/* ── Появление экрана: карта проявляется, число наклеивается и растёт, домик падает на угол,
+   пины появляются вразнобой, коллажи поднимаются следом. Только transform и opacity ── */
+
+@keyframes night-map-in {
+  from { opacity: 0; transform: scale(1.04); }
+}
+
+/* Дома друзей, у которых ты ночевал чаще всего: пины из pin.js (52 / 36 / 20), по одному,
+   появляются по очереди. Точка пина – низ кадра */
+.night-map__pins {
+  position: absolute;
+  inset: var(--space-32) var(--space-24) var(--space-20);
+}
+
+.night-map__pins .pin {
+  left: calc(var(--x) * 1%);
+  top: calc(var(--y) * 1%);
+  animation: night-pin-in var(--duration-sheet) var(--ease-emphasized) both;
+  animation-delay: calc(var(--i) * 140ms + 450ms);   /* --i – случайный порядок из JS */
+}
+
+@keyframes night-pin-in {
+  from { opacity: 0; transform: translate(-50%, calc(-100% + 12px)) scale(calc(var(--pin-scale) * 0.85)); }
+}
+
+/* Итог: стикер-число 64, как счётчики профиля, наклеен поверх карты */
+.night-map__total {
+  position: absolute;
+  left: var(--gutter);
+  top: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transform: rotate(-6deg);
+  transform-origin: 0 0;
+  animation: night-total-in var(--duration-sheet) var(--ease-emphasized) 150ms both;
+}
+
+@keyframes night-total-in {
+  from { opacity: 0; transform: rotate(-14deg) scale(0.8); }
+}
+
+.night-map__number {
+  --sticker-size: 64px;
+}
+
+.night-map__unit {
+  margin: calc(var(--space-4) * -1) 0 0 var(--space-6);
+  font: var(--type-stat-label);
+  text-shadow: var(--shadow-text-on-media);
+}
+
+/* Метафора экрана – 3D-домик с месяцем, наклеен на угол карты */
+.night-map__sticker {
+  position: absolute;
+  right: var(--space-8);
+  top: calc(var(--space-20) * -1);
+  width: 112px;
+  height: 112px;
+  transform: rotate(8deg);
+  pointer-events: none;
+  animation: night-sticker-in 0.5s var(--ease-emphasized) 300ms both;
+}
+
+@keyframes night-sticker-in {
+  from { opacity: 0; transform: translateY(-16px) rotate(22deg); }
+}
+
+/* ── Где ночуешь: три коллажа-счётчика ───────────────────────────────── */
+
+.overnights__split {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-8);
+  padding: 0 var(--gutter);
+}
+
+.split {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: split-in var(--duration-sheet) var(--ease-emphasized) both;
+}
+
+.split:nth-child(1) { animation-delay: 950ms; }
+.split:nth-child(2) { animation-delay: 1030ms; }
+.split:nth-child(3) { animation-delay: 1110ms; }
+
+@keyframes split-in {
+  from { opacity: 0; transform: translateY(12px); }
+}
+
+/* Картинка коллажа – плотная стопка, число наклеено поверх её низа, как в коллажах профиля */
+.split__art {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 96px;
+  height: 64px;
+}
+
+/* друг – вырезка без подложки, как в списке друзей; прямой край закрывает дуга */
+.split__cutout {
+  --cutout-size: 72px;
+}
+
+/* дома друзей и города: три картинки внахлёст, у каждой свой угол и высота */
+.split__head,
+.split__trip {
+  position: absolute;
+  bottom: 0;
+}
+
+.split__head {
+  width: 46px;
+  height: 46px;
+}
+
+/* низ вырезок растворяется: прямых срезов не видно, число ложится поверх */
+.split--friends .split__art {
+  -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 96%);
+          mask-image: linear-gradient(180deg, #000 62%, transparent 96%);
+}
+
+.split__head:nth-child(1) { left: 4px; bottom: 2px; transform: rotate(-14deg); }
+.split__head:nth-child(2) { right: 4px; bottom: 6px; transform: rotate(12deg); }
+.split__head:nth-child(3) { left: 50%; z-index: 1; bottom: 12px; transform: translateX(-50%) rotate(-3deg); }
+
+/* города – пирамида: ночёвка сзади по центру, машина въезжает на неё слева, самолёт взлетает
+   справа поверх. Число ложится в центр группы */
+.split__trip--nighthouse {
+  left: 50%;
+  bottom: 16px;
+  width: 52px;
+  height: 52px;
+  transform: translateX(-50%) rotate(-6deg);
+}
+
+.split__trip--car {
+  left: 4px;
+  z-index: 1;
+  bottom: 4px;
+  width: 46px;
+  height: 46px;
+  transform: rotate(-12deg);
+}
+
+.split__trip--airplane {
+  right: 2px;
+  z-index: 1;
+  bottom: 12px;
+  width: 44px;
+  height: 44px;
+  transform: rotate(-26deg);
+}
+
+/* числа наклеены вразнобой, как в коллажах профиля */
+.split__number {
+  --sticker-size: 34px;
+  position: relative;
+  z-index: 2;
+  margin-top: calc(var(--space-20) * -1);          /* число наезжает на картинку */
+}
+
+.split--friend .split__number { transform: rotate(-6deg); }
+.split--friends .split__number { transform: rotate(4deg); }
+.split--cities .split__number { transform: rotate(-3deg); }
+
+.split__title {
+  margin-top: var(--space-6);
+  font: var(--type-label);
+  text-wrap: balance;
+}
+
+/* ── Места: строки-столбики ──────────────────────────────────────────── */
+
+.overnights__places {
+  margin-top: var(--space-32);
+}
+
+.overnights__places .section-title {
+  padding: 0 var(--gutter);
+}
+
+.night-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-top: var(--space-12);
+  padding: 0 var(--gutter);
+  list-style: none;
+}
+
+/* Подложка строки светлеет на длину числа ночей (--share от 0 до 1): список читается
+   как столбчатая диаграмма, а не как стопка одинаковых плиток */
+.night-row {
+  --press-scale: var(--press-scale-row);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  width: 100%;
+  height: 64px;
+  padding: 0 var(--space-12) 0 var(--space-10);
+  overflow: hidden;
+  border-radius: var(--radius-20);
+  background: var(--color-surface-card);
+  text-align: left;
+}
+
+.night-row::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface-raised);
+  transform: scaleX(var(--share));
+  transform-origin: 0 50%;
+  animation: night-row-bar var(--duration-sheet) var(--ease-emphasized) both;
+}
+
+@keyframes night-row-bar {
+  from { transform: scaleX(0); }
+}
+
+.night-row > * {
+  position: relative;
+}
+
+.night-row__art {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+}
+
+.night-row__house {
+  width: 100%;
+  height: 100%;
+}
+
+/* дом друга: крупно его вырезка без фона, ночёвка – в правом нижнем углу */
+.night-row__cutout {
+  --cutout-size: 44px;
+  display: block;
+}
+
+.night-row__badge {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 24px;
+  height: 24px;
+}
+
+.night-row__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.night-row__title {
+  font: var(--type-row-title);
+}
+
+.night-row__meta {
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.night-row__count {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-shrink: 0;
+  font: var(--type-folder);
+  font-variant-numeric: tabular-nums;
+}
+
+.night-row__count .icon {
+  --icon-size: 22px;
+}
+
+.night-row__chevron {
+  --icon-size: 16px;
+  flex-shrink: 0;
+  color: var(--color-text-dim);
+}
+
+.overnights__more {
+  --press-scale: var(--press-scale-wide);
+  display: block;
+  width: calc(100% - var(--gutter) * 2);
+  height: 44px;
+  margin: var(--space-6) auto 0;
+  border-radius: var(--radius-20);
+  font: var(--type-label);
+  color: var(--color-text-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .overnights__more:hover {
+    color: var(--color-text);
+  }
+}
+
+/* ── Низ: кнопка шеринга над затемнением ─────────────────────────────── */
+
+.overnights__footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  padding: var(--space-32) var(--gutter) calc(var(--safe-bottom) + var(--space-8));
+  background: var(--gradient-fade-bottom);
+  pointer-events: none;
+}
+
+.overnights__share {
+  width: 100%;
+  pointer-events: auto;
+}
+
+/* глиф „поделиться“ выше заглавных букв: 18 и сдвиг на 1 – центр по центру надписи */
+.overnights__share .icon,
+.story-sheet__cta .icon {
+  --icon-size: 18px;
+  transform: translateY(1px);
+}
+
+/* ── Шторка „сторис“ ─────────────────────────────────────────────────── */
+
+.story-sheet {
+  padding-bottom: calc(var(--safe-bottom) + var(--space-16));
+}
+
+.story-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-4);
+}
+
+.story-sheet__head .icon-button--header .icon {
+  --icon-size: 16px;
+}
+
+.story-sheet__cta {
+  width: 100%;
+  margin-top: var(--space-20);
+}
+
+
+
+/* Сторис 9:16 – та же сводка, что на экране (шапка, карта, коллажи), без списка мест.
+   Страница собрана в ширину экрана 390 и уменьшена до превью */
+.story {
+  --story-scale: calc(248 / 390);                 /* превью 248 pt из страницы 390 */
+  position: relative;
+  align-self: center;
+  width: calc(390px * var(--story-scale));
+  aspect-ratio: 9 / 16;
+  margin-top: var(--space-16);
+  overflow: hidden;
+  border-radius: var(--radius-24);
+  background: var(--color-bg);
+  box-shadow: 0 0 0 1px var(--color-divider);
+}
+
+/* Сторис: сводка на всю высоту картинки – лого над заголовком, карта и коллажи с воздухом */
+.story__page {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 390px;
+  height: calc(390px * 16 / 9);
+  padding: var(--space-32) 0;
+  transform: scale(var(--story-scale));
+  transform-origin: 0 0;
+}
+
+/* 22 + 12 + 46 + 12 + 390 + 20 + 124 = 626 из 693 – поля по 32 сверху и снизу */
+.story .night-map {
+  height: 390px;
+  margin-top: var(--space-12);
+}
+
+.story .overnights__split {
+  margin-top: var(--space-20);
+}
+
+/* логотип BLINK – над „мои ночлеги“, по левому краю, как заголовок */
+.story__logo {
+  display: block;
+  width: auto;
+  height: 22px;
+  margin: 0 0 var(--space-12) var(--gutter);
+}
+
+/* в шапке сторис только заголовок: высота – как у шапки экрана с крестиком */
+.story .overnights__header {
+  min-height: 46px;
+}
+
+/* в сторис всё уже на месте: анимации появления не нужны */
+.story .night-map__tiles,
+.story .night-map__total,
+.story .night-map__sticker,
+.story .night-map__pins .pin,
+.story .split {
+  animation: none;
+}

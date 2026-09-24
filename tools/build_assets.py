@@ -206,6 +206,8 @@ RASTER_ICONS = {
     "sticker":    ("messanger/chat inside/Button_M-1.png", (27, 27, 105, 105), dict(bg=(65, 65, 65), fg=(255, 255, 255))),
     "mic":        ("messanger/chat inside/Button_M-3.png", (33, 27, 99, 111), dict(bg=(65, 65, 65), fg=(255, 255, 255))),
     "close":      ("messanger/chat inside/close_button.png", (35, 35, 97, 97), dict(bg=(65, 65, 65), fg=(255, 255, 255))),
+    # ночлеги: контурный месяц у числа ночей (overnight.jpg, строка „85“, плитка #262626)
+    "moon":       ("overnight.jpg", (950, 546, 1011, 607), dict(bg=(38, 38, 38), fg=(255, 255, 255))),
     "text-style": ("messanger/chat inside/style_button.png", (23, 38, 109, 94), dict(bg=(65, 65, 65), fg=(255, 255, 255))),
     "send":       ("messanger/chat inside/Button_M-4.png", (29, 29, 107, 104), dict(bg=(255, 255, 255), fg=(0, 0, 0))),
     # список чатов
@@ -267,8 +269,14 @@ def build_icons() -> dict[str, Path]:
         save_png(square(trim(glyph, 2)), dest)
         icons[name] = dest
 
-    # „поделиться“: белая стрелка на тёмном вертикальном градиенте Icon.png
+    # „поделиться“: белая стрелка на тёмном вертикальном градиенте Icon.png. Кнопка снята с плашки
+    # ника, повёрнутой на −3°, и глиф в ней тоже наклонён: низ лотка поднимается вправо на 3°.
+    # Выпрямляем – иконка ровная, а наклон даёт плашка в профиле, как на эталоне
     share = unblend("profile/Icon.png", (22, 22, 86, 86), bg="rows", fg=(255, 255, 255))
+    share = np.asarray(
+        Image.fromarray(share.astype(np.uint8), "RGBA").rotate(-3, resample=Image.BICUBIC, expand=True),
+        np.float32,
+    )
     save_png(square(trim(share, 2)), idir / "share.png")
     icons["share"] = idir / "share.png"
 
@@ -515,6 +523,51 @@ def outlined_badge(alpha: np.ndarray, outline_px: float) -> np.ndarray:
     return out
 
 
+def build_overnights() -> None:
+    """
+    Ночлеги (features/overnights): 3D-домик с месяцем nighthouse.png и ночная карта.
+    Ночная карта – та же подложка Map/map_background.png: суша почти чёрная, дороги –
+    приглушённые сине-фиолетовые (чем светлее дорога днём, тем светлее ночью), вода – глубокий
+    синий, парки темнее суши; подписи и значки гасим – ночью карта без текста.
+    """
+    d = OUT / "overnights"
+    resize_to("nighthouse.png", d / "nighthouse.webp", 264, 92)
+    resize_to("home_on_map.png", d / "home.webp", 176, 92)        # твой дом в списке мест
+    resize_to("car.png", d / "car.webp", 132, 92)                  # города: машина
+    resize_to("airplane.png", d / "airplane.webp", 132, 92)        # города: самолёт
+    resize_to("logo.png", OUT / "brand" / "logo.png", 540, fmt="png")   # логотип BLINK, белый – на сторис
+    # бейдж пина „ночёвка“: домик с месяцем 20 pt с белой скруглённой обводкой – как домик
+    # и стрелки в pin/ (24 pt, 72 px @3x)
+    art = Image.open(src("nighthouse.png")).convert("RGBA").resize((60, 60), Image.LANCZOS)
+    canvas = Image.new("RGBA", (72, 72), (0, 0, 0, 0))
+    canvas.alpha_composite(art, (6, 6))
+    arr = np.asarray(canvas, np.float32)
+    from scipy.ndimage import distance_transform_edt
+    ring = np.clip(6.5 - distance_transform_edt(arr[:, :, 3] < 128), 0, 1)
+    base = np.zeros_like(arr)
+    base[:, :, :3] = 255
+    base[:, :, 3] = ring * 255
+    a_art = arr[:, :, 3:4] / 255
+    out = base.copy()
+    out[:, :, :3] = arr[:, :, :3] * a_art + base[:, :, :3] * (1 - a_art)
+    out[:, :, 3] = np.maximum(base[:, :, 3], arr[:, :, 3])
+    save_png(out, OUT / "pin" / "overnight.png")
+    a = rgba("Map/map_background.png")[:, :, :3] / 255
+    lum = a @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    sat = (a.max(axis=2) - a.min(axis=2)) / np.maximum(a.max(axis=2), 1e-3)
+    t = np.clip((lum - 0.80) / 0.20, 0, 1) ** 1.5
+    base = np.array([0.020, 0.022, 0.045], np.float32)
+    road = np.array([0.20, 0.21, 0.36], np.float32)
+    out = base + t[..., None] * (road - base)
+    water = (a[..., 2] > a[..., 0] + 0.08) & (sat > 0.2)
+    park = (a[..., 1] > a[..., 0] + 0.04) & (a[..., 1] > a[..., 2]) & (sat > 0.15)
+    out[water] = (0.035, 0.07, 0.16)
+    out[park] = out[park] * 0.6 + np.array([0.02, 0.045, 0.04], np.float32)
+    out[lum < 0.45] = base * 1.3
+    img = Image.fromarray((np.clip(out, 0, 1) * 255).astype(np.uint8), "RGB")
+    save_webp(img.resize((780, round(img.height * 780 / img.width)), Image.LANCZOS), d / "map-night.webp", 80)
+
+
 def build_pins() -> None:
     """Пин друга на карте: детали из pin/ (сняты @3x) как есть, только пережатые."""
     d = OUT / "pin"
@@ -612,6 +665,7 @@ def main() -> None:
     build_pins()
     build_browser()
     build_share()
+    build_overnights()
     build_screens_art()
     build_system()
     total = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())

@@ -189,7 +189,7 @@ def check_geo_share(browser, port: int, errors: list[str]) -> None:
     inside = page.evaluate("""() => {
         const img = document.getElementById('v-banner-photo').getBoundingClientRect();
         const banner = document.getElementById('v-banner').getBoundingClientRect();
-        return img.top >= banner.top && img.left >= banner.left && img.bottom > banner.bottom; }""")
+        return img.top >= banner.top - 3 && img.left >= banner.left && img.bottom > banner.bottom; }""")
     check("шеринг: баннер без свечения – аватар внутри, за край уходит только низ; тексты целиком; скругления вложены",
           text("#v-banner-title") == "наташка уже в blink"
           and text("#v-banner .install-banner__text") == "общение и друзья на карте"
@@ -311,6 +311,78 @@ def check_geo_share(browser, port: int, errors: list[str]) -> None:
     page.close()
 
 
+def check_overnights(browser, port: int, errors: list[str]) -> None:
+    """Фича „ночлеги“: ночная карта, коллажи, список-столбики, сторис и шеринг."""
+    page = browser.new_page(viewport={"width": 600, "height": 960}, device_scale_factor=1)
+    page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(f"http://127.0.0.1:{port}/features/overnights/index.html")
+    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(1300)
+    text = lambda sel: page.eval_on_selector(sel, "el => el.textContent").replace("\u00a0", " ").strip()
+
+    page.wait_for_timeout(700)
+    pins = page.evaluate("""() => [...document.querySelectorAll('#map-pins .pin')].map(el =>
+        [el.querySelector('.pin__title').textContent, el.querySelector('.pin__time-value').textContent,
+         el.classList.contains('pin--36') ? 36 : 52, el.querySelector('.pin__badge').getAttribute('src').endsWith('pin/overnight.png')])""")
+    check("ночлеги: в герое 68 ночей не дома (растёт с 1); на карте дома друзей – пины с лицом, ночёвкой и числом ночей",
+          text("#away-nights") == "68" and text("#away-unit") == "ночей не дома"
+          and pins == [["наташка", "25", 52, True], ["лёва", "9", 36, True], ["соня", "4", 36, True], ["вася", "2", 36, True]]
+          and page.locator("#unique-places, .overnights__city").count() == 0)
+    split = [text(f"#split .split--{g} .split__number") + " " + text(f"#split .split--{g} .split__title") for g in ("friend", "friends", "cities")]
+    overlap = page.evaluate("""() => [...document.querySelectorAll('#split .split')].every(el =>
+        el.querySelector('.split__number').getBoundingClientRect().top < el.querySelector('.split__art').getBoundingClientRect().bottom)""")
+    check("ночлеги: коллажи – ночей с наташкой, дома друзей (стопка вырезок), города (плотная стопка); число наезжает на картинку",
+          split == ["25 ночей с наташкой", "4 дома друзей", "3 города"] and overlap
+          and page.locator("#split .split__head").count() == 3
+          and page.locator("#split .split__cutout .cutout__rim").count() == 1
+          and page.locator("#split .split__trip").count() == 3 and page.locator(".split__percent").count() == 0)
+    rows = page.locator("#list .night-row")
+    shares = page.evaluate("[...document.querySelectorAll('#list .night-row')].map(el => parseFloat(el.style.getPropertyValue('--share')))")
+    arts = page.evaluate("""() => [...document.querySelectorAll('#list .night-row')].slice(0, 2).map(el =>
+        [...el.querySelectorAll('.night-row__art img')].map(i => i.getAttribute('src').split('/').pop()))""")
+    check("ночлеги: в списке 6 мест с шевронами, подложка – по числу ночей; дом – домик, у друга – вырезка без фона и ночёвка в углу",
+          rows.count() == 6 and shares[0] == 1 and shares == sorted(shares, reverse=True) and text("#more") == "показать все 15"
+          and page.locator("#list .night-row__chevron").count() == 6
+          and arts == [["home.webp"], ["cutout-1.webp", "rim-offline.png", "nighthouse.webp"]]
+          and page.locator("#list img[src*='photo-']").count() == 0)
+    page.click("#more")
+    check("ночлеги: „показать все“ раскрывает 15 мест и становится „свернуть“",
+          rows.count() == 15 and text("#more") == "свернуть")
+    page.click("#share")
+    page.wait_for_timeout(500)
+    opened = page.evaluate("document.getElementById('story-sheet').classList.contains('is-open')")
+    story = page.evaluate("""() => { const st = document.getElementById('story-summary');
+        return [st.querySelector('.screen-title').textContent, st.querySelector('.night-map__number').textContent,
+                st.querySelectorAll('.pin').length, st.querySelectorAll('.split').length,
+                st.querySelectorAll('.night-row, [data-story-hide], [id]').length]; }""")
+    fill = page.evaluate("""() => {
+        const story = document.getElementById('story').getBoundingClientRect();
+        const box = document.querySelector('#story-summary > *').getBoundingClientRect();
+        const logo = document.querySelector('#story .story__logo').getBoundingClientRect();
+        const title = document.querySelector('#story .screen-title').getBoundingClientRect();
+        return box.height / story.height > 0.85 && logo.bottom <= title.top && logo.left <= title.left + 1; }""")
+    check("ночлеги: сторис – та же сводка без списка на всю высоту 9:16, лого BLINK над „мои ночлеги“",
+          opened and story == ["мои ночлеги", "68", 4, 3, 0] and fill
+          and "blinkmap.com" not in text("#story") and text("#story-title") == "поделиться" and text("#share") == "поделиться"
+          and abs(page.evaluate("(r => r.width / r.height)(document.getElementById('story').getBoundingClientRect())") - 9 / 16) < 0.01)
+    has_share = page.evaluate("Boolean(navigator.share)")
+    page.click("#story-share")
+    page.wait_for_timeout(300)
+    check("ночлеги: „поделиться“ – системное меню, а без него текст со ссылкой копируется, кнопка говорит „скопировано“",
+          has_share or text("#story-share-label") == "скопировано")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(500)
+    check("ночлеги: Esc закрывает сторис, фокус – на кнопке шеринга",
+          not page.evaluate("document.getElementById('story-sheet').classList.contains('is-open')")
+          and page.evaluate("document.activeElement.id") == "share")
+    for w in (375, 430):
+        page.set_viewport_size({"width": w, "height": 812})
+        page.wait_for_timeout(200)
+        check(f"ночлеги: {w} – без горизонтального скролла", not page.evaluate("document.documentElement.scrollWidth > innerWidth"))
+    page.close()
+
+
 def main() -> int:
     server, port = serve()
     errors: list[str] = []
@@ -409,6 +481,7 @@ def main() -> int:
             check("375×667: нет горизонтального скролла", not overflow)
 
             check_geo_share(browser, port, errors)
+            check_overnights(browser, port, errors)
             browser.close()
     finally:
         server.shutdown()

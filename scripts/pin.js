@@ -14,10 +14,12 @@
  *     state: "home",                        // "staying" | "home" | "moving"
  *     minutes: 22,                          // сколько на месте – стикер „22 мин“
  *     speed: 12,                            // в пути – стикер „12 км/ч“
- *     sticker: "24/7",                      // своё число без подписи вместо минут и скорости
+ *     sticker: "24/7",                      // своё число вместо минут и скорости
+ *     unit: "ночей",                        // подпись под своим числом (по умолчанию без подписи)
  *     title: "наташка",                     // имя над пином с белой обводкой – человек делится геопозицией
  *     battery: 12,                          // плашка заряда под пином (есть только глиф 12 % – Map/Battery.png)
  *     approximate: true,                    // гео перестало приходить: место примерное – бейдж вместо домика и стрелок
+ *     badge: "assets/pin/overnight.png",    // свой бейдж 24 слева внизу вместо домика и стрелок (ночлеги)
  *     tag: "button",                        // "span" – декоративный пин вне карты
  *     className: "pin--static",             // модификаторы
  *     attrs: 'data-go="#/chat/natashka"',   // атрибуты кнопки
@@ -59,14 +61,16 @@
 
     let value = null;
     let unit = "";
-    if (o.sticker != null) value = o.sticker;
+    if (o.sticker != null) [value, unit] = [o.sticker, o.unit || ""];
     else if (moving && o.speed != null) [value, unit] = [o.speed, "км/ч"];
     else if (!moving && o.minutes != null) [value, unit] = [o.minutes, "мин"];
 
     const trail = moving
       ? `<span class="pin__motion"><img class="pin__trail" src="${assets}/pin/trail.webp" alt=""></span>`
       : "";
-    const badge = o.approximate
+    const badge = o.badge
+      ? `<img class="pin__badge" src="${escapeHtml(o.badge)}" alt="">`
+      : o.approximate
       ? `<img class="pin__badge pin__badge--approximate" src="${assets}/pin/approximate.png" alt="">`
       : o.state === "home"
         ? `<img class="pin__badge" src="${assets}/pin/home.png" alt="">`

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – ночлеги</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="overnights.css">
+</head>
+<body>
+<div class="device">
+  <main class="app" id="app" data-status="light" data-home="light">
+    <!-- Статус-бар iOS: только для превью в рамке, на телефоне скрыт -->
+    <div class="status-bar" aria-hidden="true">
+      <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+      <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+      <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+    </div>
+
+    <section class="screen overnights" aria-labelledby="overnights-title">
+      <div class="screen__scroll overnights__scroll" id="scroll">
+        <!-- Сводка: шапка, ночная карта, три коллажа. Сторис – это она же, без списка мест -->
+        <div class="overnights__summary" id="summary">
+          <header class="overnights__header">
+            <h1 class="screen-title" id="overnights-title">твои ночлеги</h1>
+            <button class="icon-button icon-button--header pressable" type="button" aria-label="закрыть" data-story-hide>
+              <i class="icon icon--close" aria-hidden="true"></i>
+            </button>
+          </header>
+
+          <!-- Герой: ночная карта растворяется в чёрном. На ней – дома друзей, у которых ты
+               ночевал чаще всего: пины с лицами, бейджем „ночёвка“ и числом ночей -->
+          <section class="night-map" aria-label="у кого из друзей ты ночевал">
+            <img class="night-map__tiles" src="../../assets/overnights/map-night.webp" alt="">
+            <div class="night-map__pins" id="map-pins"></div>
+            <p class="night-map__total">
+              <span class="sticker-number night-map__number" id="away-nights"></span>
+              <span class="night-map__unit" id="away-unit"></span>
+            </p>
+            <img class="night-map__sticker" src="../../assets/overnights/nighthouse.webp" alt="">
+          </section>
+
+          <!-- Три коллажа-счётчика, как в профиле: с кем чаще, сколько ночей подряд, сколько городов -->
+          <section class="overnights__split" aria-label="итоги" id="split"></section>
+        </div>
+
+        <section class="overnights__places" aria-labelledby="places-title">
+          <h2 class="section-title" id="places-title">места</h2>
+          <ol class="night-list" id="list"></ol>
+          <button class="overnights__more pressable" id="more" type="button" aria-controls="list"></button>
+        </section>
+      </div>
+
+      <!-- Низ: кнопка шеринга висит над контентом, контент уходит под затемнение -->
+      <div class="overnights__footer">
+        <button class="button button--primary overnights__share pressable" id="share" type="button" aria-haspopup="dialog">
+          <i class="icon icon--share" aria-hidden="true"></i>поделиться
+        </button>
+      </div>
+    </section>
+
+    <div class="scrim" id="scrim"></div>
+
+    <!-- Шторка „сторис“: превью картинки 9:16, которую человек выложит -->
+    <div class="sheet story-sheet" id="story-sheet" role="dialog" aria-modal="true" aria-labelledby="story-title" tabindex="-1">
+      <div class="sheet__handle" id="story-handle">
+        <div class="sheet__grabber" aria-hidden="true"></div>
+      </div>
+      <header class="story-sheet__head">
+        <h2 class="sheet__title" id="story-title">поделиться</h2>
+        <button class="icon-button icon-button--header pressable" id="story-close" type="button" aria-label="закрыть">
+          <i class="icon icon--close" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <!-- Сторис 9:16 – та же сводка, что на экране, в масштабе; без списка мест. Сводка стоит
+           в безопасной зоне сторис, логотип BLINK – маленьким знаком в углу карты -->
+      <figure class="story" id="story" aria-label="превью сторис">
+        <div class="story__page">
+          <div class="story__summary" id="story-summary"></div>
+        </div>
+      </figure>
+
+      <button class="button button--primary story-sheet__cta pressable" id="story-share" type="button">
+        <i class="icon" id="story-share-icon" aria-hidden="true"></i><span id="story-share-label"></span>
+      </button>
+    </div>
+
+    <p class="visually-hidden" id="announce" aria-live="polite"></p>
+    <div class="home-indicator" aria-hidden="true"></div>
+  </main>
+</div>
+
+<script src="../../scripts/pin.js"></script>
+<script src="overnights.js"></script>
+</body>
+</html>
