@@ -130,6 +130,13 @@
   font: var(--type-map-button);
 }
 
+/* карта светлая: белое кольцо фокуса на белом стекле не видно – на карте оно чёрное */
+.map-button:focus-visible,
+.map-chip:focus-visible,
+.pin-actions__item:focus-visible {
+  outline-color: var(--color-text-on-map);
+}
+
 .map-button--world {
   left: calc(50% - 60px);                         /* 135 pt на холсте 390 */
   justify-content: flex-start;
@@ -149,4 +156,110 @@
 
 .map-button--locate .icon {
   --icon-size: 23px;
+}
+
+/* Кнопка меняет смысл на месте: две иконки лежат друг на друге, класс .is-alt меняет их.
+   „где я“ → „поделиться“, пока карта держит тебя в центре (features/geo-share, вариант Б) */
+.map-button__icon {
+  transition:
+    opacity var(--duration-state) ease,
+    transform var(--duration-screen) var(--ease-emphasized);
+}
+
+.map-button__icon--alt {
+  position: absolute;
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.map-button.is-alt .map-button__icon:not(.map-button__icon--alt) {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.map-button.is-alt .map-button__icon--alt {
+  opacity: 1;
+  transform: none;
+}
+
+/* Кнопки над своим пином – способы поделиться собой: как плитки „добавить с помощью“
+   (54, r20, иконка 24 над подписью 12/500), только в стекле карты – полупрозрачном, с блюром,
+   как плашка шагов. Скругление вложено: стекло r24, кнопки на 4 от края – r20.
+   Колонки равные – по самой широкой подписи, но не уже 90: „скопировано“ помещается с полями,
+   ширина стекла при смене подписи не прыгает (features/geo-share, варианты А и В) */
+.pin-actions {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  width: max-content;
+  padding: var(--space-4);
+  border-radius: var(--radius-24);
+  background: var(--color-map-chip);
+  box-shadow: var(--shadow-map-chip);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+}
+
+.pin-actions__item {
+  --press-scale: var(--press-scale-button);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;                                       /* как у плитки .add-tile */
+  min-width: 90px;
+  height: 54px;
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-20);
+  color: var(--color-text-on-map);
+  font: var(--type-tile);
+  font-variant-numeric: tabular-nums;             /* „ещё 14:32“ у „гео“ не дрожит */
+  white-space: nowrap;
+}
+
+/* разделитель между кнопками: тонкая серая полоска, почти незаметная и не на всю высоту */
+.pin-actions__item + .pin-actions__item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1px;
+  height: 20px;
+  background: var(--color-divider-on-map);
+  transform: translate(-50%, -50%);
+}
+
+.pin-actions__item .icon {
+  --icon-size: 24px;
+}
+
+.pin-actions__art {
+  position: relative;
+  width: 24px;
+  height: 24px;
+}
+
+/* кольцо live-точки – цвета стекла */
+.pin-actions__live {
+  --live-dot-ring: var(--color-text);
+}
+
+/* Одна кнопка вместо трёх: иконка слева от надписи, как „мой мир“ (вариант В) */
+.pin-actions--single .pin-actions__item {
+  flex-direction: row;
+  gap: var(--space-8);
+  min-width: 0;
+  height: 40px;
+  padding: 0 var(--space-14) 0 var(--space-10);
+  font: var(--type-map-button);
+}
+
+.pin-actions--single .icon {
+  --icon-size: 22px;
+}
+
+.pin-actions__qr {
+  width: 24px;
+  height: 24px;
 }

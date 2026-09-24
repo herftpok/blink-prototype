@@ -4,6 +4,10 @@
  * Два телефона. Слева ты в приложении: нажимаешь на свой пин – камера поднимает его
  * чуть выше центра экрана, снизу выезжает шторка „поделиться“: геопозиция по ссылке,
  * ссылка на профиль, QR-код. Геопозиция и QR – шторки поверх первой, тоже снизу.
+ * Второй вход – „где я“: камера ставит твой пин в центр и едет за ним, пока карту не
+ * сдвинули пальцем. Дальше три варианта (переключаются на стенде): А – над пином кнопки
+ * „профиль“, „гео по ссылке“, „qr-код“; Б – сама „где я“ становится „поделиться“ и открывает
+ * шторку; В – над пином только „поделиться гео“.
  * Геопозиция: выбрал время → ссылка создалась и скопировалась → глаза в розовом
  * кольце-таймере, над твоим пином – „транслируется ещё 14:32“. Перестать делиться –
  * с подтверждением на месте, без модалки.
@@ -58,6 +62,12 @@
   const MAP_ZOOM = 1.35;          // подложка крупнее экрана: камере есть куда ехать
   const OWN_FOCUS = { x: 0.5, y: 0.4 };        // твой пин при открытой шторке: по центру, чуть выше середины
   const FOCUS_GAP = 24;                        // если шторка выше – пин стоит над её краем
+  const CENTER = { x: 0.5, y: 0.5 };           // „где я“: твой пин посередине экрана
+  const LOCATE_MS = 500;                       // сколько камера едет к тебе по „где я“
+  const PAN_SLOP = 4;                          // палец сдвинулся меньше – это нажатие, а не жест
+  // „где я“: А – кнопки над пином, Б – кнопка „поделиться“, В – над пином только „поделиться гео“.
+  // У Б и В своя ссылка на стенд: …/geo-share/#share-button, …/geo-share/#geo-only
+  const ENTRIES = { pin: "", button: "#share-button", geo: "#geo-only" };
   const VIEW_ANCHOR = { x: 0.5, y: 0.47 };     // у друга: пин между шапкой и баннером
   const TOKEN_HEX = "9f2c1e7a0b5d4c3e8f6a1b2c3d4e5f60";
   const EXPIRED_TOKEN = `48101.${TOKEN_HEX}`;
@@ -275,6 +285,45 @@
   /** Проекция броска (apple-design.md §6): куда элемент „доедет“ с текущей скоростью */
   const project = (velocity) => ((velocity / 1000) * 0.998) / (1 - 0.998);
 
+  /** Карту двигает палец: камера идёт за ним 1:1. Сдвинул дальше PAN_SLOP – это жест
+      (onMove: камера перестаёт ехать за пином), не сдвинул – нажатие по карте (onTap).
+      С кнопок и пинов жест не начинается */
+  function enablePan(canvas, app, cam, { enabled, onMove, onTap = () => {} }) {
+    let start = null;
+    let moved = false;
+    let zoom = 1;
+
+    canvas.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0 || event.target.closest("button, .pin-actions") || !enabled()) return;
+      zoom = zoomOf(app);
+      moved = false;
+      start = { x: event.clientX, y: event.clientY, cam: { ...cam.pos } };
+      canvas.setPointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!start) return;
+      const dx = (event.clientX - start.x) / zoom;
+      const dy = (event.clientY - start.y) / zoom;
+      if (!moved) {
+        if (Math.hypot(dx, dy) < PAN_SLOP) return;
+        moved = true;
+        canvas.classList.add("is-dragging");
+        onMove();
+      }
+      cam.set(cam.clamp(start.cam.x + dx, start.cam.y + dy), 0);
+    });
+
+    const finish = (event) => {
+      if (!start) return;
+      if (!moved && event.type === "pointerup") onTap();
+      start = null;
+      canvas.classList.remove("is-dragging");
+    };
+    canvas.addEventListener("pointerup", finish);
+    canvas.addEventListener("pointercancel", finish);
+  }
+
   const setText = (node, text) => {
     if (node.textContent !== text) node.textContent = text;
   };
@@ -303,6 +352,11 @@
     stack: [],                     // открытые шторки снизу вверх: поверх „поделиться“ – геопозиция или QR
     openers: new Map(),            // шторка → кнопка, которая её открыла: туда возвращается фокус
     follow: false,                 // камера держит твой пин, пока открыта шторка
+    centered: false,               // после „где я“ камера держит твой пин в центре, пока карту не сдвинули
+    entry: "pin",                  // что даёт „где я“: "pin" – кнопки над пином, "button" – кнопка „поделиться“,
+                                   // "geo" – над пином только „поделиться гео“
+    actionsOpen: false,            // варианты А и В: над пином открыты кнопки (пока открыта шторка – ждут под ней)
+    wasActive: false,              // шла ли трансляция на прошлом тике: в варианте В кнопка и плашка сменяют друг друга
     selected: DATA.durations[0],
     pending: false,
     failed: false,
@@ -371,10 +425,12 @@
     return { x: OWN_FOCUS.x, y: Math.max(floor, Math.min(h * OWN_FOCUS.y, top - FOCUS_GAP)) / h };
   }
 
+  /** Точка едет – камера за ней: при открытой шторке пин над её краем, после „где я“ – в центре */
   function placeOwnPin(pos, duration) {
     const { k } = sender.camera.metrics();
     placeMover(sender.mover, pos.x * k, pos.y * k, duration);
     if (sender.follow) sender.camera.set(sender.camera.target(pos, ownFocus()), duration);
+    else if (sender.centered) sender.camera.set(sender.camera.target(pos, CENTER), duration);
   }
 
   /** Камера поднимает твой пин и держит его, пока открыта шторка. Шторка закрывает
@@ -385,11 +441,20 @@
     sender.camera.set(sender.camera.target(positionAt(motion.dist), ownFocus()), SHEET_MS, EASE);
   }
 
-  /** Над твоим пином, пока тебя видно по ссылке: live-точка и „транслируется ещё 14:32“ */
+  /** Над твоим пином, пока тебя видно по ссылке: live-точка и „транслируется ещё 14:32“.
+      Пока над пином кнопки „поделиться“, плашка прячется, а live-точка – на „гео“ */
   function renderLiveChip() {
     const active = server.isActive();
     const chip = $("#s-live");
     chip.hidden = !active;
+    $("#s-act-live").hidden = !active;
+    $("#s-act-geo").setAttribute("aria-label", active ? `геопозиция по ссылке, осталось ${leftLabel()}` : "геопозиция по ссылке");
+    // у „гео“ над пином – сколько ещё, словами, пока плашка уступает место кнопкам
+    setText($("#s-act-geo-label"), active ? `ещё ${clockLabel(server.left())}` : "гео по\u00a0ссылке");
+    if (sender.wasActive !== active) {
+      sender.wasActive = active;
+      syncEntry();
+    }
     if (!active) return;
     setText($("#s-live-text"), `транслируется ещё ${clockLabel(server.left())}`);
     chip.setAttribute("aria-label", `геопозицию видно по ссылке, осталось ${leftLabel()}`);
@@ -410,11 +475,16 @@
     if (state === "live") setText(text.lastElementChild, `транслируется ещё ${clockLabel(server.left())}`);
   }
 
+  /** „профиль“ – в шторке и над пином: одно нажатие копирует ссылку, надпись на 2 s – „скопировано“ */
   function renderProfileTile() {
     const copied = sender.profileCopiedUntil > Date.now();
-    $("#s-profile-icon").className = `icon icon--${copied ? "check" : "link"}`;
-    $("#s-profile-label").textContent = copied ? "скопировано" : "профиль";
-    $("#s-profile").setAttribute("aria-label", copied ? "ссылка на профиль скопирована" : "скопировать ссылку на профиль");
+    const label = copied ? "ссылка на профиль скопирована" : "скопировать ссылку на профиль";
+    [["#s-profile-icon", "#s-profile-label", "#s-profile"], ["#s-act-profile-icon", "#s-act-profile-label", "#s-act-profile"]]
+      .forEach(([icon, text, button]) => {
+        $(icon).className = `icon icon--${copied ? "check" : "link"}`;
+        $(text).textContent = copied ? "скопировано" : "профиль";
+        $(button).setAttribute("aria-label", label);
+      });
   }
 
   function renderTiles() {
@@ -484,6 +554,54 @@
     Object.values(SHEETS).forEach((sheet) => {
       sheet.inert = sheet !== topSheet();
     });
+    syncEntry();
+  }
+
+  /** Что сейчас даёт „где я“. Вариант А – кнопки над пином: открыты после „где я“, пока их
+      не закрыли нажатием по карте; под шторкой ждут и возвращаются, когда она закрылась.
+      Вариант Б – пока камера держит тебя в центре, „где я“ не нужна: на её месте „поделиться“ */
+  function syncEntry() {
+    const share = sender.entry === "button" && sender.centered;
+    const locate = $("#s-locate");
+    locate.classList.toggle("is-alt", share);
+    locate.setAttribute("aria-label", share ? "поделиться" : "показать, где я");
+    if (share) {
+      locate.setAttribute("aria-haspopup", "dialog");
+      locate.setAttribute("aria-controls", "s-sheet");
+    } else {
+      locate.removeAttribute("aria-haspopup");
+      locate.removeAttribute("aria-controls");
+    }
+
+    // А – три кнопки над пином. В – одна „поделиться гео“, пока трансляции нет; идёт трансляция –
+    // на её месте плашка „транслируется ещё 14:32“, она тоже открывает шторку геопозиции
+    const over = sender.actionsOpen && !sender.stack.length;
+    const bar = sender.entry === "pin" && over;
+    const single = sender.entry === "geo" && over && !server.isActive();
+    [["#s-actions", bar], ["#s-geo-actions", single]].forEach(([selector, open]) => {
+      const actions = $(selector);
+      actions.classList.toggle("is-open", open);
+      actions.inert = !open;
+    });
+    sender.app.classList.toggle("has-actions", bar);
+  }
+
+  /** Фокус внутри кнопок над пином – им закрываться, фокус вернётся на „где я“ */
+  const focusOverPin = () => ["#s-actions", "#s-geo-actions"].some((selector) => $(selector).contains(document.activeElement));
+
+  /** „где я“: камера ставит твой пин в центр и дальше едет за ним */
+  function centerOnMe() {
+    sender.centered = true;
+    sender.camera.set(sender.camera.target(positionAt(motion.dist), CENTER), LOCATE_MS, EASE);
+  }
+
+  /** Кнопки над пином закрылись (нажатие по карте, Esc, карту сдвинули) */
+  function closeActions() {
+    if (!sender.actionsOpen) return;
+    const hadFocus = focusOverPin();
+    sender.actionsOpen = false;
+    syncEntry();
+    if (hadFocus) $("#s-locate").focus({ preventScroll: true });
   }
 
   /** Меняет содержимое шторки и плавно подгоняет её высоту: шторка сразу встаёт на новую
@@ -528,19 +646,37 @@
     sender.stack.splice(i, 1);
     sheet.classList.remove("is-open", "is-dragging");
     sheet.style.transform = "";
-    syncSenderChrome();
     if (sender.stack.length) {
+      syncSenderChrome();
       focusOwnPin();
     } else {
       sender.follow = false;
       sender.scrim.classList.remove("is-open");
       sender.camera.inset = 0;
-      sender.camera.set(sender.camera.clamp(sender.camera.pos.x, sender.camera.pos.y), SHEET_MS, EASE);
+      // после „где я“ камера возвращает тебя в центр, иначе карта просто встаёт в свои края
+      sender.camera.set(
+        sender.centered
+          ? sender.camera.target(positionAt(motion.dist), CENTER)
+          : sender.camera.clamp(sender.camera.pos.x, sender.camera.pos.y),
+        SHEET_MS,
+        EASE
+      );
+      syncSenderChrome();
     }
     const opener = sender.openers.get(sheet);
     sender.openers.delete(sheet);
-    if (!restoreFocus) return;
-    const back = opener && opener.isConnected && !opener.closest("[hidden], [inert]") ? opener : ownMapPin();
+    if (restoreFocus) focusBack(opener);
+  }
+
+  /** Фокус – на кнопку, которая открыла шторку. Её уже нет (вариант В: пошла трансляция, и на месте
+      „поделиться гео“ теперь плашка) – на плашку над пином, иначе на сам пин */
+  function focusBack(opener) {
+    const usable = (node) => node && node.isConnected && !node.closest("[hidden], [inert]");
+    const back = usable(opener)
+      ? opener
+      : opener && opener.closest("#s-geo-actions") && usable($("#s-live"))
+        ? $("#s-live")
+        : ownMapPin();
     if (back) back.focus({ preventScroll: true });
   }
 
@@ -548,8 +684,7 @@
     const bottom = sender.stack[0];
     const opener = bottom && sender.openers.get(bottom);
     while (sender.stack.length) closeSheet(topSheet(), { restoreFocus: false });
-    const back = opener && opener.isConnected && !opener.closest("[hidden], [inert]") ? opener : ownMapPin();
-    if (back) back.focus({ preventScroll: true });
+    focusBack(opener);
   }
 
   async function copyLink() {
@@ -569,12 +704,18 @@
     renderStage();
   }
 
-  // нажатие на свой пин: камера поднимает его, снизу – „поделиться“
+  // нажатие на свой пин: камера поднимает его, снизу – „поделиться“. Кнопки над пином
+  // уступают шторке и после неё не возвращаются: вход был не через них
   sender.mover.addEventListener("click", (event) => {
     const pin = event.target.closest(".pin");
-    if (pin) openSheet("menu", pin);
+    if (!pin) return;
+    sender.actionsOpen = false;
+    openSheet("menu", pin);
   });
-  $("#s-live").addEventListener("click", (event) => openSheet("geo", event.currentTarget));
+  $("#s-live").addEventListener("click", (event) => {
+    sender.actionsOpen = false;
+    openSheet("geo", event.currentTarget);
+  });
 
   $("#s-geo-card").addEventListener("click", (event) => openSheet("geo", event.currentTarget));
   $("#s-qr").addEventListener("click", (event) => openSheet("qr", event.currentTarget));
@@ -583,12 +724,32 @@
     button.addEventListener("click", () => closeSheet(button.closest(".sheet")));
   });
 
-  // „где я“: камера показывает твой пин посередине экрана
-  $("#s-locate").addEventListener("click", () => {
-    sender.camera.set(sender.camera.target(positionAt(motion.dist), { x: 0.5, y: 0.5 }), 500, EASE);
+  // „где я“: камера ставит твой пин в центр. Дальше – по варианту: А – над пином кнопки
+  // „поделиться“, Б – кнопка сама становится „поделиться“ и второе нажатие открывает шторку,
+  // В – над пином „поделиться гео“
+  $("#s-locate").addEventListener("click", (event) => {
+    if (sender.entry === "button" && sender.centered) {
+      openSheet("menu", event.currentTarget);
+      return;
+    }
+    centerOnMe();
+    if (sender.entry !== "button") sender.actionsOpen = true;
+    syncEntry();
+    // с клавиатуры фокус переходит на первую кнопку над пином (идёт трансляция – на плашку над ним)
+    if (sender.entry !== "button" && event.detail === 0) {
+      const first = sender.entry === "pin" ? $("#s-act-profile") : server.isActive() ? $("#s-live") : $("#s-geo-cta");
+      requestAnimationFrame(() => first.focus({ preventScroll: true }));
+    }
   });
 
-  $("#s-profile").addEventListener("click", async () => {
+  // кнопки над пином: геопозиция и QR – шторки (кнопки ждут под ними), профиль копируется на месте
+  $("#s-act-geo").addEventListener("click", (event) => openSheet("geo", event.currentTarget));
+  $("#s-geo-cta").addEventListener("click", (event) => openSheet("geo", event.currentTarget));
+  $("#s-act-qr").addEventListener("click", (event) => openSheet("qr", event.currentTarget));
+  // нажатие по пину друга – тоже мимо кнопок
+  $("#s-pins").addEventListener("click", closeActions);
+
+  async function copyProfile() {
     if (!(await writeClipboard(DATA.me.profileUrl))) return;
     sender.profileCopiedUntil = Date.now() + COPY_MS;
     $("#s-announce").textContent = "ссылка на профиль скопирована";
@@ -598,7 +759,9 @@
       renderProfileTile();
       $("#s-announce").textContent = "";
     }, COPY_MS + 20);
-  });
+  }
+  $("#s-profile").addEventListener("click", copyProfile);
+  $("#s-act-profile").addEventListener("click", copyProfile);
 
   $("#s-durations").addEventListener("click", (event) => {
     const tile = event.target.closest(".choice-tile");
@@ -708,6 +871,54 @@
     };
     handle.addEventListener("pointerup", finish);
     handle.addEventListener("pointercancel", finish);
+  });
+
+  // Свою карту тоже двигает палец. Сдвинул – камера больше не держит тебя в центре: кнопки
+  // над пином закрываются, „поделиться“ снова становится „где я“. Нажатие по карте закрывает кнопки
+  enablePan($("#s-canvas"), sender.app, sender.camera, {
+    enabled: () => !sender.stack.length,
+    onMove: () => {
+      const hadFocus = focusOverPin();
+      sender.centered = false;
+      sender.actionsOpen = false;
+      syncEntry();
+      if (hadFocus) $("#s-locate").focus({ preventScroll: true });
+    },
+    onTap: closeActions,
+  });
+
+  /** Стенд: какой вариант даёт „где я“. Карта уже держит тебя в центре – вариант виден сразу */
+  function setEntry(entry) {
+    sender.entry = entry in ENTRIES ? entry : "pin";
+    $$("[data-entry]").forEach((option) => {
+      const on = option.dataset.entry === sender.entry;
+      option.setAttribute("aria-checked", String(on));
+      option.tabIndex = on ? 0 : -1;
+    });
+    sender.actionsOpen = sender.entry !== "button" && sender.centered;
+    syncEntry();
+  }
+
+  // варианты Б и В открываются по своей ссылке – и при загрузке, и если адрес сменили
+  const entryFromUrl = () => Object.keys(ENTRIES).find((entry) => ENTRIES[entry] && ENTRIES[entry] === location.hash) || "pin";
+  window.addEventListener("hashchange", () => setEntry(entryFromUrl()));
+
+  $("#entry").addEventListener("click", (event) => {
+    const option = event.target.closest("[data-entry]");
+    if (!option) return;
+    setEntry(option.dataset.entry);
+    history.replaceState(null, "", ENTRIES[sender.entry] || location.pathname + location.search);
+  });
+
+  // стрелки двигают выбор внутри группы, как у нативных радиокнопок
+  $("#entry").addEventListener("keydown", (event) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+    if (!step) return;
+    event.preventDefault();
+    const order = Object.keys(ENTRIES);
+    const next = order[(order.indexOf(sender.entry) + step + order.length) % order.length];
+    $(`[data-entry="${next}"]`).click();
+    $(`[data-entry="${next}"]`).focus();
   });
 
   /* ═══════════════════════ ДРУГ: браузер ════════════════════════════════ */
@@ -858,38 +1069,12 @@
   }
 
   // карту друга двигает палец; камера перестаёт ехать за пином, пока не нажмёшь „показать“
-  (() => {
-    const canvas = viewer.canvas;
-    let tracking = false;
-    let start = null;
-    let zoom = 1;
-
-    canvas.addEventListener("pointerdown", (event) => {
-      if (event.button !== 0 || event.target.closest("button") || viewer.view !== "map") return;
-      tracking = true;
-      zoom = zoomOf(viewer.app);
+  enablePan(viewer.canvas, viewer.app, viewer.camera, {
+    enabled: () => viewer.view === "map",
+    onMove: () => {
       viewer.follow = false;
-      start = { x: event.clientX, y: event.clientY, cam: { ...viewer.camera.pos } };
-      canvas.setPointerCapture(event.pointerId);
-      canvas.classList.add("is-dragging");
-      viewer.camera.set(viewer.camera.pos, 0);
-    });
-
-    canvas.addEventListener("pointermove", (event) => {
-      if (!tracking) return;
-      viewer.camera.set(
-        viewer.camera.clamp(start.cam.x + (event.clientX - start.x) / zoom, start.cam.y + (event.clientY - start.y) / zoom),
-        0
-      );
-    });
-
-    const finish = () => {
-      tracking = false;
-      canvas.classList.remove("is-dragging");
-    };
-    canvas.addEventListener("pointerup", finish);
-    canvas.addEventListener("pointercancel", finish);
-  })();
+    },
+  });
 
   $("#v-recenter").addEventListener("click", () => {
     viewer.follow = true;
@@ -955,7 +1140,7 @@
     const s = server.session;
     let state = "none";
     let status = "ссылки пока нет";
-    let url = "нажми на свой пин на карте слева";
+    let url = "нажми на свой пин или „где я“ на своей карте";
     if (s && !s.endedBy) {
       const open = viewer.token === s.token && viewer.view !== "idle" && viewer.view !== "invalid";
       state = open ? "open" : "ready";
@@ -1000,6 +1185,8 @@
       copiedUntil: 0,
       copiedOnce: false,
       profileCopiedUntil: 0,
+      centered: false,
+      actionsOpen: false,
     });
     while (sender.stack.length) closeSheet(topSheet(), { restoreFocus: false });
     resetViewer();
@@ -1060,9 +1247,11 @@
     renderStage();
   });
 
-  // Esc закрывает верхнюю шторку – как шаг назад
+  // Esc закрывает верхнюю шторку – как шаг назад; шторок нет – кнопки над пином
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && sender.stack.length) closeSheet();
+    if (event.key !== "Escape") return;
+    if (sender.stack.length) closeSheet();
+    else closeActions();
   });
 
   /* стенд целиком помещается в окно; на телефоне телефоны идут друг под другом */
@@ -1092,6 +1281,7 @@
   /* ── старт ───────────────────────────────────────────────────────────── */
 
   renderSenderMap();
+  setEntry(entryFromUrl());
   resetAll();
   fitStage();
   if (document.fonts) document.fonts.ready.then(fitStage);   // высота шапки стенда меняется после шрифтов

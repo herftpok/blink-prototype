@@ -39,8 +39,9 @@
         </div>
 
         <section class="screen map" aria-label="карта">
-          <!-- Карта с камерой: по нажатию на свой пин камера поднимает его чуть выше центра -->
-          <div class="map__canvas geo-camera" id="s-canvas">
+          <!-- Карта с камерой: по нажатию на свой пин камера поднимает его чуть выше центра,
+               по „где я“ – ставит в центр и едет за ним, пока карту не сдвинули пальцем -->
+          <div class="map__canvas geo-camera geo-camera--pan" id="s-canvas">
             <div class="geo-camera__layer" id="s-layer">
               <img class="geo-camera__tiles" src="../../assets/map/map-hd.webp" alt="">
               <div class="geo-camera__pins" id="s-pins"></div>
@@ -50,6 +51,35 @@
                 <button class="map-chip map-chip--live geo-mover__chip pressable" id="s-live" type="button" aria-haspopup="dialog" hidden>
                   <span class="live-dot" aria-hidden="true"></span><span id="s-live-text"></span>
                 </button>
+                <!-- Вариант А: после „где я“ над пином – способы поделиться собой. Стоят на месте
+                     плашки трансляции, едут вместе с пином -->
+                <div class="pin-actions geo-mover__actions" id="s-actions" role="group" aria-label="поделиться" inert>
+                  <button class="pin-actions__item pressable" id="s-act-profile" type="button">
+                    <i class="icon icon--link" id="s-act-profile-icon" aria-hidden="true"></i>
+                    <span class="pin-actions__label" id="s-act-profile-label">профиль</span>
+                  </button>
+                  <!-- гео – метка и „по ссылке“: что делишься именно местом, видно без шторки.
+                       Пока идёт трансляция – live-точка и сколько ещё -->
+                  <button class="pin-actions__item pressable" id="s-act-geo" type="button" aria-haspopup="dialog" aria-controls="s-geo-sheet">
+                    <span class="pin-actions__art" aria-hidden="true">
+                      <i class="icon icon--pin"></i>
+                      <span class="live-dot live-dot--badge pin-actions__live" id="s-act-live" hidden></span>
+                    </span>
+                    <span class="pin-actions__label" id="s-act-geo-label">гео по&nbsp;ссылке</span>
+                  </button>
+                  <button class="pin-actions__item pressable" id="s-act-qr" type="button" aria-haspopup="dialog" aria-controls="s-qr-sheet">
+                    <img class="pin-actions__qr" src="../../assets/share/qr-natashka.svg" alt="">
+                    <span class="pin-actions__label">qr-код</span>
+                  </button>
+                </div>
+                <!-- Вариант В: после „где я“ над пином – только „поделиться гео“. Пока идёт трансляция,
+                     на этом месте плашка „транслируется ещё 14:32“ -->
+                <div class="pin-actions pin-actions--single geo-mover__actions" id="s-geo-actions" role="group" aria-label="поделиться" inert>
+                  <button class="pin-actions__item pressable" id="s-geo-cta" type="button" aria-haspopup="dialog" aria-controls="s-geo-sheet">
+                    <i class="icon icon--pin" aria-hidden="true"></i>
+                    <span class="pin-actions__label">поделиться гео</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -75,8 +105,10 @@
             <button class="map-button map-button--world pressable" type="button">
               <i class="icon icon--globe" aria-hidden="true"></i>мой мир
             </button>
+            <!-- Вариант Б: пока карта держит тебя в центре, „где я“ становится „поделиться“ -->
             <button class="map-button map-button--locate pressable" id="s-locate" type="button" aria-label="показать, где я">
-              <i class="icon icon--crosshair" aria-hidden="true"></i>
+              <i class="icon icon--crosshair map-button__icon" aria-hidden="true"></i>
+              <i class="icon icon--share map-button__icon map-button__icon--alt" aria-hidden="true"></i>
             </button>
           </div>
         </section>
@@ -193,6 +225,14 @@
       </div>
 
       <div class="stage__controls" role="group" aria-label="управление показом">
+        <!-- Варианты входа через „где я“: кнопки над пином, сама кнопка становится „поделиться“
+             или над пином только „поделиться гео“ -->
+        <p class="stage__group-label caps-label" id="entry-label">после „где я“</p>
+        <div class="stage__choice" id="entry" role="radiogroup" aria-labelledby="entry-label">
+          <button class="stage__button pressable" type="button" role="radio" aria-checked="true" data-entry="pin">кнопки над пином</button>
+          <button class="stage__button pressable" type="button" role="radio" aria-checked="false" data-entry="button" tabindex="-1">кнопка шера</button>
+          <button class="stage__button pressable" type="button" role="radio" aria-checked="false" data-entry="geo" tabindex="-1">только гео над пином</button>
+        </div>
         <p class="stage__group-label caps-label">время</p>
         <button class="stage__button pressable" type="button" data-demo="minute">осталась минута</button>
         <button class="stage__button pressable" type="button" data-demo="expire">время вышло</button>
@@ -223,7 +263,7 @@
 
         <!-- Веб-страница по ссылке. Всё ниже – внутри браузера: панель Safari – рамка (browser.png) -->
         <section class="screen viewer-map" id="v-map" aria-label="геопозиция друга" hidden>
-          <div class="geo-camera" id="v-canvas">
+          <div class="geo-camera geo-camera--pan" id="v-canvas">
             <div class="geo-camera__layer" id="v-layer">
               <img class="geo-camera__tiles" src="../../assets/map/map-hd.webp" alt="">
               <div class="geo-mover" id="v-mover"></div>

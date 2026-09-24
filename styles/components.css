@@ -845,6 +845,15 @@
   animation: none;
 }
 
+/* На кнопке-иконке – бейдж в углу с кольцом цвета кнопки, как онлайн-точка на аватаре */
+.live-dot--badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  box-sizing: content-box;
+  border: 2px solid var(--live-dot-ring, var(--color-bg));
+}
+
 @keyframes live-pulse {
   0%, 100% { box-shadow: 0 0 0 3px var(--color-online-halo); }
   50% { box-shadow: 0 0 0 6px var(--color-online-halo-far); }

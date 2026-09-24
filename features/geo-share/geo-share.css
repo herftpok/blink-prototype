@@ -114,9 +114,17 @@
   white-space: nowrap;
 }
 
-.stage__button[aria-pressed="true"] {
+.stage__button[aria-pressed="true"],
+.stage__button[aria-checked="true"] {
   border-color: var(--color-text);
   color: var(--color-text);
+}
+
+/* выбор варианта: две кнопки-радио столбиком, как остальное управление */
+.stage__choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
 }
 
 .stage__button--accent {
@@ -149,10 +157,13 @@
 /* Подложка крупнее экрана (--map-zoom), камера – --cam-x/--cam-y в px; переходы задаёт JS
    (--cam-duration, --cam-ease). Точки на карте – в pt подложки 390×844, --k – во сколько
    раз подложка крупнее */
+/* clip, а не hidden: карту двигает только камера. Контейнер с hidden браузер прокручивает сам,
+   когда подводит к фокусу кнопку на карте, – и пин съезжает с места, которое считает камера */
 .geo-camera {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  overflow: clip;
 }
 
 .geo-camera__layer {
@@ -189,6 +200,16 @@
   top: 0;
 }
 
+/* карту двигают пальцем – жест свой, а не скролл страницы */
+.geo-camera--pan {
+  touch-action: none;
+  cursor: grab;
+}
+
+.geo-camera--pan.is-dragging {
+  cursor: grabbing;
+}
+
 /* ── Ты: карта ───────────────────────────────────────────────────────── */
 
 /* Пока тебя видно по ссылке – плашка над твоим пином: там же, где у друга имя над пином
@@ -205,10 +226,61 @@
   transform: translate(-50%, calc(-100% - var(--pin-frame) - var(--pin-title-bottom))) scale(var(--press-scale));
 }
 
-/* пока открыта шторка, время – в ней самой: плашка над пином не дублирует его и не лезет под шапку */
-.app.has-sheet .geo-mover__chip {
+/* пока открыта шторка, время – в ней самой: плашка над пином не дублирует его и не лезет под шапку.
+   Пока над пином кнопки „поделиться“, плашка уступает им место: у „гео“ своя live-точка */
+.app.has-sheet .geo-mover__chip,
+.app.has-actions .geo-mover__chip {
   opacity: 0;
   pointer-events: none;
+}
+
+/* Вариант А: кнопки над пином стоят там же, где плашка трансляции, и едут вместе с пином.
+   Появляются из пина – растут от низа по центру; закрытые недоступны и с клавиатуры (inert) */
+.geo-mover__actions {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, calc(-100% - var(--pin-frame) - var(--pin-title-bottom) + var(--space-12))) scale(0.9);
+  transform-origin: 50% 100%;
+  transition:
+    opacity var(--duration-state) ease,
+    transform var(--duration-state) ease,
+    visibility 0s linear var(--duration-state);
+}
+
+.geo-mover__actions.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, calc(-100% - var(--pin-frame) - var(--pin-title-bottom)));
+  transition:
+    opacity var(--duration-state) ease,
+    transform var(--duration-screen) var(--ease-emphasized),
+    visibility 0s;
+}
+
+/* кнопки внутри проявляются следом, слева направо */
+.geo-mover__actions .pin-actions__item > * {
+  opacity: 0;
+  transform: translateY(var(--space-4));
+  transition:
+    opacity var(--duration-state) ease,
+    transform var(--duration-screen) var(--ease-emphasized);
+}
+
+.geo-mover__actions.is-open .pin-actions__item > * {
+  opacity: 1;
+  transform: none;
+}
+
+.geo-mover__actions.is-open .pin-actions__item:nth-child(2) > * {
+  transition-delay: 40ms;
+}
+
+.geo-mover__actions.is-open .pin-actions__item:nth-child(3) > * {
+  transition-delay: 80ms;
 }
 
 /* ── Ты: шторки „поделиться“ ─────────────────────────────────────────── */
@@ -570,16 +642,6 @@
   background: var(--color-map-land);
 }
 
-/* у друга карту двигают пальцем – жест свой, а не скролл страницы */
-.viewer .geo-camera {
-  touch-action: none;
-  cursor: grab;
-}
-
-.viewer .geo-camera.is-dragging {
-  cursor: grabbing;
-}
-
 /* сколько ещё идёт трансляция – на месте плашки шагов */
 .viewer-map__chip {
   margin-top: 11.4px;                             /* как плашка шагов под погодой (map__steps) */
@@ -755,8 +817,8 @@
     padding: var(--space-8) var(--gutter) var(--space-24);
   }
 
-  /* телефоны идут друг под другом: по карте друга листаем страницу, а не двигаем карту */
-  .viewer .geo-camera {
+  /* телефоны идут друг под другом: по картам листаем страницу, а не двигаем их */
+  .geo-camera--pan {
     touch-action: pan-y;
   }
 }

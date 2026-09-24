@@ -311,6 +311,200 @@ def check_geo_share(browser, port: int, errors: list[str]) -> None:
     page.close()
 
 
+def check_geo_share_locate(browser, port: int, errors: list[str]) -> None:
+    """Шеринг через „где я“: А – кнопки над пином, Б – „где я“ становится „поделиться“, В – только „поделиться гео“."""
+    page = browser.new_page(viewport={"width": 1300, "height": 1150}, device_scale_factor=1)
+    page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    url = f"http://127.0.0.1:{port}/features/geo-share/index.html"
+    page.goto(url)
+    page.wait_for_load_state("networkidle")
+
+    is_open = lambda sel: page.evaluate(f"document.querySelector('{sel}').classList.contains('is-open')")
+    text = lambda sel: page.eval_on_selector(sel, "el => el.textContent").replace(" ", " ").strip()
+    focused = lambda: page.evaluate("document.activeElement.id")
+    actions_open = lambda: is_open("#s-actions")
+    alt = lambda: page.evaluate("document.getElementById('s-locate').classList.contains('is-alt')")
+    # якорь своего пина (низ кадра по центру) – в долях телефона
+    pin_at = lambda: page.evaluate("""() => {
+        const app = document.getElementById('sender').getBoundingClientRect();
+        const pin = document.querySelector('#s-mover .pin').getBoundingClientRect();
+        return [(pin.left + pin.width / 2 - app.left) / app.width, (pin.bottom - app.top) / app.height]; }""")
+    centered = lambda: all(abs(v - 0.5) < 0.03 for v in pin_at())
+    app = page.locator("#sender").bounding_box()
+    # пустое место карты: слева внизу, вдали от пинов, шапки и нижнего ряда кнопок
+    spot = (app["x"] + app["width"] * 0.15, app["y"] + app["height"] * 0.72)
+
+    def drag_map() -> None:
+        page.mouse.move(*spot)
+        page.mouse.down()
+        page.mouse.move(spot[0] + 90, spot[1] - 70, steps=6)
+        page.mouse.up()
+
+    check("шеринг через „где я“: по умолчанию вариант А, кнопок над пином нет",
+          page.get_attribute("[data-entry='pin']", "aria-checked") == "true" and not actions_open()
+          and page.evaluate("document.getElementById('s-actions').inert"))
+
+    page.click("#s-locate")
+    page.wait_for_timeout(800)
+    bar_above = page.evaluate("""() => document.getElementById('s-actions').getBoundingClientRect().bottom
+        < document.querySelector('#s-mover .pin__frame').getBoundingClientRect().top""")
+    labels = [t.replace("\u00a0", " ") for t in page.locator("#s-actions .pin-actions__label").all_inner_texts()]
+    check("вариант А: „где я“ ставит пин в центр, над ним – „профиль“, „гео по ссылке“ с меткой и „qr-код“",
+          actions_open() and centered() and bar_above and labels == ["профиль", "гео по ссылке", "qr-код"]
+          and page.locator("#s-act-geo .icon--pin").count() == 1 and not alt())
+    glass = page.evaluate("""() => {
+        const bar = document.getElementById('s-actions');
+        const cs = getComputedStyle(bar);
+        const alpha = parseFloat((cs.backgroundColor.match(/[\\d.]+(?=\\))/) || [1])[0]);
+        const items = [...bar.querySelectorAll('.pin-actions__item')];
+        const dividers = items.map(i => getComputedStyle(i, '::before')).filter(d => d.content !== 'none');
+        const widths = items.map(i => Math.round(i.getBoundingClientRect().width));
+        return { alpha, blur: (cs.backdropFilter || cs.webkitBackdropFilter).includes('blur'),
+                 dividers: dividers.length, short: dividers.every(d => parseFloat(d.height) < items[0].offsetHeight / 2),
+                 equal: new Set(widths).size === 1 }; }""")
+    check("вариант А: стекло полупрозрачное с блюром, между кнопками – две короткие полоски, колонки равные",
+          glass["alpha"] <= 0.6 and glass["blur"] and glass["dividers"] == 2 and glass["short"] and glass["equal"])
+
+    page.click("#s-act-profile", force=True)
+    page.wait_for_timeout(150)
+    copied = text("#s-act-profile-label") == "скопировано" and text("#s-profile-label") == "скопировано"
+    # „скопировано“ целиком внутри своей кнопки, с полями, и не шире стекла
+    inside = page.evaluate("""() => {
+        const item = document.getElementById('s-act-profile').getBoundingClientRect();
+        const label = document.getElementById('s-act-profile-label').getBoundingClientRect();
+        const bar = document.getElementById('s-actions').getBoundingClientRect();
+        return label.left - item.left >= 4 && item.right - label.right >= 4 && label.left > bar.left; }""")
+    page.wait_for_timeout(2200)
+    check("вариант А: „профиль“ копирует ссылку на месте – „скопировано“ не вылезает за край, потом возвращается",
+          copied and inside and text("#s-act-profile-label") == "профиль" and actions_open())
+
+    page.click("#s-act-geo", force=True)
+    page.wait_for_timeout(500)
+    geo = is_open("#s-geo-sheet") and not is_open("#s-sheet") and not actions_open()
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(600)
+    check("вариант А: „гео“ – сразу шторка геопозиции; закрылась – кнопки и центр возвращаются, фокус на „гео“",
+          geo and actions_open() and centered() and focused() == "s-act-geo")
+
+    page.click("#s-act-qr", force=True)
+    page.wait_for_timeout(500)
+    qr = is_open("#s-qr-sheet") and not is_open("#s-sheet")
+    page.click("#s-scrim", force=True)
+    page.wait_for_timeout(600)
+    check("вариант А: „qr-код“ – шторка с кодом, после неё кнопки на месте", qr and actions_open())
+
+    page.mouse.click(*spot)
+    page.wait_for_timeout(2300)
+    check("вариант А: нажатие по карте закрывает кнопки, камера всё ещё держит пин в центре",
+          not actions_open() and centered())
+
+    page.click("#s-locate")
+    page.wait_for_timeout(700)
+    reopened = actions_open()
+    drag_map()
+    page.wait_for_timeout(2300)
+    check("вариант А: карту сдвинули пальцем – кнопки закрылись, камера отпустила пин",
+          reopened and not actions_open() and not centered())
+
+    page.focus("#s-locate")
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(600)
+    on_first = focused() == "s-act-profile" and actions_open()
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(300)
+    check("вариант А: с клавиатуры фокус переходит на кнопки, Esc закрывает их и возвращает на „где я“",
+          on_first and not actions_open() and focused() == "s-locate")
+
+    # вариант Б: камера уже держит пин в центре – кнопка сразу становится „поделиться“
+    page.click("[data-entry='button']")
+    page.wait_for_timeout(400)
+    icons = page.evaluate("""() => [...document.querySelectorAll('#s-locate .icon')].map(i => getComputedStyle(i).opacity)""")
+    check("вариант Б: переключатель на стенде, пока ты в центре – вместо „где я“ кнопка „поделиться“",
+          page.evaluate("location.hash") == "#share-button" and alt() and icons == ["0", "1"]
+          and page.get_attribute("#s-locate", "aria-label") == "поделиться" and not actions_open())
+
+    drag_map()
+    page.wait_for_timeout(400)
+    back = not alt() and page.get_attribute("#s-locate", "aria-label") == "показать, где я"
+    page.click("#s-locate")
+    page.wait_for_timeout(800)
+    check("вариант Б: сдвинул карту – снова „где я“; нажал – пин в центре, кнопка опять „поделиться“",
+          back and alt() and centered() and not actions_open())
+
+    page.click("#s-locate")
+    page.wait_for_timeout(500)
+    menu = is_open("#s-sheet")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(600)
+    check("вариант Б: „поделиться“ открывает шторку „поделиться“, после неё фокус на кнопке",
+          menu and not is_open("#s-sheet") and focused() == "s-locate" and alt() and centered())
+
+    # вариант В: над пином одна кнопка „поделиться гео“ – пока трансляции нет
+    page.click("[data-entry='geo']")
+    page.wait_for_timeout(500)
+    single = (is_open("#s-geo-actions") and not actions_open() and not alt()
+              and text("#s-geo-cta") == "поделиться гео" and page.locator("#s-geo-cta .icon--pin").count() == 1)
+    check("вариант В: пока ты в центре – над пином только „поделиться гео“ с меткой",
+          single and page.evaluate("location.hash") == "#geo-only")
+    page.click("#s-geo-cta", force=True)
+    page.wait_for_timeout(500)
+    geo_only = is_open("#s-geo-sheet") and not is_open("#s-sheet") and not is_open("#s-geo-actions")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(600)
+    check("вариант В: „поделиться гео“ – сразу шторка геопозиции; закрылась – кнопка снова над пином",
+          geo_only and is_open("#s-geo-actions") and focused() == "s-geo-cta")
+    drag_map()
+    page.wait_for_timeout(400)
+    dragged = not is_open("#s-geo-actions")
+    page.click("#s-locate")
+    page.wait_for_timeout(700)
+    check("вариант В: сдвинул карту – кнопка ушла; „где я“ – снова пин в центре и „поделиться гео“",
+          dragged and is_open("#s-geo-actions") and centered())
+
+    # трансляция в варианте А: плашка над пином уступает место кнопкам, live-точка – на „гео“
+    page.click("[data-entry='pin']")
+    page.wait_for_timeout(400)
+    page.click("#s-act-geo", force=True)
+    page.wait_for_timeout(500)
+    page.click("#s-cta")
+    page.wait_for_timeout(900)
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(600)
+    chip_hidden = page.eval_on_selector("#s-live", "el => getComputedStyle(el).opacity") == "0"
+    # трансляция на 15 мин идёт секунду-другую: „ещё 15:00“ или „ещё 14:59“
+    left = text("#s-act-geo-label")
+    badge = page.is_visible("#s-act-live") and (left.startswith("ещё 14:") or left == "ещё 15:00")
+    page.mouse.click(*spot)
+    page.wait_for_timeout(400)
+    check("вариант А в трансляции: кнопки на месте плашки, у „гео“ live-точка и „ещё 14:xx“; закрылись – плашка вернулась",
+          chip_hidden and badge and not actions_open()
+          and page.eval_on_selector("#s-live", "el => getComputedStyle(el).opacity") == "1")
+
+    # вариант В в трансляции: „поделиться гео“ не нужна – над пином плашка со временем
+    page.click("[data-entry='geo']")
+    page.wait_for_timeout(500)
+    check("вариант В в трансляции: вместо „поделиться гео“ над пином плашка „транслируется ещё“",
+          not is_open("#s-geo-actions") and page.eval_on_selector("#s-live", "el => getComputedStyle(el).opacity") == "1"
+          and text("#s-live-text").startswith("транслируется ещё"))
+
+    # сменили адрес на открытой странице – вариант переключается без перезагрузки
+    page.evaluate("location.hash = 'share-button'")
+    page.wait_for_timeout(300)
+    live_switch = page.get_attribute("[data-entry='button']", "aria-checked") == "true"
+    page.goto("about:blank")
+    page.goto(url + "#share-button")
+    page.wait_for_load_state("networkidle")
+    check("вариант Б открывается по ссылке #share-button – и новой страницей, и сменой адреса",
+          live_switch and page.get_attribute("[data-entry='button']", "aria-checked") == "true" and not alt())
+    page.goto("about:blank")
+    page.goto(url + "#geo-only")
+    page.wait_for_load_state("networkidle")
+    check("вариант В открывается по ссылке #geo-only",
+          page.get_attribute("[data-entry='geo']", "aria-checked") == "true" and not is_open("#s-geo-actions"))
+    page.close()
+
+
 def check_overnights(browser, port: int, errors: list[str]) -> None:
     """Фича „ночлеги“: ночная карта, коллажи, список-столбики, сторис и шеринг."""
     page = browser.new_page(viewport={"width": 600, "height": 960}, device_scale_factor=1)
@@ -481,6 +675,7 @@ def main() -> int:
             check("375×667: нет горизонтального скролла", not overflow)
 
             check_geo_share(browser, port, errors)
+            check_geo_share_locate(browser, port, errors)
             check_overnights(browser, port, errors)
             browser.close()
     finally:
