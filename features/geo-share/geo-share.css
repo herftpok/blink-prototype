@@ -649,7 +649,7 @@
 
 /* „показать“ – над баннером, баннер – над панелью браузера */
 .viewer-map__actions {
-  bottom: calc(var(--browser-bar) + var(--tabbar-height) + var(--space-28));
+  bottom: calc(var(--browser-bar) + var(--install-banner-height) + var(--space-28));
   transition: opacity var(--duration-state) ease;
 }
 
@@ -669,7 +669,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-8);
-  height: var(--tabbar-height);
+  height: var(--install-banner-height);
   padding: 0 var(--space-12) 0 80px;              /* слева место под аватар */
   border: 1px solid var(--color-tabbar-border);
   border-radius: var(--radius-pill);

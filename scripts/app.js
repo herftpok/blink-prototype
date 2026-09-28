@@ -2,7 +2,8 @@
  * Blink – прототип: навигация и поведение.
  *
  * Навигация:
- *   #/map  #/friends  #/chats  #/checkins  #/profile  – табы (таб-бар внизу)
+ *   #/map  #/friends  #/chats  #/market  #/profile   – табы (таб-бар внизу)
+ *   #/checkins                                       – чекины: таба нет, вход из профиля
  *   #/chat/<id>                                      – чат поверх табов (въезжает справа)
  * Назад из чата: кнопка „назад“, Esc, свайп от левого края.
  *
@@ -78,7 +79,9 @@
 
   /* ── таб-бар и роутер ────────────────────────────────────────────────── */
 
-  const TABS = ["map", "friends", "chats", "checkins", "profile"];
+  const TABS = ["map", "friends", "chats", "market", "profile"];
+  // экраны без своего пункта в таб-баре: открываются из других экранов, таб-бар без выделения
+  const SCREENS = [...TABS, "checkins"];
   const DARK_STATUS = new Set(["map", "profile"]);   // светлый верх → чёрный статус-бар
   const DARK_HOME = new Set(["map"]);                 // светлый низ → чёрный индикатор „домой“
   const scrollMemory = {};
@@ -86,7 +89,7 @@
   let openChatId = null;
 
   function showTab(tab) {
-    if (!TABS.includes(tab)) tab = "map";
+    if (!SCREENS.includes(tab)) tab = "map";
     if (tab === activeTab) return;
 
     if (activeTab) {
@@ -673,5 +676,7 @@
   renderFolders();
   renderChats();
   renderProfile();
+  // маркет – общий компонент (scripts/market.js): баланс как на эталоне market_full_screen.png
+  window.BlinkMarket.mount($("#screen-market"), { assets: "assets", coins: 55000 });
   route();
 })();

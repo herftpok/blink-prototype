@@ -1,0 +1,1 @@
+three.js 0.186.1 – npm-пакет three, файлы build/three.module.js и build/three.core.js без изменений. Лицензия MIT – LICENSE рядом.

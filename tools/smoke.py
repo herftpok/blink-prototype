@@ -14,6 +14,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from compare import serve  # noqa: E402  (тот же локальный сервер, что у сверки)
 
+ROOT_PROTOTYPE = Path(__file__).resolve().parent.parent
+
 from playwright.sync_api import Page, sync_playwright
 
 CHECKS: list[tuple[str, bool]] = []
@@ -505,6 +507,236 @@ def check_geo_share_locate(browser, port: int, errors: list[str]) -> None:
     page.close()
 
 
+def check_new_year(browser, port: int, errors: list[str]) -> None:
+    """Фича „новогодние подарки“: вкладка в маркете, флоу подарка, 3D-эльфы на карте, пуши, тряска."""
+    page = browser.new_page(viewport={"width": 1500, "height": 1000}, device_scale_factor=1)
+    page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(f"http://127.0.0.1:{port}/features/new-year/index.html")
+    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(1200)
+
+    L = "#phone-left"
+    R = "#phone-right"
+    text = lambda sel: page.eval_on_selector(sel, "el => el.textContent").replace("\u00a0", " ").strip()
+    is_open = lambda sel: page.evaluate(f"document.querySelector(\"{sel}\").classList.contains('is-open')")
+    state = lambda expr: page.evaluate(f"(() => {{ {expr} }})()")
+
+    ny_tab = page.get_attribute(f"{L} #market-tab-ny", "aria-selected") == "true"
+    check("подарки: у наташки маркет на вкладке „новый год“ – 3D-эльф, упаковки с „+ в мешок“; у лёвы карта с 3D",
+          ny_tab and page.locator(f"{L} [data-panel='ny'] canvas[data-hero]").count() == 1
+          and page.locator(f"{L} [data-panel='ny'] .ny-add").count() >= 10
+          and page.locator(f"{R} [data-3d]").count() == 1
+          and state("return Boolean(NY.phones.right.scene) && Boolean(NY.phones.left.hero)"))
+    sky_ny = state("return NY.phones.left.market.sky.mode")
+    page.click(f"{L} #market-tab-stickers")
+    page.wait_for_timeout(200)
+    sky_stickers = state("return NY.phones.left.market.sky.mode")
+    page.click(f"{L} #market-tab-ny")
+    page.wait_for_timeout(200)
+    ring = page.evaluate(f"getComputedStyle(document.querySelector('{L} .market__ring')).animationName")
+    check("подарки: снег только на вкладке „новый год“, на „стикерах“ звёзды; кольцо-градиент в углу вращается",
+          sky_ny == "snow" and sky_stickers == "stars" and state("return NY.phones.left.market.sky.mode") == "snow"
+          and ring == "market-ring")
+
+    # флоу: упаковка → кому → подарить → отправлен
+    page.click(f"{L} [data-panel='ny'] [data-item='zombie']")
+    page.wait_for_timeout(500)
+    rec = is_open(f"{L} [data-recipients]") and text(f"{L} .recipients__title") == "кому подаришь?"
+    page.click(f"{L} [data-recipients] [data-to='leva']")
+    page.wait_for_timeout(500)
+    tiles = [t.replace("\u00a0", " ") for t in page.locator(f"{L} [data-confirm] .choice-tile__value").all_inner_texts()]
+    confirm = is_open(f"{L} [data-confirm]") and text(f"{L} .gift-card__title") == "жутко весело" \
+        and page.locator(f"{L} .stock").count() == 1 and tiles == ["3 дня", "1 день", "12 часов"] \
+        and text(f"{L} .gift-speed__label") == "эльф дойдёт примерно за"
+    page.click(f"{L} [data-anon]")
+    page.click(f"{L} [data-confirm] [data-speed='fast']")
+    page.click(f"{L} [data-send]")
+    page.wait_for_timeout(600)
+    coins = text(f"{L} [data-coins]")
+    gift = state("const g = NY.server.gifts[0]; return g && [g.from, g.to, g.anonymous, g.speed, g.items.join()]")
+    # поля карточки – по раскладке (offset* не зависят от transform, пока карточка выезжает)
+    card = page.evaluate(f"""() => {{ const ph = document.querySelector('{L} .ny-phone');
+        const b = document.querySelector('{L} [data-sent]');
+        return [b.offsetLeft, ph.offsetWidth - b.offsetLeft - b.offsetWidth, ph.offsetHeight - b.offsetTop - b.offsetHeight,
+                getComputedStyle(b).borderBottomLeftRadius]; }}""")
+    check("подарки: кому → подарить (анонимно, за 12 часов) → карточка „подарок отправлен анонимно!“ с полями, на градиенте, с именем",
+          rec and confirm and is_open(f"{L} [data-sent]") and text(f"{L} .ny-sent__title") == "подарок отправлен анонимно!"
+          and text(f"{L} .ny-sent__to") == "лёва" and is_open(f"{L} [data-backdrop]") and card == [16, 16, 34, "30px"]
+          and coins == "53 500" and gift == ["natashka", "leva", True, "fast", "zombie"])
+    check("подарки: эльф выходит сбоку от пункта отправки, а не из двери",
+          state("return NY.server.gifts[0].walked") >= 30)
+    push = page.evaluate(f"document.querySelector('{R} [data-push]').classList.contains('is-shown')")
+    banner = page.evaluate(f"""() => {{ const b = document.querySelector('{R} [data-push]'); const cs = getComputedStyle(b);
+        return [b.querySelector('.ny-push__icon').getAttribute('src').endsWith('system/app-icon.png'),
+                b.querySelector('.ny-push__time').textContent, cs.backdropFilter.includes('blur'),
+                getComputedStyle(b.querySelector('.ny-push__title')).fontWeight]; }}""")
+    check("подарки: лёве пришёл пуш „к тебе идёт эльф с подарком“ – от анонима; пуш – нативный баннер iOS с иконкой Blink",
+          push and text(f"{R} [data-push-title]") == "к тебе идёт эльф с подарком" and text(f"{R} [data-push-text]") == "от анонима"
+          and banner == [True, "сейчас", True, "600"])
+
+    page.click(f"{L} [data-sent-map]")
+    page.wait_for_timeout(900)
+    sbody = page.inner_text(f"{L} [data-map-body]").replace("\u00a0", " ")
+    progress = page.evaluate(f"parseFloat(document.querySelector('{L} [data-track]').style.getPropertyValue('--progress'))")
+    check("подарки: „где эльф?“ – камера за эльфом; в шторке дорожка пин → эльф → пин, примерное время и крупно, что внутри",
+          state("return NY.phones.left.tab === 'map' && NY.phones.left.follow === 1 && NY.phones.left.sheet.kind === 'elf'")
+          and page.locator(f"{L} .elf-track .pin").count() == 2 and page.locator(f"{L} .elf-track .pin--online").count() == 0
+          and page.locator(f"{L} .elf-track__frame--walk").count() == 6 and 0 < progress < 1
+          and "ещё примерно" in sbody and "жутко весело" in sbody
+          and page.locator(f"{L} .gift-plate").count() == 1 and page.locator(f"{L} .elf-track [data-eta]").count() == 1
+          and page.locator(f"{L} [data-map-sheet] .live-dot, {L} [data-map-sheet] .cutout").count() == 0
+          and page.eval_on_selector(f"{L} [data-route-left]", "el => el.classList.contains('is-shown') && el.getAttribute('d').length > 10"))
+
+    # пуш висит 6 s, а стенд с тремя WebGL-холстами в SwiftShader медленный: показываем его снова с пульта
+    page.click("[data-act='push']")
+    page.wait_for_timeout(500)
+    page.click(f"{R} [data-push]")
+    page.wait_for_timeout(900)
+    body = page.inner_text(f"{R} [data-map-body]")
+    check("подарки: пуш у лёвы – камера за эльфом; на дорожке аноним – только вопросик без пина, плашки „внутри“ нет, подсказка про тряску",
+          state("return NY.phones.right.follow === 1 && NY.phones.right.sheet.kind === 'elf'")
+          and "аноним" in body and "сюрприз" not in body and page.locator(f"{R} .gift-inside").count() == 0
+          and page.locator(f"{R} .elf-track__sticker").count() == 1
+          and page.locator(f"{R} .elf-track .pin").count() == 1 and page.is_visible(f"{R} [data-shake-hint]"))
+
+    left0 = state("return NY.server.left(NY.server.gifts[0])")
+    page.click("[data-act='shake']")
+    page.wait_for_timeout(500)
+    boosted = state("return NY.server.gifts[0].boost")
+    shaking = page.evaluate(f"document.querySelector('{R} .ny-phone').classList.contains('is-shaking')")
+    left1 = state("return NY.server.left(NY.server.gifts[0])")
+    page.wait_for_timeout(1200)
+    check("подарки: после тряски эльф бежит – на карте другая походка и снег из-под ног, на дорожке кадры бега и штрихи",
+          state("return NY.phones.right.elves()[0].running") and state("return NY.phones.right.scene.puffCount()") > 0
+          and page.evaluate(f"document.querySelector('{R} [data-track]').classList.contains('is-running')")
+          and page.locator(f"{R} .elf-track__frame--run").count() == 6)
+    page.click("[data-act='shake']")
+    page.wait_for_timeout(500)
+    check("подарки: встряхнул – телефон качается, снег, эльф вдвое быстрее; второй раз за день – „эльф выдохся“",
+          boosted and shaking and left1 < left0 * 0.6
+          and state("return NY.phones.right.sheet.kind === 'tired'") and "эльф выдохся" in page.inner_text(f"{R} [data-map-body]"))
+    page.click(f"{R} [data-tired-ok]")
+    page.wait_for_timeout(300)
+
+    # попадание пальцем в 3D: эльф и пункт отправки на карте наташки. Шторку закрываем нажатием мимо – крестика нет
+    page.click(f"{L} [data-map-scrim]", position={"x": 195, "y": 150})
+    page.wait_for_timeout(700)
+    check("подарки: шторку эльфа закрывает нажатие мимо неё; крестиков в шторках нет",
+          state("return NY.phones.left.sheet === null")
+          and page.evaluate("document.querySelectorAll('.ny-phone .sheet [aria-label=\"закрыть\"]').length") == 0)
+    hits = state("""const p = NY.phones.left; const rect = p.el.gl.getBoundingClientRect();
+        const z = rect.width / p.el.gl.offsetWidth; const k = p.metrics().k;
+        const g = NY.server.gifts[0]; const s = g.path.segments; const d = Math.min(g.walked, g.path.total);
+        const seg = s.find((x) => d <= x.start + x.length) || s[s.length - 1]; const t = seg.length ? (d - seg.start) / seg.length : 1;
+        const ex = seg.ax + (seg.bx - seg.ax) * t, ey = seg.ay + (seg.by - seg.ay) * t;
+        // модель стоит на точке карты и растёт вверх: ищем её над точкой, снизу вверх
+        const at = (x, y) => { for (let up = 0; up <= 60; up += 3) {
+          const hit = p.scene.pick(rect.left + (x * k + p.cam.x) * z, rect.top + (y * k + p.cam.y - up) * z);
+          if (hit) return hit; } return null; };
+        return [at(ex, ey), at(176, 422)];""")
+    check("подарки: нажатие попадает в 3D – по эльфу и по пункту отправки",
+          hits[0] == {"type": "elf", "id": 1} and hits[1] == {"type": "dispatch"})
+
+    page.evaluate("NY.phones.left.openDispatch()")
+    page.wait_for_timeout(500)
+    row_status = page.inner_text(f"{L} [data-row-status='1']")
+    dbody = page.inner_text(f"{L} [data-map-body]").replace("\u00a0", " ")
+    check("подарки: пункт отправки подарков – текст, новогодний подарок, строки с шевроном и примерным временем, без живой точки",
+          page.locator(f"{L} [data-row]").count() == 1 and ("примерно через" in row_status or "доставлен" in row_status)
+          and "пункт отправки подарков" in dbody and "статус отправления твоих новогодних подарков" in dbody
+          and page.get_attribute(f"{L} .dispatch-hero", "src").endswith("market/gift.webp")
+          and page.locator(f"{L} .dispatch-row__chevron").count() == 1 and page.locator(f"{L} [data-map-sheet] .live-dot").count() == 0)
+
+    page.click("[data-act='arrive']")
+    page.wait_for_timeout(1200)
+    arrival = state("return NY.server.gifts[0].status === 'delivered' && NY.phones.right.sheet.kind === 'arrival'")
+    abody = page.inner_text(f"{R} [data-map-body]")
+    check("подарки: эльф дошёл – у лёвы сверху послание дарителя (аноним, дата), ниже подарок и „подарить кому-нибудь“; у наташки пуш",
+          arrival and "эльф принёс подарок" in abody and text(f"{R} .arrival-head__nick") == "аноним"
+          and text(f"{R} .arrival-head__date") == "28.12.2026" and page.locator(f"{R} .gift-card--sheet").count() == 1
+          and page.locator(f"{R} [data-map-body] .gift-inside__label").count() == 0
+          and text(f"{L} [data-push-title]") == "эльф донёс подарок")
+    page.click(f"{R} [data-gift-too]")
+    page.wait_for_timeout(500)
+    check("подарки: „подарить кому-нибудь“ ведёт получателя в новогодний маркет",
+          state("return NY.phones.right.tab === 'market'") and page.get_attribute(f"{R} #market-tab-ny", "aria-selected") == "true")
+
+    # мешок
+    page.click("[data-scene='market']")
+    page.wait_for_timeout(700)
+    for item in ["cat", "ghost", "pumpkin"]:
+        page.click(f"{L} [data-add='{item}']")
+    page.wait_for_timeout(400)
+    sack_shown = page.evaluate(f"document.querySelector('{L} [data-sack]').classList.contains('is-shown')")
+    count = text(f"{L} [data-sack-count]")
+    page.click(f"{L} [data-sack-gift]")
+    page.wait_for_timeout(400)
+    page.click(f"{L} [data-recipients] [data-to='sonya']")
+    page.wait_for_timeout(500)
+    check("подарки: мешок – три подарка над таб-баром, в „подарить“ – мешок подарков",
+          sack_shown and count == "3 подарка" and text(f"{L} .gift-card__title") == "мешок подарков")
+    page.evaluate("NY.phones.left.closeFlow()")
+    page.wait_for_timeout(400)
+    centers = page.evaluate(f"""() => {{ const bar = document.querySelector('{L} .ny-sack').getBoundingClientRect();
+        const mid = (el) => {{ const r = el.getBoundingClientRect(); return (r.top + r.bottom) / 2 - (bar.top + bar.bottom) / 2; }};
+        const items = [...document.querySelectorAll('{L} .ny-sack .fan__item')].map((el) => el.getBoundingClientRect());
+        const fan = (Math.min(...items.map((r) => r.top)) + Math.max(...items.map((r) => r.bottom))) / 2 - (bar.top + bar.bottom) / 2;
+        return [fan, mid(document.querySelector('{L} .ny-sack__body')), mid(document.querySelector('{L} .ny-sack__button'))]; }}""")
+    check("подарки: плашка „мешок подарков“ – веер, текст и кнопка по центру её высоты",
+          text(f"{L} .ny-sack__title") == "мешок подарков" and all(abs(c) <= 2 for c in centers))
+    # „кому подаришь?“ и „подарок отправлен!“ закрываются нажатием мимо и жестом вниз
+    page.evaluate("NY.phones.left.startGift(['cat'])")
+    page.wait_for_timeout(500)
+    page.click(f"{L} [data-backdrop]", position={"x": 195, "y": 24})
+    page.wait_for_timeout(500)
+    tap_closed = not is_open(f"{L} [data-recipients]")
+    page.evaluate("NY.phones.left.startGift(['cat'])")
+    page.wait_for_timeout(500)
+    box = page.locator(f"{L} [data-recipients] .sheet__handle").bounding_box()
+    page.mouse.move(box["x"] + box["width"] / 2, box["y"] + 10)
+    page.mouse.down()
+    for i in range(1, 11):
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + 10 + i * 30)
+        page.wait_for_timeout(16)
+    page.mouse.up()
+    page.wait_for_timeout(500)
+    check("подарки: „кому подаришь?“ – без крестика, закрывается нажатием над шторкой и жестом вниз",
+          tap_closed and not is_open(f"{L} [data-recipients]")
+          and page.locator(f"{L} [data-recipients] [aria-label='закрыть']").count() == 0)
+
+    # друг получателя видит эльфа и кнопку подарить
+    page.click("[data-scene='gift']")
+    page.wait_for_timeout(600)
+    page.click("[data-right='sonya']")
+    page.wait_for_timeout(700)
+    page.evaluate("NY.phones.right.openElf(NY.server.gifts[0].id)")
+    page.wait_for_timeout(600)
+    fbody = page.inner_text(f"{R} [data-map-body]")
+    check("подарки: соня видит эльфа к лёве – дорожку от кого к кому, без содержимого, и „подарить кому-нибудь“",
+          "эльф несёт подарок лёве" in fbody and "сюрприз" not in fbody and page.locator(f"{R} .elf-track .pin").count() == 2
+          and page.locator(f"{R} [data-gift-too]").count() == 1 and page.locator(f"{R} .gift-inside").count() == 0)
+
+    page.evaluate("NY.phones.right.closeSheet(); NY.scene('sack'); NY.phones.left.openElf(NY.server.gifts[0].id)")
+    page.wait_for_timeout(800)
+    check("подарки: мешок в шторке эльфа – каждый подарок своей плашкой, сколько их – розовым",
+          page.locator(f"{L} .gift-plates--row .gift-plate").count() == 3 and text(f"{L} .gift-inside__count") == "3 подарка")
+
+    page.click("[data-scene='many']")
+    page.wait_for_timeout(800)
+    check("подарки: три эльфа сразу – три подарка в пути, у каждого свой маршрут",
+          state("return NY.server.gifts.filter((g) => g.status === 'walking').length") == 3
+          and state("return NY.phones.left.elves().length") == 3)
+
+    page.set_viewport_size({"width": 375, "height": 812})
+    page.wait_for_timeout(300)
+    widths = page.evaluate("""() => ['#phone-left .ny-phone', '.panel', '#phone-right .ny-phone']
+        .map((s) => Math.round(document.querySelector(s).getBoundingClientRect().width))""")
+    check("подарки: 375×812 – телефоны и пульт колонкой на всю ширину, без горизонтального скролла",
+          widths == [375, 375, 375] and not page.evaluate("document.documentElement.scrollWidth > innerWidth"))
+    page.close()
+
+
 def check_overnights(browser, port: int, errors: list[str]) -> None:
     """Фича „ночлеги“: ночная карта, коллажи, список-столбики, сторис и шеринг."""
     page = browser.new_page(viewport={"width": 600, "height": 960}, device_scale_factor=1)
@@ -592,7 +824,7 @@ def main() -> int:
             page.wait_for_load_state("networkidle")
             check("по умолчанию открыта карта", active_tab(page) == "map")
 
-            for tab in ["friends", "chats", "checkins", "profile", "map"]:
+            for tab in ["friends", "chats", "market", "profile", "map"]:
                 page.click(f".tabbar__item[data-tab='{tab}']")
                 check(f"таб „{tab}“ открывается", active_tab(page) == tab and page.is_visible(f"#screen-{tab}"))
 
@@ -664,6 +896,32 @@ def main() -> int:
             page.click("#stat-friends")
             check("коллаж „друзья“ в профиле ведёт в друзей", active_tab(page) == "friends")
 
+            # маркет: четвёртый таб по новому таб-бару, экран по market_full_screen.png
+            page.click(".tabbar__item[data-tab='market']")
+            page.wait_for_timeout(300)
+            labels = [t.strip() for t in page.locator(".tabbar__item").all_inner_texts()]
+            tabs_market = page.locator("#screen-market .market-tab").all_inner_texts()
+            check("таб-бар: карта · друзья · чаты · маркет · ты; маркет – баланс 55 000, вкладки хвосты и стикеры",
+                  labels == ["карта", "друзья", "чаты", "маркет", "ты"]
+                  and page.inner_text("#screen-market [data-coins]").replace("\u00a0", " ") == "55 000"
+                  and tabs_market == ["хвосты", "стикеры"]
+                  and page.locator("#market-panel-tails .market-item").count() == 6
+                  and page.locator("#market-panel-tails .owned-card__selected").count() == 1)
+            page.click("#market-tab-stickers")
+            page.wait_for_timeout(200)
+            check("маркет: „стикеры“ – своя лента упаковок с ценниками",
+                  page.is_visible("#market-panel-stickers") and not page.is_visible("#market-panel-tails")
+                  and page.locator("#market-panel-stickers .price-chip").count() == 8)
+            page.click(".tabbar__item[data-tab='profile']")
+            page.click(".market-pill")
+            page.wait_for_timeout(200)
+            market_from_profile = active_tab(page) == "market"
+            page.click(".tabbar__item[data-tab='profile']")
+            page.click("#stat-checkins")
+            page.wait_for_timeout(200)
+            check("профиль: плашка „маркет“ ведёт в маркет, коллаж „чекины“ – на экран чекинов без таба",
+                  market_from_profile and page.is_visible("#screen-checkins") and active_tab(page) is None)
+
             page.goto(f"{base}#/chat/masha")
             page.wait_for_timeout(600)
             check("прямая ссылка #/chat/masha открывает чат", chat_open(page) and page.inner_text("#chat-name") == "маша")
@@ -678,9 +936,19 @@ def main() -> int:
             check_geo_share_locate(browser, port, errors)
             check_overnights(browser, port, errors)
             browser.close()
+            # 3D новогодних подарков рисует three.js: WebGL в безголовом Chromium – только через SwiftShader.
+            # Отдельный браузер: программная отрисовка замедляет всё, и проверки с анимациями выше начинают плавать
+            gl = p.chromium.launch(args=["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
+            check_new_year(gl, port, errors)
+            gl.close()
     finally:
         server.shutdown()
 
+    # прототип на GitHub Pages не индексируется: у каждой страницы robots noindex
+    pages = sorted(p.relative_to(ROOT_PROTOTYPE).as_posix() for p in ROOT_PROTOTYPE.rglob("*.html")
+                   if ".compare" not in p.parts)
+    closed = [p for p in pages if 'name="robots" content="noindex, nofollow"' in (ROOT_PROTOTYPE / p).read_text(encoding="utf-8")]
+    check(f"все {len(pages)} страниц закрыты от поисковиков (noindex, nofollow)", pages and closed == pages)
     check("в консоли нет ошибок", not errors)
     for e in errors:
         print("    console:", e)

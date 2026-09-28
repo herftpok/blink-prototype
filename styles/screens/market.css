@@ -1,0 +1,306 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Экран „маркет“ – референс market/market_full_screen.png: длинный скриншот
+   390×2450 pt @3x. Вкладка „хвосты“ повторяет его: упаковки, карточки коллекции
+   и архива стоят по координатам эталона (pt от верха холста; по горизонтали –
+   от центра экрана, --x – левый край на холсте 390). Разметка – scripts/market.js.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.market {
+  background: var(--color-bg);
+}
+
+/* Небо под контентом: звёзды, а в новогоднем маркете – снег (scripts/particles.js).
+   Холст не скроллится вместе с лентой – частицы как фон за стеклом */
+.market__sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.market__content {
+  position: relative;
+  min-height: 100%;
+}
+
+/* высота ленты „хвосты“ – как у эталона: низ ленты доезжает до таб-бара так же */
+.market__content[data-tab="tails"] {
+  height: 2450px;
+}
+
+/* Свечение в правом верхнем углу – кольцо-градиент market/gradient.png (ring.webp, размытие
+   запечено). Подобрано по эталону: кольцо 553 pt с центром в (376, −160) – видна только его
+   нижняя дуга. Кольцо медленно вращается, и по углу переливаются жёлтый, розовый и салатовый.
+   Рамка обрезает кольцо по экрану: иначе оно растянуло бы ленту вбок. Едет вместе с лентой */
+.market__glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.market__ring {
+  position: absolute;
+  top: -457.5px;                                  /* центр на −160: −160 − 595 / 2 */
+  right: -288.5px;                                /* центр на 376 из 390: 390 − 376 − 605 / 2 */
+  width: 605px;
+  max-width: none;
+  transform: rotate(89.5deg);
+  animation: market-ring 24s linear infinite;
+  will-change: transform;
+}
+
+@keyframes market-ring {
+  to {
+    transform: rotate(449.5deg);
+  }
+}
+
+/* ── Шапка: „маркет“ и баланс ─────────────────────────────────────────── */
+
+/* верх строки заголовка – 59 pt (базовая линия „маркет“ на 94) */
+.market__header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: calc(var(--safe-top) + 5px) var(--gutter) 0;
+}
+
+/* Плашка баланса (market/Coin balance.png, @4x): 164×40, r16, белый .1 со стеклом;
+   монета 28, число 20.5/600, кнопка „+“ 32 – белая, r12 (16 − 4), на 4 от краёв */
+.coin-balance {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  margin-top: 2.5px;
+  padding: 0 var(--space-4) 0 var(--space-6);
+  border-radius: var(--radius-16);
+  background: var(--color-banner-fill);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+}
+
+.coin-balance__coin {
+  width: 28px;
+  height: 28px;
+}
+
+.coin-balance__value {
+  margin: 0 var(--space-16) 0 9.5px;
+  font: var(--type-coin-balance);
+  letter-spacing: var(--tracking-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.coin-balance__add {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-12);
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+.coin-balance__add .icon {
+  --icon-size: 15px;
+}
+
+/* ── Вкладки: хвосты · стикеры (· новый год) ──────────────────────────── */
+
+.market-tabs {
+  position: relative;
+  display: flex;
+  gap: 23px;
+  padding: 14px var(--gutter) 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.market-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.market-tab {
+  --press-scale: var(--press-scale-small);
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font: var(--type-market-tab);
+  letter-spacing: var(--tracking-title);
+  white-space: nowrap;
+}
+
+.market-tab[aria-selected="true"] {
+  color: var(--color-text);
+}
+
+/* ── Предмет: упаковка + ценник ───────────────────────────────────────── */
+
+/* по координатам эталона: --x, --y – левый верхний угол рамки упаковки на холсте 390, --w – её ширина */
+.market-item {
+  --press-scale: var(--press-scale-button);
+  position: absolute;
+  left: calc(50% + (var(--x) - 195) * 1px);
+  top: calc(var(--y) * 1px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: calc(var(--w) * 1px);
+}
+
+.market-item__art {
+  display: block;
+  width: 100%;
+  pointer-events: none;
+}
+
+/* Ценник: тёмная пилюля 28, монета 20 вложена (14 − 4 = 10), цена 15/600.
+   Без монеты – „бесплатно“, „скоро“ */
+.price-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7.5px;
+  height: 28px;
+  margin-top: 2px;
+  padding: 0 9px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-card);
+  color: var(--color-text);
+  font: var(--type-label);
+  white-space: nowrap;
+}
+
+.price-chip--coins {
+  padding: 0 7.5px 0 var(--space-4);
+}
+
+.price-chip__coin {
+  width: 20px;
+  height: 20px;
+}
+
+/* ── „уже у тебя“ и „архив“: заголовок с подписью, наклеены с поворотом −2° ── */
+
+.market-section {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--y) * 1px);
+  text-align: center;
+  transform: rotate(var(--tilt, -2deg));
+}
+
+.market-section__title {
+  font: var(--type-market-section);
+  letter-spacing: var(--tracking-title);
+}
+
+.market-section__text {
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-market-subtitle);
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+/* ── Коллекция: карточка хвоста без упаковки и „выбрано“ ─────────────── */
+
+.owned-card {
+  --press-scale: var(--press-scale-button);
+  position: absolute;
+  left: calc(50% + (var(--x) - 195) * 1px);
+  top: calc(var(--y) * 1px);
+  width: calc(var(--w) * 1px);
+}
+
+.owned-card img {
+  display: block;
+  width: 100%;
+  pointer-events: none;
+}
+
+/* „выбрано“: лаймовый круг 24 с чёрной галочкой и подпись 15.5/500 */
+.owned-card__selected {
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 10px;                                     /* круг – на 10 правее рамки карточки (x 56) */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-selected);
+  font: var(--type-market-note);
+  letter-spacing: var(--tracking-title);
+  white-space: nowrap;
+}
+
+.owned-card__check {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-selected);
+  color: var(--color-text-on-light);
+}
+
+.owned-card__check .icon {
+  --icon-size: 13px;
+}
+
+/* лента „архив“ во всю ширину экрана */
+.market-tape {
+  position: absolute;
+  left: 0;
+  top: calc(var(--y) * 1px);
+  width: 100%;
+  pointer-events: none;
+}
+
+/* ── Вкладки без эталона (стикеры): та же упаковка и ценник, сеткой в две колонки ── */
+
+.market-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 12px;
+  padding: 58px var(--gutter) 200px;
+}
+
+.market-grid .market-item {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100%;
+  justify-self: center;
+}
+
+.market-grid .market-item__art {
+  width: 150px;
+}
+
+/* лёгкий наклон, как у упаковок на эталоне: вразнобой, но не хаос */
+.market-grid .market-item:nth-child(4n + 1) .market-item__art { transform: rotate(-3deg); }
+.market-grid .market-item:nth-child(4n + 2) .market-item__art { transform: rotate(4deg); }
+.market-grid .market-item:nth-child(4n + 3) .market-item__art { transform: rotate(2deg); }
+.market-grid .market-item:nth-child(4n) .market-item__art { transform: rotate(-4deg); }
+
+@media (hover: hover) and (pointer: fine) {
+  .market-tab:hover {
+    color: var(--color-text-secondary);
+  }
+
+  .market-tab[aria-selected="true"]:hover {
+    color: var(--color-text);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .market__ring {
+    animation: none;
+  }
+}

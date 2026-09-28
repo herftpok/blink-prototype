@@ -54,14 +54,22 @@
   --color-text-secondary: rgba(255, 255, 255, 0.8);   /* „5 мин назад“ в шапке чата */
   --color-text-muted: #808080;                        /* мета, дистанция, подписи секций */
   --color-text-dim: rgba(255, 255, 255, 0.5);         /* неактивный таб, плейсхолдер поиска */
+  --color-text-faint: #494949;                         /* плейсхолдер коммента к подарку (market/confirm_gift.png) */
   --color-text-on-light: #000000;                     /* текст на белом, зелёном, розовом */
   --color-text-on-map: #000000;
   --color-text-on-chip: #151515;                      /* ник на светлой плашке */
   --color-sticker-unit: #808080;                      /* „мин“, „км/ч“ под числом на пине (pin/*.png) */
 
   /* ── Смысловые акценты ─────────────────────────────────────────────── */
+  --color-selected: #adff58;                   /* „выбрано“ в коллекции маркета: галочка и подпись (market_full_screen.png) */
+  /* маркет: градиенты с эталонов market/*.png */
+  --gradient-market-backdrop: linear-gradient(90deg, #e1a0ff 0%, #a0e8ff 100%);   /* фон над шторками маркета (choose_recipient.png) */
+  --gradient-market-text: linear-gradient(90deg, #73edff 0%, #cf91ff 100%);       /* „ЛУЧШИЕ ДРУЗЬЯ“, „в сети“ – текст градиентом */
+  --gradient-holo: linear-gradient(90deg, #e0c195 0%, #e5a0d3 42%, #88e3da 100%);  /* „осталось на складе“ (gifts_left_progress.png) */
+  --gradient-toggle: linear-gradient(90deg, #74e4fa 0%, #9ea4ef 100%);            /* включённый переключатель, ручка чёрная (confirm_gift.png) */
   --color-danger: #ff4a31;                     /* кнопки, которые прекращают или удаляют: „перестать делиться гео“ */
   --color-pink: #ff75e1;                       /* новое и непрочитанное: счётчик-звезда, „заявки“, медиа в мете */
+  --confetti-colors: #ff75e1, #73edff, #cf91ff, #adff58, #e0c195;   /* конфетти „подарок отправлен!“ – только цвета системы: розовый, голубой и сиреневый градиента маркета, лайм „выбрано“, золото голограммы */
   --color-pink-halo: rgba(255, 117, 225, 0.25);  /* пульс подсветки „смотри сюда“ в онбординге */
   --color-online: #96e732;                     /* точка „в сети“ на аватаре */
   --color-online-glow: #b6fe4f;                /* свечение под вырезкой друга в сети (glow-online.webp) */
@@ -118,6 +126,22 @@
   --type-pin-number: italic 700 13px/1 var(--font-ui);      /* „22“, „120“ на пине 52 – курсив, как на эталонах pin/*.png и карты */
   --type-pin-unit: italic 700 9px/1 var(--font-ui);         /* „мин“, „км/ч“ под числом */
   --type-browser-address: 400 17px/22px var(--font-text);   /* домен в адресной строке Safari (рамка браузера, превью) */
+  /* маркет (market/market_full_screen.png, fit-font) */
+  --type-market-tab: 600 20.5px/24px var(--font-ui);        /* „хвосты“, „стикеры“ – вкладки маркета, трекинг −0.02em */
+  --type-coin-balance: 600 20.5px/24px var(--font-ui);      /* „55 000“ на плашке баланса, трекинг −0.02em */
+  --type-market-section: 600 24px/30px var(--font-ui);      /* „уже у тебя“, „архив“ – наклеены с поворотом −2° */
+  --type-market-subtitle: 500 16.5px/18px var(--font-ui);   /* „хвосты в коллекции“, трекинг −0.04em */
+  --type-market-note: 500 15.5px/20px var(--font-ui);       /* „выбрано“, трекинг −0.02em */
+  /* подарок другу (market/choose_recipient.png, confirm_gift.png, gift_sended_modal.png, fit-font) */
+  --type-sheet-title: 700 28px/34px var(--font-ui);         /* „кому подаришь?“ */
+  --type-recipient-name: 500 15.5px/19px var(--font-ui);    /* имя в списке получателей и в шапке „подарить“ */
+  --type-recipient-status: 500 15px/18px var(--font-text);  /* „в сети“, „36 мин назад“, „получатель“ */
+  --type-gift-title: 600 20px/22px var(--font-ui);          /* название подарка в карточке, „подарок отправлен!“ */
+  --type-gift-kind: 500 15px/18px var(--font-ui);           /* „гифт“, „стикерпак“ под названием, трекинг +0.02em */
+  --type-gift-note: 600 13px/16px var(--font-ui);           /* „осталось на складе“, „42/100“ */
+  --type-gift-option: 600 14.5px/18px var(--font-ui);       /* „отправить анонимно“, трекинг +0.02em */
+  --type-comment-label: 600 14px/17px var(--font-text);     /* „коммент к подарку“ */
+  --type-comment: 500 17px/22px var(--font-text);           /* текст коммента и плейсхолдер */
   --tracking-title: -0.02em;                   /* заголовок экрана */
   --tracking-city: -0.04em;                    /* „москва“ на карте (карту ещё не пересматривали) */
   --tracking-section: 0;                       /* заголовок секции */
@@ -170,11 +194,13 @@
   --radius-squircle: 36%;                      /* аватары-сквирклы: 46 → 16, 56 → 20 */
   --radius-pin: 21px;                          /* кадр пина 52 (Pin.svg: rx 21) */
   --radius-pin-avatar: 26px;                   /* маска живой аватарки в пине */
-  --radius-sheet: 18px;                        /* верхние углы шторки (main-design-system.md 4.6) */
+  --radius-sheet: 38px;                        /* верхние углы шторки – шторки маркета (market/choose_recipient.png) */
+  --radius-modal: 30px;                        /* карточка по центру: „подарок отправлен!“ (market/gift_sended_modal.png) */
 
   /* ── Размеры компонентов ───────────────────────────────────────────── */
-  --tabbar-width: 303px;
-  --tabbar-height: 70px;
+  --tabbar-width: 304px;                       /* Map/tab bar@3x.png: 912×198 → 304×66 */
+  --tabbar-height: 66px;
+  --install-banner-height: 70px;               /* баннер „скачай blink“ в вебе (blink-design.md): 358×70, под него подобран аватар 64×70 */
   --search-height: 46px;
   --button-height: 56px;                       /* основной CTA (Buttons/Button styles.md) */
   --control-44: 44px;
@@ -218,4 +244,21 @@
   --press-scale-wide: 0.98;
   --press-scale-button: 0.96;
   --press-scale-small: 0.92;
+
+  /* ── iOS: системный баннер уведомления (пуш) ──────────────────────────
+     Это не стиль Blink, а нативный баннер iOS (светлая тема, как по умолчанию): материал
+     с блюром, иконка приложения, SF Pro. От продукта в пуше – только иконка, заголовок и текст */
+  --ios-banner-inset: 8px;                     /* поле от краёв экрана */
+  --ios-banner-padding: 14px;
+  --ios-app-icon: 38px;                        /* иконка приложения в баннере */
+  --radius-ios-banner: 24px;
+  --radius-ios-app-icon: 8.5px;                /* маска иконки iOS: ≈ 22 % стороны */
+  --color-ios-banner: rgba(246, 246, 246, 0.78);   /* материал уведомления, светлая тема */
+  --color-ios-label: #000000;
+  --color-ios-secondary-label: rgba(60, 60, 67, 0.6);
+  --blur-ios-banner: 30px;
+  --shadow-ios-banner: 0 8px 28px rgba(0, 0, 0, 0.14);
+  --type-ios-notification-title: 600 15px/20px var(--font-text);
+  --type-ios-notification-body: 400 15px/20px var(--font-text);
+  --type-ios-notification-time: 400 13px/18px var(--font-text);
 }

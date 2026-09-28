@@ -72,17 +72,19 @@
 
 /* ── Таб-бар ─────────────────────────────────────────────────────────── */
 
+/* Map/tab bar@3x.png и низ маркета (market/market_full_screen.png): пилюля 304×66,
+   низ – на 33 pt от края экрана, пять колонок по 58 с полями 6 */
 .tabbar {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--safe-bottom) - 3px);
+  bottom: calc(var(--safe-bottom) - 1px);
   z-index: 20;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   width: var(--tabbar-width);
   height: var(--tabbar-height);
   margin-left: calc(var(--tabbar-width) / -2);
-  padding: 0 11px;
+  padding: 0 6px;
   border: 1px solid var(--color-tabbar-border);
   border-radius: var(--radius-pill);
   background: var(--color-tabbar);
@@ -90,13 +92,15 @@
           backdrop-filter: blur(var(--blur-glass));
 }
 
+/* иконка 24 по центру на 23 pt от верха пилюли, строчные подписи – с 43.3 (Map/tab bar@3x.png) */
 .tabbar__item {
   --press-scale: var(--press-scale-small);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
+  justify-content: flex-start;
+  gap: 3.5px;
+  padding-top: 10px;
   min-width: 0;
   color: var(--color-text-dim);
   font: var(--type-tab);
@@ -108,12 +112,14 @@
 }
 
 .tabbar__item .icon {
-  --icon-size: 28px;
+  --icon-size: 24px;
 }
 
+/* фото 28 – на 4 крупнее иконок: выходит за их строку по 2 сверху и снизу, подпись не сдвигает */
 .tabbar__avatar {
   width: var(--avatar-tab);
   height: var(--avatar-tab);
+  margin: -2px 0;
   border-radius: 50%;
   object-fit: cover;
   object-position: 50% 20%;
@@ -687,7 +693,10 @@
 }
 
 /* Живая аватарка: маска 62×80 по центру кадра. Картинка заполняет маску (cover):
-   квадратная обрезается по бокам, голова выходит над кадром */
+   квадратная обрезается по бокам, голова выходит над кадром. С боков и снизу человек обрезан
+   по кадру – внутри белой рамки, скругление вложено (21 − 3.5); наружу, над верхним краем,
+   выходит только голова (pin/staying_offline.png). Иначе пышные волосы и плечи торчат за кадр –
+   на светлой карте незаметно, а на тёмной шторке выглядит криво */
 .pin__photo {
   position: absolute;
   left: calc((var(--pin-frame) - var(--pin-avatar-width)) / 2);
@@ -698,6 +707,12 @@
   object-fit: cover;
   object-position: 50% 50%;
   border-radius: var(--radius-pin-avatar);
+  clip-path: inset(
+    calc(var(--pin-avatar-height) * -1)
+    calc((var(--pin-avatar-width) - var(--pin-frame)) / 2 + var(--pin-avatar-bottom))
+    0
+    round 0 0 calc(var(--radius-pin) - var(--pin-avatar-bottom)) calc(var(--radius-pin) - var(--pin-avatar-bottom))
+  );
   pointer-events: none;
 }
 

@@ -184,7 +184,8 @@ SVG_ICONS = {
     "pin":           "messanger/icons/glyph.svg",          # таб „карта“
     "friends":       "messanger/icons/nav.svg",            # таб „друзья“
     "chat":          "messanger/icons/message.svg",        # таб „чаты“, кнопка „написать“ в строке друга
-    "checkin":       "messanger/icons/glyph-1.svg",        # таб „чекины“
+    "checkin":       "messanger/icons/glyph-1.svg",        # чекины: место с отметкой (таба больше нет – вход из профиля)
+    "market":        "Map/market_icon.svg",                # таб „маркет“ (Map/tab bar@3x.png)
     "compose":       "messanger/icons/create_chat.svg",    # новый чат
     "pinned":        "messanger/icons/glyph_pin_24.svg",   # закреплённый чат
     "orb":           "messanger/icons/glyph_orb_16.svg",   # тип сообщения „шар“
@@ -223,9 +224,10 @@ RASTER_ICONS = {
     "globe":      ("Map/tools_2_row.png", (435, 54, 519, 138), dict(bg=(255, 255, 255), fg=(0, 0, 0))),
     "crosshair":  ("Map/tools_2_row.png", (1002, 55, 1083, 136), dict(bg=(255, 255, 255), fg=(0, 0, 0))),
     "steps":      ("Map/top.png", (68, 309, 124, 363), dict(bg=(255, 255, 255), fg=(0, 0, 0))),
-    "market":     ("Map/tab_bar + button_group.png", (726, 33, 798, 105), dict(bg=(36, 36, 36))),
     # профиль
     "location":   (SCREEN_PROFILE, (353, 1211, 397, 1265), dict(bg="rows")),
+    # маркет: плюс на белой кнопке у баланса (market/Coin balance.png снят @4x)
+    "plus":       ("market/Coin balance.png", (546, 50, 606, 110), dict(bg=(255, 255, 255), fg=(0, 0, 0))),
 }
 
 ALPHA_ICONS = {
@@ -568,6 +570,203 @@ def build_overnights() -> None:
     save_webp(img.resize((780, round(img.height * 780 / img.width)), Image.LANCZOS), d / "map-night.webp", 80)
 
 
+SCREEN_MARKET = "market/market_full_screen.png"
+
+
+def cutout_on_black(path: str, box_pt: tuple[float, float, float, float], dest: Path,
+                    body_threshold: float = 22, width_px: int | None = None, quality: int = 90,
+                    hull: bool = False) -> None:
+    """Предмет со скриншота на чистом чёрном фоне → PNG/WebP с прозрачностью.
+    Звёзды фона (мелкие точки) убираем. Тело предмета (всё, что заметно светлее чёрного, с залитыми
+    дырами) – непрозрачное: тёмное нутро упаковки не просвечивает. Снаружи тела – мягкое свечение:
+    альфа по яркости, цвет распремножаем, чтобы на чёрном выглядело как на скриншоте.
+    box_pt – рамка x0, y0, x1, y1 в pt (@3x → ×3). hull=True – тело по выпуклой оболочке: у карточек
+    коллекции тонкая тёмная рамка не везде замкнута, а форма – наклонённый прямоугольник."""
+    from scipy import ndimage
+    x0, y0, x1, y1 = (round(v * 3) for v in box_pt)
+    arr = rgba(path)[y0:y1, x0:x1].copy()
+    rgb = arr[:, :, :3]
+    lum = rgb.max(axis=2)
+    lab, n = ndimage.label(lum > 24)
+    if n:
+        sizes = ndimage.sum(np.ones_like(lum), lab, range(1, n + 1))
+        stars = np.isin(lab, np.where(sizes < 80)[0] + 1)
+        rgb[ndimage.binary_dilation(stars, iterations=2)] = 0
+        lum = rgb.max(axis=2)
+    body = lum > body_threshold
+    lab, n = ndimage.label(body)
+    if n:
+        sizes = ndimage.sum(body, lab, range(1, n + 1))
+        body = np.isin(lab, np.where(sizes >= sizes.max() * 0.04)[0] + 1)
+    if hull:
+        # наименьший по площади повёрнутый прямоугольник вокруг рамки и содержимого – сама карточка
+        from PIL import ImageDraw
+        from scipy.spatial import ConvexHull
+        pts = np.argwhere(body)[:, ::-1].astype(np.float64)
+        hull_pts = pts[ConvexHull(pts).vertices]
+        best = None
+        for i in range(len(hull_pts)):
+            edge = hull_pts[(i + 1) % len(hull_pts)] - hull_pts[i]
+            ang = np.arctan2(edge[1], edge[0])
+            rot = np.array([[np.cos(ang), np.sin(ang)], [-np.sin(ang), np.cos(ang)]])
+            r = hull_pts @ rot.T
+            lo, hi = r.min(axis=0), r.max(axis=0)
+            area = np.prod(hi - lo)
+            if best is None or area < best[0]:
+                best = (area, rot, lo, hi)
+        _, rot, lo, hi = best
+        corners = np.array([[lo[0], lo[1]], [hi[0], lo[1]], [hi[0], hi[1]], [lo[0], hi[1]]]) @ rot
+        poly = Image.new("L", body.shape[::-1], 0)
+        ImageDraw.Draw(poly).polygon([tuple(c) for c in corners], fill=255)
+        body = ndimage.binary_erosion(np.asarray(poly) > 0, iterations=2)
+    else:
+        body = ndimage.binary_erosion(ndimage.binary_fill_holes(ndimage.binary_closing(body, iterations=3)), iterations=2)
+    alpha = np.clip(lum / 255 * 1.4, 0, 1)
+    alpha[body] = 1
+    out = np.zeros_like(arr)
+    out[:, :, :3] = np.clip(rgb / np.maximum(alpha[:, :, None], 1 / 255), 0, 255)
+    out[:, :, 3] = alpha * 255
+    img = Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), "RGBA")
+    if width_px:
+        img = img.resize((width_px, round(img.height * width_px / img.width)), Image.LANCZOS)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.suffix == ".webp":
+        img.save(dest, "WEBP", quality=quality, method=6)
+    else:
+        img.save(dest, optimize=True)
+
+
+def package_without_price(path: str, dest: Path, width_px: int) -> None:
+    """Упаковка из market/items (снята @4x) без вшитого ценника: ценник рисует вёрстка,
+    цена у каждого предмета своя. Режем по пустой строке между упаковкой и ценником."""
+    arr = rgba(path)
+    rows = (arr[:, :, 3] > 8).sum(axis=1)
+    h = arr.shape[0]
+    empty = [y for y in range(int(h * 0.6), h) if rows[y] == 0]
+    # пустой строки нет – ценник касается упаковки: режем по самой узкой строке между ними
+    cut = empty[0] if empty else int(h * 0.75) + int(np.argmin(rows[int(h * 0.75):]))
+    ys, xs = np.where(arr[:cut, :, 3] > 8)
+    part = arr[ys.min():cut, xs.min():xs.max() + 1]
+    img = Image.fromarray(part.astype(np.uint8), "RGBA")
+    img = img.resize((width_px, round(img.height * width_px / img.width)), Image.LANCZOS)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    img.save(dest, "WEBP", quality=90, method=6)
+
+
+def market_ring(dest: Path) -> None:
+    """Кольцо-градиент в углу маркета (market/gradient.png). Подобрано по эталону
+    market_full_screen.png: кольцо шириной 553 pt, центр в (376, −160) pt, поворот 89.5°, размытие
+    8.2 pt – на экране видна только его нижняя дуга. Размытие запекаем: в CSS кольцо только вращается.
+    Картинка 1 px = 1 pt, с полями 26 под размытие: итог 605 px по ширине."""
+    from scipy import ndimage
+    size, pad, sigma = 553, 26, 8.2
+    ring = Image.open(src("market/gradient.png")).convert("RGBA")
+    ring = ring.resize((size, round(ring.height * size / ring.width)), Image.LANCZOS)
+    arr = np.array(ring).astype(np.float32) / 255
+    canvas = np.zeros((arr.shape[0] + 2 * pad, arr.shape[1] + 2 * pad, 4), np.float32)
+    canvas[pad:pad + arr.shape[0], pad:pad + arr.shape[1]] = arr
+    pm = canvas[..., :3] * canvas[..., 3:4]                      # размываем в премультиплицированном виде
+    pm = np.stack([ndimage.gaussian_filter(pm[..., k], sigma) for k in range(3)], -1)
+    alpha = ndimage.gaussian_filter(canvas[..., 3], sigma)
+    out = np.zeros_like(canvas)
+    out[..., :3] = pm / np.maximum(alpha[..., None], 1e-4)
+    out[..., 3] = alpha
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    Image.fromarray((np.clip(out, 0, 1) * 255).round().astype(np.uint8), "RGBA").save(dest, "WEBP", quality=86, method=6)
+
+
+def newyear_gift(dest: Path, width_px: int = 360) -> None:
+    """Подарок пункта отправки (gift.png в корне проекта) в цветах 3D-подарка на крыше пункта:
+    коробка розовая #FF75E1, лента салатовая #96E732 (--color-pink и --color-online).
+    Не сдвиг тона – он сжимал тени, и подарок выходил плоским. Карта градиента: светлота каждой
+    точки оригинала (у коробки 0.21…0.73, у ленты 0.48…0.97 – 1-й и 99-й перцентили) растянута
+    на 0…1, тени углублены (степень 1.5) и разложены по палитре от глубокой тени до блика.
+    Форма, складки ленты и блики – от оригинала, объём – контрастнее."""
+    img = np.array(Image.open(src("gift.png")).convert("RGBA")).astype(np.float32) / 255
+    rgb, a = img[..., :3], img[..., 3]
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    mx, mn = rgb.max(-1), rgb.min(-1)
+    d = mx - mn
+    h = np.zeros_like(mx)
+    m = d > 1e-6
+    rr = m & (mx == r)
+    gg = m & (mx == g) & ~rr
+    bb = m & ~rr & ~gg
+    h[rr] = ((g - b)[rr] / d[rr]) % 6
+    h[gg] = (b - r)[gg] / d[gg] + 2
+    h[bb] = (r - g)[bb] / d[bb] + 4
+    h = h * 60
+    lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+    def ramp(t: np.ndarray, stops: list[tuple[float, str]]) -> np.ndarray:
+        pos = np.array([p for p, _ in stops], np.float32)
+        cols = np.array([[int(c[i:i + 2], 16) / 255 for i in (1, 3, 5)] for _, c in stops], np.float32)
+        return np.stack([np.interp(t, pos, cols[:, k]) for k in range(3)], -1)
+
+    parts = [
+        ((h > 300) | (h < 18), (0.214, 0.727),                  # коробка: коралловая → розовая
+         [(0, "#4a0636"), (0.3, "#9c1a7c"), (0.62, "#e04cc4"), (0.8, "#ff75e1"), (0.93, "#ffb3ef"), (1, "#fff0fb")]),
+        ((h >= 18) & (h < 90), (0.482, 0.968),                  # лента: золотая → салатовая
+         [(0, "#1f4504"), (0.3, "#4f8a0e"), (0.6, "#7fcc22"), (0.78, "#96e732"), (0.92, "#c9ff72"), (1, "#f4ffdf")]),
+    ]
+    out = rgb.copy()
+    for mask, (lo, hi), stops in parts:
+        t = np.clip((lum[mask] - lo) / (hi - lo), 0, 1) ** 1.5
+        out[mask] = ramp(t, stops)
+    res = Image.fromarray((np.dstack([out, a]) * 255).round().astype(np.uint8), "RGBA")
+    if res.width != width_px:
+        res = res.resize((width_px, round(res.height * width_px / res.width)), Image.LANCZOS)
+    save_webp(res, dest, 90)
+
+
+def build_market() -> None:
+    """
+    Маркет (market/*): эталон – market/market_full_screen.png (390×2450 pt @3x, длинный скриншот).
+    Упаковки хвостов, карточки коллекции и архива, лента „архив“ вырезаны со скриншота
+    (фон чистый чёрный) – рамки в pt @3x. Упаковки стикеров – market/items/*.png (@4x) без
+    вшитого ценника. Монета, свечения – ассеты папки как есть, пережатые.
+    """
+    d = OUT / "market"
+    # хвосты: главный (SALE, огонь) и сетка – pt, рамка вокруг упаковки со свечением, без ценника
+    tails = {
+        "tail-fire-sale": (108, 192, 281, 392),       # главный, над ценником „300“
+        "tail-cat": (37, 456, 176, 618),              # PARTNER, кот на волне
+        "tail-fire": (216, 456, 353, 618),            # огонь, „бесплатно“
+        "tail-fire-2": (37, 684, 174, 846),
+        "tail-shadow-sale": (214, 684, 357, 847),     # SALE, тень-рука
+        "tail-pixel": (126, 912, 265, 1074),          # PARTNER, пиксели – „скоро“
+    }
+    for name, box in tails.items():
+        cutout_on_black(SCREEN_MARKET, box, d / f"{name}.webp", width_px=round((box[2] - box[0]) * 3))
+    # коллекция „уже у тебя“ и архив: карточки хвоста без упаковки, у каждой свой наклон
+    # рамки – с тёмно-серой рамкой карточки (#1C1C1C, светлее фона на 28)
+    cards = {
+        "owned-1": (46, 1275, 170, 1423), "owned-2": (225, 1276, 348, 1422), "owned-3": (135, 1496, 258, 1642),
+        "archive-1": (46, 2031, 170, 2179), "archive-2": (225, 2032, 348, 2178),
+    }
+    for name, box in cards.items():
+        cutout_on_black(SCREEN_MARKET, box, d / f"{name}.webp", body_threshold=10,
+                        width_px=round((box[2] - box[0]) * 3), hull=True)
+    # лента „архив“ во всю ширину: чёрные полосы – это фон, их не восстанавливаем
+    cutout_on_black(SCREEN_MARKET, (0, 1712, 390, 1872), d / "tape.webp", body_threshold=255)
+    # стикеры и хвосты из market/items (@4x) → @3x без ценника
+    items = {
+        "item box.png": "shadow-sale", "item box-1.png": "jewelry-limited", "item box-2.png": "shadow-limited",
+        "item box-3.png": "bat-box-sale", "item box-4.png": "ghost-box-new", "item box-5.png": "zombie-box-new",
+        "item box-6.png": "bat-sale", "item box-7.png": "ghost", "item box-8.png": "pumpkin",
+        "item box-9.png": "zombie-new", "Item (large).png": "fire-new",
+    }
+    for file, name in items.items():
+        package_without_price(f"market/items/{file}", d / "items" / f"{name}.webp", 390)
+    resize_to("market/coin_icon.png", d / "coin.png", 84, fmt="png")                 # 28 pt @3x
+    market_ring(d / "ring.webp")                                                     # вращается в углу маркета
+    newyear_gift(d / "gift.webp")                                                 # пункт отправки подарков
+    resize_to("market/_background_glow.png", d / "glow-top.webp", 1170, 88)          # свечение над шторкой
+    resize_to("market/map_for_tale.png", d / "map-tail.webp", 1026, 86)              # карта в карточке хвоста
+    resize_to("market/tale_package.png", d / "package-box.webp", 429, 90)            # пустые упаковки
+    resize_to("market/sticker_package.png", d / "package-bag.webp", 429, 90)
+
+
 def build_pins() -> None:
     """Пин друга на карте: детали из pin/ (сняты @3x) как есть, только пережатые."""
     d = OUT / "pin"
@@ -652,6 +851,9 @@ def build_system() -> None:
     island = rgba(SCREEN_FRIENDS)[33:111, 462:708].copy()
     island[:, :, 3] *= rounded_mask(island.shape[0], island.shape[1], island.shape[0] / 2)
     save_png(island, s / "live-activity.png")
+    # иконка приложения для пушей (blink-icon.png, квадрат во весь кадр – скругление iOS даёт вёрстка):
+    # 38 pt @3x
+    resize_to("blink-icon.png", s / "app-icon.png", 114, fmt="png")
 
 
 def main() -> None:
@@ -666,6 +868,7 @@ def main() -> None:
     build_browser()
     build_share()
     build_overnights()
+    build_market()
     build_screens_art()
     build_system()
     total = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())

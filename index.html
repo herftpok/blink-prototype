@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="dark">
   <title>Blink – прототип</title>
@@ -19,6 +21,7 @@
   <link rel="stylesheet" href="styles/screens/chat.css">
   <link rel="stylesheet" href="styles/screens/profile.css">
   <link rel="stylesheet" href="styles/screens/checkins.css">
+  <link rel="stylesheet" href="styles/screens/market.css">
 </head>
 <body>
 <div class="device">
@@ -149,7 +152,11 @@
       </label>
     </section>
 
-    <!-- ═════════════ ЧЕКИНЫ (экрана нет в референсах) ═════════════ -->
+    <!-- ═════════════ МАРКЕТ (market/market_full_screen.png) ═════════════
+         Разметку собирает scripts/market.js – она общая с фичами -->
+    <section class="screen market" id="screen-market" aria-label="маркет" hidden></section>
+
+    <!-- ═════════════ ЧЕКИНЫ (экрана нет в референсах; таба больше нет – вход из профиля) ═════════════ -->
     <section class="screen checkins" id="screen-checkins" aria-label="чекины" hidden>
       <div class="screen__scroll">
         <div class="checkins__content">
@@ -177,7 +184,7 @@
               <button class="icon-button icon-button--glass pressable" type="button" aria-label="редактировать"><i class="icon icon--edit" aria-hidden="true"></i></button>
               <button class="icon-button icon-button--glass pressable" type="button" aria-label="настройки"><i class="icon icon--settings" aria-hidden="true"></i></button>
             </div>
-            <button class="market-pill pressable" type="button">
+            <button class="market-pill pressable" type="button" data-go="#/market">
               маркет
               <span class="market-pill__coins">
                 <img class="market-pill__coin" src="assets/profile/coin.png" alt="">
@@ -232,7 +239,7 @@
       <button class="tabbar__item pressable" type="button" data-tab="map"><i class="icon icon--pin" aria-hidden="true"></i>карта</button>
       <button class="tabbar__item pressable" type="button" data-tab="friends"><i class="icon icon--friends" aria-hidden="true"></i>друзья</button>
       <button class="tabbar__item pressable" type="button" data-tab="chats"><i class="icon icon--chat" aria-hidden="true"></i>чаты</button>
-      <button class="tabbar__item pressable" type="button" data-tab="checkins"><i class="icon icon--checkin" aria-hidden="true"></i>чекины</button>
+      <button class="tabbar__item pressable" type="button" data-tab="market"><i class="icon icon--market" aria-hidden="true"></i>маркет</button>
       <button class="tabbar__item pressable" type="button" data-tab="profile"><img class="tabbar__avatar" id="tab-avatar" src="" alt="">ты</button>
     </nav>
 
@@ -301,6 +308,8 @@
 
 <script src="scripts/data.js"></script>
 <script src="scripts/pin.js"></script>
+<script src="scripts/particles.js"></script>
+<script src="scripts/market.js"></script>
 <script src="scripts/app.js"></script>
 </body>
 </html>

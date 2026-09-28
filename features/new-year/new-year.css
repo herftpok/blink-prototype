@@ -1,0 +1,1547 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Новогодние подарки. Общие токены и компоненты – ../../styles, маркет –
+   ../../styles/screens/market.css (эталоны market/*.png). Здесь – стенд с двумя
+   телефонами и пультом, новогодняя вкладка маркета, флоу подарка, карта с 3D.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Стенд (в продукт не идёт) ───────────────────────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-16);
+  min-height: 100dvh;
+  padding: var(--space-20) var(--space-24);
+}
+
+.stage__head {
+  text-align: center;
+}
+
+.stage__title {
+  font: var(--type-section-title);
+}
+
+.stage__lead {
+  margin-top: var(--space-4);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.stage__phones {
+  display: grid;
+  grid-template-columns: 390px 244px 390px;
+  align-items: start;
+  column-gap: var(--space-24);
+  zoom: var(--stage-zoom, 1);
+}
+
+.stage__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-14);
+}
+
+.stage__caption {
+  min-height: 16px;
+}
+
+/* ── Пульт: сценарии и состояния ─────────────────────────────────────── */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  padding-top: 30px;                              /* вровень с телефонами, а не с подписями */
+}
+
+.panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.panel__label {
+  margin-bottom: var(--space-2);
+}
+
+.panel__row {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.panel__row > .panel__button {
+  flex: 1;
+  min-width: 0;
+}
+
+.panel__button {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  min-height: 32px;
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-12);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-map-chip);
+  text-align: center;
+}
+
+.panel__button--accent {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+.panel__button[aria-pressed="true"],
+.panel__button[aria-checked="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.panel__button:disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* подсказка пульта: почему кнопка сейчас недоступна – часть стенда, не продукта */
+.panel__note {
+  color: var(--color-text-muted);
+  font: var(--type-compact);
+  text-align: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel__button:hover {
+    border-color: var(--color-text-dim);
+    color: var(--color-text);
+  }
+
+  .panel__button--accent:hover {
+    background: var(--color-button-pressed);
+    color: var(--color-text-on-light);
+  }
+}
+
+/* ── Телефон: тряска ─────────────────────────────────────────────────── */
+
+/* встряхнули телефон – он качается в руке (только превью: на телефоне это делает человек) */
+.ny-phone.is-shaking {
+  animation: ny-shake 0.9s var(--ease-out-soft);
+}
+
+@keyframes ny-shake {
+  0%, 100% { transform: none; }
+  12% { transform: translateX(-14px) rotate(-4deg); }
+  26% { transform: translateX(12px) rotate(3.5deg); }
+  40% { transform: translateX(-10px) rotate(-3deg); }
+  54% { transform: translateX(8px) rotate(2deg); }
+  68% { transform: translateX(-5px) rotate(-1deg); }
+  82% { transform: translateX(3px) rotate(0.5deg); }
+}
+
+/* снежный шар: снег по диагонали поверх всего экрана, нажатия не ловит */
+.ny-globe {
+  position: absolute;
+  inset: 0;
+  z-index: 300;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ── Карта: подложка, пины, маршрут и 3D поверх ──────────────────────── */
+
+.ny-map {
+  background: var(--color-map-land);
+}
+
+.ny-map__canvas {
+  touch-action: none;
+  cursor: grab;
+}
+
+.ny-map__canvas.is-dragging {
+  cursor: grabbing;
+}
+
+/* слой карты: подложка крупнее экрана, камера двигает его transform-ом (из JS, каждый кадр) */
+.ny-map__layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% * var(--map-zoom, 1.35));
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.ny-map__tiles {
+  display: block;
+  width: 100%;
+  pointer-events: none;
+}
+
+.ny-map__pins .pin {
+  left: calc(var(--x) * var(--k, 1) * 1px);
+  top: calc(var(--y) * var(--k, 1) * 1px);
+}
+
+/* маршрут эльфа: пунктир от пункта отправки до дома получателя (появляется по нажатию на эльфа) */
+.ny-route {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.ny-route__path {
+  fill: none;
+  stroke: var(--color-pink);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 0.1 12;
+  opacity: 0;
+  transition: opacity var(--duration-screen) ease;
+}
+
+.ny-route__path.is-shown {
+  opacity: 1;
+}
+
+/* пройденная часть – бледнее: видно, сколько осталось */
+.ny-route__path--done {
+  stroke: var(--color-text-on-map);
+  opacity: 0;
+}
+
+.ny-route__path--done.is-shown {
+  opacity: 0.18;
+}
+
+/* 3D-слой (three.js): пункт отправки и эльфы. Нажатия разбирает JS: сначала 3D, потом пины */
+.ny-map__3d {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ── Пуш: нативный баннер iOS ─────────────────────────────────────────── */
+
+/* Пуш – системный баннер iOS, а не компонент Blink: светлый материал с блюром, иконка приложения
+   38 со скруглением iOS, заголовок SF Semibold 15, текст SF 15, „сейчас“ справа серым. Поля 8
+   от краёв экрана, r24, под Dynamic Island. От продукта – только иконка, заголовок и текст */
+.ny-push {
+  --press-scale: var(--press-scale-wide);
+  position: absolute;
+  top: calc(var(--safe-top) + 2px);
+  left: var(--ios-banner-inset);
+  right: var(--ios-banner-inset);
+  z-index: 280;
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding: var(--ios-banner-padding);
+  border-radius: var(--radius-ios-banner);
+  background: var(--color-ios-banner);
+  -webkit-backdrop-filter: blur(var(--blur-ios-banner)) saturate(180%);
+          backdrop-filter: blur(var(--blur-ios-banner)) saturate(180%);
+  box-shadow: var(--shadow-ios-banner);
+  color: var(--color-ios-label);
+  text-align: left;
+  opacity: 0;
+  transform: translateY(-140%);
+  pointer-events: none;                           /* уехавший пуш не ловит нажатия */
+  transition:
+    transform var(--duration-sheet) var(--ease-emphasized),
+    opacity var(--duration-state) ease;
+}
+
+.ny-push.is-shown {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.ny-push:active {
+  transform: scale(var(--press-scale));
+}
+
+.ny-push__icon {
+  flex-shrink: 0;
+  width: var(--ios-app-icon);
+  height: var(--ios-app-icon);
+  border-radius: var(--radius-ios-app-icon);
+}
+
+.ny-push__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* заголовок и „сейчас“ – на одной базовой линии */
+.ny-push__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.ny-push__title {
+  min-width: 0;
+  overflow: hidden;
+  font: var(--type-ios-notification-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ny-push__time {
+  flex-shrink: 0;
+  color: var(--color-ios-secondary-label);
+  font: var(--type-ios-notification-time);
+}
+
+.ny-push__text {
+  display: -webkit-box;
+  overflow: hidden;
+  font: var(--type-ios-notification-body);
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+/* ── Маркет: новогодняя вкладка ──────────────────────────────────────── */
+
+/* Герой: живой 3D-эльф с мешком (three.js) и заголовок, как у разделов маркета */
+.ny-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-8) var(--gutter) 0;
+  text-align: center;
+}
+
+.ny-hero__stage {
+  width: 100%;
+  height: 216px;
+}
+
+.ny-hero__stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ny-hero__title {
+  margin-top: -6px;
+  font: var(--type-market-section);
+  letter-spacing: var(--tracking-title);
+  transform: rotate(-2deg);
+}
+
+.ny-hero__text {
+  margin-top: var(--space-6);
+  max-width: 300px;
+  color: var(--color-text-muted);
+  font: var(--type-market-subtitle);
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  transform: rotate(-2deg);
+}
+
+.ny-grid {
+  padding-top: 36px;
+  padding-bottom: 220px;                          /* под мешком и таб-баром */
+}
+
+.ny-item {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+/* наклоны вразнобой, как у упаковок на эталоне (у .market-item внутри обёртки свой счёт детей) */
+.ny-grid .ny-item .market-item__art { transform: rotate(-3deg); }
+.ny-grid .ny-item:nth-child(4n + 2) .market-item__art { transform: rotate(4deg); }
+.ny-grid .ny-item:nth-child(4n + 3) .market-item__art { transform: rotate(2deg); }
+.ny-grid .ny-item:nth-child(4n) .market-item__art { transform: rotate(-4deg); }
+
+/* „+ в мешок“: круглая стеклянная кнопка на углу упаковки; в мешке – лаймовая галочка */
+.ny-add {
+  --press-scale: var(--press-scale-small);
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-tabbar-border);
+  border-radius: 50%;
+  background: var(--color-tabbar);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  color: var(--color-text);
+}
+
+.ny-add .icon {
+  --icon-size: 14px;
+}
+
+.ny-add[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--color-selected);
+  color: var(--color-text-on-light);
+}
+
+/* Мешок: висит над таб-баром, пока в нём есть подарки. Стекло таб-бара, внутри – веер упаковок,
+   сколько подарков и сумма, белая кнопка-пилюля (скругление вложено: 35 − 12 = 23) */
+.ny-sack {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--safe-bottom) - 1px + var(--tabbar-height) + var(--space-10));
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  height: 70px;
+  padding: 0 var(--space-12) 0 var(--space-16);
+  border: 1px solid var(--color-tabbar-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-tabbar);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  opacity: 0;
+  transform: translateY(var(--space-24));
+  pointer-events: none;
+  transition:
+    transform var(--duration-screen) var(--ease-emphasized),
+    opacity var(--duration-state) ease;
+}
+
+.ny-sack.is-shown {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.fan {
+  position: relative;
+  flex-shrink: 0;
+  width: 58px;
+  height: 50px;
+}
+
+.fan__item {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 34px;
+  transform-origin: 50% 100%;
+  transform: translateX(-50%) rotate(calc(var(--i) * 12deg - var(--n) * 6deg + 6deg));
+  pointer-events: none;
+}
+
+/* веер в плашке – по центру её высоты: упаковки крутятся вокруг своей середины, а не низа,
+   иначе веер проседает под центр плашки */
+.ny-sack .fan {
+  height: 56px;
+}
+
+.ny-sack .fan__item {
+  top: 50%;
+  bottom: auto;
+  transform-origin: 50% 50%;
+  transform: translate(-50%, -50%) rotate(calc(var(--i) * 12deg - var(--n) * 6deg + 6deg));
+}
+
+.ny-sack__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.ny-sack__title {
+  font: var(--type-friend-name);
+  white-space: nowrap;
+}
+
+.ny-sack__sum {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-compact);
+}
+
+.ny-sack__coin {
+  width: 14px;
+  height: 14px;
+}
+
+.ny-sack__button {
+  height: 46px;
+  padding: 0 var(--space-16);
+  border-radius: var(--radius-pill);
+  font: var(--type-button-compact);
+  letter-spacing: var(--tracking-button-small);
+}
+
+/* ── Флоу подарка: „кому подаришь?“ (market/choose_recipient.png) ────── */
+
+/* фон над шторками маркета – градиент эталона, а не затемнение */
+.ny-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 150;
+  background: var(--gradient-market-backdrop);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-screen) ease, visibility 0s linear var(--duration-screen);
+}
+
+.ny-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--duration-screen) ease, visibility 0s;
+}
+
+/* шторка на весь рост: верх на 56.7 – как на эталоне „кому подаришь?“ */
+.ny-sheet {
+  z-index: 151;
+  top: 56.7px;
+  max-height: none;
+  padding-bottom: 0;
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+}
+
+.ny-sheet .sheet__grabber {
+  width: 34px;
+  background: var(--color-grabber);
+}
+
+/* заголовок и список – по эталону: буквы заголовка с 91, подпись секции с 153.7, первая строка с 186 */
+.recipients__title {
+  margin-top: 14px;                               /* в зоне захвата: схлопывается с полем грэббера 4 */
+  font: var(--type-sheet-title);
+}
+
+.recipients__scroll {
+  flex: 1;
+  margin: 0 calc(var(--gutter) * -1);
+  padding: 0 var(--gutter) 120px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.recipients__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.recipients__label {
+  display: flex;
+  gap: var(--space-6);
+  margin: 32px 0 20px;
+}
+
+/* вторая секция – дальше от списка: подпись „все друзья“ на 461.7 */
+.recipients__list + .recipients__label {
+  margin-top: 40px;
+}
+
+.recipients__label--best .recipients__label-text {
+  background: var(--gradient-market-text);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+
+.recipients__label-count {
+  color: var(--color-text);
+}
+
+.recipients__list,
+.dispatch-list {
+  list-style: none;
+}
+
+.recipients__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;                                      /* шаг строк 62 = 46 + 16 */
+}
+
+.recipient {
+  --press-scale: var(--press-scale-row);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+}
+
+.recipient__photo {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-16);
+  object-fit: cover;
+  background: var(--color-surface-raised);
+}
+
+.recipient__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;                                       /* от базовой линии имени до статуса 21.3, как на эталоне */
+  min-width: 0;
+  padding-bottom: 2px;                            /* и весь текст на 1 выше центра аватара */
+}
+
+.recipient__name {
+  font: var(--type-recipient-name);
+}
+
+.recipient__status {
+  color: var(--color-text-muted);
+  font: var(--type-recipient-status);
+}
+
+.recipient__status--online {
+  background: var(--gradient-market-text);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+
+/* поиск и „закрыть“ внизу шторки: поле 301×46 и кнопка 46 */
+.recipients__footer {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--safe-bottom) + 18px);
+  display: flex;
+  gap: 10px;
+}
+
+.recipients__footer .search-field {
+  position: static;
+  flex: 1;
+  width: auto;
+}
+
+/* ── „подарить“: получатель, подарок, комментарий, анонимно, эльф (market/confirm_gift.png) ── */
+
+.ny-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 160;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  transform: translateY(102%);
+  visibility: hidden;
+  pointer-events: none;                           /* уезжает вниз – нажатия уже проходят сквозь */
+  transition: transform var(--duration-sheet) var(--ease-emphasized), visibility 0s linear var(--duration-sheet);
+}
+
+.ny-confirm.is-open {
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+  transition: transform var(--duration-sheet) var(--ease-emphasized), visibility 0s;
+}
+
+/* фиолетовое свечение над шапкой (market/_background_glow.png) */
+.ny-confirm__glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+/* колонка: карточка подарка забирает свободное место до эталонных 320 – у лимитированных
+   под ней ещё склад, и карточка становится ниже, а CTA стоит на месте (732 на эталоне) */
+.ny-confirm__scroll {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: calc(var(--safe-top) + 6px) var(--space-24) calc(var(--safe-bottom) + 22px + var(--button-height) + 16px);
+}
+
+.ny-confirm__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.ny-confirm__head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  margin: 0 -8px;                                 /* шапка – по полям экрана 16, контент – 24 */
+}
+
+.ny-confirm__head .icon-button--header {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.ny-confirm__photo {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-16);
+  object-fit: cover;
+}
+
+.ny-confirm__who {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-bottom: 4px;                            /* имя и „получатель“ на 2 выше центра аватара – как на эталоне */
+}
+
+.ny-confirm__name {
+  font: var(--type-recipient-name);
+}
+
+.ny-confirm__role {
+  color: var(--color-text-muted);
+  font: var(--type-recipient-status);
+}
+
+/* Карточка подарка: чёрная с сеткой точек, рамка 2 pt #1A1A1A, r40 */
+.gift-card {
+  position: relative;
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  align-items: center;
+  min-height: 200px;
+  max-height: 320px;
+  margin-top: 16px;
+  padding: 26px var(--space-20) 13px;
+  border: 2px solid var(--color-surface);
+  border-radius: 40px;
+  background:
+    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    var(--color-bg);
+  text-align: center;
+}
+
+/* картинка занимает всё, что осталось в карточке над названием */
+.gift-card__art {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.gift-card .fan {
+  flex: 1;
+  width: 210px;
+  min-height: 0;
+  max-height: 170px;
+}
+
+.gift-card .fan__item {
+  width: 100px;
+  transform: translateX(-50%) rotate(calc(var(--i) * 14deg - var(--n) * 7deg + 7deg));
+}
+
+.gift-card__title {
+  margin-top: 12px;
+  font: var(--type-gift-title);
+  text-wrap: balance;
+}
+
+.gift-card__kind {
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font: var(--type-gift-kind);
+  letter-spacing: 0.02em;
+}
+
+/* остаток на складе: голографическая полоса 28, трек белый .1 */
+.stock {
+  flex-shrink: 0;
+  margin-top: 16px;
+}
+
+.stock__bar {
+  position: relative;
+  height: 28px;
+  padding: 3px;
+  border-radius: var(--radius-10);
+  background: var(--color-banner-fill);
+  overflow: hidden;
+}
+
+.stock__fill {
+  height: 100%;
+  width: calc(var(--share) * 100%);
+  border-radius: 7px;                             /* 10 − 3 */
+  background: var(--gradient-holo);
+}
+
+.stock__meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 9px;
+  font: var(--type-gift-note);
+}
+
+.stock__count {
+  font-variant-numeric: tabular-nums;
+}
+
+.stock__total {
+  color: var(--color-text-muted);
+}
+
+/* коммент к подарку: тёмное поле 105, r20 */
+.gift-comment {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 5px;
+  height: 105px;
+  margin-top: 16px;
+  padding: 12px 17px;
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+}
+
+/* после склада – ниже: под „осталось на складе“ на эталоне 25 */
+.stock + .gift-comment {
+  margin-top: 24px;
+}
+
+.gift-comment__label {
+  color: var(--color-text-muted);
+  font: var(--type-comment-label);
+}
+
+.gift-comment__input {
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: var(--type-comment);
+  resize: none;
+  outline: none;
+}
+
+.gift-comment__input::placeholder {
+  color: var(--color-text-faint);
+}
+
+/* строка с переключателем: „отправить анонимно“ */
+.gift-option {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  margin-top: 12px;
+  min-height: 30px;
+  color: var(--color-text-muted);
+  font: var(--type-gift-option);
+  letter-spacing: 0.02em;
+}
+
+/* переключатель 53×30: включённый – градиент, ручка чёрная */
+.switch {
+  --press-scale: var(--press-scale-small);
+  position: relative;
+  flex-shrink: 0;
+  width: 53px;
+  height: 30px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  transition: background var(--duration-state) ease;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  transition: transform var(--duration-state) var(--ease-emphasized), background var(--duration-state) ease;
+}
+
+.switch[aria-checked="true"] {
+  background: var(--gradient-toggle);
+}
+
+.switch[aria-checked="true"]::after {
+  background: var(--color-bg);
+  transform: translateX(23px);
+}
+
+/* как быстро побежит эльф: три плитки выбора (компонент .choice-tiles) */
+.gift-speed {
+  flex-shrink: 0;
+  margin-top: 16px;
+}
+
+.gift-speed__label {
+  margin-bottom: 8px;
+  color: var(--color-text-muted);
+  font: var(--type-gift-option);
+  letter-spacing: 0.02em;
+}
+
+/* „1 день“ на плитке – как сумма в CTA, только без капса; строка одна – плитка ниже */
+.gift-speed .choice-tile {
+  height: var(--button-height);
+}
+
+.gift-speed .choice-tile__value {
+  font: var(--type-button);
+}
+
+/* CTA – 732…788 на эталоне: над home indicator ещё 22 */
+.ny-confirm__footer {
+  position: absolute;
+  left: var(--space-24);
+  right: var(--space-24);
+  bottom: calc(var(--safe-bottom) + 22px);
+}
+
+/* „ПОДАРИТЬ“ – белая CTA 56: слева действие, справа сумма с монетой – тем же шрифтом */
+.gift-cta {
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 var(--space-16);
+}
+
+.gift-cta__sum {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  text-transform: none;
+}
+
+.gift-cta__coin {
+  width: 28px;
+  height: 28px;
+}
+
+/* ── „подарок отправлен!“ – карточка снизу (market/gift_sended_modal.png) ── */
+
+/* Не шторка во всю ширину, а карточка с полями по бокам (16) и снизу (над home indicator),
+   скругление r30 со всех сторон. Над градиентом, как „кому подаришь?“: чёрная на чёрном маркете
+   сливалась бы с ним. Внутри – как на эталоне: заголовок 20/600, упаковка 157, аватар 32 и имя
+   через 16, CTA r20. Выезжает снизу целиком, из-под края экрана */
+.ny-sent {
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: var(--safe-bottom);
+  z-index: 161;
+  align-items: center;
+  padding: 0 var(--space-20) var(--space-8);
+  border-radius: var(--radius-modal);
+  text-align: center;
+  transform: translateY(calc(100% + var(--safe-bottom) + var(--space-24)));
+}
+
+.ny-sent.is-open {
+  transform: none;
+}
+
+/* у карточки поле снизу – фон за нижний край, как у шторки, не нужен */
+.ny-sent::after {
+  display: none;
+}
+
+/* за заголовок карточку можно смахнуть вниз */
+.ny-sent__handle {
+  align-self: stretch;
+  touch-action: none;
+  cursor: grab;
+}
+
+.ny-sent__title {
+  margin-top: 27px;                               /* буквы с 32, как на эталоне */
+  font: var(--type-gift-title);
+  text-wrap: balance;
+}
+
+.ny-sent__art {
+  width: 157px;
+  margin-top: 22px;
+}
+
+.ny-sent__fan {
+  width: 220px;
+  height: 180px;
+  margin-top: 22px;
+}
+
+.ny-sent__fan .fan__item {
+  width: 110px;
+  transform: translateX(-50%) rotate(calc(var(--i) * 14deg - var(--n) * 7deg + 7deg));
+}
+
+.ny-sent__to {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  margin-top: 46px;
+  color: var(--color-text-muted);
+  font: var(--type-label);
+}
+
+.ny-sent__photo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-12);
+  object-fit: cover;
+}
+
+.ny-sent__cta {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.ny-sent__second {
+  width: 100%;
+}
+
+/* ── Карта: шторки эльфа и пункта отправки ───────────────────────────── */
+
+.ny-map-sheet {
+  z-index: 120;
+}
+
+/* шторку тянут вниз за грэббер: сдвиг --drag из JS, без анимации, пока палец на экране */
+.ny-phone .sheet.is-dragging {
+  transform: translateY(var(--drag, 0px));
+  transition: none;
+}
+
+/* Дорожка: слева пин того, кто дарит, справа – того, кому; между ними пунктир маршрута, по которому
+   идёт эльф. Пройденное – бледнее, как на карте; где эльф – доля --progress (0…1) из JS.
+   Пины – тот же компонент, что на карте (scripts/pin.js), без свечения онлайна */
+.elf-track {
+  display: flex;
+  align-items: flex-start;
+  margin-top: var(--space-8);
+}
+
+.elf-track__person {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  width: 76px;
+}
+
+/* пин 52 и голова над кадром: маска аватарки 62×80 */
+.elf-track__pin {
+  position: relative;
+  width: var(--pin-avatar-width);
+  height: var(--pin-avatar-height);
+}
+
+.elf-track__pin .pin {
+  left: 50%;
+  top: 100%;
+}
+
+/* аноним: только стикер-вопрос, без кадра пина – стоит на той же линии, что и пины */
+.elf-track__sticker {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  transform: translateX(-50%) rotate(-8deg);
+}
+
+.elf-track__name {
+  max-width: 100%;
+  font: var(--type-friend-name);
+}
+
+/* пунктир на высоте середины кадра пина: 80 − 52 / 2 */
+.elf-track__way {
+  position: relative;
+  flex: 1;
+  height: var(--pin-avatar-height);
+  container-type: inline-size;
+}
+
+.elf-track__way::before,
+.elf-track__done {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--pin-avatar-height) - var(--pin-frame) / 2 - 2px);
+  height: 4px;
+}
+
+.elf-track__way::before {
+  background: radial-gradient(circle, var(--color-pink) 0 1.8px, transparent 2.3px) 0 50% / 12px 4px repeat-x;
+}
+
+/* пройденное гасим подложкой шторки поверх розовых точек */
+.elf-track__done {
+  background: var(--color-bg);
+  opacity: 0.75;
+  transform: scaleX(var(--progress, 0));
+  transform-origin: 0 50%;
+  transition: transform 0.25s linear;
+}
+
+/* сколько ещё идти – сразу под пунктиром, своей строкой выше имён: не читается как их продолжение */
+.elf-track__eta {
+  position: absolute;
+  top: calc(var(--pin-avatar-height) - var(--pin-frame) / 2 + var(--space-10));
+  left: 0;
+  right: 0;
+  color: var(--color-text-muted);
+  font: var(--type-recipient-status);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* эльф стоит на пунктире: ноги – на 90 % высоты кадра */
+.elf-track__elf {
+  position: absolute;
+  left: 0;
+  top: calc(var(--pin-avatar-height) - var(--pin-frame) / 2 - 72px);
+  width: 80px;
+  height: 80px;
+  transform: translateX(calc(var(--progress, 0) * 100cqw - 50%));
+  transition: transform 0.25s linear;
+}
+
+/* шаг: кадры рендера three.js сменяют друг друга (только opacity) */
+.elf-track__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  animation: elf-step 0.48s steps(1, end) infinite;
+  animation-delay: calc(var(--f) * 0.08s);
+}
+
+/* после тряски – бег: свои кадры (корпус вперёд, подлёт на каждом шаге), цикл втрое быстрее */
+.elf-track__frame--run {
+  display: none;
+  animation-duration: 0.3s;
+  animation-delay: calc(var(--f) * 0.05s);
+}
+
+.elf-track.is-running .elf-track__frame--walk {
+  display: none;
+}
+
+.elf-track.is-running .elf-track__frame--run {
+  display: block;
+}
+
+/* за бегущим эльфом – снежные штрихи: улетают назад и тают */
+.elf-track__speed {
+  position: absolute;
+  left: -14px;
+  top: 38%;
+  width: 26px;
+  height: 22px;
+  opacity: 0;
+  background:
+    linear-gradient(90deg, transparent, var(--color-text)) 0 0 / 100% 2px no-repeat,
+    linear-gradient(90deg, transparent, var(--color-text)) 8px 10px / 70% 2px no-repeat,
+    linear-gradient(90deg, transparent, var(--color-text)) 2px 20px / 85% 2px no-repeat;
+}
+
+.elf-track.is-running .elf-track__speed {
+  animation: elf-speed 0.42s linear infinite;
+}
+
+@keyframes elf-speed {
+  0% { opacity: 0; transform: translateX(8px); }
+  30% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateX(-14px); }
+}
+
+@keyframes elf-step {
+  0% { opacity: 1; }
+  16.667% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.ny-sheet-title {
+  margin-top: var(--space-20);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* подзаголовок сразу под заголовком */
+.ny-sheet-title + .sheet__text.ny-sheet-title {
+  margin-top: var(--space-4);
+}
+
+/* что внутри – только дарителю: „внутри“ и сколько подарков (розовым, на одной линии),
+   под ними каждый подарок своей плашкой */
+.gift-inside {
+  margin-top: var(--space-16);
+}
+
+.gift-inside__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.gift-inside__count {
+  color: var(--color-pink);
+  font: var(--type-label);
+}
+
+.gift-plates {
+  margin-top: var(--space-8);
+  list-style: none;
+}
+
+/* один подарок – плашка во всю ширину: упаковка слева, название справа, всё по центру высоты */
+.gift-plate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-12) var(--space-20) var(--space-12) var(--space-12);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.gift-plate__art {
+  flex-shrink: 0;
+  width: 84px;
+  height: 96px;
+  object-fit: contain;
+  transform: rotate(-6deg);
+}
+
+.gift-plate__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.gift-plate__name {
+  font: var(--type-gift-title);
+}
+
+.gift-plate__kind {
+  color: var(--color-text-muted);
+  font: var(--type-gift-kind);
+  letter-spacing: 0.02em;
+}
+
+/* несколько подарков – лентой, листается пальцем до края экрана: у каждого своя плашка,
+   упаковка сверху, название под ней */
+.gift-plates--row {
+  display: flex;
+  gap: var(--space-8);
+  margin-right: calc(var(--gutter) * -1);
+  margin-left: calc(var(--gutter) * -1);
+  padding: 0 var(--gutter);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--gutter);
+  scrollbar-width: none;
+}
+
+.gift-plates--row::-webkit-scrollbar {
+  display: none;
+}
+
+.gift-plates--row .gift-plate {
+  flex: 0 0 132px;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12);
+  scroll-snap-align: start;
+  text-align: center;
+}
+
+.gift-plates--row .gift-plate__body {
+  align-items: center;
+  width: 100%;
+}
+
+.gift-plates--row .gift-plate__name {
+  max-width: 100%;
+  font: var(--type-label);
+}
+
+.gift-plates--row .gift-plate__kind {
+  font: var(--type-tile);
+}
+
+/* подсказка про тряску – скрытый жест иначе не найти: „трях“ – наш знак встряхнуть */
+.ny-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+  color: var(--color-text-secondary);
+  font: var(--type-caption);
+}
+
+/* центр значка – по середине строчных букв: по замеру он стоял на 2.3 выше */
+.ny-hint .icon {
+  --icon-size: 20px;
+  transform: translateY(2px);
+}
+
+.ny-sheet-cta {
+  width: 100%;
+  margin-top: var(--space-20);
+}
+
+/* пункт отправки: подарок (gift.png в новогодних цветах) и список твоих подарков */
+.dispatch-hero {
+  display: block;
+  width: 120px;
+  margin: var(--space-4) auto 0;
+}
+
+.dispatch-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+  max-height: 330px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.dispatch-row {
+  --press-scale: var(--press-scale-row);
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--space-8) var(--space-12) var(--space-8) var(--space-8);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.dispatch-row__photo {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-16);
+  object-fit: cover;
+}
+
+.dispatch-row__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.dispatch-row__name {
+  font: var(--type-friend-name);
+}
+
+.dispatch-row__status {
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+.dispatch-row__fan {
+  width: 46px;
+  height: 44px;
+}
+
+.dispatch-row__fan .fan__item {
+  width: 28px;
+}
+
+/* строка открывает шторку подарка */
+.dispatch-row__chevron {
+  --icon-size: 16px;
+  color: var(--color-text-muted);
+}
+
+/* доставлен – галочка как „выбрано“ в маркете */
+.dispatch-row__done {
+  color: var(--color-selected);
+}
+
+/* Подарок пришёл: сверху послание дарителя – аватар 46, ник и дата дарения, под ними текст;
+   ниже подарок карточкой, как на экране „подарить“ (мешок – плашками), и „подарить кому-нибудь“ */
+.arrival-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: var(--space-8);
+}
+
+.arrival-head__photo,
+.arrival-head__sticker {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+}
+
+.arrival-head__photo {
+  border-radius: var(--radius-16);
+  object-fit: cover;
+}
+
+.arrival-head__sticker {
+  object-fit: contain;
+  transform: rotate(-8deg);
+}
+
+.arrival-head__who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-bottom: 4px;                            /* как шапка „подарить“: текст на 2 выше центра аватара */
+}
+
+.arrival-head__nick {
+  font: var(--type-recipient-name);
+}
+
+.arrival-head__date {
+  color: var(--color-text-muted);
+  font: var(--type-recipient-status);
+}
+
+.arrival-message {
+  margin-top: var(--space-12);
+  font: var(--type-bio);
+  letter-spacing: -0.01em;
+  text-align: left;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* карточка подарка в шторке: высота по содержимому, картинка – своей высоты */
+.gift-card--sheet {
+  flex: none;
+  min-height: 0;
+  max-height: none;
+  margin-top: var(--space-16);
+  padding-top: var(--space-20);
+}
+
+.gift-card--sheet .gift-card__art {
+  flex: none;
+  height: 150px;
+}
+
+.arrival-plates {
+  margin-top: var(--space-16);
+}
+
+.tired-art {
+  display: block;
+  width: 120px;
+  margin: var(--space-12) auto 0;
+  transform: rotate(-8deg);
+}
+
+/* ── Телефон: стенд складывается в колонку ───────────────────────────── */
+
+@media (max-width: 480px) {
+  .stage {
+    gap: 0;
+    padding: 0;
+  }
+
+  .stage__head {
+    padding: var(--space-20) var(--gutter);
+  }
+
+  .stage__phones {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    zoom: 1;
+  }
+
+  .stage__side {
+    width: 100%;
+    gap: 0;
+  }
+
+  /* телефон на всю ширину: .app берёт 100% обёртки, а по центру она сжалась бы в ноль */
+  .stage__phone {
+    align-self: stretch;
+  }
+
+  .stage__caption {
+    align-self: stretch;
+    padding: var(--space-12) var(--gutter);
+  }
+
+  .panel {
+    align-self: stretch;
+    padding: var(--space-8) var(--gutter) var(--space-24);
+  }
+
+  .ny-map__canvas {
+    touch-action: pan-y;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ny-phone.is-shaking {
+    animation: none;
+  }
+
+  /* эльф на дорожке стоит: один кадр, без шага и штрихов */
+  .elf-track__frame,
+  .elf-track.is-running .elf-track__speed {
+    animation: none;
+  }
+
+  .elf-track__frame--first {
+    opacity: 1;
+  }
+}

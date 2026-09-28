@@ -36,11 +36,14 @@ SCREENS = {
     "chat": ("#/chat/masha", "messanger/chat inside/основной.png"),
     "profile": ("#/profile", "profile/profile.png"),
     "profile-full": ("#/profile", "profile/profile_without_nav.png"),   # низ профиля без таб-бара
+    "market": ("#/market", "market/market_full_screen.png"),             # длинный скриншот 390×2450
 }
 
 # экранам, у которых референс снят без части интерфейса, эту часть прячем
 EXTRA_CSS = {
     "profile-full": ".tabbar{visibility:hidden}",
+    # эталон маркета – вся лента разом: телефон вытянут до 2450 pt, лента не скроллится
+    "market": ".app{height:2450px!important;zoom:1!important}.market .screen__scroll{overflow:visible}",
 }
 
 # Состояния пина: эталон pin/*.png (снят @3x, если не сказано иначе), где в нём кадр 52 (x, y в pt),
@@ -63,9 +66,16 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
         pass
 
 
+class LocalServer(socketserver.ThreadingTCPServer):
+    # Chromium открывает по шесть соединений разом, а стенды тянут десятки картинок: при очереди
+    # по умолчанию (5) соединения сбрасываются – ERR_CONNECTION_RESET в консоли
+    request_queue_size = 128
+    daemon_threads = True
+
+
 def serve() -> tuple[socketserver.TCPServer, int]:
     handler = functools.partial(QuietHandler, directory=str(PROTOTYPE))
-    server = socketserver.ThreadingTCPServer(("127.0.0.1", 0), handler)
+    server = LocalServer(("127.0.0.1", 0), handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server, server.server_address[1]
 
@@ -80,7 +90,9 @@ def render(routes: dict[str, str], out: Path) -> dict[str, Path]:
             browser = p.chromium.launch()
             page = browser.new_page(viewport={"width": 520, "height": 960}, device_scale_factor=3)
             for name, route in routes.items():
-                page.goto(f"http://127.0.0.1:{port}/index.html{route}")
+                # свой адрес у каждого снимка: переход только по хешу страницу не перезагружает,
+                # и стили прошлого экрана (EXTRA_CSS) остались бы
+                page.goto(f"http://127.0.0.1:{port}/index.html?shot={name}{route}")
                 page.wait_for_load_state("networkidle")
                 page.evaluate("document.fonts.ready")
                 page.add_style_tag(content="*,*::before,*::after{transition:none!important;animation:none!important}"

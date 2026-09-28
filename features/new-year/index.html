@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – новогодние подарки</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/screens/map.css">
+  <link rel="stylesheet" href="../../styles/screens/market.css">
+  <link rel="stylesheet" href="new-year.css">
+  <!-- three.js лежит в прототипе (vendor/three, MIT): страница открывается без внешних скриптов -->
+  <script type="importmap">{ "imports": { "three": "../../vendor/three/three.module.js" } }</script>
+</head>
+<body>
+<div class="stage">
+
+  <!-- Стенд: подписи и пульт – только для показа, в продукт не идут -->
+  <header class="stage__head">
+    <h1 class="stage__title">новогодние подарки</h1>
+    <p class="stage__lead">наташка дарит подарок, эльф несёт его от&nbsp;пункта отправки к&nbsp;дому друга</p>
+  </header>
+
+  <div class="stage__phones" id="stage-phones">
+    <section class="stage__side" aria-labelledby="side-left">
+      <h2 class="stage__caption caps-label" id="side-left">наташка · дарит</h2>
+      <div class="stage__phone" id="phone-left"></div>
+    </section>
+
+    <!-- Пульт: любой сценарий и состояние одной кнопкой -->
+    <aside class="panel" aria-label="пульт показа">
+      <div class="panel__group" role="group" aria-labelledby="panel-scenes">
+        <p class="panel__label caps-label" id="panel-scenes">сценарии</p>
+        <button class="panel__button panel__button--accent pressable" type="button" data-scene="gift">подарок лёве – эльф в пути</button>
+        <button class="panel__button pressable" type="button" data-scene="sack">мешок подарков лёве</button>
+        <button class="panel__button pressable" type="button" data-scene="many">три эльфа сразу</button>
+        <button class="panel__button pressable" type="button" data-scene="market">наташка в маркете</button>
+      </div>
+
+      <div class="panel__group" role="group" aria-labelledby="panel-recipient">
+        <p class="panel__label caps-label" id="panel-recipient">лёва</p>
+        <button class="panel__button pressable" type="button" data-act="push">пуш: эльф вышел</button>
+        <button class="panel__button pressable" type="button" data-act="open-push">открыть пуш – камера за эльфом</button>
+        <button class="panel__button pressable" type="button" data-act="shake">потрясти телефон</button>
+        <p class="panel__note" id="panel-shake-note"></p>
+        <button class="panel__button pressable" type="button" data-act="arrive">эльф дошёл</button>
+      </div>
+
+      <div class="panel__group" role="group" aria-labelledby="panel-right">
+        <p class="panel__label caps-label" id="panel-right">телефон справа</p>
+        <div class="panel__row" role="radiogroup" aria-labelledby="panel-right">
+          <button class="panel__button pressable" type="button" role="radio" data-right="leva">лёва</button>
+          <button class="panel__button pressable" type="button" role="radio" data-right="sonya">соня, подруга лёвы</button>
+        </div>
+      </div>
+
+      <div class="panel__group" role="group" aria-labelledby="panel-time">
+        <p class="panel__label caps-label" id="panel-time">сутки на стенде идут</p>
+        <div class="panel__row" role="radiogroup" aria-labelledby="panel-time">
+          <button class="panel__button pressable" type="button" role="radio" data-time="1">24 часа</button>
+          <button class="panel__button pressable" type="button" role="radio" data-time="480">3 минуты</button>
+          <button class="panel__button pressable" type="button" role="radio" data-time="1440">минуту</button>
+        </div>
+        <button class="panel__button pressable" type="button" data-act="new-day">наступил новый день</button>
+        <button class="panel__button pressable" type="button" data-act="reset">с начала</button>
+      </div>
+    </aside>
+
+    <section class="stage__side" aria-labelledby="side-right">
+      <h2 class="stage__caption caps-label" id="side-right"></h2>
+      <div class="stage__phone" id="phone-right"></div>
+    </section>
+  </div>
+</div>
+
+<script src="../../scripts/pin.js"></script>
+<script src="../../scripts/particles.js"></script>
+<script src="../../scripts/market.js"></script>
+<script type="module" src="new-year.js"></script>
+</body>
+</html>
