@@ -728,12 +728,41 @@ def check_new_year(browser, port: int, errors: list[str]) -> None:
           state("return NY.server.gifts.filter((g) => g.status === 'walking').length") == 3
           and state("return NY.phones.left.elves().length") == 3)
 
+    # ссылка из раскладки: стенд открывается сразу в нужном состоянии
+    page.goto(f"http://127.0.0.1:{port}/features/new-year/index.html?state=elf-friend", wait_until="domcontentloaded")
+    # программный WebGL пересобирает стенд долго: ждём само состояние, а не тишину в сети
+    page.wait_for_function("window.NY && NY.phones.right.sheet !== null", timeout=90000)
+    check("подарки: ссылка ?state=elf-friend открывает стенд сразу в состоянии – справа соня, шторка эльфа",
+          state("return NY.phones.right.persona === 'sonya' && NY.phones.right.sheet && NY.phones.right.sheet.kind === 'elf'"))
+
     page.set_viewport_size({"width": 375, "height": 812})
     page.wait_for_timeout(300)
     widths = page.evaluate("""() => ['#phone-left .ny-phone', '.panel', '#phone-right .ny-phone']
         .map((s) => Math.round(document.querySelector(s).getBoundingClientRect().width))""")
     check("подарки: 375×812 – телефоны и пульт колонкой на всю ширину, без горизонтального скролла",
           widths == [375, 375, 375] and not page.evaluate("document.documentElement.scrollWidth > innerWidth"))
+    page.close()
+
+
+def check_new_year_board(browser, port: int, errors: list[str]) -> None:
+    """Раскладка новогодней фичи: все экраны и состояния, снимки и ссылки на живой стенд."""
+    page = browser.new_page(viewport={"width": 1280, "height": 900}, device_scale_factor=1)
+    page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(f"http://127.0.0.1:{port}/features/new-year/states.html")
+    page.wait_for_load_state("networkidle")
+    info = page.evaluate("""() => { const cards = [...document.querySelectorAll('.board-card__link')];
+        return [cards.length, document.querySelectorAll('.board__group').length,
+                cards.every((a) => /^index\\.html\\?state=[a-z-]+$/.test(a.getAttribute('href'))),
+                [...document.querySelectorAll('.board-card__shot')].map((img) => img.getAttribute('src'))]; }""")
+    shots = ROOT_PROTOTYPE / "features" / "new-year"
+    check("подарки: раскладка – 22 состояния в 5 сценариях, у каждого снимок и ссылка на живой стенд",
+          info[0] == 22 and info[1] == 5 and info[2] and all((shots / src).exists() for src in info[3]))
+    page.set_viewport_size({"width": 375, "height": 812})
+    page.wait_for_timeout(300)
+    check("подарки: раскладка на 375 – по два экрана в ряд, без горизонтального скролла",
+          not page.evaluate("document.documentElement.scrollWidth > innerWidth")
+          and page.evaluate("getComputedStyle(document.querySelector('.board__grid')).gridTemplateColumns.split(' ').length") == 2)
     page.close()
 
 
@@ -935,6 +964,7 @@ def main() -> int:
             check_geo_share(browser, port, errors)
             check_geo_share_locate(browser, port, errors)
             check_overnights(browser, port, errors)
+            check_new_year_board(browser, port, errors)
             browser.close()
             # 3D новогодних подарков рисует three.js: WebGL в безголовом Chromium – только через SwiftShader.
             # Отдельный браузер: программная отрисовка замедляет всё, и проверки с анимациями выше начинают плавать

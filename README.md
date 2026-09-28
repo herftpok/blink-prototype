@@ -69,9 +69,10 @@ tools/                  сборка и проверки
 | `python3 prototype/tools/build_assets.py` | пересобирает `assets/` и `styles/icons.css` из папок проекта |
 | `python3 prototype/tools/compare.py` | рендерит экраны и кладёт в `tools/.compare/` сравнения с референсами (рядом и наложением); `profile-full` – низ профиля против `profile_without_nav.png` |
 | `python3 prototype/tools/compare.py pins` | пин во всех шести состояниях против `pin/*.png`: лист „эталон · прототип · наложение“ (`pins-side.png`) и доля отличий вне аватарки |
-| `python3 prototype/tools/smoke.py` | прокликивает 112 сценариев: 31 основного прототипа, 51 „шеринга геопозиции“, 9 „ночлегов“ и 21 „новогодних подарков“, проверяет noindex на всех страницах и ловит ошибки консоли |
+| `python3 prototype/tools/smoke.py` | прокликивает 115 сценариев: 31 основного прототипа, 51 „шеринга геопозиции“, 9 „ночлегов“ и 24 „новогодних подарков“ (вместе с раскладкой экранов), проверяет noindex на всех страницах и ловит ошибки консоли |
 | `python3 prototype/tools/measure.py` | замеры по скриншотам: полосы блоков, цвета, место ассета, подбор кегля и веса по форме букв (`fit-font`) |
 | `python3 prototype/tools/check_assets.py` | проверяет, что все файлы проекта описаны в `ASSETS.md` |
+| `python3 prototype/tools/shoot_states.py` | снимки всех состояний новогодней фичи для раскладки `features/new-year/states.html` |
 | `python3 prototype/tools/serve.py` | дев-сервер на http://localhost:8765 без кэша: картинки пересобираются под теми же именами, и браузер всегда берёт свежие |
 
 ## Состояние сверки

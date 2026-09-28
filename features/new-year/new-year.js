@@ -14,6 +14,7 @@
  * пульт. Всё вне телефонов – стенд. Время на стенде идёт быстрее: по умолчанию сутки за 3 минуты.
  */
 import { createMapScene, createHeroScene, renderProps } from "./ny-scene.js";
+import { STATES } from "./states.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -104,7 +105,7 @@ const sumOf = (items) => items.reduce((sum, id) => sum + (itemById(id).price || 
 
 // t – время стенда в мс; scale – во сколько раз быстрее жизни. По умолчанию сутки за 3 минуты: эльф „за 1 день“
 // идёт 3 минуты, и после тряски его бег видно дольше минуты
-const sim = { scale: 480, t: 0 };
+const sim = { scale: 480, t: 0, pushMs: PUSH_MS };     // pushMs – сколько висит пуш (снимкам состояний нужно дольше)
 
 const bus = {
   handlers: {},
@@ -1046,7 +1047,7 @@ class Phone {
     this.el.push.classList.add("is-shown");
     this.el.announce.textContent = `${title}. ${text}`;
     clearTimeout(this.pushTimer);
-    this.pushTimer = setTimeout(() => this.hidePush(), PUSH_MS);
+    this.pushTimer = setTimeout(() => this.hidePush(), sim.pushMs);
   }
 
   hidePush() {
@@ -1435,6 +1436,126 @@ window.addEventListener("resize", fitStage);
 fitStage();
 if (document.fonts) document.fonts.ready.then(fitStage);
 
+/* ── все состояния фичи: раскладка states.html и ссылки ?state=<id> ─────────
+   Как дойти до каждого состояния с чистого стенда. Список и подписи – states.js */
+
+const STATE_COMMENT = "с наступающим! пусть этот год будет не «ну норм», а «офигеть, как я так живу» 🎄";
+
+/** эльф у двери прямо сейчас: пуши и шторка прихода – как в жизни */
+function deliverNow(gift) {
+  gift.walked = gift.path.total;
+  server.update(0);
+}
+
+function stateConfirm(items, to, sack = false) {
+  scene("market");
+  phones.left.startGift(items, { sack });
+  phones.left.draft.to = to;
+  phones.left.openConfirm();
+}
+
+function stateSent(anonymous) {
+  scene("market");
+  phones.left.openSent(quickGift("natashka", "leva", ["jewelry"], { anonymous }));
+}
+
+function stateRecipient() {
+  scene("gift");
+  phones.right.hidePush();
+  phones.right.openElf(server.gifts[0].id);
+}
+
+function stateDispatch() {
+  phones.left.showTab("map");
+  phones.left.centerOn(DISPATCH, { x: 0.5, y: 0.3 }, true);
+  phones.left.openDispatch();
+}
+
+const STATE_SETUPS = {
+  "market-ny": () => scene("market"),
+  "market-sack": () => {
+    scene("market");
+    phones.left.sack = ["cat", "ghost", "pumpkin"];
+    phones.left.renderSack();
+  },
+  recipients: () => {
+    scene("market");
+    phones.left.startGift(["zombie"]);
+  },
+  confirm: () => stateConfirm(["cat"], "leva"),
+  "confirm-limited": () => stateConfirm(["jewelry"], "leva"),
+  "confirm-sack": () => stateConfirm(["cat", "ghost", "pumpkin"], "sonya", true),
+  sent: () => stateSent(false),
+  "sent-anon": () => stateSent(true),
+  "elf-sender": () => {
+    scene("gift");
+    phones.left.openElf(server.gifts[0].id);
+  },
+  "elf-sender-sack": () => {
+    scene("sack");
+    phones.left.openElf(server.gifts[0].id);
+  },
+  "dispatch-empty": () => {
+    resetAll();
+    stateDispatch();
+  },
+  "dispatch-list": () => {
+    resetAll();
+    // один уже дошёл – тихо, без пушей; второй в пути
+    const done = quickGift("natashka", "vasya", ["ghost"]);
+    Object.assign(done, { walked: done.path.total, status: "delivered", doneAt: performance.now() - CELEBRATE_MS });
+    quickGift("natashka", "leva", ["zombie"]);
+    phones.right.hidePush();
+    stateDispatch();
+  },
+  "push-delivered": () => {
+    scene("gift");
+    deliverNow(server.gifts[0]);
+  },
+  many: () => scene("many"),
+  "push-incoming": () => scene("gift"),
+  "elf-recipient": () => stateRecipient(),
+  "elf-recipient-anon": () => {
+    resetAll();
+    const gift = quickGift("natashka", "leva", ["zombie"], { anonymous: true });
+    phones.right.hidePush();
+    phones.right.openElf(gift.id);
+  },
+  running: () => {
+    stateRecipient();
+    phones.right.shake();
+  },
+  tired: () => {
+    stateRecipient();
+    server.shakes.leva = server.day;              // сегодня уже тряс
+    phones.right.shake();
+  },
+  arrival: () => {
+    resetAll();
+    deliverNow(quickGift("natashka", "leva", ["jewelry"], { comment: STATE_COMMENT }));
+    phones.right.hidePush();
+  },
+  "arrival-sack": () => {
+    resetAll();
+    deliverNow(quickGift("natashka", "leva", ["cat", "zombie", "ghost"], { anonymous: true, comment: "угадай, от кого 🎁" }));
+    phones.right.hidePush();
+  },
+  "elf-friend": () => {
+    scene("gift");
+    phones.right.openElf(server.gifts[0].id);
+  },
+};
+
+/** включить состояние: стенд с чистого листа, справа – лёва или соня, как нужно состоянию */
+function showState(id) {
+  const meta = STATES.find((state) => state.id === id);
+  if (!meta || !STATE_SETUPS[id]) return false;
+  panelState.right = meta.persona || "leva";
+  STATE_SETUPS[id]();
+  renderPanel();
+  return true;
+}
+
 /* ── старт ───────────────────────────────────────────────────────────── */
 
 try {
@@ -1456,5 +1577,9 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 
-// для смоук-теста: состояние стенда без доступа к модулю
-window.NY = { server, sim, phones, scene, act };
+// ссылка из раскладки: index.html?state=<id> открывает стенд сразу в этом состоянии
+const initialState = new URLSearchParams(location.search).get("state");
+if (initialState) showState(initialState);
+
+// для смоук-теста и снимков: состояние стенда без доступа к модулю
+window.NY = { server, sim, phones, scene, act, showState, states: STATES.map(({ id, phone }) => ({ id, phone })) };

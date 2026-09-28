@@ -6,7 +6,9 @@
  *   BlinkSky.start(canvas, { mode: "none", shade: true });   // над светлым (карта): у снежинок тень
  *   sky.set("snow");  sky.mode  // → "snow"
  *   sky.globe();        // встряхнули: вихрь по диагонали, через несколько секунд оседает
- *   sky.confetti(["#ff75e1", "#73edff"]);   // праздник: ленточки конфетти падают сверху и уходят за край
+ *   sky.globe(60000);   // вихрь подольше (снимки состояний)
+ *   sky.confetti(["#ff75e1", "#73edff"]);         // праздник: ленточки падают сверху и уходят за край
+ *   sky.confetti(colors, 44, true);                // уже в кадре (снимки состояний)
  *   sky.stop();
  *
  * Холст сам подстраивается под размер и плотность пикселей, рисует только пока виден.
@@ -36,6 +38,7 @@
     let flakes = [];
     let globe = [];
     let globeStart = 0;
+    let globeMs = GLOBE_MS;
     let confetti = [];
 
     const scale = () => (w * h) / (390 * 844);
@@ -137,17 +140,17 @@
       // снежный шар: вихрь по диагонали, быстро – потом медленнее, оседает и тает
       if (globe.length) {
         const age = t - globeStart;
-        const k = Math.max(0, 1 - age / GLOBE_MS);        // 1 → 0: сила вихря
+        const k = Math.max(0, 1 - age / globeMs);         // 1 → 0: сила вихря
         for (const g of globe) {
           const speed = g.speed * (0.18 + 0.82 * k * k);
           g.x += (g.dx * speed + Math.sin(t / 380 + g.phase) * 22 * k) * dt;
           g.y += (g.dy * speed + 18 * (1 - k)) * dt;
           if (g.x > w + 10) g.x = -10;
           if (g.y > h + 10) { g.y = -10; g.x = Math.random() * w; }
-          const fade = age > GLOBE_MS ? Math.max(0, 1 - (age - GLOBE_MS) / 1400) : 1;
+          const fade = age > globeMs ? Math.max(0, 1 - (age - globeMs) / 1400) : 1;
           drawDot(g.x, g.y, g.r, g.a * fade);
         }
-        if (age > GLOBE_MS + 1400) globe = [];
+        if (age > globeMs + 1400) globe = [];
       }
       ctx.globalAlpha = 1;
     }
@@ -185,10 +188,11 @@
         kick();
       },
       /** Встряхнули телефон: снег по диагонали через весь экран, потом оседает */
-      globe() {
+      globe(duration = GLOBE_MS) {
         if (reduced()) return;
         resize();
         globeStart = performance.now();
+        globeMs = duration;
         const angle = rand(0.5, 0.7);                     // ~30–40° вниз вправо
         globe = Array.from({ length: Math.round(GLOBE_COUNT * scale()) }, () => ({
           x: Math.random() * w,
@@ -203,12 +207,12 @@
         kick();
       },
       /** Праздник: ленточки конфетти цветами системы сыплются сверху, волнами, и уходят за нижний край */
-      confetti(colors = ["#fff"], count = 44) {
+      confetti(colors = ["#fff"], count = 44, inView = false) {
         if (reduced()) return;
         resize();
         confetti = Array.from({ length: Math.round(count * Math.sqrt(scale())) }, () => ({
           x: Math.random() * w,
-          y: -rand(12, h * 0.55),
+          y: inView ? rand(-12, h * 0.6) : -rand(12, h * 0.55),
           w: rand(5, 8),
           h: rand(10, 17),
           color: colors[Math.floor(Math.random() * colors.length)],

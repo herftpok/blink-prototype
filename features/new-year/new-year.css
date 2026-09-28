@@ -29,6 +29,16 @@
   color: var(--color-text-muted);
 }
 
+/* ссылка на раскладку всех экранов (states.html) */
+.stage__link {
+  display: inline-block;
+  margin-top: var(--space-8);
+  color: var(--color-text);
+  font: var(--type-map-chip);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .stage__phones {
   display: grid;
   grid-template-columns: 390px 244px 390px;
