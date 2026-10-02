@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – приветственный квест</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/screens/map.css">
+  <link rel="stylesheet" href="../../styles/screens/market.css">
+  <link rel="stylesheet" href="../../styles/screens/friends.css">
+  <link rel="stylesheet" href="quest.css">
+</head>
+<body>
+<div class="stage">
+
+  <!-- Стенд: подпись и пульт – только для показа, в продукт не идут -->
+  <header class="stage__head">
+    <h1 class="stage__title">приветственный квест</h1>
+    <p class="stage__lead">угадай, где сейчас знакомые, а чтобы проверить – добавь их в друзья</p>
+  </header>
+
+  <div class="stage__phones">
+    <div class="stage__phone" id="phone"></div>
+
+    <aside class="panel" aria-label="пульт показа">
+      <div class="panel__group" role="group" aria-labelledby="panel-friends">
+        <p class="panel__label caps-label" id="panel-friends">знакомые</p>
+        <button class="panel__button panel__button--accent pressable" type="button" data-act="one">заявку приняли</button>
+        <button class="panel__button pressable" type="button" data-act="all">все приняли заявки</button>
+        <button class="panel__button pressable" type="button" data-act="three">три метки сразу</button>
+        <button class="panel__button pressable" type="button" role="switch" data-act="auto">отвечают сами</button>
+      </div>
+      <div class="panel__group" role="group" aria-labelledby="panel-stand">
+        <p class="panel__label caps-label" id="panel-stand">стенд</p>
+        <button class="panel__button pressable" type="button" data-act="intro">онбординг</button>
+        <button class="panel__button pressable" type="button" data-act="reset">с начала</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="../../scripts/pin.js"></script>
+<script src="../../scripts/particles.js"></script>
+<script src="../../scripts/market.js"></script>
+<script type="module" src="stand.js"></script>
+</body>
+</html>

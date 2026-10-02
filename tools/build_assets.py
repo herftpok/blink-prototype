@@ -767,6 +767,38 @@ def build_market() -> None:
     resize_to("market/sticker_package.png", d / "package-bag.webp", 429, 90)
 
 
+def video_package(path: str, dest: Path, fps: int = 15, width_px: int = 264) -> None:
+    """Анимированная упаковка из видео (HEVC без альфы) → анимированный WebP с прозрачным фоном.
+    Кадры – системным AVFoundation (tools/extract_frames.swift: ffmpeg может не быть). Чёрный фон
+    вокруг упаковки убираем заливкой от углов: светлый контур упаковки её останавливает."""
+    import subprocess
+    import tempfile
+    from PIL import ImageDraw
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["swift", str(Path(__file__).with_name("extract_frames.swift")), str(src(path)), tmp, str(fps)],
+                       check=True, capture_output=True)
+        frames = []
+        for f in sorted(Path(tmp).glob("*.png")):
+            im = Image.open(f).convert("RGBA")
+            w, h = im.size
+            for corner in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
+                ImageDraw.floodfill(im, corner, (0, 0, 0, 0), thresh=40)
+            if width_px != w:
+                im = im.resize((width_px, round(h * width_px / w)), Image.LANCZOS)
+            frames.append(im)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    frames[0].save(dest, save_all=True, append_images=frames[1:], duration=round(1000 / fps), loop=0,
+                   quality=80, method=4, lossless=False)
+
+
+def build_market_motion() -> None:
+    """Живые призы маркета: упаковки хвостов с анимацией и звезда blink vip (APNG как есть)."""
+    d = OUT / "market"
+    video_package("market/tail_animation.mov", d / "anim-tail-shadow.webp")
+    video_package("market/tail_animation1.mov", d / "anim-tail-fire.webp")
+    shutil.copyfile(src("market/star-loop.png"), d / "vip-star.png")
+
+
 def build_pins() -> None:
     """Пин друга на карте: детали из pin/ (сняты @3x) как есть, только пережатые."""
     d = OUT / "pin"
@@ -869,6 +901,7 @@ def main() -> None:
     build_share()
     build_overnights()
     build_market()
+    build_market_motion()
     build_screens_art()
     build_system()
     total = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())

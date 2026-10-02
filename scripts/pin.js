@@ -8,7 +8,10 @@
  *
  *   BlinkPin.markup({
  *     name: "наташка",
- *     photo: "assets/people/live-1.webp",   // живая аватарка (квадрат с запасом над головой)
+ *     photo: "assets/people/live-1.webp",   // живая аватарка (квадрат с запасом над головой);
+ *                                           // нет фото – в кадре первая буква имени
+ *     flat: true,                           // photo – обычное фото с фоном (не вырезка): лежит в кадре
+ *                                           // целиком, без маски с головой над кадром
  *     size: 52,                             // 52 | 36 | 20
  *     online: false,                        // в сети – зелёная подложка
  *     state: "home",                        // "staying" | "home" | "moving"
@@ -91,7 +94,9 @@
       <${tag} class="${classes}" ${a11y} ${o.attrs || ""}>
         ${trail}
         <span class="pin__frame"></span>
-        <img class="pin__photo" src="${escapeHtml(o.photo)}" alt="">
+        ${o.photo
+          ? `<img class="pin__photo${o.flat ? " pin__photo--flat" : ""}" src="${escapeHtml(o.photo)}" alt="">`
+          : `<span class="pin__initial">${escapeHtml(String(o.name || "?")[0])}</span>`}
         ${badge}
         ${time}
         ${title}

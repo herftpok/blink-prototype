@@ -1,0 +1,1449 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Приветственный квест. Токены и компоненты – ../../styles (шторка, пин, кнопки, пуш .ny-push),
+   ценник и фон маркета – screens/market.css, строка друга – screens/friends.css, плашка карты –
+   screens/map.css. Здесь – стенд, онбординг, карта игры с меткой и раскрытием, шапка, карточка
+   с огоньками и подарком, шторки и „подарок твой!“.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Стенд (в продукт не идёт) ───────────────────────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-16);
+  min-height: 100dvh;
+  padding: var(--space-20) var(--space-24);
+}
+
+.stage__head {
+  text-align: center;
+}
+
+.stage__title {
+  font: var(--type-section-title);
+}
+
+.stage__lead {
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+.stage__phones {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-24);
+  zoom: var(--stage-zoom, 1);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  width: 220px;
+}
+
+.panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.panel__label {
+  margin-bottom: var(--space-2);
+}
+
+.panel__button {
+  --press-scale: var(--press-scale-wide);
+  min-height: 32px;
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-12);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-map-chip);
+}
+
+.panel__button--accent {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+.panel__button[aria-checked="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel__button:hover {
+      border-color: var(--color-text-dim);
+      color: var(--color-text);
+    }
+  
+  .panel__button--accent:hover {
+      background: var(--color-button-pressed);
+      color: var(--color-text-on-light);
+    }
+}
+
+/* ── Экран квеста ─────────────────────────────────────────────────────── */
+
+.wq {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  overflow: clip;
+  background: var(--color-map-land);
+}
+
+/* ── Карта: подложка на всю ширину, точки – в pt подложки ────────────── */
+
+.wq-map {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  -webkit-user-select: none;
+          user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* карту листает палец: жесты страницы здесь не нужны */
+.wq-map {
+  touch-action: none;
+  cursor: grab;
+}
+
+/* слой карты крупнее экрана; камера – сдвиг через transform (game.js, setCam) */
+.wq-map__layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--k, 1) * 390px);
+  height: calc(var(--k, 1) * 844px);
+  transform: translate(var(--cam-x, 0), var(--cam-y, 0));
+}
+
+/* камера сама едет к раскрытию – плавно; за пальцем – без задержки */
+.wq-map__layer.is-flying {
+  transition: transform 0.5s var(--ease-emphasized);
+}
+
+.wq-map__tiles {
+  display: block;
+  width: 100%;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.wq-map__marks,
+.wq-map__reveal {
+  position: absolute;
+  inset: 0;
+}
+
+.wq-mark {
+  position: absolute;
+  left: calc(var(--x) * var(--k, 1) * 1px);
+  top: calc(var(--y) * var(--k, 1) * 1px);
+}
+
+.wq-mark {
+  width: 0;
+  height: 0;
+}
+
+.wq-mark .pin {
+  left: 0;
+  top: 0;
+}
+
+.wq-mark--me {
+  z-index: 2;
+}
+
+.wq-mark--guess {
+  z-index: 3;
+}
+
+.wq-mark--real {
+  z-index: 5;
+}
+
+/* в режиме метки палец ставит её на карту */
+.wq[data-mode="guess"] .wq-map {
+  cursor: crosshair;
+}
+
+/* итог: на карте только твоя метка и знакомый. Остальные уходят, и твой пин тоже – пунктир мог бы пройти
+   через него; итог закрыли – твой пин плавно возвращается */
+.wq-map__me {
+  position: absolute;
+  inset: 0;
+}
+
+.wq-mark--me {
+  transition: opacity var(--duration-state) ease, visibility 0s;
+}
+
+.wq[data-mode="result"] .wq-map__marks .wq-mark,
+.wq[data-mode="result"] .wq-mark--me {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-state) ease, visibility 0s linear var(--duration-state);
+}
+
+/* ── Метка: пин знакомого – аватар чёрно-белый, слева внизу вопрос с белой обводкой ── */
+
+/* как домик у пина „дома“: бейдж 24 слева внизу (pin.js, badge), обводка – белая, 1.5 */
+.wq-guess-pin .pin__photo,
+.wq-guess-pin .pin__initial {
+  filter: grayscale(1);
+}
+
+.wq-guess-pin .pin__badge {
+  filter:
+    drop-shadow(1.5px 0 0 var(--color-text))
+    drop-shadow(-1.5px 0 0 var(--color-text))
+    drop-shadow(0 1.5px 0 var(--color-text))
+    drop-shadow(0 -1.5px 0 var(--color-text));
+}
+
+/* знакомый принял, а раскрытие ждёт (ставишь другую метку, открыта шторка) – метка зовёт розовым */
+.wq-mark--guess.is-ready .pin__frame {
+  animation: wq-call var(--duration-live) ease-out infinite;
+}
+
+@keyframes wq-call {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-pink) 80%, transparent), var(--shadow-pin); }
+  100% { box-shadow: 0 0 0 12px transparent, var(--shadow-pin); }
+}
+
+/* метка, пока её ставят: пин под пальцем приподнят, тень под ним меньше */
+
+.wq-aim {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 6;
+  width: 0;
+  height: 0;
+  transform: translate(calc(var(--x) * var(--k, 1) * 1px), calc(var(--y) * var(--k, 1) * 1px));
+}
+
+.wq-aim:focus-visible {
+  outline: none;
+}
+
+.wq-aim:focus-visible .pin__frame {
+  outline: 2px solid var(--color-text-on-map);
+  outline-offset: 3px;
+}
+
+.wq-aim .pin {
+  left: 0;
+  top: 0;
+}
+
+.wq-aim__lift {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transition: transform var(--duration-press) ease;
+}
+
+.wq-aim.is-lifted .wq-aim__lift {
+  transform: translateY(-12px) scale(1.06);
+}
+
+.wq-aim__shadow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-scrim);
+  transform: translate(-50%, -50%);
+  transition: transform var(--duration-press) ease, opacity var(--duration-press) ease;
+}
+
+.wq-aim.is-lifted .wq-aim__shadow {
+  opacity: 0.5;
+  transform: translate(-50%, -50%) scale(0.7);
+}
+
+/* метки ещё нет: пульсирующий круг и „нажми, где сейчас соня“ – на экране, не на карте: карту можно
+   листать, подсказка остаётся на месте */
+.wq-tap {
+  position: absolute;
+  left: var(--sx, 50%);
+  top: var(--sy, 40%);
+  z-index: 6;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.wq-tap__ring {
+  position: absolute;
+  left: -24px;
+  top: -24px;
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--color-text-on-map);
+  border-radius: 50%;
+  animation: wq-tap 1.4s ease-out infinite;
+}
+
+@keyframes wq-tap {
+  0% { opacity: 0.9; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+.wq-tap__chip {
+  position: absolute;
+  left: 0;
+  top: 36px;
+  font: var(--type-map-chip-strong);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* ── Раскрытие: пунктир тянется от метки к настоящему месту, км растут, в конце – пин ── */
+
+.wq-line {
+  position: absolute;
+  left: calc(var(--x) * var(--k, 1) * 1px);
+  top: calc(var(--y) * var(--k, 1) * 1px);
+  z-index: 2;                                    /* под пинами: твой пин и друг – поверх пунктира */
+  width: calc(var(--len) * var(--k, 1) * 1px);
+  height: 4px;
+  margin-top: -2px;
+  border-radius: var(--radius-pill);
+  background: repeating-linear-gradient(90deg, var(--color-text-on-light) 0 8px, transparent 8px 14px);
+  transform: rotate(var(--angle));
+  transform-origin: 0 50%;
+  animation: wq-line 0.9s cubic-bezier(0.45, 0, 0.55, 1) both;
+}
+
+@keyframes wq-line {
+  from { transform: rotate(var(--angle)) scaleX(0); }
+}
+
+@keyframes wq-fade {
+  from { opacity: 0; }
+}
+
+.wq-mark--mine {
+  z-index: 4;
+}
+
+/* „твоя метка“ – под меткой: над настоящим пином его имя, подписи не сталкиваются */
+.wq-mine {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  padding: var(--space-4);
+  color: var(--color-text-on-light);
+  font: var(--type-pin-title);
+  letter-spacing: -0.02em;
+  text-shadow: var(--outline-pin-title);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* км – наклейка с белой обводкой, без подложки, сбоку от пунктира; число растёт вместе с ним */
+.wq-km {
+  --sticker-size: 22px;
+  position: absolute;
+  left: calc(var(--x) * var(--k, 1) * 1px);
+  top: calc(var(--y) * var(--k, 1) * 1px);
+  z-index: 6;
+  transform: translate(-50%, -50%) rotate(-6deg);
+  animation: wq-fade 0.2s ease both;
+}
+
+/* настоящий пин выпрыгивает, когда пунктир дошёл */
+.wq-mark--real .pin {
+  animation: pin-pop 0.45s var(--ease-spring) 0.9s both;
+}
+
+/* ── Шапка: одна строка по центру – плашка игры (она же „как играть“) и крестик; в режиме метки –
+   „назад“ и „где сейчас соня?“. „Назад“ и крестик – одинаковые квадраты на полупрозрачном фоне ── */
+
+.wq-head {
+  position: absolute;
+  top: calc(var(--safe-top) + var(--space-12));
+  left: var(--gutter);
+  right: var(--gutter);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  pointer-events: none;
+}
+
+.wq-head > * {
+  pointer-events: auto;
+}
+
+.wq-square {
+  --press-scale: var(--press-scale-button);
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-12);
+  background: var(--color-glass-button);
+  color: var(--color-text);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wq-square .icon {
+  --icon-size: 14px;
+}
+
+.wq-head__close {
+  margin-left: auto;
+}
+
+/* плашка игры – кнопка „как играть“; вопрос выходит за её левый край: игра – угадайка */
+.wq-plate {
+  --press-scale: var(--press-scale-wide);
+  display: block;
+  text-align: left;
+  position: relative;
+  min-width: 0;
+  margin-left: var(--space-10);
+  padding: var(--space-10) var(--space-16) var(--space-12) 62px;
+  border-radius: var(--radius-20);
+  background: var(--color-map-chip);
+  box-shadow: var(--shadow-map-chip);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  color: var(--color-text-on-map);
+}
+
+.wq-plate__sticker {
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  width: 70px;
+  height: 70px;
+  transform: translateY(-56%) rotate(-10deg);
+  pointer-events: none;
+}
+
+.wq-plate__title {
+  display: block;
+  font: var(--type-banner-title);
+  white-space: nowrap;
+}
+
+.wq-plate__meta {
+  display: block;
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font: var(--type-map-chip);
+}
+
+.wq-who {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-10);
+  min-width: 0;
+  padding: var(--space-8) var(--space-16) var(--space-8) var(--space-8);
+  border-radius: var(--radius-20);
+  background: var(--color-map-chip);
+  box-shadow: var(--shadow-map-chip);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  color: var(--color-text-on-map);
+}
+
+.wq-who__avatar {
+  --avatar-size: 40px;
+}
+
+.wq-who__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wq-who__title {
+  font: var(--type-row-title);
+}
+
+.wq-who__text {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font: var(--type-map-chip);
+}
+
+/* закрыть онбординг: крестик на полупрозрачном квадрате со скруглением */
+.wq-close {
+  position: absolute;
+  top: calc(var(--safe-top) + var(--space-20));
+  right: var(--gutter);
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-12);
+  background: var(--color-glass-button);
+  color: var(--color-text);
+}
+
+.wq-close .icon {
+  --icon-size: 14px;
+}
+
+/* на чёрном онбординге подложка светлая полупрозрачная */
+.wq-close--dark {
+  top: calc(var(--safe-top) + var(--space-8));
+  background: var(--color-track-on-dark);
+}
+
+/* ── Карточка снизу: следующий подарок и огоньки, одна кнопка ─────────── */
+
+.wq-card {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: var(--safe-bottom);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  padding: var(--space-16);
+  border-radius: var(--radius-modal);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-card-avatar);
+  color: var(--color-text);
+}
+
+.wq-card__cta {
+  width: 100%;
+}
+
+/* „угадать ещё“ и прозрачная „позже“ под ней */
+.wq-card__actions {
+  display: flex;
+  flex-direction: column;
+}
+
+/* стикер, заголовок и строка: „заявка отправлена“ */
+.wq-note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.wq-note__sticker {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.wq-note__body {
+  min-width: 0;
+}
+
+.wq-note__title {
+  font: var(--type-gift-title);
+  text-wrap: balance;
+}
+
+.wq-note__text {
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+  text-wrap: pretty;
+}
+
+.wq-fire {
+  flex-shrink: 0;
+  width: var(--fire-size, 24px);
+  max-width: none;
+  height: var(--fire-size, 24px);
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.wq-fire.is-dim {
+  opacity: 0.25;
+  filter: grayscale(1);
+}
+
+/* следующий подарок: картинка, что это, полоса до него и сколько огоньков осталось; справа – сколько есть */
+.wq-goal {
+  --press-scale: var(--press-scale-wide);
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-14);
+  width: 100%;
+  text-align: left;
+}
+
+.wq-goal__art {
+  width: 52px;
+  height: 60px;
+  object-fit: contain;
+  transform: rotate(-5deg);
+  pointer-events: none;
+}
+
+.wq-goal__art--vip {
+  transform: none;
+}
+
+.wq-goal__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wq-goal__title {
+  font: var(--type-row-title);
+}
+
+.wq-goal__bar {
+  position: relative;
+  height: 8px;
+  margin: var(--space-8) 0 var(--space-6);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-track-on-dark);
+}
+
+.wq-goal__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-text);
+  transform: translateX(calc((var(--fill, 0) - 1) * 100%));
+  transition: transform 0.7s var(--ease-emphasized);
+}
+
+.wq-goal__left {
+  color: var(--color-text-muted);
+  font: var(--type-map-chip);
+}
+
+.wq-goal__count {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font: var(--type-section-title);
+  font-variant-numeric: tabular-nums;
+}
+
+/* кто ещё не ответил – лица внахлёст и имена */
+.wq-waiting {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  min-width: 0;
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+.wq-waiting__faces {
+  display: flex;
+  flex-shrink: 0;
+  padding-left: var(--space-8);
+}
+
+.wq-waiting__face {
+  --avatar-size: 28px;
+  margin-left: calc(var(--space-8) * -1);
+  border-radius: var(--radius-squircle);
+  box-shadow: 0 0 0 2px var(--color-bg);
+}
+
+.wq-card__note {
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* метка стоит: над „добавить в друзья“ – пин знакомого и зачем добавлять */
+.wq-ask {
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+}
+
+/* пин – span: внутри флекса он блок, и .pin--static держит место по своему видимому размеру */
+.wq-ask__pin {
+  display: flex;
+  flex-shrink: 0;
+  padding: var(--space-6) var(--space-4) 0;
+}
+
+.wq-ask__text {
+  color: var(--color-text-secondary);
+  font: var(--type-distance);
+  text-wrap: pretty;
+}
+
+/* итог: три огонька (сколько горит – столько получил), слово и где знакомый относительно метки.
+   Пока тянется пунктир, огоньки тусклые, а слова нет; дошёл – заработанные загораются по одному,
+   слово проявляется */
+.wq-heat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+}
+
+.wq-heat__body,
+.wq-heat .wq-fire {
+  transition: opacity var(--duration-state) ease, filter var(--duration-state) ease;
+}
+
+.wq-heat .wq-fire:nth-child(2) {
+  transition-delay: 0.12s;
+}
+
+.wq-heat .wq-fire:nth-child(3) {
+  transition-delay: 0.24s;
+}
+
+.wq-heat.is-waiting .wq-fire {
+  opacity: 0.25;
+  filter: grayscale(1);
+}
+
+.wq-heat.is-waiting .wq-heat__body {
+  opacity: 0;
+}
+
+.wq-heat__fires {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.wq-fire--big {
+  --fire-size: 40px;
+  margin-right: calc(var(--space-6) * -1);
+}
+
+.wq-fire--big:nth-child(2) {
+  transform: translateY(-6px) rotate(6deg);
+}
+
+.wq-fire--big:nth-child(3) {
+  transform: rotate(10deg);
+}
+
+.wq-heat__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-left: var(--space-6);
+}
+
+.wq-heat__word {
+  font: var(--type-sheet-title);
+}
+
+.wq-heat__text {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+  text-wrap: pretty;
+}
+
+/* человек без фото – первая буква на #242424 */
+.wq-initial {
+  display: grid;
+  place-items: center;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font: var(--type-folder);
+}
+
+/* ── Шторки: „кого угадываем?“, „подарки за огоньки“, „что это“ ──────── */
+
+.wq-sheet {
+  z-index: 120;
+}
+
+.scrim[data-scrim] {
+  z-index: 119;
+}
+
+/* закрытая шторка, пока уезжает, и гаснущая подложка касаний не ловят: карта отвечает сразу */
+.wq .scrim:not(.is-open),
+.wq .sheet:not(.is-open) {
+  pointer-events: none;
+}
+
+/* „что это“ открывается и с онбординга – она над ним */
+.wq-giftsheet {
+  z-index: 172;
+}
+
+.scrim[data-scrim="gift"] {
+  z-index: 171;
+}
+
+.wq-sheet--friends {
+  height: calc(100% - var(--safe-top) - var(--space-20));
+}
+
+.wq-sheet__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-8) 0 var(--space-16);
+}
+
+/* глаза наклеены справа от заголовка: „кого ты видишь в списке“ */
+.wq-sheet__sticker {
+  width: 64px;
+  height: 64px;
+  margin: -14px 4px -14px 0;
+  transform: rotate(10deg);
+  pointer-events: none;
+}
+
+.wq-search {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-10);
+  height: var(--search-height);
+  padding: 0 var(--space-14) 0 var(--space-12);
+  border: 2px solid var(--color-search-border);
+  border-radius: var(--radius-16);
+  background: var(--color-search-fill);
+  color: var(--color-text-dim);
+}
+
+.wq-search .icon {
+  --icon-size: 22px;
+}
+
+.wq-search__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  color: var(--color-text);
+  font: var(--type-search);
+  text-transform: lowercase;
+}
+
+.wq-search__input:focus-visible {
+  outline: none;
+}
+
+.wq-search__input::placeholder {
+  color: var(--color-text-dim);
+  opacity: 1;
+}
+
+.wq-search__input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.wq-people {
+  flex: 1;
+  min-height: 0;
+  margin: var(--space-8) calc(var(--gutter) * -1) 0;
+  padding: 0 var(--gutter);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.wq-person {
+  padding: 0;
+}
+
+.wq-people__empty {
+  padding: var(--space-16) 0;
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+  text-align: center;
+}
+
+/* компактная белая „ДОБАВИТЬ“, как в „возможных“; заявка ушла – #242424 с галочкой */
+.wq-add {
+  --press-scale: var(--press-scale-button);
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  height: 32px;
+  padding: 0 var(--space-14);
+  border-radius: var(--radius-12);
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+  font: var(--type-button-compact);
+  text-transform: uppercase;
+}
+
+.wq-add:disabled {
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+}
+
+.wq-add--sent {
+  width: 48px;
+  padding: 0;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  --icon-size: 17px;
+}
+
+/* что за подарок – небольшая шторка: карточка как у „подарить“ в маркете (market/confirm_gift.png) –
+   чёрная с сеткой точек, рамка 2 pt #1A1A1A, r40, внутри упаковка, название и вид. Крестика нет:
+   закрывают нажатием мимо, жестом вниз и Esc */
+.wq-giftcard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--space-8);
+  padding: var(--space-24) var(--space-20) var(--space-20);
+  border: 2px solid var(--color-surface);
+  border-radius: 40px;
+  background:
+    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    var(--color-bg);
+  text-align: center;
+}
+
+.wq-giftcard__art {
+  width: 150px;
+  height: 170px;
+  object-fit: contain;
+}
+
+.wq-giftcard__title {
+  margin-top: var(--space-12);
+  font: var(--type-gift-title);
+}
+
+.wq-giftcard__kind {
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-gift-kind);
+  letter-spacing: 0.02em;
+}
+
+/* ── „подарок твой!“ – карточка снизу на градиенте маркета, как „подарок отправлен!“ ── */
+
+.wq-won-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 160;
+  background: var(--gradient-market-backdrop);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-screen) ease, visibility 0s linear var(--duration-screen);
+}
+
+.wq-won-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--duration-screen) ease, visibility 0s;
+}
+
+.wq-confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 163;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.wq-won {
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: var(--safe-bottom);
+  z-index: 161;
+  align-items: center;
+  padding: 0 var(--space-20) var(--space-8);
+  border-radius: var(--radius-modal);
+  text-align: center;
+  transform: translateY(calc(100% + var(--safe-bottom) + var(--space-24)));
+}
+
+.wq-won.is-open {
+  transform: none;
+}
+
+.wq-won::after {
+  display: none;
+}
+
+.wq-won__handle {
+  align-self: stretch;
+  touch-action: none;
+  cursor: grab;
+}
+
+.wq-won__title {
+  margin-top: 27px;
+  font: var(--type-gift-title);
+  text-wrap: balance;
+}
+
+.wq-won__art {
+  margin-top: 22px;
+}
+
+.wq-won__single {
+  width: 157px;
+}
+
+.wq-won__fan {
+  position: relative;
+  display: block;
+  width: 220px;
+  height: 180px;
+}
+
+.wq-won__fan-item {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 110px;
+  transform: translateX(-50%) rotate(calc(var(--i) * 14deg - var(--n) * 7deg + 7deg));
+  transform-origin: 50% 120%;
+}
+
+.wq-won__name {
+  margin-top: var(--space-16);
+  color: var(--color-text-muted);
+  font: var(--type-gift-kind);
+}
+
+.wq-won__cta {
+  width: 100%;
+  margin: var(--space-24) 0 var(--space-12);
+}
+
+/* ── Онбординг: один экран – подарки и механика ──────────────────────── */
+
+.wq-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + var(--space-8)) 0 calc(var(--safe-bottom) + var(--space-8));
+  background: var(--color-bg);
+  color: var(--color-text);
+  transition: opacity var(--duration-screen) var(--ease-emphasized);
+}
+
+.wq-intro:not(.is-open) {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-screen) var(--ease-emphasized), visibility 0s linear var(--duration-screen);
+}
+
+.wq-intro:focus-visible {
+  outline: none;
+}
+
+/* экран на весь рост – крестик есть, он же „пропустить“ */
+.wq-intro .wq-close {
+  z-index: 2;
+}
+
+/* картинка, заголовок и строка – одним блоком по центру между крестиком и кнопкой */
+.wq-intro__step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding-top: var(--space-32);
+  text-align: center;
+  animation: wq-fade var(--duration-screen) var(--ease-emphasized);
+}
+
+.wq-intro__step[hidden] {
+  display: none;
+}
+
+.wq-intro__cta {
+  position: relative;
+  z-index: 1;
+  width: calc(100% - var(--gutter) * 2);
+  margin: var(--space-32) var(--gutter) 0;
+}
+
+@keyframes wq-drop {
+  from { opacity: 0; transform: translateY(-40px); }
+}
+
+@keyframes wq-pop {
+  from { opacity: 0; transform: rotate(8deg) scale(0.4); }
+}
+
+/* ── онбординг: подарки выпрыгивают снизу, название игры ─────────────── */
+
+.wq-hero {
+  justify-content: flex-end;
+  padding-bottom: var(--space-8);
+}
+
+.wq-hero__stage {
+  position: relative;
+  width: 100%;
+  height: 450px;
+}
+
+/* ночная карта едва видна и растворяется в чёрном: игра – про карту */
+.wq-hero__map {
+  position: absolute;
+  top: -160px;
+  left: 0;
+  width: 100%;
+  height: calc(100% + 160px);
+  object-fit: cover;
+  object-position: 50% 40%;
+  opacity: 0.7;
+  /* карта видна там, где пины (верх сцены), и растворяется к краям и к подаркам */
+  -webkit-mask-image: radial-gradient(ellipse 54% 36% at 50% 46%, var(--color-bg) 30%, transparent 100%);
+          mask-image: radial-gradient(ellipse 54% 36% at 50% 46%, var(--color-bg) 30%, transparent 100%);
+  pointer-events: none;
+  animation: wq-fade 0.8s ease both;
+}
+
+/* „полка“: подарки стоят на мягком свечении градиента маркета, а не висят в пустоте */
+.wq-hero__floor {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  width: 340px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--gradient-market-backdrop);
+  opacity: 0.55;
+  filter: blur(28px);
+  transform: translateX(-50%);
+  animation: wq-fade 0.8s ease 0.3s both;
+  pointer-events: none;
+}
+
+.wq-hero__gifts {
+  position: absolute;
+  inset: 0;
+}
+
+/* механика одной картинкой над подарками, на ночной карте: метка – пин знакомого (чёрно-белый, с вопросом) –
+   (центр − 66, 150), настоящий пин – (центр + 62, 98), между остриями пунктир, над ним км */
+.wq-hero__mark {
+  position: absolute;
+  z-index: 1;
+  width: 0;
+  height: 0;
+}
+
+.wq-hero__mark .pin {
+  left: 0;
+  top: 0;
+}
+
+.wq-hero__mark--guess {
+  left: calc(50% - 66px);
+  top: 150px;
+  animation: wq-drop 0.5s var(--ease-spring) 1.1s both;
+}
+
+.wq-hero__mark--real {
+  left: calc(50% + 62px);
+  top: 98px;
+}
+
+.wq-hero__mark--real .pin {
+  animation: pin-pop 0.45s var(--ease-spring) 1.7s both;
+}
+
+.wq-hero__line {
+  position: absolute;
+  left: calc(50% - 66px);
+  top: 150px;
+  width: 138px;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: var(--radius-pill);
+  background: repeating-linear-gradient(90deg, var(--color-text) 0 6px, transparent 6px 11px);
+  opacity: 0.8;
+  transform: rotate(-22.1deg);
+  transform-origin: 0 50%;
+  animation: wq-hero-line 0.5s var(--ease-emphasized) 1.4s both;
+}
+
+@keyframes wq-hero-line {
+  from { transform: rotate(-22.1deg) scaleX(0); }
+}
+
+/* выпрыгивают снизу по очереди (кнопка), потом покачиваются (картинка) */
+.wq-hero__gift {
+  --press-scale: var(--press-scale-button);
+  --turn: 0deg;
+  position: absolute;
+  bottom: 52px;
+  -webkit-tap-highlight-color: transparent;
+  animation: wq-jump 0.7s var(--ease-spring) both;
+}
+
+.wq-hero__gift--0 { left: calc(50% - 168px); --turn: -9deg; animation-delay: 0.1s; }
+
+.wq-hero__gift--1 { left: calc(50% + 50px); --turn: 8deg; animation-delay: 0.25s; }
+
+.wq-hero__gift--2 { left: calc(50% - 96px); bottom: 84px; animation-delay: 0.45s; }
+
+.wq-hero__art {
+  position: relative;
+  display: block;
+  width: 118px;
+  transform: rotate(var(--turn));
+  animation: wq-float 3.2s ease-in-out 1.2s infinite alternate;
+  pointer-events: none;
+}
+
+.wq-hero__gift--1 .wq-hero__art {
+  animation-delay: 1.6s;
+}
+
+/* vip – главный приз: крупнее, по центру, на розовом свечении */
+.wq-hero__art--vip {
+  width: 192px;
+  animation-delay: 1.4s;
+}
+
+.wq-hero__halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--color-pink) 55%, transparent), transparent);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+@keyframes wq-jump {
+  0% { opacity: 0; transform: translateY(260px) scale(0.6); }
+  60% { opacity: 1; }
+}
+
+/* лёгкое покачивание: экран остаётся живым, пока человек читает */
+@keyframes wq-float {
+  to { transform: translateY(-7px) rotate(calc(var(--turn) + 2deg)); }
+}
+
+.wq-hero__title {
+  margin-top: var(--space-8);
+  font: var(--type-city);
+  letter-spacing: var(--tracking-city);
+  text-align: center;
+  animation: wq-title 0.6s var(--ease-spring) 0.8s both;
+}
+
+.wq-hero__text {
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-meta);
+  text-align: center;
+  animation: wq-fade 0.4s ease 1.1s both;
+}
+
+@keyframes wq-title {
+  from { opacity: 0; transform: scale(0.6) rotate(-4deg); }
+}
+
+@keyframes wq-rise {
+  from { opacity: 0; transform: translateY(14px); }
+}
+
+/* подпись под заголовком шторки */
+.wq-sheet__heading {
+  min-width: 0;
+}
+
+.wq-sheet__text {
+  margin-top: var(--space-4);
+}
+
+/* подарки за огоньки: картинка, что это, сколько огоньков нужно или „твой“ */
+.wq-sheet--prizes {
+  max-height: calc(100% - var(--safe-top) - var(--space-20));
+}
+
+.wq-prizes {
+  min-height: 0;
+  margin: 0 calc(var(--gutter) * -1);
+  padding: 0 var(--gutter) var(--space-8);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.wq-prize__button {
+  --press-scale: var(--press-scale-row);
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-14);
+  width: 100%;
+  padding: var(--space-8) 0;
+  text-align: left;
+}
+
+.wq-prize__art {
+  width: 56px;
+  height: 64px;
+  object-fit: contain;
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+
+.wq-prize__art--vip {
+  transform: none;
+}
+
+.wq-prize__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wq-prize__title {
+  font: var(--type-row-title);
+}
+
+.wq-prize__name {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+.wq-prize__need,
+.wq-prize__got {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font: var(--type-label);
+  font-variant-numeric: tabular-nums;
+}
+
+/* уже твой – лаймовая галочка, как „выбрано“ в маркете */
+.wq-prize__got {
+  color: var(--color-selected);
+  --icon-size: 14px;
+}
+
+.wq-giftcard__need {
+  margin-top: var(--space-12);
+  font: var(--type-label);
+}
+
+/* ── Онбординг: км на картинке механики и кнопка, которая зовёт ─────── */
+
+/* км – наклейка с белой обводкой над серединой пунктира, как на раскрытии */
+.wq-hero__km {
+  --sticker-size: 18px;
+  position: absolute;
+  left: calc(50% - 10px);
+  top: 106px;
+  z-index: 1;
+  transform: translate(-50%, -50%) rotate(-6deg);
+  animation: wq-fade 0.3s ease 1.9s both;
+}
+
+/* подарки встали – кнопка зовёт розовым кольцом: смотреть надо на неё */
+.wq-intro__cta--call {
+  animation: wq-cta 1.8s ease-out 1.6s infinite;
+}
+
+@keyframes wq-cta {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-pink) 70%, transparent); }
+  70% { box-shadow: 0 0 0 14px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* ── Телефон: стенд складывается в колонку ───────────────────────────── */
+
+@media (max-width: 480px) {
+  .stage {
+    gap: 0;
+    padding: 0;
+  }
+
+  .stage__head {
+    padding: var(--space-20) var(--gutter);
+  }
+
+  .stage__phones {
+    flex-direction: column;
+    width: 100%;
+    zoom: 1;
+  }
+
+  /* телефон на всю ширину: .app берёт 100% обёртки */
+  .stage__phone {
+    align-self: stretch;
+  }
+
+  .panel {
+    width: auto;
+    padding: var(--space-20) var(--gutter) var(--space-24);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wq-hero__map,
+  .wq-hero__floor,
+  .wq-hero__mark--guess,
+  .wq-hero__mark--real .pin,
+  .wq-hero__line,
+  .wq-hero__km,
+  .wq-hero__gift,
+  .wq-hero__art,
+  .wq-hero__text,
+  .wq-hero__title,
+  .wq-intro__step,
+  .wq-intro__cta--call,
+  .wq-line,
+  .wq-km,
+  .wq-mark--real .pin,
+  .wq-mark--guess.is-ready .pin__frame,
+  .wq-tap__ring {
+    animation: none;
+  }
+
+  .wq-aim__lift,
+  .wq-aim__shadow,
+  .wq-map__layer.is-flying,
+  .wq-goal__fill,
+  .wq-heat__body,
+  .wq-heat .wq-fire {
+    transition: none;
+  }
+}

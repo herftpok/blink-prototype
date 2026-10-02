@@ -838,6 +838,259 @@ def check_overnights(browser, port: int, errors: list[str]) -> None:
     page.close()
 
 
+def check_welcome_quest(browser, port: int, errors: list[str]) -> None:
+    """Приветственный квест „угадай, где друзья“: онбординг (подарки и механика), карта листается, в списке –
+    только „угадать“ и только без меток, метка – пин знакомого (чёрно-белый, с вопросом) под пальцем,
+    „ты узнаешь, где … на самом деле, когда вы станете друзьями“ и „добавить в друзья“, „заявка отправлена“,
+    раскрытие – пунктир тянется к настоящему пину, км растут; огоньки „близко – недалеко – далеко“ и подарки.
+    Движение выключено."""
+    page = browser.new_page(viewport={"width": 1300, "height": 1000}, device_scale_factor=1, reduced_motion="reduce")
+    page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(f"http://127.0.0.1:{port}/features/welcome-quest/index.html")
+    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(400)
+    page.click('[data-act="auto"]')                        # ответы на заявки – только с пульта
+    ph = "#phone"
+    V = "WQ.view"
+    Q = "WQ.quest"
+    text = lambda sel: page.eval_on_selector(sel, "el => el.textContent").replace(" ", " ").strip()
+    # textContent, а не innerText: капс у подписей и кнопок делает CSS, в разметке они строчные
+    contents = lambda sel: [t.replace(" ", " ").strip() for t in page.eval_on_selector_all(sel, "els => els.map((e) => e.textContent)")]
+    js_click = lambda sel: page.eval_on_selector(sel, "el => el.click()")
+    is_open = lambda sel: page.evaluate("(s) => document.querySelector(s).classList.contains('is-open')", sel)
+    hidden = lambda sel: page.evaluate("(s) => { const el = document.querySelector(s); return !el || el.closest('[hidden]') !== null; }", sel)
+    mode = lambda: page.evaluate(f"{V}.state.mode")
+    size = lambda: page.evaluate(f"{Q}.guesses.size")
+    cam = lambda: page.evaluate("(s) => { const l = document.querySelector(s); return [l.style.getPropertyValue('--cam-x'), l.style.getPropertyValue('--cam-y')]; }", f"{ph} [data-layer]")
+    rect = lambda sel: page.eval_on_selector(sel, "el => { const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; }")
+    geo = lambda: page.evaluate(f"""() => {{ const root = {V}.root; const r = root.getBoundingClientRect(); return {{ left: r.left, top: r.top, zoom: r.width / root.offsetWidth }}; }}""")
+
+    check("квест: стенд – один телефон (только понятная версия) и пульт",
+          page.locator(".stage__phone .app").count() == 1 and page.locator("#phone-clear").count() == 0)
+
+    # ── онбординг – первый экран прежней версии: подарки и механика картинкой ──
+    intro = f"{ph} [data-intro]"
+    scene_pin = f"{intro} .wq-hero__mark--guess .pin"
+    hero = is_open(intro) and text(f"{intro} .wq-hero__title") == "угадай, где друзья" \
+        and rect(f"{intro} .wq-hero__title")["h"] < 50 and text(f"{intro} .wq-hero__text") == "и забирай подарки" \
+        and page.eval_on_selector_all(f"{intro} .wq-hero__gift", "els => els.map((e) => e.dataset.gift)") == ["3", "0", "4"] \
+        and page.locator(f"{scene_pin}.wq-guess-pin .pin__badge[src$='stickers/question.webp']").count() == 1 \
+        and page.eval_on_selector(f"{scene_pin} .pin__photo", "el => getComputedStyle(el).filter") == "grayscale(1)" \
+        and text(f"{intro} .wq-hero__km") == "0.5 км" and page.locator(f"{intro} .wq-hero__km.sticker-number").count() == 1 \
+        and page.locator(f"{intro} .wq-hero__gain").count() == 0 and text(f"{intro} [data-act='intro-ok']") == "начать"
+    js_click(f"{intro} .wq-hero__gift--0")
+    page.wait_for_timeout(200)
+    what = is_open(f"{ph} [data-sheet='gift']") and text(f"{ph} [data-gift-name]") == "тень" \
+        and text(f"{ph} [data-gift-kind]") == "хвост для пина" and text(f"{ph} [data-gift-need]") == "за 14 огоньков"
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(150)
+    what = what and not is_open(f"{ph} [data-sheet='gift']") and is_open(intro)
+    js_click(f"{intro} [data-act='intro-ok']")
+    page.wait_for_timeout(200)
+    check("квест: онбординг – „угадай, где друзья“ в одну строку, „и забирай подарки“; тень, vip, огонь; механика: метка – пин знакомого, чёрно-белый, с вопросом – „0.5 км“ наклейкой – настоящий пин; „начать“; подарок – „что это“, Esc закрывает только её",
+          hero and what and not is_open(intro))
+
+    # ── карта ──
+    plate, close = rect(f"{ph} [data-plate]"), rect(f"{ph} [data-close]")
+    home = text(f"{ph} .wq-plate__title") == "угадай, где друзья" and text(f"{ph} [data-plate-meta]") == "осталось 10 меток из 10" \
+        and close["w"] == 40 and abs((close["y"] + close["h"] / 2) - (plate["y"] + plate["h"] / 2)) < 1 \
+        and text(f"{ph} .wq-goal__title") == "хвост для пина" and text(f"{ph} .wq-goal__left") == "ещё 1 огонёк" \
+        and page.locator(f"{ph} .wq-goal__art[src$='anim-tail-fire.webp']").count() == 1 \
+        and text(f"{ph} [data-goal-count]") == "0" and text(f"{ph} .wq-card [data-act='find']") == "угадать, где друзья"
+    g = geo()
+    at = lambda x, y: (g["left"] + x * g["zoom"], g["top"] + y * g["zoom"])
+    before = cam()
+    page.mouse.move(*at(200, 400))
+    page.mouse.down()
+    page.mouse.move(*at(150, 330), steps=6)
+    page.mouse.up()
+    panned = cam() != before
+    check("квест: карта – „угадай, где друзья · осталось 10 меток из 10“, крестик – квадрат 40 по центру плашки; первый подарок – хвост „огонь“: „хвост для пина“, „ещё 1 огонёк“; „угадать, где друзья“; карта листается пальцем",
+          home and panned)
+
+    # ── кого угадываем ──
+    js_click(f"{ph} .wq-card [data-act='find']")
+    page.wait_for_timeout(200)
+    sheet = f"{ph} [data-sheet='friends']"
+    people = contents(f"{sheet} .friend-row__name")
+    check("квест: шторка „кого угадываем?“ – „ищи своих знакомых и угадывай, где они сейчас“; 12 человек, у всех „угадать“, имя „артём“ короткое",
+          is_open(sheet) and text(f"{sheet} .sheet__title") == "кого угадываем?"
+          and text(f"{sheet} .wq-sheet__text") == "ищи своих знакомых и угадывай, где они сейчас"
+          and len(people) == 12 and "артём" in people and set(contents(f"{sheet} .wq-add")) == {"угадать"})
+
+    js_click(f"{sheet} [data-pick='leva']")
+    page.wait_for_timeout(200)
+    back, who = rect(f"{ph} [data-act='cancel']"), rect(f"{ph} [data-who]")
+    guess = mode() == "guess" and not is_open(sheet) and size() == 0 \
+        and text(f"{ph} .wq-who__title") == "где сейчас лёва?" and back["w"] == 40 and abs((back["y"] + back["h"] / 2) - (who["y"] + who["h"] / 2)) < 1 \
+        and not hidden(f"{ph} [data-tap]") and text(f"{ph} [data-tap-text]") == "нажми, где сейчас лёва" and hidden(f"{ph} [data-aim]") \
+        and page.eval_on_selector(f"{ph} [data-act='send']", "el => el.disabled") and text(f"{ph} [data-act='send']") == "отметь на карте"
+    check("квест: „угадать“ не шлёт заявку – „где сейчас лёва?“, „назад“ – квадрат 40 по центру плашки, подсказка „нажми, где сейчас лёва“, кнопка выключена: „отметь на карте“",
+          guess)
+
+    # метка – нажатием, точно под пальцем; пин знакомого: чёрно-белый, вопрос слева внизу
+    to_map = lambda: page.evaluate(f"""() => {{ const l = document.querySelector('{ph} [data-layer]'); const k = parseFloat(l.style.getPropertyValue('--k'));
+        return {{ k, cx: parseFloat(l.style.getPropertyValue('--cam-x')), cy: parseFloat(l.style.getPropertyValue('--cam-y')) }}; }}""")
+    m = to_map()
+    page.mouse.click(*at(200, 420))
+    page.wait_for_timeout(150)
+    aim = page.evaluate(f"{V}.state.aim")
+    exact = abs(aim["x"] - (200 - m["cx"]) / m["k"]) < 1 and abs(aim["y"] - (420 - m["cy"]) / m["k"]) < 1
+    pin = f"{ph} [data-aim] .pin"
+    placed = exact and page.locator(f"{pin}.wq-guess-pin .pin__badge[src$='stickers/question.webp']").count() == 1 \
+        and page.eval_on_selector(f"{pin} .pin__photo", "el => getComputedStyle(el).filter") == "grayscale(1)" \
+        and text(f"{ph} .wq-ask__text") == "ты узнаешь, где лёва на самом деле, когда вы станете друзьями" \
+        and page.locator(f"{ph} .wq-ask__pin .pin").count() == 1 and page.locator(f"{ph} .wq-card img[src$='eyes.webp']").count() == 0 \
+        and text(f"{ph} [data-act='send']") == "добавить в друзья" and size() == 0
+    sx, sy = page.evaluate("(s) => { const r = document.querySelector(s).getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }", f"{pin} .pin__frame")
+    page.mouse.move(sx, sy)
+    page.mouse.down()
+    page.mouse.move(sx - 40, sy - 30, steps=5)
+    lifted = page.evaluate("(s) => document.querySelector(s).classList.contains('is-lifted')", f"{ph} [data-aim]")
+    page.mouse.up()
+    dragged = page.evaluate(f"{V}.state.aim")
+    pan0 = cam()
+    page.mouse.move(*at(320, 600))
+    page.mouse.down()
+    page.mouse.move(*at(300, 560), steps=5)
+    page.mouse.up()
+    check("квест: нажатие ставит метку точно под пальцем – пин лёвы чёрно-белый, слева внизу вопрос; над кнопкой пин и „ты узнаешь, где лёва на самом деле, когда вы станете друзьями“, кнопка „добавить в друзья“; пин тянут пальцем (приподнят), мимо пина карта листается; заявки ещё нет",
+          placed and lifted and dragged["x"] < aim["x"] and cam() != pan0 and page.evaluate(f"{V}.state.aim") == dragged and size() == 0)
+
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(150)
+    check("квест: Esc или „назад“ – без заявки, снова карта", mode() == "home" and size() == 0 and not hidden(f"{ph} [data-plate]"))
+
+    # ── заявка ──
+    page.evaluate(f"{V}.pick('leva')")
+    page.evaluate(f"{V}.aimAt(150, 372)")
+    js_click(f"{ph} [data-act='send']")
+    page.wait_for_timeout(150)
+    sent = page.evaluate(f"{Q}.guesses.get('leva')?.status") == "sent" and text(f"{ph} .wq-note__title") == "заявка отправлена" \
+        and text(f"{ph} .wq-note__text") == "когда лёва её примет, ты увидишь, где он на самом деле"
+    js_click(f"{ph} [data-act='home']")
+    page.wait_for_timeout(150)
+    mark = f"{ph} .wq-map__marks .wq-mark--guess"
+    on_map = page.locator(mark).count() == 1 and text(f"{mark} .pin__title") == "лёва" \
+        and page.locator(f"{mark} .wq-guess-pin .pin__badge[src$='stickers/question.webp']").count() == 1 \
+        and text(f"{ph} .wq-waiting__text") == "ждём ответа: лёва" and text(f"{ph} [data-plate-meta]") == "осталось 9 меток из 10"
+    js_click(f"{ph} .wq-card [data-act='find']")
+    page.wait_for_timeout(200)
+    listed = page.locator(f"{sheet} [data-pick='leva']").count() == 0 and page.locator(f"{sheet} [data-pick]").count() == 11
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(150)
+    page.evaluate(f"{V}.pick('masha')")
+    page.evaluate(f"{V}.aimAt(170, 240)")
+    js_click(f"{ph} [data-act='send']")
+    page.wait_for_timeout(150)
+    she = text(f"{ph} .wq-note__text") == "когда маша её примет, ты увидишь, где она на самом деле"
+    js_click(f"{ph} [data-act='home']")
+    page.wait_for_timeout(150)
+    check("квест: „добавить в друзья“ – „заявка отправлена“, „когда лёва её примет, ты увидишь, где он на самом деле“ (у маши – „она“); на карте пин-метка „лёва“ с вопросом, „ждём ответа: лёва“, меток осталось 9; в списке лёвы больше нет",
+          sent and on_map and listed and she)
+
+    # ── раскрытие: пунктир, км, настоящий пин, огоньки ──
+    page.evaluate(f"{Q}.accept('leva')")
+    page.wait_for_timeout(400)
+    r = f"{ph} [data-reveal]"
+    reveal = mode() == "result" and page.evaluate(f"document.querySelector('{ph} [data-push]').classList.contains('is-shown')") \
+        and text(f"{ph} [data-push-title]") == "лёва теперь в друзьях" and page.locator(f"{r} .wq-line").count() == 1 \
+        and text(f"{r} .wq-mine") == "твоя метка" and page.locator(f"{r} .wq-mark--mine .wq-guess-pin").count() == 1 \
+        and text(f"{r} .wq-km") == "0.5 км" and page.locator(f"{r} .wq-km.sticker-number").count() == 1 \
+        and page.locator(f"{r} .map-chip").count() == 0 and text(f"{r} .wq-mark--real .pin__title") == "лёва" \
+        and text(f"{ph} .wq-heat__word") == "недалеко" and page.locator(f"{ph} .wq-heat__fires .wq-fire:not(.is-dim)").count() == 2 \
+        and text(f"{ph} .wq-heat__text") == "лёва в 0.5 км от твоей метки" and text(f"{ph} [data-goal-count]") == "2" \
+        and not page.eval_on_selector(f"{ph} [data-heat]", "el => el.classList.contains('is-waiting')")
+    me_hidden = page.eval_on_selector(f"{ph} .wq-mark--me", "el => getComputedStyle(el).visibility") == "hidden"
+    check("квест: принял – пуш, пунктир от „твоей метки“ к настоящему пину „лёва“, км – наклейкой без подложки („0.5 км“); твой пин на итоге убран; „недалеко“, горят 2 огонька из 3, в счёте 2",
+          reveal and me_hidden)
+
+    js_click(f"{ph} [data-act='next']")
+    page.wait_for_timeout(250)
+    won = is_open(f"{ph} [data-won]") and text(f"{ph} [data-won-title]") == "хвост для пина – твой!" and text(f"{ph} [data-won-name]") == "хвост огонь"
+    js_click(f"{ph} [data-act='won-ok']")
+    page.wait_for_timeout(250)
+    after = text(f"{ph} .wq-goal__title") == "стикеры для чата" and text(f"{ph} .wq-goal__left") == "ещё 2 огонька" \
+        and page.eval_on_selector(f"{ph} .wq-mark--me", "el => getComputedStyle(el).visibility") == "visible" \
+        and page.locator(f"{ph} .wq-map__marks .wq-mark:not(.wq-mark--me):not(.wq-mark--guess) .pin--online").count() == 1
+    check("квест: огоньков хватило – „хвост для пина – твой!“, „хвост огонь“ без кавычек; дальше „стикеры для чата“, „ещё 2 огонька“; лёва на карте своим пином, твой пин вернулся",
+          won and after)
+
+    js_click(f"{ph} [data-act='prizes']")
+    page.wait_for_timeout(200)
+    prizes = f"{ph} [data-sheet='prizes']"
+    rows = contents(f"{prizes} .wq-prize__name") == ["огонь", "тыквы", "привидения", "тень", "подписка"] \
+        and contents(f"{prizes} .wq-prize__need") == ["4", "8", "14", "20"] \
+        and page.locator(f"{prizes} .wq-prize[data-state='got']").count() == 1 and text(f"{prizes} [data-prizes-text]") == "у тебя 2 огонька"
+    js_click(f"{prizes} .wq-prize:nth-child(2) [data-gift]")
+    page.wait_for_timeout(200)
+    what = is_open(f"{ph} [data-sheet='gift']") and text(f"{ph} [data-gift-name]") == "тыквы" \
+        and text(f"{ph} [data-gift-kind]") == "стикеры для чата" and text(f"{ph} [data-gift-need]") == "за 4 огонька"
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(150)
+    top_only = not is_open(f"{ph} [data-sheet='gift']") and is_open(prizes)
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(150)
+    no_quotes = page.evaluate("(s) => !/[„“]/.test(document.querySelector(s).textContent)", f"{ph} .wq")
+    check("квест: „подарки за огоньки“ – огонь, тыквы, привидения, тень, vip, пороги 4/8/14/20, первый твой; „что это“ – „тыквы“, „стикеры для чата“, „за 4 огонька“; Esc закрывает по одной; кавычек у названий нет",
+          rows and what and top_only and not is_open(prizes) and no_quotes)
+
+    # ── принял, пока ставишь другую метку ──
+    page.evaluate(f"{V}.pick('sonya')")
+    page.evaluate(f"{V}.aimAt(300, 380)")
+    page.evaluate(f"{V}.send()")
+    page.evaluate(f"{V}.pick('timur')")
+    page.evaluate(f"{Q}.accept('sonya')")
+    page.wait_for_timeout(200)
+    waits = mode() == "guess" and page.locator(f"{ph} .wq-map__marks .wq-mark--guess.is-ready").count() == 1
+    js_click(f"{ph} [data-act='cancel']")
+    page.wait_for_timeout(400)
+    check("квест: знакомый принял, пока ставишь другую метку, – его метка зовёт розовым, раскрытие играет, когда вернулся на карту",
+          waits and mode() == "result" and page.evaluate(f"{V}.state.result.id") == "sonya")
+    js_click(f"{ph} [data-act='next']")
+    page.wait_for_timeout(250)
+    if is_open(f"{ph} [data-won]"):
+        js_click(f"{ph} [data-act='won-ok']")
+        page.wait_for_timeout(250)
+
+    page.evaluate(f"{V}.demoGuesses(10)")
+    page.wait_for_timeout(200)
+    check("квест: меток 10 – „осталось 0 меток из 10“, вместо кнопки „все 10 меток стоят – ждём ответов“",
+          size() == 10 and text(f"{ph} [data-plate-meta]") == "осталось 0 меток из 10"
+          and page.locator(f"{ph} .wq-card [data-act='find']").count() == 0 and text(f"{ph} .wq-card__note") == "все 10 меток стоят – ждём ответов")
+
+    page.click('[data-act="intro"]')
+    page.wait_for_timeout(200)
+    replay = is_open(intro) and text(f"{intro} [data-act='intro-ok']") == "начать"
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
+    check("квест: „онбординг“ на пульте открывает его снова, Esc закрывает", replay and not is_open(intro))
+    page.close()
+
+    for w in (375, 430):
+        mobile = browser.new_page(viewport={"width": w, "height": 812}, device_scale_factor=1, is_mobile=True, has_touch=True)
+        mobile.on("pageerror", lambda e: errors.append(str(e)))
+        mobile.goto(f"http://127.0.0.1:{port}/features/welcome-quest/index.html")
+        mobile.wait_for_timeout(600)
+        fits = mobile.evaluate("""() => { const i = document.querySelector('#phone [data-intro]').getBoundingClientRect();
+            const c = document.querySelector('#phone [data-act=intro-ok]');
+            const g = [...document.querySelectorAll('#phone .wq-hero__gift')].map((e) => e.getBoundingClientRect());
+            const t = document.querySelector('#phone .wq-hero__title').getBoundingClientRect();
+            return c.getBoundingClientRect().bottom <= i.bottom && g.every((r) => r.left >= i.left - 12 && r.right <= i.right + 12)
+              && t.height < 50 && getComputedStyle(c).animationName === 'wq-cta'; }""")
+        mobile.evaluate("WQ.view.closeIntro()")
+        mobile.wait_for_timeout(200)
+        card = mobile.evaluate("""() => { const r = document.querySelector('#phone .wq').getBoundingClientRect();
+            const c = document.querySelector('#phone .wq-card').getBoundingClientRect();
+            const p = document.querySelector('#phone .wq-plate').getBoundingClientRect();
+            const x = document.querySelector('#phone [data-close]').getBoundingClientRect();
+            return c.left >= r.left && c.right <= r.right && p.right <= x.left && x.right <= r.right; }""")
+        check(f"квест: {w} – онбординг помещается, заголовок в одну строку, кнопка зовёт розовым; плашка, крестик и карточка в экране, без горизонтального скролла",
+              fits and card and not mobile.evaluate("document.documentElement.scrollWidth > innerWidth"))
+        mobile.close()
+
+
 def main() -> int:
     server, port = serve()
     errors: list[str] = []
@@ -965,6 +1218,7 @@ def main() -> int:
             check_geo_share_locate(browser, port, errors)
             check_overnights(browser, port, errors)
             check_new_year_board(browser, port, errors)
+            check_welcome_quest(browser, port, errors)
             browser.close()
             # 3D новогодних подарков рисует three.js: WebGL в безголовом Chromium – только через SwiftShader.
             # Отдельный браузер: программная отрисовка замедляет всё, и проверки с анимациями выше начинают плавать
