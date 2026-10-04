@@ -666,11 +666,12 @@ ol {
 }
 
 /* Витрина-герой, как в профиле: свечение темы, кучка лиц по центру, имя под ней */
+/* лица начинаются под кнопками шапки (10 + 46) с зазором 12 – кнопки на них не налезают */
 .company__hero {
   position: relative;
   display: grid;
   place-items: center;
-  padding-top: calc(var(--safe-top) + var(--space-16));
+  padding-top: calc(var(--safe-top) + 68px);
 }
 
 /* свечение растворяется в чёрном до имени: у картинки низ не чёрный, и без маски
@@ -700,21 +701,21 @@ ol {
 }
 
 .company__crew {
-  --crew-size: 270px;
+  --crew-size: 250px;
 }
 
 .company__back {
   position: absolute;
   top: calc(var(--safe-top) + var(--space-10));
   left: var(--gutter);
-  z-index: 2;
+  z-index: 25;
 }
 
 .company__edit {
   position: absolute;
   top: calc(var(--safe-top) + var(--space-10));
   right: var(--gutter);
-  z-index: 2;
+  z-index: 25;
 }
 
 .company__edit .icon {
@@ -1161,7 +1162,7 @@ ol {
 .create__crew {
   display: grid;
   place-items: center;
-  min-height: 270px;
+  min-height: 250px;
 }
 
 .create__crew-box {
@@ -1581,7 +1582,7 @@ ol {
   position: absolute;
   top: calc(var(--safe-top) + var(--space-10));
   right: var(--gutter);
-  z-index: 2;
+  z-index: 25;
 }
 
 .company__edit--shifted {

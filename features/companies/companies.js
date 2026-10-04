@@ -125,12 +125,12 @@
   let S;
   function initial() {
     return {
-      mine: "none",                // none | pending | active – по умолчанию своей компании нет
+      mine: "active",              // none | pending | active – по умолчанию своя компания уже есть
       own: { ...MINE_DEFAULT },
       accepted: ["me"],            // в „ждём друзей“ – кто уже согласился
       city: "full",                // full | one | empty
-      liked: {},                   // кого лайкнула твоя компания и кто именно
-      likesUs: 0,
+      liked: { boardgames: "natashka" },   // кого лайкнула твоя компания и кто именно
+      likesUs: 3,
       matches: [],                 // { id, state: new | they | waiting | ready | expired, daysLeft }
       draft: { interests: new Set(), friends: new Set(), what: "", day: null, desc: "" },
       confirm: false,              // „выйти из компании“ / „скрыть компанию“ ждёт второго нажатия
