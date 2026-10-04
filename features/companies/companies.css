@@ -1055,7 +1055,14 @@ ol {
   animation: heart-pop 0.6s var(--ease-spring) 0.25s both;
 }
 
+.match__hero,
+.match__footer {
+  z-index: 1;
+}
+
 .match__body {
+  position: relative;
+  z-index: 1;
   padding: 0 var(--space-24) calc(var(--safe-bottom) + 136px);
   text-align: center;
 }
@@ -1489,18 +1496,42 @@ ol {
   background: radial-gradient(closest-side, var(--c-theirs), transparent);
 }
 
-.match__spark {
+/* сердечки снизу вверх: разные размер, колонка, скорость и задержка; гаснут к верху */
+.match__float {
   position: absolute;
-  opacity: 0.55;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
   pointer-events: none;
 }
 
-.match__spark--1 { left: 58%; top: -18px; width: 30px; transform: rotate(14deg); }
-.match__spark--2 { left: 30px; top: 250px; width: 24px; transform: rotate(-18deg); opacity: 0.4; }
-.match__spark--3 { right: 40px; top: 30px; width: 20px; transform: rotate(-6deg); opacity: 0.35; }
+.match__float img {
+  position: absolute;
+  bottom: -40px;
+  left: var(--x);
+  width: var(--s);
+  opacity: 0;
+}
 
-.match.is-open .match__spark {
-  animation: bubble-in 0.5s var(--ease-spring) 0.6s both;
+.match.is-open .match__float img {
+  animation: float-up var(--t) linear var(--d) infinite;
+}
+
+.match__float img:nth-child(1) { --x: 8%; --s: 26px; --t: 6s; --d: 0s; }
+.match__float img:nth-child(2) { --x: 24%; --s: 18px; --t: 7.5s; --d: 1.2s; }
+.match__float img:nth-child(3) { --x: 41%; --s: 30px; --t: 5.5s; --d: 2.6s; }
+.match__float img:nth-child(4) { --x: 57%; --s: 20px; --t: 7s; --d: 0.6s; }
+.match__float img:nth-child(5) { --x: 72%; --s: 28px; --t: 6.5s; --d: 3.4s; }
+.match__float img:nth-child(6) { --x: 87%; --s: 18px; --t: 8s; --d: 1.8s; }
+.match__float img:nth-child(7) { --x: 15%; --s: 22px; --t: 6.8s; --d: 4.2s; }
+.match__float img:nth-child(8) { --x: 64%; --s: 24px; --t: 7.2s; --d: 5s; }
+
+@keyframes float-up {
+  0% { opacity: 0; transform: translate(0, 0) rotate(-12deg); }
+  10% { opacity: 0.6; }
+  50% { transform: translate(14px, -420px) rotate(8deg); }
+  80% { opacity: 0.35; }
+  100% { opacity: 0; transform: translate(-8px, -860px) rotate(-6deg); }
 }
 
 .match__shared {
@@ -1543,7 +1574,7 @@ ol {
 /* крестик меньше, кнопка – прежние 46 */
 .icon-button--header .icon--close,
 .icon-button--glass-dark .icon--close {
-  --icon-size: 13px;
+  --icon-size: 17px;
 }
 
 .company__close {
@@ -1723,17 +1754,6 @@ ol {
   from { opacity: 0; scale: 0.3; }
 }
 
-.intro__bubble--plan {
-  left: 50%;
-  top: calc(var(--safe-top) + 345px);
-  margin-left: -120px;
-  transform: rotate(-3deg);
-}
-
-.intro[data-step="1"].is-playing .intro__bubble--plan {
-  animation: bubble-in 0.4s var(--ease-spring) 1.2s both;
-}
-
 /* шаг 3: две компании и стикер-вопрос – лайк анонимный; ниже – их общий чат */
 .intro__pair {
   display: flex;
@@ -1751,10 +1771,6 @@ ol {
   width: 72px;
   height: 72px;
   transform: rotate(-10deg);
-}
-
-.intro[data-step="2"].is-playing .intro__secret {
-  animation: heart-pop 0.6s var(--ease-spring) 0.3s both;
 }
 
 .intro__chat {
@@ -1783,14 +1799,6 @@ ol {
   background: var(--color-bubble-outgoing);
 }
 
-.intro[data-step="2"].is-playing .intro__msg--in {
-  animation: bubble-in 0.4s var(--ease-spring) 0.9s both;
-}
-
-.intro[data-step="2"].is-playing .intro__msg--out {
-  animation: bubble-in 0.4s var(--ease-spring) 1.4s both;
-}
-
 .intro__dots {
   display: flex;
   justify-content: center;
@@ -1811,4 +1819,174 @@ ol {
 .intro[data-step="2"] .intro__dots span:nth-child(3) {
   width: 18px;
   background: var(--color-text);
+}
+
+/* микроаватарка без фото: буква по центру сквиркла */
+.face-stack__img--initial {
+  display: grid;
+  place-items: center;
+  background: var(--color-surface-raised);
+  color: var(--color-text-dim);
+  font: var(--type-compact-strong);
+}
+
+/* ── онбординг: фактура фона ─────────────────────────────────────────── */
+
+/* сетка точек, как на карточке подарка, растворяется к низу; два мягких пятна цвета */
+.intro__texture {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 22%, var(--color-pink-halo) 0, transparent 34%),
+    radial-gradient(circle at 86% 46%, var(--color-online-halo) 0, transparent 30%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.16) 1px, transparent 1.6px) 0 0 / 18px 18px;
+  -webkit-mask: linear-gradient(180deg, #000 0%, #000 45%, transparent 75%);
+          mask: linear-gradient(180deg, #000 0%, #000 45%, transparent 75%);
+  pointer-events: none;
+}
+
+/* ── онбординг, шаг 2: детали компании появляются по всему фону ───────── */
+
+.intro__bit {
+  position: absolute;
+  z-index: 12;
+  opacity: 0;
+}
+
+.intro__bit--name {
+  left: 22px;
+  top: calc(var(--safe-top) + 26px);
+  padding: 4px 12px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-chip-light);
+  color: var(--color-text-on-chip);
+  font: var(--type-username);
+  transform: rotate(-4deg);
+}
+
+.intro__bit--plan {
+  right: 16px;
+  top: calc(var(--safe-top) + 330px);
+  transform: rotate(4deg);
+}
+
+.intro__bit--t1 { left: 14px; top: calc(var(--safe-top) + 240px); transform: rotate(-6deg); }
+.intro__bit--t2 { left: 20px; top: calc(var(--safe-top) + 310px); transform: rotate(5deg); }
+.intro__bit--t3 { right: 10px; top: calc(var(--safe-top) + 200px); transform: rotate(7deg); }
+
+.intro__bit--meta {
+  right: 20px;
+  top: calc(var(--safe-top) + 400px);
+  color: var(--color-text-secondary);
+  font: var(--type-label);
+  transform: rotate(3deg);
+}
+
+.intro__bit--count {
+  --sticker-size: 40px;
+  left: 26px;
+  top: calc(var(--safe-top) + 380px);
+  transform: rotate(-8deg);
+}
+
+.intro__bit--count-label {
+  left: 80px;
+  top: calc(var(--safe-top) + 398px);
+  color: var(--color-text-secondary);
+  font: var(--type-compact-strong);
+  transform: rotate(-8deg);
+}
+
+.intro[data-step="1"].is-playing .intro__bit {
+  animation: bit-in 0.45s var(--ease-spring) var(--d, 1s) both;
+}
+
+.intro__bit--name { --d: 1.05s; }
+.intro__bit--t3 { --d: 1.25s; }
+.intro__bit--t1 { --d: 1.4s; }
+.intro__bit--plan { --d: 1.55s; }
+.intro__bit--t2 { --d: 1.7s; }
+.intro__bit--count, .intro__bit--count-label { --d: 1.85s; }
+.intro__bit--meta { --d: 2s; }
+
+@keyframes bit-in {
+  from { opacity: 0; scale: 0.5; }
+  to { opacity: 1; scale: 1; }
+}
+
+/* ── онбординг, шаг 3: лайк одним → лайк в ответ → сердце → чат ────────── */
+
+.intro__who {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.intro__like {
+  margin-top: -6px;
+}
+
+.intro__middle {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 40px;
+}
+
+.intro__middle img {
+  position: absolute;
+  inset: 0;
+  width: 72px;
+  height: 72px;
+}
+
+.intro__mutual {
+  opacity: 0;
+}
+
+.intro[data-step="2"].is-playing .intro__like--a {
+  animation: like-on 0.35s ease 0.5s both;
+}
+
+.intro[data-step="2"].is-playing .intro__like--b {
+  animation: like-on 0.35s ease 1.3s both;
+}
+
+.intro[data-step="2"].is-playing .intro__like--a .like-button__heart {
+  animation: heart-pop 0.45s var(--ease-spring) 0.5s both;
+}
+
+.intro[data-step="2"].is-playing .intro__like--b .like-button__heart {
+  animation: heart-pop 0.45s var(--ease-spring) 1.3s both;
+}
+
+@keyframes like-on {
+  to { border-color: var(--color-text); background: var(--color-text); }
+}
+
+.intro[data-step="2"].is-playing .intro__secret {
+  animation: secret-out 0.3s ease 1.9s both;
+}
+
+.intro[data-step="2"].is-playing .intro__mutual {
+  animation: mutual-in 0.6s var(--ease-spring) 2s both;
+}
+
+@keyframes secret-out {
+  from { opacity: 1; }
+  to { opacity: 0; scale: 0.4; }
+}
+
+@keyframes mutual-in {
+  from { opacity: 0; scale: 0.3; }
+  to { opacity: 1; scale: 1.15; }
+}
+
+.intro[data-step="2"].is-playing .intro__msg--in {
+  animation: bubble-in 0.4s var(--ease-spring) 2.7s both;
+}
+
+.intro[data-step="2"].is-playing .intro__msg--out {
+  animation: bubble-in 0.4s var(--ease-spring) 3.2s both;
 }

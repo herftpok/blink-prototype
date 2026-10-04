@@ -84,6 +84,7 @@
           <button class="icon-button icon-button--header intro__close pressable" type="button" aria-label="закрыть" data-act="intro-done">
             <i class="icon icon--close" aria-hidden="true"></i>
           </button>
+          <div class="intro__texture" aria-hidden="true"></div>
           <div class="intro__slides" aria-hidden="true">
             <!-- 1: две компании съезжаются, переписка, сердце -->
             <div class="intro__stage intro__stage--0">
@@ -96,14 +97,26 @@
             <!-- 2: квадрат с плюсом наполняется друзьями, появляется план -->
             <div class="intro__stage intro__stage--1">
               <div class="intro__build" id="intro-build"></div>
-              <span class="plan intro__bubble intro__bubble--plan">в кино в пт 9.10</span>
+              <!-- что ещё бывает у компании – появляется по всему фону -->
+              <span class="intro__bit intro__bit--name">тусовка с района</span>
+              <span class="plan intro__bit intro__bit--plan">в кино в пт 9.10</span>
+              <span class="tag intro__bit intro__bit--t1">кино</span>
+              <span class="tag intro__bit intro__bit--t2">настолки</span>
+              <span class="tag intro__bit intro__bit--t3">прогулки</span>
+              <span class="intro__bit intro__bit--meta">4 человека · 23 года</span>
+              <span class="sticker-number intro__bit intro__bit--count">15</span>
+              <span class="intro__bit intro__bit--count-label">человек – максимум</span>
             </div>
             <!-- 3: лайк с вопросом – анонимно; взаимно – общий чат -->
             <div class="intro__stage intro__stage--2">
+              <!-- сначала лайк одним, потом в ответ – и только тогда общий чат -->
               <div class="intro__pair">
-                <div id="intro-a"></div>
-                <img class="intro__secret" src="../../assets/stickers/question.webp" alt="">
-                <div id="intro-b"></div>
+                <div class="intro__who"><div id="intro-a"></div><span class="like-button intro__like intro__like--a"><img class="like-button__heart" src="../../assets/stickers/heart.webp" alt=""></span></div>
+                <div class="intro__middle">
+                  <img class="intro__secret" src="../../assets/stickers/question.webp" alt="">
+                  <img class="intro__mutual" src="../../assets/stickers/heart.webp" alt="">
+                </div>
+                <div class="intro__who"><div id="intro-b"></div><span class="like-button intro__like intro__like--b"><img class="like-button__heart" src="../../assets/stickers/heart.webp" alt=""></span></div>
               </div>
               <div class="intro__chat">
                 <p class="intro__msg intro__msg--in">привет! вы тоже за концерт?</p>
@@ -226,12 +239,17 @@
           <button class="icon-button icon-button--header match__close pressable" type="button" aria-label="закрыть" data-act="close-match">
             <i class="icon icon--close" aria-hidden="true"></i>
           </button>
+          <!-- фон: сердечки вылетают снизу и улетают вверх -->
+          <div class="match__float" aria-hidden="true">
+            <img src="../../assets/stickers/heart.webp" alt=""><img src="../../assets/stickers/heart.webp" alt="">
+            <img src="../../assets/stickers/heart.webp" alt=""><img src="../../assets/stickers/heart.webp" alt="">
+            <img src="../../assets/stickers/heart.webp" alt=""><img src="../../assets/stickers/heart.webp" alt="">
+            <img src="../../assets/stickers/heart.webp" alt=""><img src="../../assets/stickers/heart.webp" alt="">
+          </div>
           <div class="match__hero" aria-hidden="true">
             <span class="match__aura match__aura--mine"></span>
             <span class="match__aura match__aura--theirs"></span>
-            <img class="match__spark match__spark--1" src="../../assets/stickers/heart.webp" alt="">
-            <img class="match__spark match__spark--2" src="../../assets/stickers/heart.webp" alt="">
-            <img class="match__spark match__spark--3" src="../../assets/stickers/heart.webp" alt="">
+
             <div class="match__side match__side--mine" id="match-mine"></div>
             <div class="match__side match__side--theirs" id="match-theirs"></div>
             <img class="match__heart" src="../../assets/stickers/heart.webp" alt="">

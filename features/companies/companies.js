@@ -141,8 +141,11 @@
   }
 
   const company = (id) => (id === "mine" ? S.own : COMPANIES.find((c) => c.id === id));
+  // в ленте выше – компании, у которых больше фото: лица продают компанию лучше букв
+  const photos = (c) => c.members.filter((id) => P[id].photo).length / c.members.length;
   const visible = () => (S.city === "empty" ? [] : S.city === "one" ? COMPANIES.slice(0, 1) : COMPANIES)
-    .filter((c) => !S.hidden.includes(c.id));
+    .filter((c) => !S.hidden.includes(c.id))
+    .map((c, i) => [c, i]).sort((a, b) => photos(b[0]) - photos(a[0]) || a[1] - b[1]).map(([c]) => c);
   const match = (id) => S.matches.find((m) => m.id === id);
   const avgAge = (c) => Math.round(c.members.reduce((s, id) => s + P[id].age, 0) / c.members.length);
 
@@ -195,8 +198,8 @@
         <button class="mine-card pressable" type="button" data-act="create">
           <img class="mine-card__sticker" src="${A}stickers/rock.webp" alt="">
           <span class="mine-card__body">
-            <span class="mine-card__title">собери компанию</span>
-            <span class="mine-card__text">из своих друзей, до 15 человек</span>
+            <span class="mine-card__title">собери свою компанию</span>
+            <span class="mine-card__text">до 15 человек</span>
           </span>
           <i class="icon icon--chevron mine-card__chevron" aria-hidden="true"></i>
         </button>`;
@@ -270,7 +273,7 @@
   }
 
   // Две ленты: „ближайшие“ – у кого есть план, по дате; „все“ – все компании города с описанием
-  const withPlans = () => visible().filter((c) => c.plan).sort((a, b) => a.plan.day - b.plan.day);
+  const withPlans = () => visible().filter((c) => c.plan).sort((a, b) => a.plan.day - b.plan.day || photos(b) - photos(a));
 
   function renderList() {
     const plans = S.feed === "plans";
@@ -608,7 +611,7 @@
   // ── Онбординг ──────────────────────────────────────────────────────────
   const INTRO = [
     ["знакомься компаниями", "создавайте компании, лайкайте других и если это взаимно – то переходите в общий чат"],
-    ["собери свою компанию", "позови друзей, придумайте название, план и интересы"],
+    ["собери свою компанию", "позови друзей, укажите свои планы и интересы"],
     ["лайки анонимные", "о лайке узнают, только если он взаимный. тогда у обеих компаний появится общий чат"],
   ];
   let introAt = 0;
