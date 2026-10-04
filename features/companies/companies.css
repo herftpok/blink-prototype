@@ -1735,16 +1735,20 @@ ol {
   position: relative;
   flex-shrink: 0;
   width: 200px;
+  margin-bottom: var(--space-24);
 }
 
 .intro__build .intro__crew {
   --crew-size: 200px;
 }
 
+/* плюс в углу под лицами; под коробкой лиц – запас, чтобы с наклоном он не заходил на план */
 .intro__add {
   position: absolute;
-  right: -6px;
-  bottom: -6px;
+  right: -10px;
+  bottom: -14px;
+  width: 52px;
+  height: 52px;
 }
 
 .intro[data-step="1"].is-playing .intro__build .crew__face {
