@@ -1702,10 +1702,15 @@ ol {
   flex: 1;
 }
 
+/* сцена свёрстана на высоту 598 (экран 844); на низких экранах ужимается целиком
+   от верхнего края – companies.js → fitIntro() задаёт --intro-scale */
 .intro__slides .intro__stage {
   position: absolute;
-  inset: 0;
+  inset: 0 0 auto;
+  height: 598px;
   margin: 0;
+  transform: scale(var(--intro-scale, 1));
+  transform-origin: 50% 0;
   padding-top: calc(var(--safe-top) + 40px);
   opacity: 0;
   visibility: hidden;
@@ -1728,12 +1733,12 @@ ol {
 /* шаг 2: квадрат с плюсом наполняется друзьями, потом план */
 .intro__build {
   position: relative;
-  width: 230px;
-  margin: calc(var(--safe-top) + 40px) auto 0;
+  flex-shrink: 0;
+  width: 200px;
 }
 
 .intro__build .intro__crew {
-  --crew-size: 230px;
+  --crew-size: 200px;
 }
 
 .intro__add {
@@ -1845,69 +1850,52 @@ ol {
   pointer-events: none;
 }
 
-/* ── онбординг, шаг 2: детали компании появляются по всему фону ───────── */
+/* ── онбординг, шаг 2: карточка компании собирается по частям ─────────── */
+
+.intro__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-16);
+  height: 100%;
+  padding-bottom: var(--space-24);
+}
 
 .intro__bit {
-  position: absolute;
-  z-index: 12;
   opacity: 0;
 }
 
 .intro__bit--name {
-  left: 22px;
-  top: calc(var(--safe-top) + 26px);
   padding: 4px 12px 6px;
   border-radius: var(--radius-pill);
   background: var(--gradient-chip-light);
   color: var(--color-text-on-chip);
   font: var(--type-username);
-  transform: rotate(-4deg);
+  transform: rotate(-3deg);
 }
 
 .intro__bit--plan {
-  right: 16px;
-  top: calc(var(--safe-top) + 330px);
-  transform: rotate(4deg);
+  transform: rotate(-2deg);
 }
 
-.intro__bit--t1 { left: 14px; top: calc(var(--safe-top) + 240px); transform: rotate(-6deg); }
-.intro__bit--t2 { left: 20px; top: calc(var(--safe-top) + 310px); transform: rotate(5deg); }
-.intro__bit--t3 { right: 10px; top: calc(var(--safe-top) + 200px); transform: rotate(7deg); }
-
-.intro__bit--meta {
-  right: 20px;
-  top: calc(var(--safe-top) + 400px);
-  color: var(--color-text-secondary);
-  font: var(--type-label);
-  transform: rotate(3deg);
+.intro__bits-row {
+  display: flex;
+  gap: var(--space-8);
 }
 
-.intro__bit--count {
-  --sticker-size: 40px;
-  left: 26px;
-  top: calc(var(--safe-top) + 380px);
-  transform: rotate(-8deg);
-}
-
-.intro__bit--count-label {
-  left: 80px;
-  top: calc(var(--safe-top) + 398px);
-  color: var(--color-text-secondary);
-  font: var(--type-compact-strong);
-  transform: rotate(-8deg);
-}
+.intro__bit--t1 { transform: rotate(-4deg); }
+.intro__bit--t3 { transform: rotate(4deg); }
 
 .intro[data-step="1"].is-playing .intro__bit {
   animation: bit-in 0.45s var(--ease-spring) var(--d, 1s) both;
 }
 
-.intro__bit--name { --d: 1.05s; }
-.intro__bit--t3 { --d: 1.25s; }
-.intro__bit--t1 { --d: 1.4s; }
-.intro__bit--plan { --d: 1.55s; }
-.intro__bit--t2 { --d: 1.7s; }
-.intro__bit--count, .intro__bit--count-label { --d: 1.85s; }
-.intro__bit--meta { --d: 2s; }
+.intro__bit--name { --d: 0.1s; }
+.intro__bit--plan { --d: 1.2s; }
+.intro__bit--t1 { --d: 1.45s; }
+.intro__bit--t2 { --d: 1.6s; }
+.intro__bit--t3 { --d: 1.75s; }
 
 @keyframes bit-in {
   from { opacity: 0; scale: 0.5; }

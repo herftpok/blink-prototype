@@ -629,6 +629,13 @@
     el.classList.add("is-playing");
   }
 
+  function fitIntro() {
+    const slides = $(".intro__slides");
+    if (!slides.offsetHeight) return;
+    $("#screen-intro").style.setProperty("--intro-scale", Math.min(1, slides.offsetHeight / 598).toFixed(3));
+  }
+  addEventListener("resize", fitIntro);
+
   function showIntro() {
     const el = $("#screen-intro");
     $("#intro-left").innerHTML = crew(COMPANIES[0], "intro__crew");
@@ -639,6 +646,7 @@
     el.hidden = false;
     el.classList.remove("is-leaving");
     list.inert = true;
+    fitIntro();
     introStep(0);
   }
 
