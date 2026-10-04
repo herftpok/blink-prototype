@@ -49,6 +49,13 @@
     misha: { name: "миша", age: 18 },
     artur: { name: "артур", age: 28 },
     timofey: { name: "тимофей с очень длинной фамилией", age: 26 },
+    // ещё компании города: фото в паке мало, часть людей – без фото, с буквой имени
+    yana: { name: "яна", photo: "people/photo-4.webp", age: 21 }, kira: { name: "кира", age: 20 }, mila: { name: "мила", age: 21 },
+    roma: { name: "рома", photo: "people/photo-2.webp", age: 24 }, igor: { name: "игорь", age: 25 }, seva: { name: "сева", age: 23 }, oleg: { name: "олег", age: 26 },
+    polina: { name: "полина", photo: "people/photo-1.webp", age: 17 }, dasha: { name: "даша", age: 17 }, vera: { name: "вера", age: 18 },
+    max: { name: "макс", photo: "people/photo-5.webp", age: 20 }, ilya: { name: "илья", photo: "people/photo-3.webp", age: 21 }, gleb: { name: "глеб", age: 20 }, ann: { name: "аня", age: 19 }, zhenya: { name: "женя", age: 20 },
+    sasha: { name: "саша", photo: "people/kekova.webp", sq: true, age: 22 }, lera: { name: "лера", photo: "people/masha.webp", sq: true, age: 22 },
+    fedya: { name: "федя", photo: "people/tarakanus.webp", sq: true, age: 30 }, stas: { name: "стас", age: 29 }, kostya: { name: "костя", age: 31 }, lyosha: { name: "лёша", age: 28 },
   };
 
   const COMPANIES = [
@@ -56,6 +63,12 @@
     { id: "boardgames", theme: ["#adff58", "#ccff39", "#30e593"], name: "настолки на патриках", plan: { what: "поиграть в настолки", day: 5 }, desc: "каждую пятницу играем в мафию и кодовые имена. новичков научим", interests: ["настолки", "квизы", "пицца"], members: ["tyoma", "tarakanus", "gosha"] },
     { id: "hse", theme: ["#e0c195", "#ff6ac8", "#e5a0d3"], name: "второй курс вшэ и все, кто к нам прибился", plan: { what: "в бар", day: 0 }, desc: "после пар идём куда угодно, лишь бы не в библиотеку", interests: ["тусовки", "бары", "кино", "клубы", "учёба"], members: ["lyova", "vasya", "katya", "dan", "nika", "rita", "egor", "misha"] },
     { id: "brothers", theme: ["#74e4fa", "#9ea4ef", "#73edff"], name: "мы с братом", plan: null, desc: "футбол по воскресеньям, ищем ещё одну команду", interests: ["футбол"], members: ["artur", "timofey"] },
+    { id: "kpop", theme: ["#ff75e1", "#73edff", "#cf91ff"], name: "k-pop пати", plan: { what: "на вечеринку", day: 6 }, desc: "танцуем каверы и ходим на все k-pop вечеринки", interests: ["k-pop", "танцы", "музыка"], members: ["yana", "kira", "mila"] },
+    { id: "runners", theme: ["#adff58", "#74e4fa", "#30e593"], name: "бегаем по утрам", plan: { what: "на пробежку", day: 1 }, desc: "10 км по набережной, потом кофе. темп любой", interests: ["бег", "кофе", "спорт"], members: ["roma", "igor", "seva", "oleg"] },
+    { id: "school", theme: ["#cf91ff", "#ff6ac8", "#73edff"], name: "11 б", plan: null, desc: "заканчиваем школу и хотим тусить с кем-то кроме одноклассников", interests: ["тусовки", "кино", "мемы"], members: ["polina", "dasha", "vera"] },
+    { id: "gamers", theme: ["#73edff", "#9ea4ef", "#adff58"], name: "катаем в доту", plan: { what: "в компьютерный клуб", day: 3 }, desc: "ищем пятёрку на турнир и просто поиграть вечером", interests: ["видеоигры", "киберспорт", "пицца"], members: ["max", "ilya", "gleb", "ann", "zhenya"] },
+    { id: "wine", theme: ["#e0c195", "#e5a0d3", "#ff75e1"], name: "винные пятницы", plan: { what: "в бар", day: 5 }, desc: "пробуем новые бары каждую пятницу", interests: ["вино", "бары", "стендап"], members: ["sasha", "lera"] },
+    { id: "fishing", theme: ["#88e3da", "#74e4fa", "#e0c195"], name: "рыбаки с юго-запада", plan: null, desc: "за город на рыбалку и шашлыки, места в машине есть", interests: ["рыбалка", "походы", "машины"], members: ["fedya", "stas", "kostya", "lyosha"] },
   ];
 
   const MINE_DEFAULT = {
@@ -77,7 +90,7 @@
     "в клуб", "на стендап", "в театр", "в музей", "на выставку", "на рейв", "кататься на великах", "на пикник", "в парк",
     "на шашлыки", "в баню", "в бассейн", "на скалодром", "в аквапарк", "на матч", "в антикафе", "на хакатон", "в лазертаг",
     "в квест", "на лекцию", "на маркет", "поиграть в волейбол", "в падел", "поиграть в приставку", "на рыбалку", "за город",
-    "на дачу", "на крышу", "встречать рассвет", "на фестиваль", "на картинг", "в планетарий"];
+    "на дачу", "на крышу", "встречать рассвет", "на фестиваль", "на картинг", "в планетарий", "на пробежку", "в компьютерный клуб"];
   const MAX_DAYS = 30;             // план – на ближайший месяц, дата из календаря
   const WEEKDAYS = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
   function dayLabel(day) {
@@ -215,11 +228,11 @@
   }
 
   function matchMeta(m) {
-    const name = `«${company(m.id).name}»`;
+    const name = company(m.id).name;
     const left = `ещё ${days(m.daysLeft)}`;
     return {
       new: `создайте общий чат · ${left}`,
-      they: `${name} за общий чат · ${left}`,
+      they: `они за общий чат · ${left}`,
       waiting: `ждём ответа · ${left}`,
       ready: "общий чат готов",
       expired: "неделя прошла",
@@ -367,15 +380,19 @@
   function renderMatch(id) {
     const m = match(id);
     const c = company(id);
-    const name = `«${c.name}»`;
+    const name = c.name;
     $("#match-mine").innerHTML = crew(S.own, "match__crew");
     $("#match-theirs").innerHTML = crew(c, "match__crew");
-    $("#match-mine-name").textContent = S.own.name;
-    $("#match-theirs-name").innerHTML = `${esc(c.name)}${planText(c.plan) ? `<span class="plan match__plan">${esc(planText(c.plan))}</span>` : ""}`;
+    const hero = $(".match__hero");
+    hero.style.setProperty("--c-mine", S.own.theme[0]);
+    hero.style.setProperty("--c-theirs", c.theme[0]);
+    const shared = c.interests.filter((t) => S.own.interests.includes(t));
+    $("#match-shared").innerHTML = shared.length
+      ? `<p class="caps-label match__shared-label">общие интересы</p><ul class="tags match__tags">${interests(shared)}</ul>` : "";
     const all = S.own.members.length + c.members.length;
     const text = {
       new: `${name} тоже лайкнули вашу компанию`,
-      they: `${P[c.members[0]].name} из ${name} уже за общий чат`,
+      they: `${P[c.members[0]].name} из компании ${name} уже за общий чат`,
       waiting: `${name} тоже лайкнули вашу компанию`,
       ready: `общий чат на ${people(all)} готов`,
       expired: `${name} тоже лайкнули вашу компанию`,
@@ -432,9 +449,9 @@
     $("#create-plan").innerHTML = d.what
       ? `<button class="plan plan--big pressable" type="button" data-sheet="plan">${esc(draftPlanText(d))}</button>`
       : addChip("plan", "план");
-    $("#create-desc-slot").innerHTML = d.desc
-      ? `<button class="company__desc create__filled pressable" type="button" data-sheet="desc">${esc(d.desc)}</button>`
-      : addChip("desc", "описание");
+    const desc = $("#create-desc");
+    if (desc.value !== d.desc) desc.value = d.desc;
+    requestAnimationFrame(() => grow(desc));
     $("#create-interests-slot").innerHTML = d.interests.size
       ? `<button class="create__filled pressable" type="button" data-sheet="interests"><ul class="tags company__interests">${interests([...d.interests])}</ul></button>`
       : addChip("interests", "интересы");
@@ -455,7 +472,7 @@
     $("#create-friends").innerHTML = FRIENDS.map((f) => {
       const p = P[f.id];
       const on = d.friends.has(f.id);
-      const status = f.busy ? `уже в «${company(f.busy).name}»` : years(p.age);
+      const status = f.busy ? `уже в компании ${company(f.busy).name}` : years(p.age);
       return `
         <li>
           <button class="pick-row pressable" type="button" data-friend="${f.id}" aria-pressed="${on}" ${f.busy ? "disabled" : ""}>
@@ -469,24 +486,54 @@
         </li>`;
     }).join("");
 
-    const what = options(WHAT, WHAT_KEY, d.what ? [d.what] : [], $("#what-search").value);
+    // своё занятие: если набранного нет в списке, оно – первое предложение (а если ничего не нашлось – единственное)
+    const query = $("#what-search").value.trim().toLowerCase();
+    let what = options(WHAT, WHAT_KEY, d.what ? [d.what] : [], query);
+    if (query && !what.includes(query)) what = [query, ...what];
     $("#create-what").innerHTML = what.length ? what.map((t) => `
-      <button class="tag tag--toggle pressable" type="button" role="radio" aria-pressed="${d.what === t}" data-what="${t}">${t}</button>`).join("")
+      <button class="tag tag--toggle pressable" type="button" role="radio" aria-pressed="${d.what === t}" data-what="${esc(t)}">${esc(t)}</button>`).join("")
       : `<p class="sheet__empty">такого нет – попробуй по-другому</p>`;
-    const today = new Date();
-    const iso = (day) => { const x = new Date(today); x.setDate(x.getDate() + day); return x.toISOString().slice(0, 10); };
     const other = d.day != null && d.day > 1;
     $("#create-when").innerHTML = [0, 1].map((day) => `
       <button class="tag tag--toggle pressable" type="button" role="radio" aria-pressed="${d.day === day}" data-day="${day}">${dayLabel(day)}</button>`).join("") + `
-      <label class="tag tag--toggle date-tag" aria-pressed="${other}">
-        <i class="icon icon--plus" aria-hidden="true"></i>${other ? dayLabel(d.day) : "другой день"}
-        <input class="date-tag__input" id="create-date" type="date" min="${iso(0)}" max="${iso(MAX_DAYS)}" value="${other ? iso(d.day) : ""}" aria-label="выбрать дату">
-      </label>`;
+      <button class="tag tag--toggle pressable" type="button" role="radio" aria-pressed="${other || calendarOpen}" data-act="calendar" aria-expanded="${other || calendarOpen}">${other ? dayLabel(d.day) : "другой день"}</button>`;
+    renderCalendar(other || calendarOpen);
 
     const ints = options(INTERESTS, INTERESTS_KEY, [...d.interests], $("#interest-search").value);
     $("#create-interests").innerHTML = ints.length ? ints.map((t) => `
       <button class="tag tag--toggle pressable" type="button" aria-pressed="${d.interests.has(t)}" data-interest="${t}">${t}</button>`).join("")
       : `<p class="sheet__empty">такого нет – попробуй по-другому</p>`;
+  }
+
+  // Свой календарь: месяц сеткой, неделя с понедельника; можно выбрать день от сегодня до +30
+  const MONTHS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
+  let calendarOpen = false;
+  let calMonth = 0;              // сдвиг месяца от текущего
+  function renderCalendar(show) {
+    const el = $("#calendar");
+    el.hidden = !show;
+    if (!show) return;
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    const first = new Date(t.getFullYear(), t.getMonth() + calMonth, 1);
+    const lead = (first.getDay() + 6) % 7;
+    const total = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    const maxMonth = new Date(t.getTime() + MAX_DAYS * 86400000).getMonth() !== t.getMonth() ? 1 : 0;
+    const cells = [];
+    for (let k = 0; k < lead; k++) cells.push('<span class="calendar__cell" aria-hidden="true"></span>');
+    for (let n = 1; n <= total; n++) {
+      const date = new Date(first.getFullYear(), first.getMonth(), n);
+      const day = Math.round((date - t) / 86400000);
+      const off = day < 0 || day > MAX_DAYS;
+      cells.push(`<button class="calendar__cell calendar__day pressable${day === 0 ? " is-today" : ""}" type="button" data-cal="${day}"
+        aria-pressed="${S.draft.day === day}" ${off ? "disabled" : ""} aria-label="${n} ${MONTHS[first.getMonth()]}">${n}</button>`);
+    }
+    el.innerHTML = `
+      <div class="calendar__head">
+        <button class="calendar__nav calendar__nav--prev pressable" type="button" data-cal-nav="-1" ${calMonth <= 0 ? "disabled" : ""} aria-label="прошлый месяц"><i class="icon icon--chevron" aria-hidden="true"></i></button>
+        <span class="calendar__month">${MONTHS[first.getMonth()]}</span>
+        <button class="calendar__nav pressable" type="button" data-cal-nav="1" ${calMonth >= maxMonth ? "disabled" : ""} aria-label="следующий месяц"><i class="icon icon--chevron" aria-hidden="true"></i></button>
+      </div>
+      <div class="calendar__grid">${["пн", "вт", "ср", "чт", "пт", "сб", "вс"].map((w) => `<span class="calendar__wd">${w}</span>`).join("")}${cells.join("")}</div>`;
   }
 
   // ── Шторки ─────────────────────────────────────────────────────────────
@@ -495,7 +542,8 @@
     sheetOpen = $(`#sheet-${name}`);
     $("#what-search").value = "";
     $("#interest-search").value = "";
-    if (name === "desc") $("#create-desc").value = S.draft.desc;
+    calendarOpen = false;
+    calMonth = 0;
     renderSheets();
     sheetOpen.classList.add("is-open");
     $("#scrim").classList.add("is-open");
@@ -505,7 +553,6 @@
 
   function closeSheet() {
     if (!sheetOpen) return;
-    if (sheetOpen.id === "sheet-desc") S.draft.desc = $("#create-desc").value.trim();
     sheetOpen.classList.remove("is-open", "is-dragging");
     sheetOpen.style.removeProperty("transform");
     $("#scrim").classList.remove("is-open");
@@ -543,24 +590,53 @@
   });
   $("#what-search").addEventListener("input", renderSheets);
   $("#interest-search").addEventListener("input", renderSheets);
-  document.addEventListener("change", (e) => {
-    if (e.target.id !== "create-date" || !e.target.value) return;
-    const [y, mo, d] = e.target.value.split("-").map(Number);
-    const t = new Date(); t.setHours(0, 0, 0, 0);
-    S.draft.day = Math.max(0, Math.round((new Date(y, mo - 1, d) - t) / 86400000));
-    renderSheets();
+  // всё, что пишут о компании, – строчными, как весь интерфейс blink
+  const lower = (el) => {
+    const pos = el.selectionStart;
+    if (el.value !== el.value.toLowerCase()) {
+      el.value = el.value.toLowerCase();
+      el.setSelectionRange(pos, pos);
+    }
+  };
+  $("#create-desc").addEventListener("input", (e) => {
+    lower(e.target);
+    S.draft.desc = e.target.value;
+    grow(e.target);
   });
+  const grow = (el) => { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; };
 
   // ── Онбординг ──────────────────────────────────────────────────────────
+  const INTRO = [
+    ["знакомься компаниями", "создавайте компании, лайкайте других и если это взаимно – то переходите в общий чат"],
+    ["собери свою компанию", "позови друзей, придумайте название, план и интересы"],
+    ["лайки анонимные", "о лайке узнают, только если он взаимный. тогда у обеих компаний появится общий чат"],
+  ];
+  let introAt = 0;
+  function introStep(n) {
+    if (n >= INTRO.length) return hideIntro();
+    introAt = n;
+    const el = $("#screen-intro");
+    el.dataset.step = n;
+    $("#intro-title").textContent = INTRO[n][0];
+    $("#intro-text").textContent = INTRO[n][1];
+    $("#intro-cta").textContent = n === INTRO.length - 1 ? "погнали" : "дальше";
+    // сцена шага разыгрывается заново при каждом показе
+    el.classList.remove("is-playing");
+    void el.offsetWidth;
+    el.classList.add("is-playing");
+  }
+
   function showIntro() {
     const el = $("#screen-intro");
     $("#intro-left").innerHTML = crew(COMPANIES[0], "intro__crew");
     $("#intro-right").innerHTML = crew(COMPANIES[1], "intro__crew");
+    $("#intro-build").innerHTML = `${crew(MINE_DEFAULT, "intro__crew")}<span class="crew-add intro__add"><i class="icon icon--plus" aria-hidden="true"></i></span>`;
+    $("#intro-a").innerHTML = crew(MINE_DEFAULT, "intro__crew intro__crew--small");
+    $("#intro-b").innerHTML = crew(COMPANIES[0], "intro__crew intro__crew--small");
     el.hidden = false;
-    el.classList.remove("is-leaving", "is-playing");
-    void el.offsetWidth;
-    el.classList.add("is-playing");
+    el.classList.remove("is-leaving");
     list.inert = true;
+    introStep(0);
   }
 
   function hideIntro() {
@@ -622,7 +698,7 @@
     $("#chat-faces").outerHTML = stack(faces, "group-chat__faces").replace("<span ", '<span id="chat-faces" ');
     $("#chat-name").textContent = `${c.name} и ${S.own.name}`;
     $("#chat-status").textContent = `${S.own.members.length + c.members.length} ${plural(S.own.members.length + c.members.length, "участник", "участника", "участников")}`;
-    $("#chat-text").textContent = `тут все из «${c.name}» и «${S.own.name}»`;
+    $("#chat-text").textContent = `тут обе компании: ${c.name} и ${S.own.name}`;
     // чат – экран мессенджера: из „это взаимно“ уходим сразу в него
     if (screens.length && screens[screens.length - 1].id === "screen-match") close();
     open("chat");
@@ -660,7 +736,12 @@
       if (screens.length) closeAll();
       return;
     }
-    if (S.liked[id]) return;          // лайк ушёл – кнопка только отвечает на нажатие
+    if (S.liked[id]) {               // второе нажатие снимает лайк
+      delete S.liked[id];
+      renderAll();
+      $("#announce").textContent = `лайк убран: ${company(id).name}`;
+      return;
+    }
     S.liked[id] = "me";
     renderAll();
     const btn = $(`.like-button[data-like="${id}"]`);
@@ -688,7 +769,7 @@
   function submitCreate() {
     const d = S.draft;
     if (editing) {
-      S.own = { ...S.own, name: $("#create-name").value.trim(), desc: d.desc, interests: [...d.interests],
+      S.own = { ...S.own, name: $("#create-name").value.trim(), desc: d.desc.trim(), interests: [...d.interests],
         plan: d.what && d.day != null ? { what: d.what, day: d.day } : null };
       close();
       return renderAll();
@@ -698,7 +779,7 @@
       theme: MINE_DEFAULT.theme,
       plan: d.what && d.day != null ? { what: d.what, day: d.day } : null,
       name: $("#create-name").value.trim(),
-      desc: d.desc,
+      desc: d.desc.trim(),
       interests: [...d.interests],
       members: ["me", ...d.friends],
     };
@@ -736,7 +817,16 @@
     if (t.dataset.day) {
       const day = Number(t.dataset.day);
       S.draft.day = S.draft.day === day ? null : day;
+      calendarOpen = false;
       return renderSheets();
+    }
+    if (t.dataset.cal) {
+      S.draft.day = Number(t.dataset.cal);
+      return renderSheets();
+    }
+    if (t.dataset.calNav) {
+      calMonth += Number(t.dataset.calNav);
+      return renderCalendar(true);
     }
     if (t.dataset.feed) {
       S.feed = t.dataset.feed;
@@ -765,6 +855,12 @@
         startCreate(true);
         return setTimeout(() => openSheet("plan"), 320);
       case "sheet-done": return closeSheet();
+      case "calendar":
+        calendarOpen = !(calendarOpen || (S.draft.day != null && S.draft.day > 1));
+        if (!calendarOpen && S.draft.day > 1) S.draft.day = null;
+        return renderSheets();
+      case "help": return showIntro();
+      case "intro-next": return introStep(introAt + 1);
       case "intro-done": return hideIntro();
       case "write": return;   // чат с другом – экран мессенджера, в этой задаче его нет
       case "agree": return agree();
@@ -800,7 +896,7 @@
     confirmTimer = setTimeout(() => { S.confirm = false; if (current.company === id) renderCompany(id); }, 4000);
   }
 
-  $("#create-name").addEventListener("input", renderCreate);
+  $("#create-name").addEventListener("input", (e) => { lower(e.target); renderCreate(); });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
     if (sheetOpen) return closeSheet();
@@ -839,12 +935,12 @@
         S.liked.kotiki = S.liked.kotiki || "me";
         S.matches.unshift({ id: "kotiki", state: "new", daysLeft: WEEK });
         renderAll();
-        return push("это взаимно", "«котики» тоже лайкнули вашу компанию", () => openMatch("kotiki"));
+        return push("это взаимно", "котики тоже лайкнули вашу компанию", () => openMatch("kotiki"));
       case "they-agree": {
         const m = match("kotiki");
         m.state = m.state === "waiting" ? "ready" : "they";
         renderAll();
-        if (m.state === "ready") return push("общий чат готов", `«котики» и «${S.own.name}» теперь в одном чате`, () => openChat("kotiki"));
+        if (m.state === "ready") return push("общий чат готов", `котики и ${S.own.name} теперь в одном чате`, () => openChat("kotiki"));
         return push("котики за общий чат", "лиза уже за. остался кто-нибудь из вас", () => openMatch("kotiki"));
       }
       case "friend-agree": {
@@ -890,6 +986,8 @@
   renderAll();
   const st = q.get("state");
   if (!st && q.get("intro") !== "0") showIntro();
+  if (q.get("introStep")) introStep(Number(q.get("introStep")));
+  if (st === "calendar") { startCreate(); setTimeout(() => { openSheet("plan"); calendarOpen = true; S.draft.day = 6; renderSheets(); }, 350); }
   if (st === "company") openCompany(q.get("id") || "kotiki");
   if (st === "create") startCreate();
   if (st === "create-filled") {

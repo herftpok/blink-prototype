@@ -104,6 +104,12 @@
     border-color: var(--color-text-dim);
     color: var(--color-text);
   }
+
+  /* белая кнопка пульта: текст при наведении остаётся чёрным */
+  .panel__button--accent:hover {
+    border-color: var(--color-text);
+    color: var(--color-text-on-light);
+  }
 }
 
 /* На телефоне – только продукт */
@@ -513,11 +519,6 @@ ol {
 
 .feed-day:first-child {
   margin-top: 0;
-}
-
-/* сегодня – время идёт, розовым */
-.feed-day--today {
-  color: var(--color-pink);
 }
 
 .company-row {
@@ -1007,12 +1008,9 @@ ol {
   top: 0;
 }
 
-/* своё имя – над лицами: под ними стоит сердце */
 .match__side--mine {
   left: var(--space-12);
-  top: -26px;
-  display: flex;
-  flex-direction: column-reverse;
+  top: 0;
 }
 
 .match__side--theirs {
@@ -1440,7 +1438,7 @@ ol {
 }
 
 .intro__body {
-  padding: 0 var(--space-24) calc(var(--safe-bottom) + 112px);
+  padding: 0 var(--space-24) calc(var(--safe-bottom) + 136px);
   text-align: center;
 }
 
@@ -1467,17 +1465,350 @@ ol {
   width: 100%;
 }
 
-/* ── „это взаимно“: имена компаний под лицами, их план ───────────────── */
+/* ── „это взаимно“: фон и общие интересы ─────────────────────────────── */
 
-.match__name {
-  max-width: 210px;
-  margin-top: var(--space-4);
+/* за каждой компанией – мягкое пятно её цвета, между ними – несколько маленьких сердец */
+.match__aura {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.match__aura--mine {
+  left: -90px;
+  top: -60px;
+  background: radial-gradient(closest-side, var(--c-mine), transparent);
+}
+
+.match__aura--theirs {
+  right: -90px;
+  top: 110px;
+  background: radial-gradient(closest-side, var(--c-theirs), transparent);
+}
+
+.match__spark {
+  position: absolute;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.match__spark--1 { left: 58%; top: -18px; width: 30px; transform: rotate(14deg); }
+.match__spark--2 { left: 30px; top: 250px; width: 24px; transform: rotate(-18deg); opacity: 0.4; }
+.match__spark--3 { right: 40px; top: 30px; width: 20px; transform: rotate(-6deg); opacity: 0.35; }
+
+.match.is-open .match__spark {
+  animation: bubble-in 0.5s var(--ease-spring) 0.6s both;
+}
+
+.match__shared {
+  margin-top: var(--space-16);
+}
+
+.match__shared:empty {
+  display: none;
+}
+
+.match__shared-label {
+  margin-bottom: var(--space-8);
+}
+
+.match__tags {
+  justify-content: center;
+}
+
+/* ── шапка ленты: „?“ рядом с заголовком – онбординг заново ──────────── */
+
+.companies__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+}
+
+.help-button {
+  --press-scale: var(--press-scale-small);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-chip-border);
+  border-radius: 50%;
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-banner-title);
+}
+
+/* крестик меньше, кнопка – прежние 46 */
+.icon-button--header .icon--close,
+.icon-button--glass-dark .icon--close {
+  --icon-size: 13px;
+}
+
+.company__close {
+  position: absolute;
+  top: calc(var(--safe-top) + var(--space-10));
+  right: var(--gutter);
+  z-index: 2;
+}
+
+.company__edit--shifted {
+  right: calc(var(--gutter) + 46px + var(--space-8));
+}
+
+/* ── описание при создании – сразу поле, как текст профиля ─────────────── */
+
+.create__desc {
+  display: block;
+}
+
+.create__desc-input {
+  width: 100%;
+  overflow: hidden;
+  resize: none;
+  border: 0;
+  background: none;
   color: var(--color-text);
+  font: var(--type-bio);
+  text-align: center;
+  outline: none;
+}
+
+.create__desc-input::placeholder {
+  color: var(--color-text-faint);
+}
+
+/* ── шторка плана: подпись и свой календарь ──────────────────────────── */
+
+.sheet-sub {
+  margin: var(--space-4) 0 var(--space-14);
+}
+
+.calendar {
+  margin-top: var(--space-14);
+}
+
+.calendar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+}
+
+.calendar__month {
   font: var(--type-label);
+}
+
+.calendar__nav {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-12);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.calendar__nav .icon {
+  --icon-size: 16px;
+}
+
+/* назад – тот же шеврон, развёрнутый */
+.calendar__nav--prev .icon {
+  transform: scaleX(-1);
+}
+
+.calendar__nav:disabled {
+  opacity: 0.3;
+}
+
+.calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-4);
+}
+
+.calendar__wd {
+  padding-bottom: var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-tile);
   text-align: center;
 }
 
-.match__plan {
-  display: table;
-  margin: var(--space-6) auto 0;
+.calendar__day {
+  --press-scale: var(--press-scale-small);
+  height: 40px;
+  border-radius: var(--radius-12);
+  color: var(--color-text);
+  font: var(--type-label);
+}
+
+.calendar__day.is-today {
+  box-shadow: inset 0 0 0 1px var(--color-chip-border);
+}
+
+.calendar__day[aria-pressed="true"] {
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+.calendar__day:disabled {
+  color: var(--color-text-faint);
+}
+
+/* ── онбординг: три шага ─────────────────────────────────────────────── */
+
+.intro__close {
+  position: absolute;
+  top: calc(var(--safe-top) + var(--space-12));
+  right: var(--gutter);
+  z-index: 5;
+}
+
+.intro__slides {
+  position: relative;
+  flex: 1;
+}
+
+.intro__slides .intro__stage {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding-top: calc(var(--safe-top) + 40px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-screen) ease;
+}
+
+.intro__slides .intro__side--left { top: calc(var(--safe-top) + 80px); }
+.intro__slides .intro__side--right { top: calc(var(--safe-top) + 250px); }
+.intro__slides .intro__heart { top: calc(var(--safe-top) + 230px); }
+.intro__slides .intro__bubble--left { top: calc(var(--safe-top) + 70px); }
+.intro__slides .intro__bubble--right { top: calc(var(--safe-top) + 440px); }
+
+.intro[data-step="0"] .intro__stage--0,
+.intro[data-step="1"] .intro__stage--1,
+.intro[data-step="2"] .intro__stage--2 {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* шаг 2: квадрат с плюсом наполняется друзьями, потом план */
+.intro__build {
+  position: relative;
+  width: 230px;
+  margin: calc(var(--safe-top) + 40px) auto 0;
+}
+
+.intro__build .intro__crew {
+  --crew-size: 230px;
+}
+
+.intro__add {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+}
+
+.intro[data-step="1"].is-playing .intro__build .crew__face {
+  animation: face-in 0.45s var(--ease-spring) both;
+}
+
+.intro[data-step="1"].is-playing .intro__build .crew__face:nth-child(2) { animation-delay: 0.3s; }
+.intro[data-step="1"].is-playing .intro__build .crew__face:nth-child(3) { animation-delay: 0.55s; }
+.intro[data-step="1"].is-playing .intro__build .crew__face:nth-child(4) { animation-delay: 0.8s; }
+
+@keyframes face-in {
+  from { opacity: 0; scale: 0.3; }
+}
+
+.intro__bubble--plan {
+  left: 50%;
+  top: calc(var(--safe-top) + 345px);
+  margin-left: -120px;
+  transform: rotate(-3deg);
+}
+
+.intro[data-step="1"].is-playing .intro__bubble--plan {
+  animation: bubble-in 0.4s var(--ease-spring) 1.2s both;
+}
+
+/* шаг 3: две компании и стикер-вопрос – лайк анонимный; ниже – их общий чат */
+.intro__pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: calc(var(--safe-top) + 70px);
+}
+
+.intro__crew--small {
+  --crew-size: 140px;
+}
+
+.intro__secret {
+  width: 72px;
+  height: 72px;
+  transform: rotate(-10deg);
+}
+
+.intro[data-step="2"].is-playing .intro__secret {
+  animation: heart-pop 0.6s var(--ease-spring) 0.3s both;
+}
+
+.intro__chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-32) var(--space-24) 0;
+}
+
+/* пузыри чата из системы: собеседник – салатовый, ты – белый */
+.intro__msg {
+  max-width: 78%;
+  padding: var(--space-6) var(--space-12) var(--space-8);
+  border-radius: var(--radius-18);
+  color: var(--color-text-on-light);
+  font: var(--type-comment);
+}
+
+.intro__msg--in {
+  align-self: flex-start;
+  background: var(--gradient-bubble-incoming);
+}
+
+.intro__msg--out {
+  align-self: flex-end;
+  background: var(--color-bubble-outgoing);
+}
+
+.intro[data-step="2"].is-playing .intro__msg--in {
+  animation: bubble-in 0.4s var(--ease-spring) 0.9s both;
+}
+
+.intro[data-step="2"].is-playing .intro__msg--out {
+  animation: bubble-in 0.4s var(--ease-spring) 1.4s both;
+}
+
+.intro__dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-6);
+  margin-bottom: var(--space-16);
+}
+
+.intro__dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-text-dim);
+  transition: width var(--duration-state) ease, background var(--duration-state) ease;
+}
+
+.intro[data-step="0"] .intro__dots span:nth-child(1),
+.intro[data-step="1"] .intro__dots span:nth-child(2),
+.intro[data-step="2"] .intro__dots span:nth-child(3) {
+  width: 18px;
+  background: var(--color-text);
 }
