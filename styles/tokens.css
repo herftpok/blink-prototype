@@ -65,6 +65,7 @@
   /* маркет: градиенты с эталонов market/*.png */
   --gradient-market-backdrop: linear-gradient(90deg, #e1a0ff 0%, #a0e8ff 100%);   /* фон над шторками маркета (choose_recipient.png) */
   --gradient-market-text: linear-gradient(90deg, #73edff 0%, #cf91ff 100%);       /* „ЛУЧШИЕ ДРУЗЬЯ“, „в сети“ – текст градиентом */
+  --gradient-match: linear-gradient(180deg, #cf91ff 0%, rgba(207, 145, 255, 0.35) 28%, #000 62%);  /* „это взаимно“: сиреневый маркета сверху уходит в чёрный */
   --gradient-holo: linear-gradient(90deg, #e0c195 0%, #e5a0d3 42%, #88e3da 100%);  /* „осталось на складе“ (gifts_left_progress.png) */
   --gradient-toggle: linear-gradient(90deg, #74e4fa 0%, #9ea4ef 100%);            /* включённый переключатель, ручка чёрная (confirm_gift.png) */
   --color-danger: #ff4a31;                     /* кнопки, которые прекращают или удаляют: „перестать делиться гео“ */

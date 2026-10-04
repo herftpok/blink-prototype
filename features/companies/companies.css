@@ -1,0 +1,1483 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Компании: вебвью внутри приложения (без рамки браузера и таб-бара).
+   Общие токены и компоненты – ../../styles. Здесь – стенд с пультом,
+   список компаний, профиль компании, новая компания, „это взаимно“, начало чата.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Стенд (в продукт не идёт) ───────────────────────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 100dvh;
+  padding: var(--space-16) var(--space-24);
+}
+
+.stage__head {
+  text-align: center;
+}
+
+.stage__title {
+  font: var(--type-section-title);
+}
+
+.stage__lead {
+  margin-top: var(--space-4);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.stage__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-24);
+  zoom: var(--stage-zoom, 1);          /* телефон целиком в окне: считает companies.js → fit() */
+}
+
+.stage .device {
+  min-height: 0;
+  padding: 0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  width: 260px;
+  padding-top: var(--space-24);
+}
+
+.panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.panel__row {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.panel__row > .panel__button {
+  flex: 1;
+  min-width: 0;
+}
+
+.panel__button {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-12);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-map-chip);
+}
+
+.panel__button--accent {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+.panel__button[aria-checked="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.panel__button:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.panel__note:empty {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel__button:hover {
+    border-color: var(--color-text-dim);
+    color: var(--color-text);
+  }
+}
+
+/* На телефоне – только продукт */
+@media (max-width: 480px) {
+  .stage {
+    display: block;
+    padding: 0;
+  }
+
+  .stage__body {
+    display: block;
+  }
+
+  .stage__head,
+  .panel {
+    display: none;
+  }
+}
+
+/* ── Экраны поверх списка ─────────────────────────────────────────────── */
+
+/* Экран снизу на весь рост: новая компания, „это взаимно“ (как „подарить“ в маркете) */
+.screen--rise {
+  z-index: 50;
+  transform: translateY(100%);
+  transition: transform var(--duration-screen) var(--ease-emphasized);
+}
+
+.screen--rise.is-open {
+  transform: none;
+}
+
+/* Кнопка поверх фото: тёмное стекло, белая иконка */
+.icon-button--glass-dark {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-14);
+  background: var(--color-glass-button);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  color: var(--color-text);
+}
+
+/* Низ с главной кнопкой: висит над контентом, контент уходит в чёрный */
+.company__footer,
+.create__footer,
+.match__footer {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-32) var(--gutter) calc(var(--safe-bottom) + var(--space-8));
+  background: var(--gradient-fade-bottom);
+}
+
+.button__sticker {
+  width: 30px;
+  height: 30px;
+  margin: -6px 0;
+}
+
+.button__face {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-squircle);
+  object-fit: cover;
+}
+
+.button.is-confirm {
+  background: var(--color-danger);
+  color: var(--color-text-on-light);
+}
+
+.button:disabled {
+  background: transparent;
+}
+
+/* ── Компания: кучка лиц-наклеек (как витрина-герой профиля) ─────────── */
+
+/* Сквирклы разного размера с наклоном, внахлёст. Тёмное кольцо цвета подложки отделяет
+   наклейки друг от друга. Координаты лиц – CSS-переменные из данных (companies.js → CREW) */
+.crew {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--crew-size, 150px);
+  aspect-ratio: 1;
+}
+
+.crew__face {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  z-index: var(--z);
+  width: var(--s);
+  aspect-ratio: 1;
+  padding: var(--crew-ring, 3px);
+  border-radius: var(--radius-squircle);
+  background: var(--crew-ring-color, var(--color-surface-card));
+  transform: translate(-50%, -50%) rotate(var(--r));
+}
+
+.crew__img {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-squircle);
+  object-fit: cover;
+  background: var(--color-surface-raised);
+}
+
+/* Без фото – буква имени */
+.crew__img--initial {
+  color: var(--color-text-dim);
+  font: var(--type-section-title);
+}
+
+/* Больше четырёх – стикер-число, как счётчики в профиле */
+.crew__more {
+  --sticker-size: 24px;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 20;
+  transform: rotate(-8deg);
+}
+
+/* ── Теги интересов: как плашка-вход „где учишься?“ (.chip в профиле) ── */
+
+ul,
+ol {
+  list-style: none;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-label);
+  white-space: nowrap;
+}
+
+.tag--more {
+  color: var(--color-text-muted);
+}
+
+/* Выбор интереса – как плитки выбора: белый текст и белая рамка, без заливки */
+.tag--toggle {
+  --press-scale: var(--press-scale-button);
+  color: var(--color-text-muted);
+}
+
+.tag--toggle[aria-pressed="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px var(--color-text);
+}
+
+/* ── 1. Список компаний ──────────────────────────────────────────────── */
+
+.companies__scroll {
+  padding: calc(var(--safe-top) + var(--space-12)) 0 calc(var(--safe-bottom) + var(--space-24));
+}
+
+.companies__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0 var(--gutter);
+}
+
+.companies__city {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font: var(--type-label);
+}
+
+.companies__city .icon {
+  --icon-size: 15px;
+}
+
+.companies__mine {
+  margin: var(--space-20) var(--gutter) 0;
+}
+
+.companies__section {
+  margin-top: var(--space-28);
+}
+
+.companies__section-title {
+  margin: 0 var(--gutter) var(--space-12);
+}
+
+/* Вкладки лент – как вкладки маркета: 20.5/600, неактивная серая, зазор 23 */
+.feed-tabs {
+  display: flex;
+  gap: 23px;
+  margin: 0 var(--gutter) var(--space-14);
+}
+
+.feed-tabs__tab {
+  --press-scale: var(--press-scale-small);
+  color: var(--color-text-muted);
+  font: var(--type-market-tab);
+  letter-spacing: -0.02em;
+}
+
+.feed-tabs__tab[aria-selected="true"] {
+  color: var(--color-text);
+}
+
+.feed-tabs__count {
+  color: var(--color-text-muted);
+}
+
+.companies__empty {
+  padding: var(--space-32) var(--gutter);
+}
+
+/* Своя компания – баннер, как „у maxklumchuk др!“: r24, белый .1, рамка #242424 */
+.mine-card {
+  --press-scale: var(--press-scale-wide);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  width: 100%;
+  min-height: 70px;
+  padding: var(--space-12);
+  border: 1px solid var(--color-banner-border);
+  border-radius: var(--radius-24);
+  background: var(--color-banner-fill);
+  text-align: left;
+}
+
+.mine-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.mine-card__title {
+  font: var(--type-banner-title);
+}
+
+.mine-card__text {
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+/* 3D-стикер наклеен на край баннера и выходит за него */
+.mine-card__sticker {
+  width: 64px;
+  height: 64px;
+  margin: -22px 0 -10px -4px;
+  transform: rotate(-10deg);
+  pointer-events: none;
+}
+
+/* Стопка лиц крупнее, чем „7 общих“: 36 с наездом −10 */
+.mine-card__faces,
+.match-row__faces {
+  flex-shrink: 0;
+  padding-left: var(--space-10);
+}
+
+.mine-card__faces .face-stack__img,
+.match-row__faces .face-stack__img {
+  width: 36px;
+  height: 36px;
+  margin-left: -10px;
+  border-width: 2px;
+}
+
+.match-row__faces .face-stack__img:nth-child(n + 3) {
+  display: none;
+}
+
+.mine-card__faces .face-stack__img:nth-child(odd),
+.match-row__faces .face-stack__img:nth-child(odd) {
+  transform: rotate(-6deg);
+}
+
+.mine-card__faces .face-stack__img:nth-child(even),
+.match-row__faces .face-stack__img:nth-child(even) {
+  transform: rotate(6deg);
+}
+
+.mine-card__faces .is-waiting {
+  opacity: 0.35;
+}
+
+.mine-card__likes {
+  --badge-size: 34px;
+}
+
+.mine-card__chevron {
+  --icon-size: 16px;
+  color: var(--color-text-muted);
+}
+
+.mine-card.is-nudged {
+  animation: nudge 0.4s var(--ease-out-soft);
+}
+
+@keyframes nudge {
+  20% { transform: translateX(-6px); }
+  45% { transform: translateX(5px); }
+  70% { transform: translateX(-3px); }
+}
+
+/* Взаимно – строки как в списке чатов: 66, мини-обложка 46, имя 16/600, мета SF 16 */
+.match-row {
+  --press-scale: var(--press-scale-row);
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  width: 100%;
+  height: 66px;
+  padding: 0 var(--gutter);
+  text-align: left;
+}
+
+.match-row__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.match-row__title {
+  font: var(--type-row-title);
+}
+
+.match-row__meta {
+  color: var(--color-text-muted);
+  font: var(--type-meta);
+}
+
+/* новое – розовым, как непрочитанное */
+.match-row__dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-pink);
+}
+
+.match-row.is-expired {
+  opacity: 0.45;
+}
+
+/* План – пузырь собеседника (салатовый градиент, чёрный текст): компания зовёт, куда.
+   Наклеен с лёгким наклоном, как стикер */
+.plan {
+  display: inline-block;
+  max-width: 100%;
+  padding: var(--space-4) var(--space-10) var(--space-6);
+  border-radius: var(--radius-14);
+  background: var(--gradient-bubble-incoming);
+  color: var(--color-text-on-light);
+  font: var(--type-caption);
+  text-wrap: balance;
+  transform: rotate(-2deg);
+}
+
+.plan--big {
+  padding: var(--space-6) var(--space-14) var(--space-8);
+  border-radius: var(--radius-18);
+  font: var(--type-comment);
+}
+
+.company__plan {
+  margin-bottom: var(--space-12);
+}
+
+.company__plan:empty {
+  display: none;
+}
+
+/* Компания в ленте – без подложки и рамок: кучка лиц, текст и мягкое пятно цвета компании
+   за лицами (тот же цвет, что у свечения её профиля). Вся строка открывает профиль */
+.feed-day {
+  margin: var(--space-14) var(--gutter) var(--space-2);
+  color: var(--color-text-muted);
+  font: var(--type-caps-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.feed-day:first-child {
+  margin-top: 0;
+}
+
+/* сегодня – время идёт, розовым */
+.feed-day--today {
+  color: var(--color-pink);
+}
+
+.company-row {
+  position: relative;
+  display: grid;
+  align-items: center;
+  gap: var(--space-12);
+  transition: transform var(--duration-press) ease;
+}
+
+.company-row:has(.company-row__open:active) {
+  transform: scale(var(--press-scale-row));
+}
+
+/* обе ленты: текст слева, лица справа */
+.company-row {
+  grid-template-columns: minmax(0, 1fr) 104px;
+  padding: var(--space-4) var(--space-10) var(--space-6) var(--gutter);
+}
+
+.company-row + .company-row {
+  margin-top: var(--space-10);
+}
+
+.company-row__aura {
+  position: absolute;
+  top: 50%;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--c1), transparent);
+  opacity: 0.32;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.company-row__aura {
+  right: -30px;
+}
+
+/* нажимается вся строка: прозрачная кнопка поверх, лайк – над ней */
+.company-row__open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.company-row__open:focus-visible {
+  border-radius: var(--radius-20);
+  outline: 2px solid var(--color-text);
+  outline-offset: -2px;
+}
+
+.company-row__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.company-row__crew {
+  --crew-ring-color: var(--color-bg);
+  --crew-size: 104px;
+}
+
+.company-row__crew .crew__more {
+  --sticker-size: 18px;
+}
+
+.company-row__plan {
+  margin-bottom: var(--space-8);
+}
+
+.company-row__name {
+  display: -webkit-box;
+  overflow: hidden;
+  font: var(--type-row-title);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.company-row__meta {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+.company-row__desc {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: var(--space-6);
+  color: var(--color-text-secondary);
+  font: var(--type-distance);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.company-row .like-button {
+  position: relative;
+  z-index: 2;
+}
+
+.company-row .like-button {
+  margin-top: var(--space-10);
+}
+
+/* Лайк – пилюля высотой с тег (32), в ней 3D-сердце.
+   Не нажат – тёмная, как теги; нажат – ярче: белая */
+.like-button {
+  --press-scale: var(--press-scale-button);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 32px;
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-chip-fill);
+}
+
+.like-button__heart {
+  width: 24px;
+  height: 24px;
+}
+
+.like-button.is-liked {
+  border-color: var(--color-text);
+  background: var(--color-text);
+}
+
+.like-button.is-popping .like-button__heart {
+  animation: heart-pop 0.45s var(--ease-spring);
+}
+
+@keyframes heart-pop {
+  0% { transform: scale(0.4) rotate(-20deg); }
+  100% { transform: none; }
+}
+
+/* ── 2. Профиль компании ─────────────────────────────────────────────── */
+
+.company__scroll {
+  padding-bottom: calc(var(--safe-bottom) + 170px);
+}
+
+/* Витрина-герой, как в профиле: свечение темы, кучка лиц по центру, имя под ней */
+.company__hero {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding-top: calc(var(--safe-top) + var(--space-16));
+}
+
+/* свечение растворяется в чёрном до имени: у картинки низ не чёрный, и без маски
+   под мета-строкой видна серая полоса с обрывом */
+/* Своё свечение у каждой компании: формула тем профиля (main-design-system.md 3.2 C),
+   три цвета системы приходят из данных (--c1…--c3). Растворяется в чёрном до имени */
+.company__theme {
+  position: absolute;
+  top: -69px;
+  left: -170px;
+  width: 674.5px;
+  height: 600px;                         /* выше, чем у профиля: герой здесь – кучка лиц на 270 */
+  background:
+    radial-gradient(110% 76% at 22% 0%, var(--c1) 0%, transparent 60%),
+    radial-gradient(100% 70% at 82% 10%, var(--c2) 0%, transparent 58%),
+    radial-gradient(90% 60% at 52% 34%, var(--c3) 0%, transparent 60%);
+  -webkit-mask: linear-gradient(180deg, #000 50%, transparent 92%);
+          mask: linear-gradient(180deg, #000 50%, transparent 92%);
+  pointer-events: none;
+}
+
+/* на свечении и на чёрном – белая обводка, как у наклеек и стикер-чисел */
+.company__crew,
+.match__crew {
+  --crew-ring: 4px;
+  --crew-ring-color: var(--color-text);
+}
+
+.company__crew {
+  --crew-size: 270px;
+}
+
+.company__back {
+  position: absolute;
+  top: calc(var(--safe-top) + var(--space-10));
+  left: var(--gutter);
+  z-index: 2;
+}
+
+.company__edit {
+  position: absolute;
+  top: calc(var(--safe-top) + var(--space-10));
+  right: var(--gutter);
+  z-index: 2;
+}
+
+.company__edit .icon {
+  --icon-size: 21px;
+}
+
+.company__body {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-12);
+  padding: 0 var(--gutter);
+}
+
+.company__intro {
+  text-align: center;
+}
+
+.company__name {
+  font: var(--type-sheet-title);
+  text-wrap: balance;
+}
+
+.company__meta {
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-label);
+}
+
+.company__desc {
+  margin-top: var(--space-12);
+  font: var(--type-bio);
+  letter-spacing: -0.01em;
+}
+
+/* В профиле интересы листаются пальцем от края до края экрана */
+.company__interests {
+  flex-wrap: nowrap;
+  justify-content: safe center;
+  margin: var(--space-16) calc(var(--gutter) * -1) 0;
+  padding: 0 var(--gutter);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.company__interests::-webkit-scrollbar {
+  display: none;
+}
+
+.company__interests .tag {
+  flex-shrink: 0;
+}
+
+.company__members-title {
+  margin: var(--space-28) 0 var(--space-8);
+}
+
+.member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  height: 62px;
+}
+
+.member__face {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--avatar-list);
+  height: var(--avatar-list);
+  border-radius: var(--radius-squircle);
+  object-fit: cover;
+  background: var(--color-surface-raised);
+  color: var(--color-text-dim);
+  font: var(--type-row-title);
+}
+
+/* Строка участника – как строка друга: имя 15/600, под ним возраст SF 15 серым, справа действие */
+.member__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.member__name {
+  font: var(--type-friend-name);
+}
+
+.member__age {
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+/* „ДОБАВИТЬ“ – компактная белая, как в карточке „возможные“; заявка ушла – галочка на #242424 */
+.add-button {
+  --press-scale: var(--press-scale-button);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: 48px;
+  height: 36px;
+  padding: 0 var(--space-12);
+  border: 2px solid var(--color-text);
+  border-radius: var(--radius-12);
+  background: transparent;
+  color: var(--color-text);
+  font: var(--type-button-compact);
+  text-transform: uppercase;
+}
+
+/* заявка ушла – серая „отменить“ */
+.add-button--sent {
+  border-color: var(--color-surface-raised);
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+}
+
+.add-button .icon {
+  --icon-size: 16px;
+}
+
+/* „+ план“, „+ описание“… – плашка-вход, как „где учишься?“ в профиле */
+.chip {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 32px;
+  padding: 0 13px 0 12px;
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-label);
+}
+
+.chip .icon {
+  --icon-size: 14px;
+  color: var(--color-text-dim);
+}
+
+.company__footer .button {
+  width: 100%;
+}
+
+.company__footer .button--danger {
+  height: 48px;
+}
+
+.company__footer .button--danger:not(.is-confirm) {
+  margin-top: var(--space-4);
+}
+
+.company__footer .button--danger.is-confirm {
+  margin-top: var(--space-8);
+}
+
+/* ── Поле и строки выбора (шторки создания) ─────────────────────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-12) var(--space-16) var(--space-14);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+}
+
+.field__label {
+  color: var(--color-text-muted);
+  font: var(--type-comment-label);
+}
+
+.field__input {
+  resize: none;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: var(--type-comment);
+  outline: none;
+}
+
+.field__input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.field:focus-within {
+  box-shadow: inset 0 0 0 2px var(--color-text-dim);
+}
+
+/* Строки выбора – как в „кому подаришь?“: 46 + 16, шаг 62 */
+.pick-row {
+  --press-scale: var(--press-scale-row);
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  width: 100%;
+  height: 62px;
+  text-align: left;
+}
+
+.pick-row__face {
+  flex-shrink: 0;
+  width: var(--avatar-list);
+  height: var(--avatar-list);
+  border-radius: var(--radius-squircle);
+  object-fit: cover;
+}
+
+.pick-row__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pick-row__name {
+  font: var(--type-recipient-name);
+}
+
+.pick-row__status {
+  color: var(--color-text-muted);
+  font: var(--type-recipient-status);
+}
+
+/* Выбран – лаймовый круг с галочкой, как „выбрано“ в маркете */
+.pick-row__check {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--color-outline);
+  border-radius: 50%;
+  color: transparent;
+}
+
+.pick-row__check .icon {
+  --icon-size: 14px;
+}
+
+.pick-row[aria-pressed="true"] .pick-row__check {
+  border-color: var(--color-selected);
+  background: var(--color-selected);
+  color: var(--color-text-on-light);
+}
+
+.pick-row:disabled {
+  opacity: 0.4;
+}
+
+.pick-row:disabled .pick-row__check {
+  visibility: hidden;
+}
+
+.create__footer .button {
+  width: 100%;
+}
+
+.create__footer .button:disabled {
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+}
+
+/* ── 4. Это взаимно ──────────────────────────────────────────────────── */
+
+.match {
+  display: flex;
+  flex-direction: column;
+  background: var(--gradient-match), var(--color-bg);   /* градиент полупрозрачный – под ним чёрный, список не просвечивает */
+}
+
+.match__close {
+  position: absolute;
+  top: calc(var(--safe-top) + var(--space-12));
+  right: var(--gutter);
+  z-index: 4;
+}
+
+/* Две кучки лиц навстречу друг другу, между ними – 3D-сердце */
+.match__hero {
+  position: relative;
+  flex: 1;
+  margin-top: calc(var(--safe-top) + 72px);
+}
+
+.match__side {
+  position: absolute;
+  top: 0;
+}
+
+/* своё имя – над лицами: под ними стоит сердце */
+.match__side--mine {
+  left: var(--space-12);
+  top: -26px;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.match__side--theirs {
+  right: var(--space-12);
+  top: 170px;
+}
+
+.match__crew {
+  --crew-size: 210px;
+}
+
+.match.is-open .match__side {
+  animation: side-in 0.5s var(--ease-emphasized) both;
+}
+
+.match.is-open .match__side--theirs {
+  animation-name: side-in-right;
+  animation-delay: 0.08s;
+}
+
+@keyframes side-in {
+  from { opacity: 0; transform: translateX(-60px); }
+}
+
+@keyframes side-in-right {
+  from { opacity: 0; transform: translateX(60px); }
+}
+
+.match__heart {
+  position: absolute;
+  top: 140px;
+  left: 50%;
+  z-index: 10;
+  width: 130px;
+  height: 130px;
+  margin-left: -65px;
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.match.is-open .match__heart {
+  animation: heart-pop 0.6s var(--ease-spring) 0.25s both;
+}
+
+.match__body {
+  padding: 0 var(--space-24) calc(var(--safe-bottom) + 136px);
+  text-align: center;
+}
+
+.match__title {
+  font: var(--type-screen-title);
+  letter-spacing: var(--tracking-title);
+}
+
+.match__text {
+  margin-top: var(--space-6);
+  color: var(--color-text-muted);
+  font: var(--type-meta);
+  text-wrap: balance;
+}
+
+/* срок – под кнопкой (решение пользователя: время видно рядом с действием) */
+.match__time {
+  margin-top: var(--space-12);
+  color: var(--color-text-muted);
+  font: var(--type-caption);
+  text-align: center;
+}
+
+.match__cta {
+  width: 100%;
+}
+
+
+
+/* ── 5. Общий чат (начало, дальше – нативный мессенджер) ─────────────── */
+
+.group-chat {
+  display: flex;
+  flex-direction: column;
+}
+
+.group-chat__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding: calc(var(--safe-top) + var(--space-12)) var(--gutter) 0;
+}
+
+.group-chat__title {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.group-chat__faces {
+  padding-left: var(--space-8);
+  margin-bottom: var(--space-4);
+}
+
+.group-chat__faces .face-stack__img {
+  width: 30px;
+  height: 30px;
+  margin-left: -8px;
+  border-width: 2px;
+}
+
+.group-chat__name {
+  max-width: 100%;
+  font: var(--type-header-name);
+}
+
+.group-chat__status {
+  color: var(--color-text-secondary);
+  font: var(--type-status);
+}
+
+.group-chat__spacer {
+  flex-shrink: 0;
+  width: 46px;
+}
+
+.group-chat .chat-divider {
+  margin-top: var(--space-24);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.group-chat__empty {
+  padding-bottom: 120px;
+}
+
+/* ── 3. Новая компания: вёрстка готового профиля ─────────────────────── */
+
+.create__scroll {
+  padding: 0 0 calc(var(--safe-bottom) + 120px);
+}
+
+.create__crew {
+  display: grid;
+  place-items: center;
+  min-height: 270px;
+}
+
+.create__crew-box {
+  position: relative;
+}
+
+/* квадрат с плюсом – позвать друзей; пока никого нет, он один и крупный */
+.crew-add {
+  --press-scale: var(--press-scale-button);
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 2px dashed var(--color-text-dim);
+  border-radius: var(--radius-squircle);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  transform: rotate(6deg);
+}
+
+.crew-add .icon {
+  --icon-size: 22px;
+}
+
+.crew-add--big {
+  position: static;
+  width: 150px;
+  height: 150px;
+  transform: rotate(-4deg);
+}
+
+.crew-add--big .icon {
+  --icon-size: 40px;
+}
+
+.create__name {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.create__name-input {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--color-text);
+  font: var(--type-sheet-title);
+  text-align: center;
+  outline: none;
+}
+
+.create__name-input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.create__name-input:focus-visible {
+  border-bottom-color: var(--color-text-dim);
+}
+
+.create__slot {
+  margin-top: var(--space-14);
+}
+
+.create__filled {
+  --press-scale: var(--press-scale-row);
+  width: 100%;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.create__filled .company__interests {
+  margin-top: 0;
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+
+.create__theme {
+  opacity: 0.6;
+}
+
+/* ── Шторки создания ─────────────────────────────────────────────────── */
+
+.sheet-head {
+  margin: var(--space-4) 0 var(--space-14);
+}
+
+.sheet__list,
+.sheet__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.sheet__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.sheet__label {
+  margin: var(--space-24) 0 var(--space-10);
+}
+
+.sheet__empty {
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+.sheet__done {
+  flex-shrink: 0;
+  width: 100%;
+  margin-top: var(--space-16);
+}
+
+/* поиск в шторке – как поиск на экранах: стекло, лупа, поле 17 (не меньше 16 – без зума) */
+.sheet-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: var(--search-height);
+  margin-bottom: var(--space-14);
+  padding: 0 var(--space-14);
+  border: 2px solid var(--color-search-border);
+  border-radius: var(--radius-16);
+  background: var(--color-search-fill);
+  color: var(--color-text-dim);
+}
+
+.sheet-search .icon {
+  --icon-size: 20px;
+}
+
+.sheet-search__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: var(--type-comment);
+  outline: none;
+}
+
+.sheet-search__input::placeholder {
+  color: var(--color-text-dim);
+}
+
+.sheet-search__input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* „другой день“ – плашка, под ней прозрачный системный календарь на всю её площадь */
+.date-tag {
+  position: relative;
+  gap: var(--space-6);
+}
+
+.date-tag .icon {
+  --icon-size: 12px;
+}
+
+.date-tag__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.date-tag__input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  cursor: pointer;
+}
+
+/* ── 0. Онбординг ────────────────────────────────────────────────────── */
+
+.intro {
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background: var(--gradient-match), var(--color-bg);
+  transition: opacity var(--duration-screen) ease;
+}
+
+.intro.is-leaving {
+  opacity: 0;
+}
+
+.intro__stage {
+  position: relative;
+  flex: 1;
+  margin-top: calc(var(--safe-top) + 40px);
+}
+
+.intro__crew {
+  --crew-size: 190px;
+  --crew-ring: 4px;
+  --crew-ring-color: var(--color-text);
+}
+
+.intro__side {
+  position: absolute;
+}
+
+.intro__side--left {
+  left: var(--space-12);
+  top: 40px;
+}
+
+.intro__side--right {
+  right: var(--space-12);
+  top: 210px;
+}
+
+.intro__heart {
+  position: absolute;
+  top: 190px;
+  left: 50%;
+  z-index: 10;
+  width: 120px;
+  height: 120px;
+  margin-left: -60px;
+  transform: rotate(-8deg);
+  opacity: 0;
+}
+
+.intro__bubble {
+  position: absolute;
+  z-index: 11;
+  opacity: 0;
+}
+
+.intro__bubble--left {
+  left: 150px;
+  top: 30px;
+}
+
+.intro__bubble--right {
+  right: 150px;
+  top: 400px;
+  transform: rotate(3deg);
+}
+
+/* сцена разыгрывается один раз: компании съезжаются, сердце, „в бар в пятницу?“ – „мы за!“ */
+.intro.is-playing .intro__side--left {
+  animation: side-in 0.6s var(--ease-emphasized) 0.1s both;
+}
+
+.intro.is-playing .intro__side--right {
+  animation: side-in-right 0.6s var(--ease-emphasized) 0.25s both;
+}
+
+.intro.is-playing .intro__bubble--left {
+  animation: bubble-in 0.4s var(--ease-spring) 0.75s both;
+}
+
+.intro.is-playing .intro__bubble--right {
+  animation: bubble-in 0.4s var(--ease-spring) 1.2s both;
+}
+
+.intro.is-playing .intro__heart {
+  animation: heart-pop 0.6s var(--ease-spring) 1.6s both;
+}
+
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.6); }
+  to { opacity: 1; }
+}
+
+.intro.is-playing .intro__heart {
+  opacity: 1;
+}
+
+.intro__body {
+  padding: 0 var(--space-24) calc(var(--safe-bottom) + 112px);
+  text-align: center;
+}
+
+.intro__title {
+  font: var(--type-section-title);
+  text-wrap: balance;
+}
+
+.intro__text {
+  max-width: 300px;
+  margin: var(--space-8) auto 0;
+  color: var(--color-text-secondary);
+  font: var(--type-meta);
+  text-wrap: balance;
+}
+
+.intro__footer {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 0 var(--gutter) calc(var(--safe-bottom) + var(--space-8));
+}
+
+.intro__cta {
+  width: 100%;
+}
+
+/* ── „это взаимно“: имена компаний под лицами, их план ───────────────── */
+
+.match__name {
+  max-width: 210px;
+  margin-top: var(--space-4);
+  color: var(--color-text);
+  font: var(--type-label);
+  text-align: center;
+}
+
+.match__plan {
+  display: table;
+  margin: var(--space-6) auto 0;
+}

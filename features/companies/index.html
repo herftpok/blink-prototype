@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – компании</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="companies.css">
+</head>
+<body>
+<div class="stage">
+
+  <!-- Стенд: подпись и пульт – только для показа, в продукт не идут -->
+  <header class="stage__head">
+    <h1 class="stage__title">компании</h1>
+    <p class="stage__lead">вебвью: компании твоего города, анонимные лайки, взаимный лайк – общий чат</p>
+  </header>
+
+  <div class="stage__body">
+    <div class="device">
+      <main class="app" id="app">
+        <div class="status-bar" aria-hidden="true">
+          <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+          <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+          <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+        </div>
+
+        <!-- 1. Компании города -->
+        <section class="screen companies" id="screen-list" aria-labelledby="list-title">
+          <div class="screen__scroll companies__scroll">
+            <header class="companies__head">
+              <div>
+                <h1 class="screen-title" id="list-title">компании</h1>
+                <p class="companies__city"><i class="icon icon--location" aria-hidden="true"></i>москва</p>
+              </div>
+              <button class="icon-button icon-button--header pressable" type="button" aria-label="закрыть" data-act="close-webview">
+                <i class="icon icon--close" aria-hidden="true"></i>
+              </button>
+            </header>
+
+            <div class="companies__mine" id="mine"></div>
+
+            <section class="companies__section" id="matches-section" aria-labelledby="matches-title" hidden>
+              <h2 class="section-title companies__section-title" id="matches-title">взаимно <span class="section-title__count" id="matches-count"></span></h2>
+              <ul class="companies__matches" id="matches"></ul>
+            </section>
+
+            <section class="companies__section" aria-labelledby="all-title">
+              <!-- Две ленты: у кого есть план на ближайшие дни и все компании города -->
+              <div class="feed-tabs" role="tablist" aria-label="компании" id="all-title">
+                <button class="feed-tabs__tab pressable" type="button" role="tab" data-feed="plans">с планами <span class="feed-tabs__count" id="count-plans"></span></button>
+                <button class="feed-tabs__tab pressable" type="button" role="tab" data-feed="all">все <span class="feed-tabs__count" id="count-all"></span></button>
+              </div>
+              <ul class="companies__list" id="list"></ul>
+              <div class="empty-state companies__empty" id="plans-empty" hidden>
+                <img class="empty-state__sticker" src="../../assets/stickers/zzz.webp" alt="">
+                <p class="empty-state__title">в ближайшие дни никто никуда не&nbsp;собирается</p>
+                <p class="empty-state__text">загляни во все компании или добавь свой план</p>
+              </div>
+              <div class="empty-state companies__empty" id="list-empty" hidden>
+                <img class="empty-state__sticker" src="../../assets/stickers/blink.webp" alt="">
+                <p class="empty-state__title">в москве пока ни одной компании</p>
+                <p class="empty-state__text">собери свою – её увидят первой</p>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- 0. Онбординг: один экран, что это и зачем. Две компании съезжаются, сердце, общий чат -->
+        <section class="screen intro" id="screen-intro" aria-labelledby="intro-title" hidden>
+          <div class="intro__stage" aria-hidden="true">
+            <div class="intro__side intro__side--left" id="intro-left"></div>
+            <div class="intro__side intro__side--right" id="intro-right"></div>
+            <img class="intro__heart" src="../../assets/stickers/heart.webp" alt="">
+            <span class="plan intro__bubble intro__bubble--left">в бар в пятницу?</span>
+            <span class="plan intro__bubble intro__bubble--right">мы за!</span>
+          </div>
+          <div class="intro__body">
+            <h1 class="intro__title" id="intro-title">знакомься компаниями</h1>
+            <p class="intro__text">лайкайте другие компании вместе с друзьями. взаимно – и у вас общий чат</p>
+          </div>
+          <footer class="intro__footer">
+            <button class="button button--primary intro__cta pressable" type="button" data-act="intro-done">погнали</button>
+          </footer>
+        </section>
+
+        <!-- 2. Профиль компании: въезжает справа -->
+        <section class="screen screen--push company" id="screen-company" aria-labelledby="company-name" hidden>
+          <div class="screen__scroll company__scroll">
+            <!-- Витрина-герой, как в профиле: свечение темы и кучка лиц -->
+            <div class="company__hero">
+              <div class="company__theme" aria-hidden="true"></div>
+              <div id="company-crew"></div>
+            </div>
+            <button class="icon-button icon-button--glass-dark company__back pressable" type="button" aria-label="назад" data-act="back">
+              <i class="icon icon--back" aria-hidden="true"></i>
+            </button>
+            <!-- править информацию может любой участник своей компании -->
+            <button class="icon-button icon-button--glass-dark company__edit pressable" id="company-edit" type="button" aria-label="изменить информацию о компании" data-act="edit" hidden>
+              <i class="icon icon--edit" aria-hidden="true"></i>
+            </button>
+            <div class="company__body">
+              <div class="company__intro">
+                <p class="company__plan" id="company-plan"></p>
+                <h1 class="company__name" id="company-name"></h1>
+                <p class="company__meta" id="company-meta"></p>
+                <p class="company__desc" id="company-desc"></p>
+                <ul class="tags company__interests" id="company-interests"></ul>
+              </div>
+              <h2 class="section-title company__members-title">участники <span class="section-title__count" id="company-count"></span></h2>
+              <ul class="company__members" id="company-members"></ul>
+            </div>
+          </div>
+          <footer class="company__footer" id="company-footer"></footer>
+        </section>
+
+        <!-- 3. Новая компания: экран снизу на весь рост -->
+        <section class="screen screen--rise create" id="screen-create" aria-labelledby="create-title" hidden>
+          <h1 class="visually-hidden" id="create-title">новая компания</h1>
+          <!-- Создание и правка – в вёрстке готового профиля компании: что не заполнено,
+               стоит на своём месте плашкой „+ …“ и открывает шторку -->
+          <div class="screen__scroll create__scroll">
+            <div class="company__hero">
+              <div class="company__theme create__theme" aria-hidden="true"></div>
+              <div class="create__crew" id="create-crew"></div>
+            </div>
+            <button class="icon-button icon-button--glass-dark company__edit pressable" type="button" aria-label="закрыть" data-act="close-create">
+              <i class="icon icon--close" aria-hidden="true"></i>
+            </button>
+            <div class="company__body">
+              <div class="company__intro">
+                <p class="company__plan" id="create-plan"></p>
+                <label class="create__name">
+                  <span class="visually-hidden">название</span>
+                  <input class="create__name-input" id="create-name" type="text" maxlength="40" placeholder="название" autocomplete="off" enterkeyhint="done">
+                </label>
+                <p class="company__meta" id="create-meta"></p>
+                <div class="create__slot" id="create-desc-slot"></div>
+                <div class="create__slot" id="create-interests-slot"></div>
+              </div>
+            </div>
+          </div>
+          <footer class="create__footer">
+            <button class="button button--primary create__submit pressable" id="create-submit" type="button" disabled>собрать компанию</button>
+          </footer>
+        </section>
+
+        <!-- Шторки создания: друзья, план, описание, интересы. Без крестика: мимо, жест вниз, Esc -->
+        <div class="scrim" id="scrim"></div>
+        <div class="sheet" id="sheet-friends" role="dialog" aria-modal="true" aria-labelledby="sheet-friends-title" tabindex="-1">
+          <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div>
+            <h2 class="sheet__title sheet-head" id="sheet-friends-title">кого позовёшь <span class="section-title__count" id="create-count"></span></h2></div>
+          <ul class="sheet__list" id="create-friends"></ul>
+          <button class="button button--primary sheet__done pressable" type="button" data-act="sheet-done">готово</button>
+        </div>
+        <div class="sheet" id="sheet-plan" role="dialog" aria-modal="true" aria-labelledby="sheet-plan-title" tabindex="-1">
+          <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div>
+            <h2 class="sheet__title sheet-head" id="sheet-plan-title">куда идёте?</h2></div>
+          <div class="sheet__scroll">
+            <label class="sheet-search"><i class="icon icon--search" aria-hidden="true"></i><span class="visually-hidden">поиск занятия</span>
+              <input class="sheet-search__input" id="what-search" type="search" placeholder="кино, квиз, каток…" autocomplete="off"></label>
+            <div class="sheet__tags" id="create-what" role="radiogroup" aria-label="куда"></div>
+            <p class="caps-label sheet__label" id="when-label">когда</p>
+            <div class="sheet__tags" id="create-when" role="radiogroup" aria-labelledby="when-label"></div>
+          </div>
+          <button class="button button--primary sheet__done pressable" type="button" data-act="sheet-done">готово</button>
+        </div>
+        <div class="sheet" id="sheet-desc" role="dialog" aria-modal="true" aria-labelledby="sheet-desc-title" tabindex="-1">
+          <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div>
+            <h2 class="sheet__title sheet-head" id="sheet-desc-title">о компании</h2></div>
+          <label class="field">
+            <span class="field__label">описание</span>
+            <textarea class="field__input" id="create-desc" rows="3" maxlength="140" placeholder="куда ходите и кого ищете"></textarea>
+          </label>
+          <button class="button button--primary sheet__done pressable" type="button" data-act="sheet-done">готово</button>
+        </div>
+        <div class="sheet" id="sheet-interests" role="dialog" aria-modal="true" aria-labelledby="sheet-interests-title" tabindex="-1">
+          <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div>
+            <h2 class="sheet__title sheet-head" id="sheet-interests-title">интересы</h2></div>
+          <div class="sheet__scroll">
+            <label class="sheet-search"><i class="icon icon--search" aria-hidden="true"></i><span class="visually-hidden">поиск интереса</span>
+              <input class="sheet-search__input" id="interest-search" type="search" placeholder="аниме, бег, техно…" autocomplete="off"></label>
+            <div class="sheet__tags" id="create-interests" role="group" aria-label="интересы"></div>
+          </div>
+          <button class="button button--primary sheet__done pressable" type="button" data-act="sheet-done">готово</button>
+        </div>
+
+        <!-- 4. Взаимный лайк: экран снизу на весь рост, конфетти -->
+        <section class="screen screen--rise match" id="screen-match" aria-labelledby="match-title" hidden>
+          <button class="icon-button icon-button--header match__close pressable" type="button" aria-label="закрыть" data-act="close-match">
+            <i class="icon icon--close" aria-hidden="true"></i>
+          </button>
+          <div class="match__hero" aria-hidden="true">
+            <div class="match__side match__side--mine"><div id="match-mine"></div><p class="match__name" id="match-mine-name"></p></div>
+            <div class="match__side match__side--theirs"><div id="match-theirs"></div><p class="match__name" id="match-theirs-name"></p></div>
+            <img class="match__heart" src="../../assets/stickers/heart.webp" alt="">
+          </div>
+          <div class="match__body">
+            <h1 class="match__title" id="match-title">это взаимно</h1>
+            <p class="match__text" id="match-text"></p>
+          </div>
+          <footer class="match__footer">
+            <button class="button match__cta pressable" id="match-cta" type="button"></button>
+            <p class="match__time" id="match-time"></p>
+          </footer>
+        </section>
+
+        <!-- 5. Общий чат: нативный мессенджер, здесь – только его начало -->
+        <section class="screen screen--push group-chat" id="screen-chat" aria-labelledby="chat-name" hidden>
+          <header class="group-chat__head">
+            <button class="icon-button icon-button--header pressable" type="button" aria-label="назад" data-act="back">
+              <i class="icon icon--back" aria-hidden="true"></i>
+            </button>
+            <div class="group-chat__title">
+              <span class="face-stack" id="chat-faces" aria-hidden="true"></span>
+              <span class="group-chat__name ellipsis" id="chat-name"></span>
+              <span class="group-chat__status" id="chat-status"></span>
+            </div>
+            <span class="group-chat__spacer" aria-hidden="true"></span>
+          </header>
+          <p class="chat-divider">сегодня</p>
+          <div class="empty-state group-chat__empty">
+            <img class="empty-state__sticker" src="../../assets/stickers/clap.webp" alt="">
+            <p class="empty-state__title">скажи привет</p>
+            <p class="empty-state__text" id="chat-text"></p>
+          </div>
+        </section>
+
+        <!-- Пуш: нативный баннер iOS -->
+        <button class="ny-push" id="push" type="button" tabindex="-1">
+          <img class="ny-push__icon" src="../../assets/system/app-icon.png" alt="">
+          <span class="ny-push__body">
+            <span class="ny-push__head"><span class="ny-push__title" id="push-title"></span><span class="ny-push__time">сейчас</span></span>
+            <span class="ny-push__text" id="push-text"></span>
+          </span>
+        </button>
+
+        <p class="visually-hidden" id="announce" aria-live="polite"></p>
+        <div class="home-indicator" aria-hidden="true"></div>
+      </main>
+    </div>
+
+    <!-- Пульт: состояния и ответы второй стороны -->
+    <aside class="panel" aria-label="пульт показа">
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-mine">
+        <p class="panel__label caps-label" id="panel-mine">моя компания</p>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" role="radio" data-mine="none">нет</button>
+          <button class="panel__button pressable" type="button" role="radio" data-mine="pending">ждём друзей</button>
+          <button class="panel__button pressable" type="button" role="radio" data-mine="active">есть</button>
+        </div>
+      </div>
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-city">
+        <p class="panel__label caps-label" id="panel-city">город</p>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" role="radio" data-city="full">5 компаний</button>
+          <button class="panel__button pressable" type="button" role="radio" data-city="one">одна</button>
+          <button class="panel__button pressable" type="button" role="radio" data-city="empty">пусто</button>
+        </div>
+      </div>
+      <div class="panel__group" role="group" aria-labelledby="panel-events">
+        <p class="panel__label caps-label" id="panel-events">вторая сторона</p>
+        <button class="panel__button panel__button--accent pressable" type="button" data-event="mutual">котики лайкнули в ответ</button>
+        <button class="panel__button pressable" type="button" data-event="they-agree">кто-то из котиков за чат</button>
+        <button class="panel__button pressable" type="button" data-event="friend-agree">друг согласился вступить</button>
+        <button class="panel__button pressable" type="button" data-event="like-us">новый лайк вашей компании</button>
+        <button class="panel__button pressable" type="button" data-event="week">прошла неделя</button>
+        <p class="panel__note" id="panel-note"></p>
+      </div>
+      <button class="panel__button pressable" type="button" data-event="intro">показать онбординг</button>
+      <button class="panel__button pressable" type="button" data-event="reset">с начала</button>
+    </aside>
+  </div>
+</div>
+
+<script src="companies.js"></script>
+</body>
+</html>
