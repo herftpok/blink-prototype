@@ -1,0 +1,390 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Первый друг: на карте новорега в правом нижнем углу – человек, которого
+   стоит добавить (место – как у бренда „дринкит появился рядом“ в фигме
+   Blink-App, node 119007-32665). Нажатие – шторка с ним и „добавить в друзья“.
+   Карта – styles/screens/map.css, общие компоненты – ../../styles.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Стенд (в продукт не идёт) ───────────────────────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 100dvh;
+  padding: var(--space-16) var(--space-24);
+}
+
+.stage__head {
+  text-align: center;
+}
+
+.stage__title {
+  font: var(--type-section-title);
+}
+
+.stage__lead {
+  margin-top: var(--space-4);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.stage__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-24);
+  zoom: var(--stage-zoom, 1);          /* телефон целиком в окне: first-friend.js → fit() */
+}
+
+.stage .device {
+  min-height: 0;
+  padding: 0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  width: 260px;
+  padding-top: var(--space-24);
+}
+
+.panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.panel__row {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.panel__row > .panel__button {
+  flex: 1;
+  min-width: 0;
+}
+
+.panel__button {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-12);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-map-chip);
+}
+
+.panel__button[aria-checked="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.panel__button:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel__button:hover {
+    border-color: var(--color-text-dim);
+    color: var(--color-text);
+  }
+}
+
+/* На телефоне – только продукт */
+@media (max-width: 480px) {
+  .stage {
+    display: block;
+    padding: 0;
+  }
+
+  .stage__body {
+    display: block;
+  }
+
+  .stage__head,
+  .panel {
+    display: none;
+  }
+}
+
+/* ── Зов в углу карты ────────────────────────────────────────────────── */
+
+/* Квадрат 100: по центру кружок 48, над ним по дуге имя. Кружок по центру „где я“
+   (правое поле 26 = 16 + половина разницы ширин), низ блока – на 4 выше ряда кнопок */
+.ff-invite {
+  --press-scale: var(--press-scale-button);
+  position: absolute;
+  right: 0;
+  bottom: calc(var(--safe-bottom) + 124px);
+  z-index: 5;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  animation: ff-pop 0.6s var(--ease-spring) 0.3s backwards;
+}
+
+.ff-invite.is-gone {
+  opacity: 0;
+  transform: scale(0.4);
+  pointer-events: none;
+  transition: opacity var(--duration-screen) ease, transform var(--duration-screen) var(--ease-emphasized);
+}
+
+@keyframes ff-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+/* Глаза вокруг кружка: будто на тебя смотрят с разных сторон. Пара появляется резко и так же
+   резко пропадает – моргает; место, размер, наклон и отражение задаёт first-friend.js (--ex, --ey
+   от центра кружка, --es, --er, --ef: −1 справа от кружка – глаза смотрят на него). Без переходов: плавное проявление читалось бы как мерцание, а не взгляд */
+.ff-invite__eyes {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+}
+
+.ff-invite__eye {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--es, 24px);
+  max-width: none;                                /* сброс base.css ужал бы до нулевой ширины обёртки */
+  height: var(--es, 24px);
+  transform: translate(calc(var(--ex, 0px) - 50%), calc(var(--ey, 0px) - 50%)) rotate(var(--er, 0deg)) scaleX(var(--ef, 1));
+  visibility: hidden;
+}
+
+.ff-invite__eye.is-on {
+  visibility: visible;
+}
+
+.ff-invite__arc {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* имя – как над пином того, кто делится (pin/other_pin_sharing.png): чёрное с белой обводкой 4.5.
+   В SVG обводка – stroke вдвое толще (половина уходит внутрь и закрыта заливкой), отдельным слоем
+   под буквами. Буквы по дуге расставляет first-friend.js: у всех одна базовая линия */
+.ff-invite__name {
+  font: var(--type-pin-title);
+  text-anchor: middle;
+  fill: var(--color-text-on-map);
+}
+
+.ff-invite__name--outline {
+  fill: var(--color-text);
+  stroke: var(--color-text);
+  stroke-width: 9px;
+  stroke-linejoin: round;
+}
+
+/* фото на белом (avatars/Image*.jpg) – кругом, белое кольцо 3 и тень пина. Кольцо – белая
+   подложка кружка, фото вложено в неё на 3: подложка под фото белая, и по сглаженному краю
+   не просвечивает тёмная линия */
+.ff-invite__disc {
+  position: absolute;
+  left: 26px;
+  top: 26px;
+  width: 48px;
+  height: 48px;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--color-text);
+  box-shadow: var(--shadow-pin);
+}
+
+.ff-invite__photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* без фото – первая буква имени, как в пине: белая на #242424 */
+.ff-invite__initial {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  font: var(--type-label);
+  color: var(--color-text);
+}
+
+/* „+“ – зовёт добавить; после заявки – лаймовая галочка (как „в мешке“ у подарков) */
+/* центр значка – на кольце под 45°, чуть снаружи (r 30 от центра кружка): лицо не закрывает */
+.ff-invite__badge {
+  position: absolute;
+  right: 21px;
+  bottom: 21px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-text);
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color var(--duration-state) ease;
+}
+
+.ff-invite__badge .icon {
+  --icon-size: 8px;
+}
+
+.ff-invite.is-sent .ff-invite__badge {
+  background: var(--color-selected);
+  color: var(--color-text-on-light);
+}
+
+.ff-invite:focus-visible {
+  outline-color: var(--color-text-on-map);
+  outline-offset: -8px;
+}
+
+/* ── Шторка ──────────────────────────────────────────────────────────── */
+
+/* новая рекомендация после крестика: строка проявляется на месте, без сдвига вбок */
+.ff-sheet__row.is-swapped {
+  animation: ff-swap var(--duration-screen) var(--ease-emphasized);
+}
+
+@keyframes ff-swap {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* фото слева, справа – имя, почему знакомы и кнопка. Колонка во всю высоту фото:
+   имя по верху фото, низ кнопки – по низу. Длинное имя выше фото – фото стоит по низу */
+.ff-sheet__row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-16);
+  margin-top: var(--space-16);
+}
+
+/* фото повёрнуто на −5°: нижний угол сквиркла выходит за рамку на 0.5 – поднимаем,
+   чтобы низ наклейки совпал с низом кнопки (замер по снимку @2x) */
+/* фото – кнопка: вход в профиль человека */
+.ff-sheet__art {
+  --press-scale: var(--press-scale-wide);
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+  padding: 0 0 0.5px;
+}
+
+/* фото-наклейка: сквиркл с белой рамкой 3, наклон −5° (как аватар в live activity).
+   Рамка – белая подложка, фото вложено в неё на 3 со своим скруглением (на 3 меньше):
+   под сглаженным краем фото белое, тёмной линии нет */
+.ff-sheet__avatar {
+  display: block;
+  width: min(140px, 36cqw);                      /* во всю высоту колонки; на 375 – 135, чтобы рядом с „добавить“ влезла кнопка профиля */
+  height: min(140px, 36cqw);
+  padding: 3px;
+  border-radius: var(--radius-squircle);         /* 36 % стороны: 50 при 140 */
+  background: var(--color-text);
+  transform: rotate(-5deg);
+}
+
+.ff-sheet__avatar img,
+.ff-sheet__initial {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 35.4%;                          /* вложено: (36 % стороны − 3) / (сторона − 6) */
+  object-fit: cover;
+}
+
+/* без фото – первая буква на #242424 */
+.ff-sheet__initial {
+  display: grid;
+  place-items: center;
+  background: var(--color-surface-raised);
+  font: var(--type-city);                        /* крупная буква – роль „москва“ на карте */
+}
+
+.ff-sheet__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  flex: 1;
+}
+
+.ff-sheet__name {
+  max-width: 100%;
+}
+
+.ff-sheet__reason {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+  margin: var(--space-4) 0 var(--space-14);      /* до кнопки – не меньше 14, даже если колонка выше фото */
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+.ff-sheet__reason .icon {
+  --icon-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ряд кнопок – по низу фото, остаток колонки – над ним */
+.ff-sheet__actions {
+  display: flex;
+  gap: var(--space-8);
+  align-self: stretch;
+  margin-top: auto;
+}
+
+.ff-sheet__cta {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--space-8);
+}
+
+/* „не этот человек“: квадрат высоты CTA с крестиком, серая как тёмная CTA (#242424),
+   скругление CTA. Крестик здесь не закрывает шторку, а меняет рекомендацию (решение пользователя) */
+.ff-sheet__next {
+  width: var(--button-height);
+  height: var(--button-height);
+  border-radius: var(--radius-20);
+  background: var(--color-surface-raised);
+}
+
+.ff-sheet__next .icon {
+  --icon-size: 18px;
+}
+
+.ff-sheet__next:disabled {
+  color: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ff-invite,
+  .ff-sheet__row.is-swapped {
+    animation: none;
+  }
+}

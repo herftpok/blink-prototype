@@ -246,6 +246,40 @@ PNG_ICONS = {
 STICKERS_SIZE = 360
 
 
+def svg_inner_glyph(source: str, dest: Path, drop: int = 1) -> None:
+    """Внутренний глиф SVG-иконки без её подложки: из пути выбрасываются первые drop контуров
+    (рамка), остаются те, что были вырезаны в ней. Контуры не меняются – только viewBox
+    обрезается по ним квадратом, чтобы глиф занимал всю иконку."""
+    svg = src(source).read_text("utf-8")
+    d = re.search(r'<path d="([^"]+)"', svg).group(1)
+    parts = [p + "Z" for p in d.split("Z") if p.strip()][drop:]
+    # рамка глифа по точкам пути: команды в нём абсолютные (M L H V C Z), у кривых берём и
+    # контрольные точки – у дуг иконок они не выходят за крайние точки
+    xs, ys, x, y = [], [], 0.0, 0.0
+    for cmd, args in re.findall(r"([MLHVCZ])([^MLHVCZ]*)", "".join(parts)):
+        nums = [float(n) for n in re.findall(r"-?\d*\.?\d+", args)]
+        if cmd == "H":
+            x = nums[-1]
+        elif cmd == "V":
+            y = nums[-1]
+        elif cmd in "MLC":
+            for px, py in zip(nums[0::2], nums[1::2]):
+                xs.append(px)
+                ys.append(py)
+            x, y = nums[-2], nums[-1]
+        xs.append(x)
+        ys.append(y)
+    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+    side = max(x1 - x0, y1 - y0)
+    vx, vy = (x0 + x1 - side) / 2, (y0 + y1 - side) / 2
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(
+        f'<svg width="24" height="24" viewBox="{vx:.3f} {vy:.3f} {side:.3f} {side:.3f}" '
+        f'fill="none" xmlns="http://www.w3.org/2000/svg"><path d="{"".join(parts)}" fill="#000"/></svg>',
+        "utf-8",
+    )
+
+
 def build_icons() -> dict[str, Path]:
     icons: dict[str, Path] = {}
     idir = OUT / "icons"
@@ -254,6 +288,11 @@ def build_icons() -> dict[str, Path]:
         dest = idir / f"{name}.svg"
         svg_as_mask(source, dest)
         icons[name] = dest
+
+    # „профиль“: человечек из „тел книги“ (Friends/contact_glyph.svg) без квадрата вокруг –
+    # кнопка профиля человека в шторке первого друга (решение пользователя)
+    svg_inner_glyph("Friends/contact_glyph.svg", idir / "person.svg")
+    icons["person"] = idir / "person.svg"
 
     for name, (path, box, opts) in RASTER_ICONS.items():
         bg = opts.get("bg")

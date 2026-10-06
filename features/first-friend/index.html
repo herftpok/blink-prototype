@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – первый друг</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/screens/map.css">
+  <link rel="stylesheet" href="first-friend.css">
+</head>
+<body>
+<div class="stage">
+
+  <!-- Стенд: подпись и пульт – только для показа, в продукт не идут -->
+  <header class="stage__head">
+    <h1 class="stage__title">первый друг</h1>
+    <p class="stage__lead">новорег на пустой карте: в углу человек, которого стоит добавить</p>
+  </header>
+
+  <div class="stage__body">
+    <div class="device">
+      <main class="app" id="app" data-status="dark" data-home="dark">
+        <div class="status-bar" aria-hidden="true">
+          <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+          <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+          <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+        </div>
+
+        <section class="screen map" id="screen-map" aria-label="карта">
+          <div class="map__canvas">
+            <img class="map__tiles" src="../../assets/map/map.webp" alt="">
+            <!-- друзей пока нет: пин появится, когда заявку примут – раньше мы не знаем, где человек -->
+            <div class="map__pins" id="pins"></div>
+          </div>
+
+          <header class="map__header">
+            <h1 class="map__city">москва</h1>
+            <p class="map__weather">
+              <time>09:53</time>
+              <span class="map__weather-temp"><span aria-hidden="true">☔</span><span>−15&nbsp;°C</span></span>
+            </p>
+            <button class="map-chip map__steps pressable" type="button">
+              <i class="icon icon--steps" aria-hidden="true"></i><span>345 шагов · 9 место</span>
+            </button>
+          </header>
+
+          <div class="map__tools">
+            <button class="icon-button icon-button--map pressable" type="button" aria-label="места"><i class="icon icon--places" aria-hidden="true"></i></button>
+            <button class="icon-button icon-button--map pressable" type="button" aria-label="пространства"><i class="icon icon--space" aria-hidden="true"></i></button>
+            <button class="icon-button icon-button--map pressable" type="button" aria-label="игры"><i class="icon icon--games" aria-hidden="true"></i></button>
+          </div>
+
+          <!-- Зов в углу (место – как у „дринкит появился рядом“ в фигме): фото в кружке,
+               имя по дуге над ним, вокруг то тут, то там моргают глаза. Расстояния нет: где человек,
+               мы не знаем, пока он не в друзьях -->
+          <button class="ff-invite pressable" id="invite" type="button" aria-haspopup="dialog" aria-controls="sheet">
+            <!-- глаза-стикеры: появляются и пропадают вокруг кружка – first-friend.js → peek() -->
+            <span class="ff-invite__eyes" id="eyes" aria-hidden="true">
+              <img class="ff-invite__eye" src="../../assets/stickers/eyes.webp" alt="">
+              <img class="ff-invite__eye" src="../../assets/stickers/eyes.webp" alt="">
+            </span>
+            <svg class="ff-invite__arc" viewBox="0 0 100 100" aria-hidden="true">
+              <!-- имя по дуге над кружком: буквы ставит first-friend.js → arcName(), каждую на одну
+                   базовую линию r 30 с поворотом по её ширине. Обводка и буквы – двумя слоями:
+                   иначе обводка следующей буквы ложится на предыдущую -->
+              <g class="ff-invite__name ff-invite__name--outline" data-arc></g>
+              <g class="ff-invite__name" data-arc></g>
+            </svg>
+            <span class="ff-invite__disc" id="invite-person"></span>
+            <span class="ff-invite__badge"><i class="icon icon--plus" id="invite-badge"></i></span>
+          </button>
+
+          <div class="map__actions">
+            <button class="map-button map-button--world pressable" type="button">
+              <i class="icon icon--globe" aria-hidden="true"></i>мой мир
+            </button>
+            <button class="map-button map-button--locate pressable" type="button" aria-label="показать, где я">
+              <i class="icon icon--crosshair" aria-hidden="true"></i>
+            </button>
+          </div>
+        </section>
+
+        <nav class="tabbar" aria-label="разделы">
+          <button class="tabbar__item pressable" type="button" aria-current="page"><i class="icon icon--pin" aria-hidden="true"></i>карта</button>
+          <button class="tabbar__item pressable" type="button"><i class="icon icon--friends" aria-hidden="true"></i>друзья</button>
+          <button class="tabbar__item pressable" type="button"><i class="icon icon--chat" aria-hidden="true"></i>чаты</button>
+          <button class="tabbar__item pressable" type="button"><i class="icon icon--market" aria-hidden="true"></i>маркет</button>
+          <button class="tabbar__item pressable" type="button"><img class="tabbar__avatar" src="../../assets/people/me-cutout.webp" alt="">ты</button>
+        </nav>
+
+        <div class="scrim" id="scrim"></div>
+
+        <!-- Шторка – композиция „рекомендации друга“ из live activity: фото слева, справа имя,
+             почему знакомы и кнопка. Фото – наклейка во всю высоту колонки -->
+        <div class="sheet ff-sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-name" tabindex="-1">
+          <div class="sheet__handle" data-drag>
+            <div class="sheet__grabber" aria-hidden="true"></div>
+          </div>
+          <div class="ff-sheet__row">
+            <!-- фото – вход в профиль человека (экрана чужого профиля в прототипе нет:
+                 нажатие только отвечает) -->
+            <button class="ff-sheet__art pressable" id="profile" type="button">
+              <span class="ff-sheet__avatar" id="sheet-avatar"></span>
+            </button>
+            <div class="ff-sheet__body">
+              <h2 class="sheet__title ff-sheet__name" id="sheet-name"></h2>
+              <p class="ff-sheet__reason"><i class="icon" id="sheet-icon" aria-hidden="true"></i><span id="sheet-reason"></span></p>
+              <!-- главное действие и рядом серая квадратная с крестиком – „не этот человек“:
+                   на месте встаёт следующая рекомендация -->
+              <div class="ff-sheet__actions">
+                <button class="button button--primary ff-sheet__cta" id="add" type="button">добавить</button>
+                <button class="icon-button ff-sheet__next pressable" id="next" type="button" aria-label="другой человек">
+                  <i class="icon icon--close" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="home-indicator" aria-hidden="true"></div>
+      </main>
+    </div>
+
+    <aside class="panel" aria-label="пульт показа">
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-reason">
+        <p class="panel__label caps-label" id="panel-reason">почему знакомы</p>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" role="radio" data-reason="contacts">контакты</button>
+          <button class="panel__button pressable" type="button" role="radio" data-reason="invite">ссылка</button>
+          <button class="panel__button pressable" type="button" role="radio" data-reason="school">школа</button>
+        </div>
+      </div>
+      <div class="panel__group">
+        <p class="panel__label caps-label">что дальше</p>
+        <button class="panel__button pressable" type="button" id="accept" disabled>заявку приняли</button>
+        <button class="panel__button pressable" type="button" id="reset">с начала</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="../../scripts/pin.js"></script>
+<script src="first-friend.js"></script>
+</body>
+</html>
