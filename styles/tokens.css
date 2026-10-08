@@ -143,6 +143,7 @@
   --type-gift-option: 600 14.5px/18px var(--font-ui);       /* „отправить анонимно“, трекинг +0.02em */
   --type-comment-label: 600 14px/17px var(--font-text);     /* „коммент к подарку“ */
   --type-comment: 500 17px/22px var(--font-text);           /* текст коммента и плейсхолдер */
+  --type-item-text: 500 15px/20px var(--font-text);         /* описание предмета в шторке маркета (market/unlimited_sticker.png) */
   --tracking-title: -0.02em;                   /* заголовок экрана */
   --tracking-city: -0.04em;                    /* „москва“ на карте (карту ещё не пересматривали) */
   --tracking-section: 0;                       /* заголовок секции */

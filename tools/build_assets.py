@@ -804,6 +804,9 @@ def build_market() -> None:
     resize_to("market/map_for_tale.png", d / "map-tail.webp", 1026, 86)              # карта в карточке хвоста
     resize_to("market/tale_package.png", d / "package-box.webp", 429, 90)            # пустые упаковки
     resize_to("market/sticker_package.png", d / "package-bag.webp", 429, 90)
+    # стикер „жутко весело“ без карточки – со шторки стикерпака (сетка точек уходит как звёзды):
+    # стикер-сообщение в чате и превью набора (features/market-week)
+    cutout_on_black("market/unlimited_sticker.png", (88, 402, 272, 576), d / "sticker-zombie.webp", width_px=552)
 
 
 def video_package(path: str, dest: Path, fps: int = 15, width_px: int = 264) -> None:

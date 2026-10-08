@@ -1,0 +1,750 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Маркет недели – альтернативная витрина маркета (исследования market/*.pdf).
+   Общие токены и компоненты – ../../styles, шапка, баланс, ценник, „уже у тебя“
+   и архив – ../../styles/screens/market.css (эталон market_full_screen.png),
+   шторка предмета – по market/unlimited_sticker.png, limited_tale.png, unlimitid_tale.png.
+   Здесь – стенд, лента недели, шторка предмета, стикер в чате.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Стенд (в продукт не идёт) ───────────────────────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-16);
+  min-height: 100dvh;
+  padding: var(--space-20) var(--space-24);
+}
+
+.stage__head {
+  text-align: center;
+}
+
+.stage__title {
+  font: var(--type-section-title);
+}
+
+.stage__lead {
+  margin-top: var(--space-4);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.stage__phones {
+  display: grid;
+  grid-template-columns: 390px 240px 390px;
+  align-items: start;
+  column-gap: var(--space-24);
+  zoom: var(--stage-zoom, 1);                     /* оба телефона целиком в окне: market-week.js → fit() */
+}
+
+.stage__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-14);
+}
+
+.stage .device {
+  min-height: 0;
+  padding: 0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  padding-top: 30px;                              /* вровень с телефонами, а не с подписями */
+}
+
+.panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.panel__button {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-12);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-map-chip);
+  text-align: center;
+}
+
+.panel__button[aria-checked="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+/* ── Лента ───────────────────────────────────────────────────────────── */
+
+.mw-feed {
+  padding-bottom: 150px;                          /* низ ленты выезжает из-под таб-бара */
+}
+
+.mw-block {
+  position: relative;
+  margin-top: var(--space-32);
+}
+
+.mw-block:first-of-type {
+  margin-top: var(--space-24);
+}
+
+/* заголовок секции и справа – срок или „все“ */
+.mw-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: 0 var(--gutter);
+}
+
+.mw-head__note {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+/* последний день недели: срок – розовым, время идёт */
+.mw-head__note--soon {
+  color: var(--color-pink);
+}
+
+.mw-head .more-link {
+  --press-scale: var(--press-scale-small);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-height: 44px;
+  margin: -14px 0;                                /* зона нажатия 44, строка заголовка не растёт */
+}
+
+.mw-head .more-link .icon {
+  --icon-size: 13px;
+}
+
+/* ── Предмет недели: примерка на твоём пине + упаковка, наклеенная на угол карты ── */
+
+.mw-hero {
+  --press-scale: var(--press-scale-wide);
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 382px;
+  margin-top: var(--space-14);
+  text-align: left;
+}
+
+.mw-hero__map {
+  position: absolute;
+  top: 0;
+  left: var(--gutter);
+  right: var(--gutter);
+  height: 250px;
+  overflow: hidden;
+  border-radius: var(--radius-modal);
+  background: var(--color-surface);
+}
+
+.mw-hero__tiles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+
+.mw-hero .mw-rider {
+  left: 64%;
+  top: 58%;
+}
+
+/* упаковка выходит за нижний край карты – как наклейка на углу */
+.mw-hero__pack-wrap {
+  position: absolute;
+  top: 160px;
+  left: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 152px;
+}
+
+.mw-hero__pack {
+  width: 100%;
+  transform: rotate(-6deg);
+  filter: drop-shadow(0 12px 24px var(--color-glass-button));
+}
+
+.mw-hero__name {
+  position: absolute;
+  top: 266px;
+  left: 204px;
+  right: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* длинное имя – в две строки, дальше многоточие */
+.mw-hero__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font: var(--type-section-title);
+  text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.mw-hero__kind {
+  color: var(--color-text-muted);
+  font: var(--type-gift-kind);
+  letter-spacing: 0.02em;
+}
+
+.mw-hero__name .mw-stock {
+  margin-top: var(--space-4);
+}
+
+/* ── Пин с хвостом. Точка – острие пина; хвост справа уходит под кадр – растёт из пина ── */
+
+.mw-rider {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.mw-rider .pin {
+  left: 0;
+  top: 0;
+}
+
+/* след „в пути“ заменяет сам хвост */
+.mw-rider .pin__motion {
+  display: none;
+}
+
+.mw-rider__tail {
+  position: absolute;
+  right: -4px;
+  top: -52px;
+  width: auto;
+  max-width: none;
+  height: 50px;
+  transform-origin: 100% 50%;
+  animation: mw-tail 1.2s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+/* хвост живой: чуть тянется и сжимается, как пламя или ткань на ветру */
+@keyframes mw-tail {
+  from { transform: scaleX(0.94); }
+  to { transform: scaleX(1.05); }
+}
+
+/* ── Предложения недели: 2 × 2, упаковки вразнобой ───────────────────── */
+
+.mw-offers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-24) var(--space-12);
+  padding: 0 var(--gutter);
+}
+
+.mw-item {
+  --press-scale: var(--press-scale-button);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.mw-item__pack {
+  width: 140px;
+  pointer-events: none;
+}
+
+.mw-offers .mw-item:nth-child(4n + 1) .mw-item__pack { transform: rotate(-3deg); }
+.mw-offers .mw-item:nth-child(4n + 2) .mw-item__pack { transform: rotate(4deg); }
+.mw-offers .mw-item:nth-child(4n + 3) .mw-item__pack { transform: rotate(2deg); }
+.mw-offers .mw-item:nth-child(4n) .mw-item__pack { transform: rotate(-4deg); }
+
+/* ценник: цена и старая цена зачёркнутой, или „у тебя“ */
+.mw-chip__old {
+  margin-left: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.mw-chip--owned {
+  gap: var(--space-6);
+  padding: 0 var(--space-10) 0 var(--space-6);
+}
+
+.mw-chip__check .icon {
+  --icon-size: 13px;
+}
+
+/* тираж – текстом-голограммой, как „осталось на складе“ у лимитированных */
+.mw-stock {
+  margin-top: var(--space-6);
+  background: var(--gradient-holo);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  font: var(--type-gift-note);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Полки: горизонтально, следующая карточка выглядывает ───────────── */
+
+.mw-shelf {
+  display: flex;
+  gap: var(--space-12);
+  margin-top: var(--space-16);
+  padding: var(--space-8) var(--gutter) var(--space-4);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--gutter);
+  scrollbar-width: none;
+}
+
+.mw-shelf::-webkit-scrollbar {
+  display: none;
+}
+
+.mw-shelf > * {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+/* у друзей: упаковка и на её угол наклеено фото друга; под ней – кто и когда */
+.mw-friend {
+  --press-scale: var(--press-scale-button);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 124px;
+}
+
+/* упаковки разной высоты стоят на одной линии – подписи под ними вровень */
+.mw-friend__art {
+  display: flex;
+  align-items: flex-end;
+  height: 146px;
+}
+
+.mw-friend__pack {
+  width: 112px;
+  pointer-events: none;
+}
+
+.mw-friend:nth-child(odd) .mw-friend__pack { transform: rotate(-3deg); }
+.mw-friend:nth-child(even) .mw-friend__pack { transform: rotate(3deg); }
+
+.mw-friend__face {
+  position: absolute;
+  top: -6px;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--color-bg);
+  border-radius: var(--radius-squircle);
+  object-fit: cover;
+  transform: rotate(-8deg);
+}
+
+.mw-friend:nth-child(even) .mw-friend__face {
+  transform: rotate(7deg);
+}
+
+.mw-friend__name {
+  max-width: 100%;
+  margin-top: var(--space-6);
+  font: var(--type-friend-name);
+}
+
+.mw-friend__when {
+  color: var(--color-text-muted);
+  font: var(--type-status);
+}
+
+.mw-item--shelf .mw-item__pack {
+  width: 124px;
+}
+
+.mw-shelf--packs .mw-item:nth-child(odd) .mw-item__pack { transform: rotate(-3deg); }
+.mw-shelf--packs .mw-item:nth-child(even) .mw-item__pack { transform: rotate(3deg); }
+
+/* ── „уже у тебя“ и архив – раскладка эталона, но в потоке ленты ───── */
+
+.mw-owned {
+  position: relative;
+  margin-top: 56px;
+}
+
+/* заголовок раздела из market.css стоит по координатам – здесь он в потоке */
+.mw-owned__title.market-section {
+  position: relative;
+  top: auto;
+}
+
+/* карточки: две рядом и третья по центру ниже (x 46 / 225 / 135 на холсте 390) */
+.mw-owned__grid {
+  position: relative;
+  height: 368px;
+  margin-top: 42px;
+}
+
+.mw-owned__grid--two {
+  height: 148px;
+}
+
+.mw-owned__card {
+  position: absolute;
+  width: 124px;
+}
+
+.mw-owned__card img {
+  width: 100%;
+}
+
+.mw-owned__card--0 { left: calc(50% - 149px); top: 0; }
+.mw-owned__card--1 { left: calc(50% + 30px); top: 1px; }
+.mw-owned__card--2 { left: calc(50% - 60px); top: 221px; }
+
+.mw-owned__selected {
+  left: calc(50% - 139px);
+  top: 149px;
+}
+
+.mw-archive {
+  margin-top: 70px;
+  padding-top: 172px;                             /* лента сверху, заголовок – на 172 ниже её верха */
+}
+
+.mw-archive__tape {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.mw-archive .mw-owned__grid {
+  margin-top: 87px;
+}
+
+/* ── „все“: подборка сеткой ─────────────────────────────────────────── */
+
+.mw-all__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+  padding: calc(var(--safe-top) + 12px) var(--gutter) 0;
+}
+
+.mw-all__grid {
+  padding-top: var(--space-32);
+}
+
+.mw-all__grid .mw-item__pack {
+  width: 150px;
+}
+
+.mw-all__grid .mw-item:nth-child(4n + 1) .mw-item__pack { transform: rotate(-3deg); }
+.mw-all__grid .mw-item:nth-child(4n + 2) .mw-item__pack { transform: rotate(4deg); }
+.mw-all__grid .mw-item:nth-child(4n + 3) .mw-item__pack { transform: rotate(2deg); }
+.mw-all__grid .mw-item:nth-child(4n) .mw-item__pack { transform: rotate(-4deg); }
+
+/* ── Шторка предмета (market/unlimited_sticker.png): поля 24 ─────────── */
+
+/* фон над шторками маркета – градиент эталона, а не затемнение */
+.mw-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: var(--gradient-market-backdrop);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-screen) ease, visibility 0s linear var(--duration-screen);
+}
+
+.mw-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--duration-screen) ease, visibility 0s;
+}
+
+.mw-sheet {
+  padding: 0 var(--space-24) calc(var(--safe-bottom) + var(--space-28));
+}
+
+.mw-sheet__body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.mw-sheet__title {
+  margin-top: var(--space-24);
+  font: var(--type-sheet-title);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* когда уйдёт – словами и розовым: время идёт. Тикающего таймера нет */
+.mw-sheet__leave {
+  margin-top: var(--space-4);
+  color: var(--color-pink);
+  font: var(--type-caption);
+}
+
+.mw-sheet__text {
+  margin-top: var(--space-6);
+  color: var(--color-text-muted);
+  font: var(--type-item-text);
+  text-wrap: pretty;
+}
+
+/* остаток тиража: голографическая полоса 28, как „осталось на складе“ в подарке */
+.mw-sheet__stock {
+  margin-top: var(--space-16);
+}
+
+.mw-sheet__stock-bar {
+  height: 28px;
+  padding: 3px;
+  border-radius: var(--radius-10);
+  background: var(--color-banner-fill);
+  overflow: hidden;
+}
+
+.mw-sheet__stock-fill {
+  width: calc(var(--share) * 100%);
+  height: 100%;
+  border-radius: 7px;                             /* 10 − 3 */
+  background: var(--gradient-holo);
+}
+
+.mw-sheet__stock-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 9px;
+  font: var(--type-gift-note);
+}
+
+.mw-sheet__stock-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.mw-sheet__stock-total {
+  color: var(--color-text-muted);
+}
+
+/* превью: на карте – твой пин с хвостом, у стикеров – стикер на карточке с сеткой точек */
+.mw-preview {
+  position: relative;
+  flex-shrink: 0;
+  height: 292px;
+  margin-top: var(--space-16);
+  overflow: hidden;
+  border-radius: var(--radius-modal);
+}
+
+.mw-preview--dots {
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--color-surface);
+  background:
+    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    var(--color-bg);
+}
+
+.mw-preview__sticker {
+  width: 190px;
+  transform: rotate(-4deg);
+}
+
+.mw-preview__pack {
+  width: 170px;
+  transform: rotate(-4deg);
+}
+
+.mw-preview__tiles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+
+.mw-preview .mw-rider {
+  left: 56%;
+  top: 56%;
+}
+
+/* у кого из друзей уже есть: лица 34 внахлёст и „+N“ */
+.mw-sheet__friends {
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+  min-height: 34px;
+  margin-top: var(--space-24);
+  color: var(--color-text-muted);
+  font: var(--type-gift-option);
+  letter-spacing: 0.02em;
+}
+
+.mw-sheet__friends--none {
+  justify-content: center;
+}
+
+.mw-faces {
+  display: flex;
+  padding-left: 9px;
+}
+
+.mw-faces__img,
+.mw-faces__more {
+  width: 34px;
+  height: 34px;
+  margin-left: -9px;
+  border: 2px solid var(--color-bg);
+  border-radius: var(--radius-squircle);
+}
+
+.mw-faces__img {
+  object-fit: cover;
+}
+
+.mw-faces__more {
+  display: grid;
+  place-items: center;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font: var(--type-button-compact);
+}
+
+/* „КУПИТЬ“ слева, цена с монетой справа – как на эталоне */
+.mw-buy {
+  flex-shrink: 0;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: var(--space-20);
+  padding: 0 var(--space-16);
+}
+
+.mw-buy__price {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-variant-numeric: tabular-nums;
+}
+
+.mw-buy__coin {
+  width: 22px;
+  height: 22px;
+}
+
+.mw-buy__old {
+  color: var(--color-text-muted);
+}
+
+.mw-buy--owned {
+  justify-content: center;
+}
+
+.mw-buy--owned:disabled {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  cursor: default;
+}
+
+.mw-buy--owned .icon {
+  --icon-size: 18px;
+}
+
+/* ── Чат: стикер лёвы – вход в набор ─────────────────────────────────── */
+
+.mw-chat__feed {
+  padding-bottom: 120px;
+}
+
+.mw-chat-sticker {
+  --press-scale: var(--press-scale-button);
+}
+
+.bubble--sticker.mw-chat-sticker img {
+  height: auto;
+  transform: rotate(-6deg);
+}
+
+/* ── Телефон: стенд складывается в колонку ───────────────────────────── */
+
+@media (max-width: 480px) {
+  .stage {
+    gap: 0;
+    padding: 0;
+  }
+
+  .stage__head {
+    padding: var(--space-20) var(--gutter);
+  }
+
+  .stage__phones {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    zoom: 1;
+  }
+
+  .stage__side {
+    width: 100%;
+    gap: 0;
+  }
+
+  .stage__side .device {
+    align-self: stretch;
+  }
+
+  .stage__caption {
+    align-self: stretch;
+    padding: var(--space-12) var(--gutter);
+  }
+
+  .panel {
+    align-self: stretch;
+    padding: var(--space-8) var(--gutter) var(--space-24);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel__button:hover {
+    border-color: var(--color-text-dim);
+    color: var(--color-text);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mw-rider__tail {
+    animation: none;
+  }
+}

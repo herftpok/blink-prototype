@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – маркет недели</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/screens/market.css">
+  <link rel="stylesheet" href="../../styles/screens/chat.css">
+  <link rel="stylesheet" href="market-week.css">
+</head>
+<body>
+<div class="stage">
+
+  <!-- Стенд: подписи и пульт – только для показа, в продукт не идут -->
+  <header class="stage__head">
+    <h1 class="stage__title">маркет недели</h1>
+    <p class="stage__lead">витрина меняется раз в неделю; в маркет ведёт и чужой стикер в чате</p>
+  </header>
+
+  <div class="stage__phones" id="stage-phones">
+    <section class="stage__side" aria-labelledby="side-market">
+      <h2 class="stage__caption caps-label" id="side-market">ты · маркет</h2>
+      <div class="device">
+        <main class="app" id="app-market" aria-label="телефон: маркет">
+          <div class="status-bar" aria-hidden="true">
+            <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+            <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+            <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+          </div>
+
+          <section class="screen market" id="screen-market" aria-label="маркет">
+            <canvas class="market__sky" aria-hidden="true"></canvas>
+            <div class="screen__scroll" id="market-scroll">
+              <div class="market__content mw-feed" id="feed"></div>
+            </div>
+          </section>
+
+          <!-- „все“ у полки: подборка целиком сеткой, въезжает справа -->
+          <section class="screen screen--push market mw-all" id="screen-all" aria-labelledby="all-title" hidden>
+            <div class="screen__scroll">
+              <header class="mw-all__head">
+                <button class="icon-button icon-button--header pressable" type="button" data-act="back" aria-label="назад">
+                  <i class="icon icon--back" aria-hidden="true"></i>
+                </button>
+                <h1 class="screen-title" id="all-title"></h1>
+              </header>
+              <div class="market-grid mw-all__grid" id="all-grid"></div>
+            </div>
+          </section>
+
+          <nav class="tabbar" aria-label="разделы">
+            <button class="tabbar__item pressable" type="button"><i class="icon icon--pin" aria-hidden="true"></i>карта</button>
+            <button class="tabbar__item pressable" type="button"><i class="icon icon--friends" aria-hidden="true"></i>друзья</button>
+            <button class="tabbar__item pressable" type="button"><i class="icon icon--chat" aria-hidden="true"></i>чаты</button>
+            <button class="tabbar__item pressable" type="button" aria-current="page"><i class="icon icon--market" aria-hidden="true"></i>маркет</button>
+            <button class="tabbar__item pressable" type="button"><img class="tabbar__avatar" src="../../assets/people/me-cutout.webp" alt="">ты</button>
+          </nav>
+
+          <div class="home-indicator" aria-hidden="true"></div>
+        </main>
+      </div>
+    </section>
+
+    <!-- Пульт: какой сегодня день – так видно, как витрина живёт неделю -->
+    <aside class="panel" aria-label="пульт показа">
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-day">
+        <p class="panel__label caps-label" id="panel-day">какой день</p>
+        <button class="panel__button pressable" type="button" role="radio" data-day="thu">четверг, 8.10</button>
+        <button class="panel__button pressable" type="button" role="radio" data-day="sun">воскресенье, 11.10 – последний день недели</button>
+        <button class="panel__button pressable" type="button" role="radio" data-day="mon">понедельник, 12.10 – новая витрина</button>
+      </div>
+      <div class="panel__group">
+        <p class="panel__label caps-label">ещё</p>
+        <button class="panel__button pressable" type="button" data-act="reset">с начала</button>
+      </div>
+    </aside>
+
+    <section class="stage__side" aria-labelledby="side-chat">
+      <h2 class="stage__caption caps-label" id="side-chat">ты · чат с лёвой</h2>
+      <div class="device">
+        <main class="app" id="app-chat" aria-label="телефон: чат">
+          <div class="status-bar" aria-hidden="true">
+            <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+            <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+            <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+          </div>
+
+          <section class="screen chat" id="screen-chat" aria-label="чат с лёвой">
+            <div class="chat__scroll">
+              <div class="chat__feed mw-chat__feed" id="chat-feed"></div>
+            </div>
+
+            <header class="chat__header">
+              <button class="icon-button icon-button--header pressable" type="button" aria-label="назад">
+                <i class="icon icon--back" aria-hidden="true"></i>
+              </button>
+              <div class="chat__peer">
+                <span class="avatar avatar--online"><img class="avatar__img" src="../../assets/people/photo-3.webp" alt=""></span>
+                <span class="chat__peer-text">
+                  <span class="chat__peer-name ellipsis">лёва</span>
+                  <span class="chat__peer-status ellipsis">в сети</span>
+                </span>
+              </div>
+              <button class="icon-button icon-button--header pressable" type="button" aria-label="позвонить">
+                <i class="icon icon--phone" aria-hidden="true"></i>
+              </button>
+            </header>
+
+            <footer class="chat__footer">
+              <div class="composer">
+                <button class="icon-button icon-button--field pressable" type="button" aria-label="крупный текст">
+                  <i class="icon icon--text-style" aria-hidden="true"></i>
+                </button>
+                <label class="composer__field">
+                  <span class="visually-hidden">сообщение</span>
+                  <textarea class="composer__input" rows="1" placeholder="написать..." enterkeyhint="send"></textarea>
+                  <button class="composer__sticker pressable" type="button" aria-label="стикеры">
+                    <i class="icon icon--sticker" aria-hidden="true"></i>
+                  </button>
+                </label>
+                <button class="icon-button icon-button--field pressable" type="button" aria-label="фото">
+                  <i class="icon icon--photo" aria-hidden="true"></i>
+                </button>
+                <button class="icon-button icon-button--field pressable" type="button" aria-label="голосовое">
+                  <i class="icon icon--mic" aria-hidden="true"></i>
+                </button>
+              </div>
+            </footer>
+          </section>
+
+          <div class="home-indicator" aria-hidden="true"></div>
+        </main>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="../../scripts/pin.js"></script>
+<script src="../../scripts/particles.js"></script>
+<script src="../../scripts/market.js"></script>
+<script src="market-week.js"></script>
+</body>
+</html>
