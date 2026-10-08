@@ -2,7 +2,7 @@
  * Маркет недели – альтернативная витрина маркета по двум исследованиям в market/*.pdf
  * („Интерфейсы ротируемых магазинов“, „Механики возврата в ротируемый магазин“).
  *
- * Лента сверху вниз: шапка с балансом → „на этой неделе“ (когда придёт новое – словами, без
+ * Лента сверху вниз: шапка с балансом → вкладки „хвосты · стикеры“, у каждой своя неделя → „на этой неделе“ (когда придёт новое – словами, без
  * тикающего таймера) → один крупный предмет недели без карусели, с примеркой на твоём пине →
  * четыре предложения недели → „у друзей“ – что взяли твои друзья → полка „хэллоуин“ со ссылкой
  * „все“ → „уже у тебя“ → архив. Карточка – одна зона нажатия, на ней цена и одно состояние.
@@ -43,6 +43,10 @@
       price: 2500, stock: { left: 17, total: 100 }, friends: 1, text: "та самая рваная тень, только тиражом 100 штук" },
     "fire-new": { name: "огонёк", kind: "хвост", pack: "market/items/fire-new.webp", tail: "tails/rocket.webp", price: 800, friends: 0,
       text: "пламя за твоим пином – новое и поярче" },
+    "fire-2": { name: "искра", kind: "хвост", pack: "market/tail-fire-2.webp", tail: "tails/rocket.webp", price: 200, friends: 1,
+      text: "короткая вспышка за твоим пином" },
+    ember: { name: "уголёк", kind: "хвост", pack: "market/tail-fire.webp", tail: "tails/rocket.webp", price: 150, friends: 0,
+      text: "тихое пламя за твоим пином – на каждый день" },
     pixel: { name: "пиксели", kind: "хвост", pack: "market/tail-pixel.webp", price: 500, friends: 0,
       text: "хвост из пикселей, как в старых играх" },
     "bat-box": { name: "летучая мышь", kind: "хвост", pack: "market/items/bat-box-sale.webp", price: 300, old: 500, friends: 2,
@@ -70,27 +74,51 @@
   };
   const FACES = ["lyova", "sonya", "timur", "vasya", "natashka"];
 
-  // Две недели витрины: предмет недели, четыре предложения, что взяли друзья (свежее – сверху)
+  // Вкладки маркета, как на эталоне market_full_screen.png. У каждой своя витрина недели: предмет
+  // недели, четыре предложения, что взяли друзья (свежее – сверху), и подборка к празднику
+  // (у неё свой срок, она не крутится каждую неделю)
+  const TABS = [
+    { id: "tails", title: "хвосты" },
+    { id: "stickers", title: "стикеры" },
+  ];
   const WEEKS = {
-    w41: {
-      hero: "fire",
-      offers: ["cat", "zombie", "shadow", "jewelry"],
-      friends: [
-        { who: "sonya", item: "cat", when: "сегодня" },
-        { who: "lyova", item: "zombie", when: "вчера" },
-        { who: "timur", item: "fire", when: "во вторник" },
-        { who: "vasya", item: "jewelry", when: "в понедельник" },
-      ],
+    tails: {
+      w41: {
+        hero: "fire",
+        offers: ["cat", "shadow", "fire-2", "pixel"],
+        friends: [
+          { who: "sonya", item: "cat", when: "сегодня" },
+          { who: "timur", item: "fire", when: "во вторник" },
+          { who: "natashka", item: "fire-2", when: "в понедельник" },
+        ],
+      },
+      w42: {
+        hero: "shadow-limited",
+        offers: ["fire-new", "ember", "cat", "pixel"],
+        friends: [{ who: "lyova", item: "shadow-limited", when: "сегодня" }],
+      },
     },
-    w42: {
-      hero: "shadow-limited",
-      offers: ["fire-new", "pixel", "bat-box", "ghost-box"],
-      friends: [{ who: "lyova", item: "shadow-limited", when: "сегодня" }],
+    stickers: {
+      w41: {
+        hero: "zombie",
+        offers: ["jewelry", "bats", "ghost", "pumpkin"],
+        friends: [
+          { who: "sonya", item: "bats", when: "сегодня" },
+          { who: "lyova", item: "zombie", when: "вчера" },
+          { who: "vasya", item: "jewelry", when: "в понедельник" },
+        ],
+      },
+      w42: {
+        hero: "ghost",
+        offers: ["pumpkin", "jewelry", "bats", "zombie"],
+        friends: [{ who: "natashka", item: "ghost", when: "сегодня" }],
+      },
     },
   };
 
-  // Подборка к празднику – не крутится каждую неделю, у неё свой срок
-  const COLLECTION = { title: "хэллоуин", until: "до 31.10", items: ["bats", "ghost", "pumpkin", "zombie-box"] };
+  const COLLECTIONS = {
+    tails: { title: "хэллоуин", until: "до 31.10", items: ["zombie-box", "ghost-box", "bat-box"] },
+  };
 
   // Коллекция и архив – карточки хвостов со скриншота market_full_screen.png
   const OWNED = ["owned-1", "owned-2", "owned-3"];
@@ -103,8 +131,9 @@
     mon: { week: "w42", next: "новое – 19.10", leave: "уходит в воскресенье" },
   };
 
-  const S = { day: "thu", coins: 55000, owned: new Set() };
-  const week = () => WEEKS[DAYS[S.day].week];
+  const S = { tab: "tails", day: "thu", coins: 55000, owned: new Set() };
+  const week = (tab = S.tab) => WEEKS[tab][DAYS[S.day].week];
+  const collection = () => COLLECTIONS[S.tab];
 
   // ── Ценник ─────────────────────────────────────────────────────────────
   // одно состояние: цена (со старой зачёркнутой при скидке) или „у тебя“
@@ -147,21 +176,24 @@
       </button>`;
   }
 
+  // Предмет недели. Хвост – на карте за твоим пином, упаковка наклеена на угол карты.
+  // Стикерпак – стикер на карточке с сеткой точек, упаковка так же на углу. Нет отдельной
+  // картинки – на карточке сама упаковка, крупно
   function heroMarkup(item) {
+    const art = item.tail
+      ? `<span class="mw-hero__map"><img class="mw-hero__tiles" src="${A}/market/map-tail.webp" alt="">${rider(item)}</span>`
+      : `<span class="mw-hero__map mw-hero__map--dots">
+          <img class="${item.sticker ? "mw-hero__sticker" : "mw-hero__solo"}" src="${A}/${item.sticker || item.pack}" alt="">
+        </span>`;
+    const solo = !item.tail && !item.sticker;
     return `
-      <button class="mw-hero pressable" type="button" data-item="${item.id}" aria-label="${esc(`предмет недели: ${label(item)}`)}">
-        <span class="mw-hero__map">
-          <img class="mw-hero__tiles" src="${A}/market/map-tail.webp" alt="">
-          ${rider(item)}
-        </span>
-        <span class="mw-hero__pack-wrap">
-          <img class="mw-hero__pack" src="${A}/${item.pack}" alt="">
-          ${chip(item)}
-        </span>
+      <button class="mw-hero pressable${solo ? " mw-hero--solo" : ""}" type="button" data-item="${item.id}" aria-label="${esc(`предмет недели: ${label(item)}`)}">
+        ${art}
+        ${solo ? "" : `<span class="mw-hero__pack-wrap"><img class="mw-hero__pack" src="${A}/${item.pack}" alt="">${chip(item)}</span>`}
         <span class="mw-hero__name">
           <span class="mw-hero__title">${esc(item.name)}</span>
           <span class="mw-hero__kind">${esc(item.kind)}</span>
-          ${stockLine(item)}
+          ${solo ? chip(item) : ""}${stockLine(item)}
         </span>
       </button>`;
   }
@@ -183,23 +215,44 @@
     return list.map((art, i) => `<div class="mw-owned__card mw-owned__card--${i}"><img src="${A}/market/${art}.webp" alt=""></div>`).join("");
   }
 
-  function renderFeed() {
-    const w = week();
-    const day = DAYS[S.day];
-    const hero = ITEMS[w.hero];
+  // Шапка и вкладки рисуются один раз: фокус на вкладке не теряется при переключении
+  function renderShell() {
     $("#feed").innerHTML = `
       <div class="market__glow" aria-hidden="true"><img class="market__ring" src="${A}/market/ring.webp" alt=""></div>
       <header class="market__header">
         <h1 class="screen-title">маркет</h1>
-        <div class="coin-balance" aria-label="баланс: ${formatCoins(S.coins)} монет">
+        <div class="coin-balance">
           <img class="coin-balance__coin" src="${A}/market/coin.png" alt="">
-          <span class="coin-balance__value">${formatCoins(S.coins)}</span>
+          <span class="coin-balance__value" data-coins></span>
           <button class="coin-balance__add pressable" type="button" aria-label="пополнить монеты">
             <i class="icon icon--plus" aria-hidden="true"></i>
           </button>
         </div>
       </header>
+      <div class="market-tabs" role="tablist" aria-label="разделы маркета">
+        ${TABS.map((t) => `<button class="market-tab pressable" type="button" role="tab" data-tab="${t.id}"
+                                   id="market-tab-${t.id}" aria-controls="market-panel">${esc(t.title)}</button>`).join("")}
+      </div>
+      <div class="mw-panel" id="market-panel" role="tabpanel"></div>`;
+  }
 
+  function renderFeed() {
+    const w = week();
+    const day = DAYS[S.day];
+    const hero = ITEMS[w.hero];
+    const coll = collection();
+    const value = $("#feed [data-coins]");
+    value.textContent = formatCoins(S.coins);
+    value.closest(".coin-balance").setAttribute("aria-label", `баланс: ${formatCoins(S.coins)} монет`);
+    $$("#feed .market-tab").forEach((t) => {
+      const on = t.dataset.tab === S.tab;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+    });
+    $("#market-panel").setAttribute("aria-labelledby", `market-tab-${S.tab}`);
+    // купленные стикерпаки – упаковками в „уже у тебя“; у хвостов – коллекция с эталона
+    const ownedPacks = [...S.owned].map((id) => ITEMS[id]).filter((i) => i.kind === "стикерпак");
+    $("#market-panel").innerHTML = `
       <section class="mw-block" aria-labelledby="week-title">
         <div class="mw-head">
           <h2 class="section-title" id="week-title">на этой неделе</h2>
@@ -213,17 +266,19 @@
         <div class="mw-head">
           <h2 class="section-title" id="friends-title">у друзей</h2>
         </div>
-        <div class="mw-shelf${w.friends.length === 1 ? " mw-shelf--single" : ""}">${w.friends.map(friendCard).join("")}</div>
+        <div class="mw-shelf">${w.friends.map(friendCard).join("")}</div>
       </section>
 
+      ${coll ? `
       <section class="mw-block" aria-labelledby="collection-title">
         <div class="mw-head">
-          <h2 class="section-title" id="collection-title">${COLLECTION.title} <span class="section-title__count">${COLLECTION.until}</span></h2>
+          <h2 class="section-title" id="collection-title">${coll.title} <span class="section-title__count">${coll.until}</span></h2>
           <button class="more-link caps-label pressable" type="button" data-act="all">все <i class="icon icon--chevron" aria-hidden="true"></i></button>
         </div>
-        <div class="mw-shelf mw-shelf--packs">${COLLECTION.items.map((id) => card(ITEMS[id], "mw-item--shelf")).join("")}</div>
-      </section>
+        <div class="mw-shelf mw-shelf--packs">${coll.items.map((id) => card(ITEMS[id], "mw-item--shelf")).join("")}</div>
+      </section>` : ""}
 
+      ${S.tab === "tails" ? `
       <section class="mw-owned" aria-labelledby="owned-title">
         <div class="market-section mw-owned__title">
           <h2 class="market-section__title" id="owned-title">уже у тебя</h2>
@@ -242,12 +297,20 @@
           <p class="market-section__text">лимитированные хвосты,<br>которые остались в&nbsp;истории</p>
         </div>
         <div class="mw-owned__grid mw-owned__grid--two">${cards(ARCHIVE)}</div>
-      </section>`;
+      </section>` : ownedPacks.length ? `
+      <section class="mw-owned" aria-labelledby="owned-title">
+        <div class="market-section mw-owned__title">
+          <h2 class="market-section__title" id="owned-title">уже у тебя</h2>
+          <p class="market-section__text">стикерпаки в коллекции</p>
+        </div>
+        <div class="market-grid mw-owned__packs">${ownedPacks.map((i) => card(i, "mw-item--grid")).join("")}</div>
+      </section>` : ""}`;
   }
 
   function renderAll() {
-    $("#all-title").textContent = COLLECTION.title;
-    $("#all-grid").innerHTML = COLLECTION.items.map((id) => card(ITEMS[id], "mw-item--grid")).join("");
+    const coll = collection() || COLLECTIONS.tails;
+    $("#all-title").textContent = coll.title;
+    $("#all-grid").innerHTML = coll.items.map((id) => card(ITEMS[id], "mw-item--grid")).join("");
   }
 
   // ── Чат с лёвой ───────────────────────────────────────────────────────
@@ -338,8 +401,9 @@
   // тираж – полосой, как „осталось на складе“ в подарке; дата ухода – розовым: время идёт
   function fillSheet(ctx) {
     const item = ctx.item;
-    const inWeek = [week().hero, ...week().offers].includes(item.id);
-    const leave = inWeek ? DAYS[S.day].leave : COLLECTION.until.replace("до", "в маркете до");
+    const inWeek = TABS.some((t) => [week(t.id).hero, ...week(t.id).offers].includes(item.id));
+    const coll = Object.values(COLLECTIONS).find((c) => c.items.includes(item.id));
+    const leave = inWeek || !coll ? DAYS[S.day].leave : coll.until.replace("до", "в маркете до");
     const quoted = item.kind === "стикерпак" ? `„${item.name}“` : item.name;
     $("[data-title]", ctx.sheet).textContent = quoted;
     $("[data-body]", ctx.sheet).innerHTML = `
@@ -444,6 +508,8 @@
     const app = e.target.closest(".app");
     const item = e.target.closest("[data-item]");
     if (app && item && !e.target.closest(".mw-sheet")) return openSheet(app, item.dataset.item, item);
+    const tab = e.target.closest(".market-tab");
+    if (tab) return selectTab(tab.dataset.tab);
     const act = e.target.closest("[data-act]");
     if (!act) return;
     if (act.dataset.act === "all") openAll(act);
@@ -456,6 +522,22 @@
     const open = [...sheets.values()].find((ctx) => ctx.sheet.classList.contains("is-open"));
     if (open) closeSheet(open);
     else closeAll();
+  });
+
+  // вкладки переключаются мгновенно; стрелки двигают выбор, как у нативных вкладок
+  function selectTab(id) {
+    if (!WEEKS[id] || id === S.tab) return;
+    S.tab = id;
+    renderFeed();
+  }
+
+  $("#feed").addEventListener("keydown", (e) => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!step || !e.target.closest(".market-tab")) return;
+    e.preventDefault();
+    const i = TABS.findIndex((t) => t.id === S.tab);
+    selectTab(TABS[(i + step + TABS.length) % TABS.length].id);
+    $(`#market-tab-${S.tab}`).focus();
   });
 
   // пульт: день недели
@@ -478,7 +560,7 @@
   function reset() {
     sheets.forEach(closeSheet);
     closeAll();
-    Object.assign(S, { day: "thu", coins: 55000, owned: new Set() });
+    Object.assign(S, { tab: "tails", day: "thu", coins: 55000, owned: new Set() });
     rerender();
     $("#market-scroll").scrollTop = 0;
   }
@@ -497,11 +579,13 @@
 
   window.BlinkSky && window.BlinkSky.start($(".market__sky"), { mode: "stars" });
 
-  // ?day=sun|mon – день; ?item=<id> – сразу шторка предмета; ?chat – она же в чате
+  // ?tab=stickers – вкладка; ?day=sun|mon – день; ?item=<id> – сразу шторка предмета; ?chat – она же в чате
   const q = new URLSearchParams(location.search);
   if (DAYS[q.get("day")]) S.day = q.get("day");
+  if (WEEKS[q.get("tab")]) S.tab = q.get("tab");
   (q.get("owned") || "").split(",").filter((id) => ITEMS[id]).forEach((id) => S.owned.add(id));
   renderChat();
+  renderShell();
   rerender();
   if (ITEMS[q.get("item")]) openSheet(q.has("chat") ? $("#app-chat") : marketApp, q.get("item"), null);
   if (q.has("all")) openAll(null);

@@ -165,6 +165,42 @@
   object-fit: cover;
 }
 
+/* у стикерпака вместо карты – карточка с сеткой точек, как в шторке */
+.mw-hero__map--dots {
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--color-surface);
+  background:
+    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    var(--color-bg);
+}
+
+/* стикер – справа, слева на угол наклеена упаковка */
+.mw-hero__sticker {
+  width: 172px;
+  margin: 0 0 30px 120px;
+  transform: rotate(6deg);
+}
+
+/* нет отдельной картинки – на карточке сама упаковка, крупно; цена – под именем */
+.mw-hero__solo {
+  width: 150px;
+  transform: rotate(-4deg);
+}
+
+.mw-hero--solo {
+  height: 360px;
+}
+
+.mw-hero--solo .mw-hero__name {
+  left: var(--gutter);
+  align-items: flex-start;
+}
+
+.mw-hero--solo .mw-hero__name .price-chip {
+  margin-top: var(--space-8);
+}
+
 .mw-hero .mw-rider {
   left: 64%;
   top: 58%;
@@ -747,4 +783,14 @@
   .mw-rider__tail {
     animation: none;
   }
+}
+
+/* купленные стикерпаки: в коллекции ценник „у тебя“ не повторяем */
+.mw-owned__packs {
+  margin-top: var(--space-24);
+  padding-top: 0;
+}
+
+.mw-owned__packs .price-chip {
+  display: none;
 }
