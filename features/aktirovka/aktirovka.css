@@ -122,7 +122,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
-  width: 380px;
+  width: 400px;
   padding-top: var(--space-24);
   color: var(--color-text-secondary);
   font: var(--type-tile);
@@ -173,16 +173,18 @@
   text-align: left;
 }
 
+/* 136 + 82 + 86 + 96 = 400: „в холодные зимы“, „школьников“ и „3,5–3,8 млн“ – в одну строку,
+   „и Норильске“ входит */
 .zones__col-zone {
   width: 136px;
 }
 
 .zones__col-kids {
-  width: 70px;
+  width: 82px;
 }
 
 .zones__col-see {
-  width: 92px;
+  width: 86px;
 }
 
 .zones th,
@@ -213,6 +215,11 @@
 .zones__row th {
   font: var(--type-tile);
   font-weight: 600;
+}
+
+/* диапазон „3,5–3,8 млн“ по тире не рвём */
+.zones__nowrap {
+  white-space: nowrap;
 }
 
 .zones__regions td {
