@@ -1,0 +1,487 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Актировка: в мороз младшие классы могут не идти в школу. На карте за
+   температурой – плашка „актировка 1–7“, по нажатию снизу выезжает вебвью
+   в шеринг-стиле, как ночлеги: весь экран – замёрзшее окно, на стекле классы
+   и стикеры, внизу „поделиться“.
+   Карта – styles/screens/map.css, общие компоненты – ../../styles.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Цвета инея – сняты с frozen.png (светлый край кристаллов, тень между ними) и живут только
+   в этой фиче: за стеклом и на плашке карты. Нового акцента в приложении нет */
+.app {
+  --frost-light: #d7ecf7;                        /* самый светлый кристалл */
+  --frost: #9fc1d6;                              /* иней в среднем */
+  --frost-ink: #0b2233;                          /* текст на инее – тень между кристаллами */
+  --frost-veil: rgba(215, 236, 247, 0.55);       /* светлая вуаль поверх фактуры: под надписью ровно */
+  --frost-veil-strong: rgba(228, 243, 251, 0.82); /* вуаль плашки на карте: мелкий текст читается */
+  --frost-night: #06111c;                        /* за стеклом: зимняя ночь */
+  --frost-glow: rgba(159, 193, 214, 0.22);       /* свет за стеклом */
+}
+
+/* ── Стенд (в продукт не идёт) ───────────────────────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 100dvh;
+  padding: var(--space-16) var(--space-24);
+}
+
+.stage__head {
+  text-align: center;
+}
+
+.stage__title {
+  font: var(--type-section-title);
+}
+
+.stage__lead {
+  margin-top: var(--space-4);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.stage__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-24);
+  zoom: var(--stage-zoom, 1);          /* телефон целиком в окне: aktirovka.js → fit() */
+}
+
+.stage .device {
+  min-height: 0;
+  padding: 0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  width: 260px;
+  padding-top: var(--space-24);
+}
+
+.panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.panel__row > .panel__button {
+  flex: 1 1 auto;
+}
+
+.panel__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+.panel__button {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  min-height: 32px;
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-12);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-map-chip);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel__button[aria-checked="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.panel__hint {
+  color: var(--color-text-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel__button:hover {
+    border-color: var(--color-text-dim);
+    color: var(--color-text);
+  }
+}
+
+@media (max-width: 480px) {
+  .stage {
+    display: block;
+    padding: 0;
+  }
+
+  .stage__body {
+    display: block;
+  }
+
+  .stage__head,
+  .panel {
+    display: none;
+  }
+}
+
+/* ── Вход на карте: плашка за температурой ───────────────────────────── */
+
+/* Строка погоды без времени: температура и плашка. Высота строки – 20, как на эталоне:
+   плашка 28 выступает на 4 вверх и вниз */
+.map__weather {
+  gap: var(--space-12);
+}
+
+/* Плашка карты (стекло h28, SF 13/600), только вместо стекла – иней: фактура frost-band
+   под светлой вуалью, кристаллы видны по краям. Слева наклеен стикер zzz – можно поспать */
+.akt-chip {
+  --press-scale: var(--press-scale-wide);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  margin-block: calc(var(--space-4) * -1);
+  padding: 0 var(--space-12) 0 30px;           /* стикер 30 выступает за левый край на 6 */
+  border-radius: var(--radius-pill);
+  background:
+    radial-gradient(ellipse 62% 75% at 60% 50%, var(--frost-veil-strong) 55%, transparent 100%),
+    url("../../assets/aktirovka/frost-band.webp") 30% 40% / 180px auto;
+  box-shadow: var(--shadow-map-chip), inset 0 0 0 1px var(--frost-light);
+  color: var(--frost-ink);
+  font: var(--type-map-chip-strong);
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.akt-chip__sticker {
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  width: 32px;
+  height: 32px;
+  transform: translateY(-54%) rotate(-12deg);
+  pointer-events: none;
+}
+
+/* актировки нет – обычное стекло карты, без инея и стикера */
+.akt-chip--none {
+  padding-left: var(--space-12);
+  background: var(--color-map-chip);
+  box-shadow: var(--shadow-map-chip);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  color: var(--color-text-on-map);
+}
+
+.akt-chip--none .akt-chip__sticker {
+  display: none;
+}
+
+.akt-chip:focus-visible {
+  outline-color: var(--color-text-on-map);
+}
+
+/* ── Вебвью: экран снизу на весь рост ────────────────────────────────── */
+
+.akt {
+  z-index: 50;
+  background: var(--frost-night);
+  transform: translateY(100%);
+  transition: transform var(--duration-sheet) var(--ease-emphasized);
+}
+
+.akt.is-open {
+  transform: none;
+}
+
+.akt:focus {
+  outline: none;
+}
+
+/* Карточка – весь экран: за стеклом ночь и снег, по краям иней, на стекле – классы и стикеры.
+   Сторис – копия карточки */
+.akt__card {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* ночь за стеклом, в середине светлее – свет из окна */
+.akt__night {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 75% 42% at 50% 50%, var(--frost-glow) 0%, transparent 100%), var(--frost-night);
+}
+
+/* у холста размер задан явно: при width: auto он берёт ширину из своего атрибута и растёт сам */
+.akt__snow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Иней по всему краю экрана: frost-screen собран под 390 × 844 из frozen.png (build_assets.py →
+   frost_edges). На 375–430 у телефонов те же пропорции – картинка ложится без искажений */
+.akt__frost {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  animation: frost-in 0.9s var(--ease-out-soft) both;
+}
+
+@keyframes frost-in {
+  from { opacity: 0; transform: scale(1.06); }
+}
+
+/* Текст – в чистой середине стекла: сверху под инеем и крестиком, снизу над „поделиться“ */
+.akt__content {
+  position: absolute;
+  inset: calc(var(--safe-top) + 62px) var(--space-28) calc(var(--safe-bottom) + 96px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.akt__title {
+  text-shadow: var(--shadow-text-on-media);
+  text-wrap: balance;
+}
+
+.akt__meta {
+  margin-top: var(--space-2);
+  font: var(--type-meta);
+  color: var(--color-text-secondary);
+  text-shadow: var(--shadow-text-on-media);
+}
+
+/* Классы – стикер-число на стекле, наклонено, как наклейка; стикеры вокруг */
+.akt__verdict {
+  position: relative;
+  display: grid;
+  flex: 1;
+  place-items: center;
+  width: 100%;
+}
+
+/* Мороз на стекле – плашка в инее, как вход на карте: уроки отменили из-за него.
+   Уроки будут – мороз и есть главное число, плашки нет */
+.akt__temp {
+  display: inline-flex;
+  align-self: flex-start;                         /* у левого края числа: справа над „7“ – zzz */
+  align-items: center;
+  height: 32px;
+  margin: 0 0 var(--space-4) var(--space-8);
+  padding: 0 var(--space-14);
+  border-radius: var(--radius-pill);
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 50%, var(--frost-veil-strong) 45%, transparent 100%),
+    url("../../assets/aktirovka/frost-band.webp") 60% 40% / 200px auto;
+  box-shadow: inset 0 0 0 1px var(--frost-light);
+  color: var(--frost-ink);
+  font: var(--type-label);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Раскладка „всё по центру“: заголовок, мороз и классы – одной группой посередине стекла,
+   всё видно сразу. Стикеры – ближе к числу, чтобы не наезжать на заголовок ── */
+.akt__card[data-layout="center"] .akt__content {
+  justify-content: center;
+}
+
+.akt__card[data-layout="center"] .akt__verdict {
+  flex: none;
+  margin-top: var(--space-24);
+}
+
+.akt__verdict-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 270px;
+  transform: rotate(-6deg);
+  animation: verdict-in var(--duration-sheet) var(--ease-emphasized) 350ms both;
+}
+
+@keyframes verdict-in {
+  from { opacity: 0; transform: rotate(-14deg) scale(0.8); }
+}
+
+.akt__number {
+  --sticker-size: 156px;
+}
+
+/* „1–11“ и „−22°“ – четыре знака: мельче, чтобы не выйти за стекло */
+.akt__number--long {
+  --sticker-size: 124px;
+}
+
+.akt__unit {
+  margin-top: calc(var(--space-8) * -1);
+  font: var(--type-stat-label);
+  text-shadow: var(--shadow-text-on-media);
+  text-wrap: balance;
+}
+
+/* язвительная подпись – строки разбиты в тексте (aktirovka.js → JOKES) */
+.akt__unit--joke {
+  margin-top: var(--space-2);
+  white-space: pre-line;
+}
+
+/* Метафоры: zzz – можно поспать – наклеен над числом справа, pray – дождались – под ним слева.
+   Актировки нет – сверху плачущий стикер, второго нет */
+/* Стикеры наклеены на углы числа: --sx, --sy – левый верхний угол стикера от центра стекла.
+   Заголовок сверху – zzz над „7“, pray у „1“; всё по центру – zzz сбоку на „7“, ниже заголовка */
+.akt__sticker {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 132px;
+  height: 132px;
+  pointer-events: none;
+}
+
+.akt__sticker--top {
+  --sx: 10px;
+  --sy: -214px;
+  transform: translate(var(--sx), var(--sy)) rotate(10deg);
+  animation: sticker-top-in 0.5s var(--ease-emphasized) 550ms both;
+}
+
+.akt__sticker--bottom {
+  --sx: -176px;
+  --sy: 52px;
+  width: 120px;
+  height: 120px;
+  transform: translate(var(--sx), var(--sy)) rotate(-12deg);
+  animation: sticker-bottom-in 0.5s var(--ease-emphasized) 700ms both;
+}
+
+.akt__card[data-layout="center"] .akt__sticker--top {
+  --sx: 88px;                                     /* повёрнутый стикер не выходит за край экрана */
+  --sy: -134px;
+  width: 96px;
+  height: 96px;
+}
+
+/* уроки будут: плашки мороза нет, группа ниже ростом – стикер ниже, на „°“, под заголовком */
+.akt__card[data-layout="center"][data-state="off"] .akt__sticker--top {
+  --sy: -108px;
+}
+
+@keyframes sticker-top-in {
+  from { opacity: 0; transform: translate(var(--sx), calc(var(--sy) - 18px)) rotate(24deg); }
+}
+
+@keyframes sticker-bottom-in {
+  from { opacity: 0; transform: translate(var(--sx), calc(var(--sy) + 18px)) rotate(-26deg); }
+}
+
+/* Крестик – экран на весь рост, „мимо“ нет. Лежит на инее: чёрная заливка, чтобы читался */
+.akt__close {
+  position: absolute;
+  top: calc(var(--safe-top) + var(--space-12));
+  right: var(--gutter);
+  z-index: 5;
+  background: var(--color-bg);
+}
+
+.akt__close .icon {
+  --icon-size: 16px;
+}
+
+/* ── Низ: кнопка шеринга ─────────────────────────────────────────────── */
+
+/* Кнопка лежит прямо на инее: затемнения нет, иней внизу виден; от инея её отделяет тень */
+.akt__footer {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--safe-bottom) + var(--space-8));
+  z-index: 5;
+}
+
+.akt__share {
+  width: 100%;
+  box-shadow: var(--shadow-card-avatar);
+}
+
+.akt__share .icon,
+.story-sheet__cta .icon {
+  --icon-size: 18px;
+  transform: translateY(1px);
+}
+
+/* ── Шторка „поделиться“ ─────────────────────────────────────────────── */
+
+.story-sheet {
+  padding-bottom: calc(var(--safe-bottom) + var(--space-16));
+}
+
+.story-sheet__title {
+  margin-top: var(--space-4);
+}
+
+.story-sheet__cta {
+  width: 100%;
+  margin-top: var(--space-20);
+}
+
+.story {
+  --story-scale: calc(248 / 390);
+  position: relative;
+  align-self: center;
+  width: calc(390px * var(--story-scale));
+  aspect-ratio: 9 / 16;
+  margin-top: var(--space-16);
+  overflow: hidden;
+  border-radius: var(--radius-24);
+  background: var(--color-bg);
+  box-shadow: 0 0 0 1px var(--color-divider);
+}
+
+/* страница сторис 390 × 693: карточка экрана ложится на неё целиком (иней – frost-story) */
+.story__page {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 390px;
+  height: calc(390px * 16 / 9);
+  overflow: hidden;
+  transform: scale(var(--story-scale));
+  transform-origin: 0 0;
+}
+
+/* логотип BLINK – над заголовком, по центру, как весь текст карточки */
+.story__logo {
+  display: block;
+  width: auto;
+  height: 22px;
+  margin: 0 auto var(--space-12);
+}
+
+/* в сторис нет статус-бара, крестика и кнопки: текст выше, стекло ниже */
+.story .akt__content {
+  inset: 84px 40px 72px;
+}
+
+.story .akt__frost,
+.story .akt__verdict-text,
+.story .akt__sticker {
+  animation: none;
+}

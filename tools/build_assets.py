@@ -609,6 +609,107 @@ def build_overnights() -> None:
     save_webp(img.resize((780, round(img.height * 780 / img.width)), Image.LANCZOS), d / "map-night.webp", 80)
 
 
+def frost_edges(width_px: int, height_px: int, scale: float = 0.36, corner: float = 0.62,
+                feather: int = 44, seed: int = 7) -> Image.Image:
+    """
+    Иней по всему краю кадра из frozen.png. Рамку целиком растянуть на экран нельзя (иглы вытянутся
+    вдвое), поэтому кадр собирается заново: по краям – середины полос рамки (левая, правая, верхняя
+    и нижняя, повёрнутые иглами внутрь кадра) с мягкими стыками, в углах – четыре настоящих угла рамки.
+    Внешний ободок рамки (светлый край льдины и прозрачное поле) срезан: иней уходит за край экрана.
+    scale – масштаб рамки для краёв (@3x: полоса ~40 pt), corner – для углов: углы крупнее и гуще,
+    как на настоящем замёрзшем окне (~100 pt по диагонали). Тоньше нельзя – иней перестанет
+    читаться, толще – внутри тесно.
+    """
+    rng = np.random.default_rng(seed)
+    rim = 90                                          # с 90 px от края рамки иней сплошной до самого края
+    full = Image.open(src("frozen.png")).convert("RGBA")
+    full = full.crop((rim, rim, full.width - rim, full.height - rim))
+    resized = lambda k: np.asarray(full.resize((round(full.width * k), round(full.height * k)), Image.LANCZOS), np.float32) / 255
+    s, big = resized(scale), resized(corner)
+    sh, sw = s.shape[:2]
+    band = round(sw * 0.45)                           # толщина полосы с кончиками игл
+    out = np.zeros((height_px, width_px, 4), np.float32)
+
+    def over(dst: np.ndarray, patch: np.ndarray, x: int, y: int, sides: str) -> None:
+        """Кладёт patch поверх dst, у сторон из sides (l t r b) альфа плавно уходит в ноль."""
+        p = patch.copy()
+        h, w = p.shape[:2]
+        ramp_x = np.ones(w, np.float32)
+        ramp_y = np.ones(h, np.float32)
+        f = min(feather, w // 3, h // 3)
+        r = np.linspace(0, 1, f, dtype=np.float32)
+        if "l" in sides: ramp_x[:f] = np.minimum(ramp_x[:f], r)
+        if "r" in sides: ramp_x[-f:] = np.minimum(ramp_x[-f:], r[::-1])
+        if "t" in sides: ramp_y[:f] = np.minimum(ramp_y[:f], r)
+        if "b" in sides: ramp_y[-f:] = np.minimum(ramp_y[-f:], r[::-1])
+        p[:, :, 3] *= ramp_y[:, None] * ramp_x[None, :]
+        x0, y0 = max(x, 0), max(y, 0)
+        x1, y1 = min(x + w, dst.shape[1]), min(y + h, dst.shape[0])
+        if x1 <= x0 or y1 <= y0:
+            return
+        p = p[y0 - y:y1 - y, x0 - x:x1 - x]
+        o = dst[y0:y1, x0:x1]
+        pa, oa = p[:, :, 3:4], o[:, :, 3:4]
+        a = pa + oa * (1 - pa)
+        rgb = (p[:, :, :3] * pa + o[:, :, :3] * oa * (1 - pa)) / np.maximum(a, 1e-6)
+        dst[y0:y1, x0:x1] = np.concatenate([rgb, a], axis=2)
+
+    # Полосы для левого края: иглы растут вправо. Середины полос рамки – без углов
+    r0, r1 = round(sh * 0.3), round(sh * 0.7)
+    c0, c1 = round(sw * 0.28), round(sw * 0.72)
+    left_tiles = [
+        s[r0:r1, :band],                                        # левая полоса
+        s[r0:r1, sw - band:][:, ::-1],                          # правая, зеркально
+        np.rot90(s[:band, c0:c1], 1),                           # верхняя, иглами вправо
+        np.rot90(s[sh - band:, c0:c1], -1),                     # нижняя, иглами вправо
+    ]
+
+    def strip(length: int) -> np.ndarray:
+        """Полоса инея вдоль левого края длиной length: плитки внахлёст с мягкими стыками."""
+        canvas = np.zeros((length + 2 * feather, band, 4), np.float32)
+        y, order, i = -feather, rng.permutation(len(left_tiles)), 0
+        while y < canvas.shape[0]:
+            tile = left_tiles[order[i % len(order)]]
+            over(canvas, tile, 0, y, "tb")
+            y += tile.shape[0] - feather
+            i += 1
+        return canvas[feather:feather + length]
+
+    # края: левый и правый во всю высоту, верхний и нижний во всю ширину (повёрнутая полоса)
+    left = strip(height_px)
+    right = strip(height_px)[:, ::-1]
+    top = np.rot90(strip(width_px), -1)             # иглы вниз
+    bottom = np.rot90(strip(width_px), 1)           # иглы вверх
+    over(out, top, 0, 0, "")
+    over(out, bottom, 0, height_px - band, "")
+    over(out, left, 0, 0, "")
+    over(out, right, width_px - band, 0, "")
+    # углы – настоящие углы рамки крупнее краёв, внутренние стороны мягкие
+    bh, bw = big.shape[:2]
+    qh, qw = round(bh * 0.34), round(bw * 0.46)
+    over(out, big[:qh, :qw], 0, 0, "rb")
+    over(out, big[:qh, bw - qw:], width_px - qw, 0, "lb")
+    over(out, big[bh - qh:, :qw], 0, height_px - qh, "rt")
+    over(out, big[bh - qh:, bw - qw:], width_px - qw, height_px - qh, "lt")
+    return Image.fromarray((np.clip(out, 0, 1) * 255).astype(np.uint8), "RGBA")
+
+
+def build_aktirovka() -> None:
+    """
+    Актировка (features/aktirovka): иней на стекле из frozen.png (1144×1553, середина прозрачная).
+    frost-screen – иней по всему краю экрана 390×844 @3x, frost-story – то же для сторис 9:16
+    (frost_edges). frost-band – плотная полоса инея снизу рамки (980×160 px, 99.8 % непрозрачна):
+    фактура плашки „актировка“ на карте; редкие дырки залиты цветом инея.
+    """
+    d = OUT / "aktirovka"
+    save_webp(frost_edges(1170, 2532), d / "frost-screen.webp", 80)
+    save_webp(frost_edges(1170, 2080, seed=11), d / "frost-story.webp", 80)
+    band = Image.open(src("frozen.png")).convert("RGBA").crop((80, 1320, 1060, 1480))
+    under = Image.new("RGBA", band.size, (150, 186, 208, 255))
+    under.alpha_composite(band)
+    save_webp(under.convert("RGB"), d / "frost-band.webp", 84)
+
+
 SCREEN_MARKET = "market/market_full_screen.png"
 
 
@@ -942,6 +1043,7 @@ def main() -> None:
     build_browser()
     build_share()
     build_overnights()
+    build_aktirovka()
     build_market()
     build_market_motion()
     build_screens_art()

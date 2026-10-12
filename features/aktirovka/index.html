@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – актировка</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/screens/map.css">
+  <link rel="stylesheet" href="aktirovka.css">
+</head>
+<body>
+<div class="stage">
+
+  <!-- Стенд: подпись и пульт – только для показа, в продукт не идут -->
+  <header class="stage__head">
+    <h1 class="stage__title">отмена уроков в мороз</h1>
+    <p class="stage__lead">актировка: рядом с температурой на карте видно, кому можно не идти в школу</p>
+  </header>
+
+  <div class="stage__body">
+    <div class="device">
+      <main class="app" id="app" data-status="dark" data-home="dark">
+        <div class="status-bar" aria-hidden="true">
+          <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+          <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+          <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+        </div>
+
+        <section class="screen map" id="screen-map" aria-label="карта">
+          <div class="map__canvas">
+            <img class="map__tiles" src="../../assets/map/map.webp" alt="">
+            <div class="map__pins" id="pins"></div>
+          </div>
+
+          <header class="map__header">
+            <h1 class="map__city" id="city"></h1>
+            <!-- Погода без времени: только температура и сразу за ней вход – уроки отменили:
+                 иней и „отмена уроков 1–7“, нет – обычное стекло карты и „уроки будут“ -->
+            <p class="map__weather">
+              <span class="map__weather-temp"><span aria-hidden="true">❄️</span><span id="temperature"></span></span>
+              <button class="akt-chip pressable" id="entry" type="button" aria-haspopup="dialog" aria-controls="webview">
+                <img class="akt-chip__sticker" src="../../assets/stickers/zzz.webp" alt="">
+                <span class="akt-chip__label" id="entry-label"></span>
+              </button>
+            </p>
+            <button class="map-chip map__steps pressable" type="button">
+              <i class="icon icon--steps" aria-hidden="true"></i><span>345 шагов · 9 место</span>
+            </button>
+          </header>
+
+          <div class="map__tools">
+            <button class="icon-button icon-button--map pressable" type="button" aria-label="места"><i class="icon icon--places" aria-hidden="true"></i></button>
+            <button class="icon-button icon-button--map pressable" type="button" aria-label="пространства"><i class="icon icon--space" aria-hidden="true"></i></button>
+            <button class="icon-button icon-button--map pressable" type="button" aria-label="игры"><i class="icon icon--games" aria-hidden="true"></i></button>
+          </div>
+
+          <div class="map__actions">
+            <button class="map-button map-button--world pressable" type="button">
+              <i class="icon icon--globe" aria-hidden="true"></i>мой мир
+            </button>
+            <button class="map-button map-button--locate pressable" type="button" aria-label="показать, где я">
+              <i class="icon icon--crosshair" aria-hidden="true"></i>
+            </button>
+          </div>
+        </section>
+
+        <nav class="tabbar" aria-label="разделы">
+          <button class="tabbar__item pressable" type="button" aria-current="page"><i class="icon icon--pin" aria-hidden="true"></i>карта</button>
+          <button class="tabbar__item pressable" type="button"><i class="icon icon--friends" aria-hidden="true"></i>друзья</button>
+          <button class="tabbar__item pressable" type="button"><i class="icon icon--chat" aria-hidden="true"></i>чаты</button>
+          <button class="tabbar__item pressable" type="button"><i class="icon icon--market" aria-hidden="true"></i>маркет</button>
+          <button class="tabbar__item pressable" type="button"><img class="tabbar__avatar" src="../../assets/people/me-cutout.webp" alt="">ты</button>
+        </nav>
+
+        <!-- Вебвью „отмена уроков“: экран снизу на весь рост, поверх карты и таб-бара. Рамки
+             браузера нет – это вебвью внутри приложения. Весь экран – замёрзшее окно: иней по
+             краям, за стеклом ночь и снег. Раскладка – data-layout: top (заголовок сверху) или
+             center (всё одной группой по центру) -->
+        <section class="screen akt" id="webview" data-layout="top" role="dialog" aria-modal="true" aria-labelledby="akt-title" tabindex="-1" hidden>
+          <!-- Карточка: она же сторис -->
+          <div class="akt__card" id="summary">
+            <span class="akt__night" aria-hidden="true"></span>
+            <canvas class="akt__snow" id="snow" aria-hidden="true"></canvas>
+            <img class="akt__frost" src="../../assets/aktirovka/frost-screen.webp" alt="" data-story-src="../../assets/aktirovka/frost-story.webp">
+            <div class="akt__content">
+              <header class="akt__head">
+                <h1 class="screen-title akt__title" id="akt-title"></h1>
+                <p class="akt__meta" id="meta"></p>
+              </header>
+              <!-- На стекле – мороз (плашка в инее) и с какого по какой класс можно не идти;
+                   уроки будут – мороз крупно и шутка. Вокруг наклеены стикеры: zzz – можно
+                   поспать, pray – дождались -->
+              <div class="akt__verdict">
+                <p class="akt__verdict-text">
+                  <span class="akt__temp" id="temp-chip"></span>
+                  <span class="sticker-number akt__number" id="grades"></span>
+                  <span class="akt__unit" id="grades-unit"></span>
+                </p>
+                <img class="akt__sticker akt__sticker--top" id="sticker-top" src="../../assets/stickers/zzz.webp" alt="">
+                <img class="akt__sticker akt__sticker--bottom" id="sticker-bottom" src="../../assets/stickers/pray.webp" alt="">
+              </div>
+            </div>
+          </div>
+
+          <button class="icon-button icon-button--header akt__close pressable" id="close" type="button" aria-label="закрыть">
+            <i class="icon icon--close" aria-hidden="true"></i>
+          </button>
+
+          <div class="akt__footer">
+            <button class="button button--primary akt__share pressable" id="share" type="button" aria-haspopup="dialog">
+              <i class="icon icon--share" aria-hidden="true"></i>поделиться
+            </button>
+          </div>
+        </section>
+
+        <div class="scrim" id="scrim"></div>
+
+        <!-- Шторка „поделиться“: превью сторис 9:16 – та же сводка, что на экране -->
+        <div class="sheet story-sheet" id="story-sheet" role="dialog" aria-modal="true" aria-labelledby="story-title" tabindex="-1">
+          <div class="sheet__handle" id="story-handle">
+            <div class="sheet__grabber" aria-hidden="true"></div>
+            <h2 class="sheet__title story-sheet__title" id="story-title">поделиться</h2>
+          </div>
+          <figure class="story" aria-label="превью сторис">
+            <div class="story__page">
+              <div class="story__summary" id="story-summary"></div>
+            </div>
+          </figure>
+          <button class="button button--primary story-sheet__cta pressable" id="story-share" type="button">
+            <i class="icon" id="story-share-icon" aria-hidden="true"></i><span id="story-share-label"></span>
+          </button>
+        </div>
+
+        <p class="visually-hidden" id="announce" aria-live="polite"></p>
+        <div class="home-indicator" aria-hidden="true"></div>
+      </main>
+    </div>
+
+    <aside class="panel" aria-label="пульт показа">
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-frost">
+        <p class="panel__label caps-label" id="panel-frost">мороз утром</p>
+        <div class="panel__grid" id="panel-frost-buttons"></div>
+      </div>
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-name">
+        <p class="panel__label caps-label" id="panel-name">название</p>
+        <div class="panel__row" id="panel-name-buttons"></div>
+      </div>
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-layout">
+        <p class="panel__label caps-label" id="panel-layout">раскладка экрана</p>
+        <div class="panel__row" id="panel-layout-buttons"></div>
+      </div>
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-joke">
+        <p class="panel__label caps-label" id="panel-joke">шутка, если уроки будут</p>
+        <div class="panel__row" id="panel-joke-buttons"></div>
+      </div>
+      <div class="panel__group">
+        <p class="panel__label caps-label">экран</p>
+        <button class="panel__button pressable" type="button" id="panel-open">открыть экран</button>
+        <button class="panel__button pressable" type="button" id="panel-reset">с начала</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="../../scripts/pin.js"></script>
+<script src="../../scripts/particles.js"></script>
+<script src="aktirovka.js"></script>
+</body>
+</html>
