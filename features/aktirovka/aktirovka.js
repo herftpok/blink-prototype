@@ -77,6 +77,7 @@
     const l = level();
     const entry = $("#entry");
     entry.classList.toggle("akt-chip--none", !l);
+    $(".akt-chip__sticker").src = `${ASSETS}/stickers/${l ? "zzz" : "crying-face"}.webp`;
     $("#entry-label").textContent = l ? `${name().on} ${grades(l.to)}` : name().off;
   }
 
@@ -337,12 +338,15 @@
     if (webview.classList.contains("is-open")) renderWebview();
   }
 
-  /** телефон целиком в окне */
+  /** стенд целиком в окне: сводка, телефон и пульт – и по высоте, и по ширине */
   function fit() {
     const body = $(".stage__body");
-    if (innerWidth <= 480) return body.style.removeProperty("--stage-zoom");
+    body.style.removeProperty("--stage-zoom");
+    if (innerWidth <= 480) return;
+    const height = Math.max(844, body.scrollHeight);
     const room = innerHeight - $(".stage__head").offsetHeight - 56;
-    body.style.setProperty("--stage-zoom", Math.min(1, room / 844).toFixed(3));
+    const zoom = Math.min(1, room / height, (innerWidth - 48) / body.scrollWidth);
+    body.style.setProperty("--stage-zoom", zoom.toFixed(3));
   }
   fit();
   addEventListener("resize", fit);

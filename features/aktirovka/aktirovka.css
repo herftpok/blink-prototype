@@ -117,7 +117,166 @@
   }
 }
 
+/* Сводка о фиче слева от телефона: охват и откуда данные */
+.brief {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  width: 380px;
+  padding-top: var(--space-24);
+  color: var(--color-text-secondary);
+  font: var(--type-tile);
+  line-height: 16px;
+}
+
+.brief__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.brief__text,
+.brief__note {
+  text-wrap: pretty;
+}
+
+.brief__note {
+  color: var(--color-text-muted);
+}
+
+.brief__hero {
+  text-wrap: pretty;
+}
+
+/* главное число охвата – крупно, как стикер-число, но без обводки: это не продукт */
+.brief__big {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--color-text);
+  font: var(--type-section-title);
+  font-variant-numeric: tabular-nums;
+}
+
+.brief__zones,
+.brief__layers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  list-style: none;
+}
+
+/* Зоны охвата – таблица: строка зоны с числами, под ней регионы мелко */
+.zones {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  text-align: left;
+}
+
+.zones__col-zone {
+  width: 136px;
+}
+
+.zones__col-kids {
+  width: 70px;
+}
+
+.zones__col-see {
+  width: 92px;
+}
+
+.zones th,
+.zones td {
+  padding: 0;
+  vertical-align: top;
+  font-weight: inherit;
+}
+
+.zones thead th {
+  padding-bottom: var(--space-6);
+  color: var(--color-text-muted);
+}
+
+.zones thead th + th,
+.zones__row td {
+  padding-left: var(--space-8);
+}
+
+.zones__row th,
+.zones__row td {
+  padding-top: var(--space-10);
+  border-top: 1px solid var(--color-divider);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.zones__row th {
+  font: var(--type-tile);
+  font-weight: 600;
+}
+
+.zones__regions td {
+  padding: var(--space-2) 0 var(--space-8);
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+.zones__letter {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-right: var(--space-6);
+  border-radius: var(--radius-6);
+  background: var(--color-surface-raised);
+  font: var(--type-button-compact);
+  font-size: 10px;
+  vertical-align: top;
+}
+
+/* зона A – главная: три четверти ученико-дней */
+.zones__row--a .zones__letter {
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+.brief__layers {
+  counter-reset: layer;
+}
+
+.brief__layers li {
+  position: relative;
+  padding-left: var(--space-24);
+  text-wrap: pretty;
+  counter-increment: layer;
+}
+
+.brief__layers li::before {
+  content: counter(layer);
+  position: absolute;
+  left: 0;
+  top: -1px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font: var(--type-button-compact);
+  font-size: 10px;
+}
+
+.brief__layers b {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
 @media (max-width: 480px) {
+  .brief {
+    display: none;
+  }
+
   .stage {
     display: block;
     padding: 0;
@@ -172,18 +331,13 @@
   pointer-events: none;
 }
 
-/* актировки нет – обычное стекло карты, без инея и стикера */
+/* уроки будут – обычное стекло карты без инея, слева наклеен плачущий стикер */
 .akt-chip--none {
-  padding-left: var(--space-12);
   background: var(--color-map-chip);
   box-shadow: var(--shadow-map-chip);
   -webkit-backdrop-filter: blur(var(--blur-glass));
           backdrop-filter: blur(var(--blur-glass));
   color: var(--color-text-on-map);
-}
-
-.akt-chip--none .akt-chip__sticker {
-  display: none;
 }
 
 .akt-chip:focus-visible {
@@ -262,10 +416,12 @@
   text-wrap: balance;
 }
 
+/* город и день: Montserrat 600 15 – роль города на карте и в профиле, – в цвете инея.
+   Тонкий SF под заголовком 36/600 выпадал из семейства */
 .akt__meta {
   margin-top: var(--space-2);
-  font: var(--type-meta);
-  color: var(--color-text-secondary);
+  font: var(--type-label);
+  color: var(--frost);
   text-shadow: var(--shadow-text-on-media);
 }
 

@@ -28,6 +28,55 @@
   </header>
 
   <div class="stage__body">
+    <!-- Сводка о фиче: охват и откуда данные. Только для показа, в продукт не идёт -->
+    <aside class="brief" aria-label="о фиче">
+      <section class="brief__block">
+        <h2 class="caps-label">о фиче</h2>
+        <p class="brief__text">В мороз рядом с температурой на карте видно, кому отменили уроки. По нажатию – экран в инее, которым хочется поделиться. Включаем на сезон морозов.</p>
+      </section>
+
+      <section class="brief__block">
+        <h2 class="caps-label">охват</h2>
+        <p class="brief__hero"><span class="brief__big">5–7&nbsp;млн</span> школьников видят актировку в обычную или холодную зиму – 30–40&nbsp;% из 17,8&nbsp;млн, которые учатся в 2026/27 году.</p>
+        <table class="zones">
+          <colgroup><col class="zones__col-zone"><col class="zones__col-kids"><col class="zones__col-see"><col></colgroup>
+          <thead>
+            <tr><th scope="col">зона</th><th scope="col">школьников</th><th scope="col">видят актировку</th><th scope="col">дней за&nbsp;зиму</th></tr>
+          </thead>
+          <tbody>
+            <tr class="zones__row zones__row--a">
+              <th scope="row"><span class="zones__letter">A</span>каждую зиму</th>
+              <td>~3,8&nbsp;млн<br>22&nbsp;%</td><td>почти все, 3,5–3,8&nbsp;млн</td><td>5–15, в Якутии и&nbsp;Норильске больше</td>
+            </tr>
+            <tr class="zones__regions"><td colspan="4">27 регионов: Сибирь, Дальний Восток, Север, Тюмень и АО, Курган, Коми, Архангельск, Мурманск</td></tr>
+            <tr class="zones__row">
+              <th scope="row"><span class="zones__letter">B</span>в холодные зимы</th>
+              <td>~3,9&nbsp;млн<br>22&nbsp;%</td><td>1,5–3,1&nbsp;млн</td><td>1–4</td>
+            </tr>
+            <tr class="zones__regions"><td colspan="4">15 регионов: Урал и Поволжье – Свердловская, Челябинская, Пермь, Башкирия, Татарстан, Оренбург, Самара, Саратов и&nbsp;др.</td></tr>
+            <tr class="zones__row">
+              <th scope="row"><span class="zones__letter">C</span>редко</th>
+              <td>~10&nbsp;млн</td><td>раз в несколько лет</td><td>0–1</td>
+            </tr>
+            <tr class="zones__regions"><td colspan="4">Центр, Северо-Запад, юг</td></tr>
+          </tbody>
+        </table>
+        <p class="brief__note">В ученико-днях – 19–70&nbsp;млн за сезон, 75–85&nbsp;% из них в зоне A.</p>
+      </section>
+
+      <section class="brief__block">
+        <h2 class="caps-label">откуда данные</h2>
+        <p class="brief__text">Единого реестра нет: пороги и порядок задают регионы, города и школы. Собираем в четыре слоя.</p>
+        <ol class="brief__layers">
+          <li><b>Официальные каналы</b>, ~25 городов: Telegram мэрий и управлений образования в 05:30–08:00, 10:30–12:00 и накануне в 18:00–23:00.</li>
+          <li><b>Госпаблики ВКонтакте</b>, вся страна: поиск „актировка“, „отменены занятия“ по белому списку.</li>
+          <li><b>Погода и пороги</b>, где город молчит (Новосибирск, Красноярск, Омск): считаем сами на 06:00 и 11:00.</li>
+          <li><b>Партнёрства</b>: „Госуслуги Югры“ и MAX, для парсинга закрыты.</li>
+        </ol>
+        <p class="brief__note">Telegram замедляют с февраля 2026 – ВКонтакте держим дублем.</p>
+      </section>
+    </aside>
+
     <div class="device">
       <main class="app" id="app" data-status="dark" data-home="dark">
         <div class="status-bar" aria-hidden="true">
@@ -45,7 +94,8 @@
           <header class="map__header">
             <h1 class="map__city" id="city"></h1>
             <!-- Погода без времени: только температура и сразу за ней вход – уроки отменили:
-                 иней и „отмена уроков 1–7“, нет – обычное стекло карты и „уроки будут“ -->
+                 иней, стикер zzz и „отмена уроков 1–7“; нет – обычное стекло карты, плачущий
+                 стикер и „уроки будут“ -->
             <p class="map__weather">
               <span class="map__weather-temp"><span aria-hidden="true">❄️</span><span id="temperature"></span></span>
               <button class="akt-chip pressable" id="entry" type="button" aria-haspopup="dialog" aria-controls="webview">
