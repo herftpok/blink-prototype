@@ -14,6 +14,8 @@ guard let first = NSImage(contentsOf: files[0])?.cgImage(forProposedRect: nil, c
 let w = first.width, h = first.height
 try? FileManager.default.removeItem(at: out)
 let writer = try AVAssetWriter(outputURL: out, fileType: .mp4)
+// moov – в начале файла: браузер узнаёт размер и длительность по первым килобайтам и играет, не скачав всё
+writer.shouldOptimizeForNetworkUse = true
 let input = AVAssetWriterInput(mediaType: .video, outputSettings: [
   AVVideoCodecKey: AVVideoCodecType.h264,
   AVVideoWidthKey: w,

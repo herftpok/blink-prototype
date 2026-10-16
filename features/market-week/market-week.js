@@ -1,13 +1,13 @@
 /*
- * Маркет недели – альтернативная витрина маркета по двум исследованиям в market/*.pdf
- * („Интерфейсы ротируемых магазинов“, „Механики возврата в ротируемый магазин“).
+ * Новый маркет – альтернативная витрина маркета по двум исследованиям в market/*.pdf
+ * («Интерфейсы ротируемых магазинов», «Механики возврата в ротируемый магазин»).
  *
- * Лента сверху вниз: шапка с балансом → вкладки „хвосты · стикеры“, у каждой своя неделя → „новинки“ (когда придут следующие – словами, без
+ * Лента сверху вниз: шапка с балансом → вкладки «хвосты · стикеры», у каждой своя неделя → «новинки» (когда придут следующие – словами, без
  * тикающего таймера) → один крупный предмет недели без карусели, с примеркой на твоём пине →
- * четыре предложения недели → „у друзей“ – что взяли твои друзья → полка „хэллоуин“ со ссылкой
- * „все“ → „уже у тебя“ → архив. Карточка – одна зона нажатия, на ней цена и одно состояние.
+ * четыре предложения недели → «у друзей» – что взяли твои друзья → полка «хэллоуин» со ссылкой
+ * «все» → «уже у тебя» → архив. Карточка – одна зона нажатия, на ней цена и одно состояние.
  * Нажатие – шторка предмета по эталонам market/unlimited_sticker.png, limited_tale.png,
- * unlimitid_tale.png; покупка – как там: „КУПИТЬ“ с ценой.
+ * unlimitid_tale.png; покупка – как там: «КУПИТЬ» с ценой.
  *
  * Второй телефон – чат с лёвой: нажатие на его стикер открывает шторку этого набора.
  * Пульт стенда переключает день: четверг, воскресенье (последний день), понедельник (новая витрина).
@@ -32,7 +32,7 @@
     // хвосты – живые упаковки из записей маркета (market/tales*.mov, tail_animation*.mov).
     // Ограничения – по одному: ends – когда уходит (медузы; ушёл – пропадает из ленты), stock – тираж
     // (золото). Остальные – всегда в маркете
-    fire: { name: "огонь", kind: "хвост", pack: "market/anim-tail-fire.webp", tail: "tails/rocket.webp", price: 300, old: 500, friends: 3,
+    fire: { name: "огонь", kind: "хвост", pack: "market/anim-tail-fire.webp", tail: "tails/rocket.webp", price: 500, friends: 3,
       text: "реактивное пламя за твоим пином на карте" },
     gold: { name: "золото", kind: "хвост", pack: "market/tails/gold.webp", video: "market/tails/gold.mp4", follower: "market/tails/bare-gold.webp", price: 777, stock: { left: 42, total: 100 }, friends: 1,
       text: "золотые монеты сыплются за твоим пином, тиражом 100 штук" },
@@ -101,7 +101,7 @@
     { id: "stickers", title: "стикеры" },
     { id: "tails", title: "хвосты" },
   ];
-  // „подарки“ – вкладка без экрана в этой фиче: стоит в ряду, но не нажимается
+  // «подарки» – вкладка без экрана в этой фиче: стоит в ряду, но не нажимается
   const SOON_TABS = [{ id: "gifts", title: "подарки" }];
   const WEEKS = {
     tails: {
@@ -188,7 +188,7 @@
     return new Date(at.getFullYear(), at.getMonth(), at.getDate() + 1).getTime();
   };
 
-  // комета уже у тебя: в коллекции „уже у тебя“ – кометы
+  // комета уже у тебя: в коллекции «уже у тебя» – кометы
   const OWNED_AT_START = ["comet"];
   const S = { tab: "tails", day: "thu", coins: 55000, owned: new Set(OWNED_AT_START), clock: 0, since: 0, deal: true, dealEnds: 0 };
 
@@ -202,8 +202,8 @@
   const now = () => S.clock + (performance.now() - S.since);
   const pad = (n) => String(n).padStart(2, "0");
 
-  // „3 дня 09:40“ (двоеточие мигает), в последние сутки – с секундами „02:12:28“; aria – словами.
-  // short – для ценника: „3 дня“ без часов, в последние сутки – „02:12:28“
+  // «3 дня 09:40» (двоеточие мигает), в последние сутки – с секундами «02:12:28»; aria – словами.
+  // short – для ценника: «3 дня» без часов, в последние сутки – «02:12:28»
   function countdown(target, prefix, short = false) {
     const left = Math.max(0, target - now());
     const sec = Math.ceil(left / 1000);
@@ -226,7 +226,7 @@
     deal: { prefix: "скидка пропадёт через", target: () => S.dealEnds },
   };
 
-  // новинка стикеров уходит со сменой витрины – срок в ценнике, как тираж: „осталось 3 дня“
+  // новинка стикеров уходит со сменой витрины – срок в ценнике, как тираж: «осталось 3 дня»
   // когда товар уходит: хвост – свой срок, новинка стикеров – со сменой витрины; null – не уходит
   // weekly – стикерпак уходит со сменой витрины (мыши); у остальных новинок срока нет
   const endsOf = (item) =>
@@ -285,13 +285,13 @@
   const collection = () => COLLECTIONS[S.tab];
 
   // ── Ценник ─────────────────────────────────────────────────────────────
-  // одно состояние: цена (со старой зачёркнутой при скидке) или „у тебя“
+  // одно состояние: цена (со старой зачёркнутой при скидке) или «у тебя»
   function chip(item) {
     if (S.owned.has(item.id))
       return `<span class="price-chip mw-chip mw-chip--owned"><span class="mw-chip__check"><i class="icon icon--check" aria-hidden="true"></i></span>у тебя</span>`;
-    // ограничение – в той же пилюле, после разделителя, словами и розовым, как „осталось 09:42“ у скидки:
-    // тираж – „осталось 42“, срок новинки – „ещё 3 дня“ (в последние сутки – „ещё 02:12:28“, секунды
-    // идут). „осталось 3 дня“ в ширину карточки не помещается. Тираж и срок вместе тоже не помещаются –
+    // ограничение – в той же пилюле, после разделителя, словами и розовым, как «осталось 09:42» у скидки:
+    // тираж – «осталось 42», срок новинки – «ещё 3 дня» (в последние сутки – «ещё 02:12:28», секунды
+    // идут). «осталось 3 дня» в ширину карточки не помещается. Тираж и срок вместе тоже не помещаются –
     // у тиражной новинки тираж: он кончается раньше
     let stock = "";
     if (item.stock) stock = `<span class="mw-chip__stock">осталось ${item.stock.left}</span>`;
@@ -327,7 +327,7 @@
   const ME = { name: "ты", live: `${A}/people/live-1.webp`, online: true, speed: 25 };
   // в баннере камера приближена: карта и пин крупнее в 1.5 раза, живая аватарка – HD
   const ME_HD = { ...ME, live: `${A}/people/live-hd-1.webp` };
-  // хвост – в „крыле“ с центром в центре кадра: поворачивается по направлению полёта (--heading,
+  // хвост – в «крыле» с центром в центре кадра: поворачивается по направлению полёта (--heading,
   // 0° – вправо) вместе со стрелками пина; сам пин не поворачивается
   const rider = (item, who = ME, cls = "") => `
     <span class="mw-rider ${cls}" aria-hidden="true">
@@ -338,11 +338,14 @@
 
   // ── Лента ─────────────────────────────────────────────────────────────
   // живая упаковка на чёрном – видео: анимированный WebP браузер декодирует на процессоре, и шесть–восемь
-  // таких на экране дёргаются; видео декодирует видеочип. Играет, только пока видно (IntersectionObserver)
+  // таких на экране дёргаются; видео декодирует видеочип. Сначала виден постер (первый кадр петли),
+  // видео грузится и играет, только пока оно у экрана (IntersectionObserver, «Живые упаковки» ниже)
+  const videoMarkup = (cls, file) =>
+    `<video class="${cls} mw-video" data-src="${A}/${file}" poster="${A}/${file.replace(/\.mp4$/, "-poster.webp")}"
+            muted loop playsinline preload="none" disablepictureinpicture aria-hidden="true"></video>`;
   const packMarkup = (item) =>
     item.video
-      ? `<video class="mw-item__pack mw-video" src="${A}/${item.video}" muted loop playsinline preload="metadata"
-               disablepictureinpicture aria-hidden="true"></video>`
+      ? videoMarkup("mw-item__pack", item.video)
       : `<img class="mw-item__pack" src="${A}/${item.pack}" alt="" loading="lazy" decoding="async">`;
 
   function card(item, cls = "") {
@@ -355,7 +358,7 @@
 
   // Предмет недели у хвостов – низкий баннер: твой пин с этим хвостом на карте, упаковка
   // наклеена на угол карты, рядом имя и цена
-  // почему хвост наверху – справа от названия: стикер огня (в blink – „горячо, первое место“) и „хит недели“
+  // почему хвост наверху – справа от названия: стикер огня (в blink – «горячо, первое место») и «хит недели»
   const whyMarkup = (why) => `
     <span class="mw-hero__why">
       <img class="mw-hero__why-sticker" src="${A}/stickers/fire.webp" alt="">
@@ -377,7 +380,7 @@
       </button>`;
   }
 
-  // Сезонный баннер стикеров: праздничная сцена фоном, „новые стикеры“ наклейкой, крупный заголовок
+  // Сезонный баннер стикеров: праздничная сцена фоном, «новые стикеры» наклейкой, крупный заголовок
   // и срок розовой пилюлей, стикеры всех наборов – каждый на своём месте в сцене и целиком
   // в баннере. Нажатие – подборка целиком
   function bannerMarkup(coll) {
@@ -407,7 +410,7 @@
     return `
       <div class="mw-sky">
         <div class="mw-sky__city" style="--w:${width}">
-          <span class="mw-sky__map"><img class="mw-sky__tile" src="${A}/overnights/map-night.webp" alt=""></span>
+          <span class="mw-sky__map"><img class="mw-sky__tile" src="${A}/overnights/map-night.webp" alt="" loading="lazy" decoding="async"></span>
           ${friends.map(({ who, item: id, when, at, heading, far }) => {
             const f = FRIENDS[who];
             const item = ITEMS[id];
@@ -430,7 +433,7 @@
       <button class="mw-friend mw-friend--pin pressable" type="button" data-item="${id}"
               aria-label="${esc(`${f.name}, ${when}: ${item.name}, ${item.kind}`)}">
         <span class="mw-friend__map" style="--map-x:${[20, 70, 45, 85][i % 4]}%;--map-y:${[30, 60, 80, 20][i % 4]}%">
-          <img class="mw-friend__tiles" src="${A}/market/map-tail.webp" alt="">
+          <img class="mw-friend__tiles" src="${A}/market/map-tail.webp" alt="" loading="lazy" decoding="async">
           ${rider(item, f)}
         </span>
         <span class="mw-friend__name ellipsis">${esc(f.name)}</span>
@@ -439,18 +442,17 @@
     return `
       <button class="mw-friend pressable" type="button" data-item="${id}"
               aria-label="${esc(`${f.name}, ${when}: ${item.name}, ${item.kind}`)}">
-        <span class="mw-friend__art"><img class="mw-friend__pack" src="${A}/${item.pack}" alt=""></span>
-        <img class="mw-friend__face" src="${f.photo}" alt="">
+        <span class="mw-friend__art"><img class="mw-friend__pack" src="${A}/${item.pack}" alt="" loading="lazy" decoding="async"></span>
+        <img class="mw-friend__face" src="${f.photo}" alt="" loading="lazy" decoding="async">
         <span class="mw-friend__name ellipsis">${esc(f.name)}</span>
         <span class="mw-friend__when">${esc(when)}</span>
       </button>`;
   }
 
-  // карточки коллекции в ряд; selected – „выбрано“ под первой
+  // карточки коллекции в ряд; selected – «выбрано» под первой
   function cards(list, selected = false) {
     return list
-      .map((art, i) => `<div class="mw-owned__card"><video class="mw-video" src="${A}/market/${art}.mp4" muted loop playsinline
-                preload="metadata" disablepictureinpicture aria-hidden="true"></video>${
+      .map((art, i) => `<div class="mw-owned__card">${videoMarkup("mw-owned__video", `market/${art}.mp4`)}${
         selected && i === 0 ? `<span class="owned-card__selected mw-owned__selected"><span class="owned-card__check"><i class="icon icon--check" aria-hidden="true"></i></span>выбрано</span>` : ""}</div>`)
       .join("");
   }
@@ -460,7 +462,7 @@
     [TAILS_FEED.best, ...TAILS_FEED.first].find((id) => !gone(ITEMS[id]) && (ITEMS[id].tail || ITEMS[id].follower));
 
   // Товар на странице один раз: скидочный – только в карточке скидки, комета (уже у тебя) – только
-  // в „уже у тебя“
+  // в «уже у тебя»
   const IN_COLLECTION = ["comet"];
   const shown = (ids) => ids.filter((id) => !IN_COLLECTION.includes(id) && !gone(ITEMS[id]) && !(dealFor(ITEMS[id]) && dealMarkup()));
   const grid = (ids, aria) => {
@@ -471,8 +473,8 @@
   };
 
   // Только для тебя: личная скидка на один товар на сутки. Карточка с сеткой точек: упаковка слева,
-  // справа имя, розовым „осталось 09:42:07“ (секунды идут) и цена со старой зачёркнутой;
-  // на правом верхнем углу наклеено „−40%“ (стикер-число). Без заголовка – место бережём
+  // справа имя, розовым «осталось 09:42:07» (секунды идут) и цена со старой зачёркнутой;
+  // на правом верхнем углу наклеено «−40%» (стикер-число). Без заголовка – место бережём
   // сколько осталось скидке – розовой строкой под именем, тем же отсчётом, что пилюля у новинок
   function dealTimerMarkup() {
     const t = TIMERS.deal;
@@ -490,7 +492,7 @@
     return `
       <section class="mw-block mw-deal-block" aria-label="скидка только для тебя">
         <button class="mw-deal pressable" type="button" data-item="${item.id}" aria-label="${esc(label(item))}">
-          <span class="mw-deal__art"><img class="mw-deal__pack" src="${A}/${item.pack}" alt=""></span>
+          <span class="mw-deal__art"><img class="mw-deal__pack" src="${A}/${item.pack}" alt="" loading="lazy" decoding="async"></span>
           <span class="mw-deal__info">
             <span class="mw-deal__name">${esc(item.name)}</span>
             ${dealTimerMarkup()}
@@ -537,7 +539,7 @@
       t.tabIndex = on ? 0 : -1;
     });
     $("#market-panel").setAttribute("aria-labelledby", `market-tab-${S.tab}`);
-    // купленные стикерпаки – упаковками в „уже у тебя“; у хвостов – коллекция с эталона
+    // купленные стикерпаки – упаковками в «уже у тебя»; у хвостов – коллекция с эталона
     const ownedPacks = [...S.owned].map((id) => ITEMS[id]).filter((i) => i.kind === "стикерпак");
     $("#market-panel").innerHTML = `
       ${tails ? `
@@ -582,7 +584,7 @@
       </section>
 
       <section class="mw-owned mw-archive" aria-labelledby="archive-title">
-        <img class="mw-archive__tape" src="${A}/market/tape.webp" alt="">
+        <img class="mw-archive__tape" src="${A}/market/tape.webp" alt="" loading="lazy" decoding="async">
         <div class="market-section mw-owned__title">
           <h2 class="market-section__title" id="archive-title">архив</h2>
           <p class="market-section__text">лимитированные хвосты,<br>которые остались в&nbsp;истории</p>
@@ -598,7 +600,7 @@
       </section>` : ""}`;
   }
 
-  // „все“: подборка к празднику сеткой
+  // «все»: подборка к празднику сеткой
   function renderAll() {
     const coll = collection() || COLLECTIONS.stickers;
     $("#all-title").textContent = coll.title;
@@ -612,8 +614,8 @@
       <div class="message-row message-row--in"><div class="bubble bubble--in">смотри, что у&nbsp;меня есть</div></div>
       <div class="message-row message-row--in is-continued">
         <button class="bubble bubble--sticker mw-chat-sticker pressable" type="button" data-item="zombie"
-                aria-label="стикер из набора „жутко весело“">
-          <img src="${A}/market/sticker-zombie.webp" alt="">
+                aria-label="стикер из набора «жутко весело»">
+          <img src="${A}/market/sticker-zombie.webp" alt="" loading="lazy" decoding="async">
         </button>
       </div>
       <div class="message-row message-row--out"><div class="bubble bubble--out">ахах где взял</div></div>
@@ -701,7 +703,7 @@
       </p>`;
   }
 
-  // 1 друга / 2 друзей / 5 друзей – „есть у 1 друга“
+  // 1 друга / 2 друзей / 5 друзей – «есть у 1 друга»
   function plural(n, one, few, many) {
     const m10 = n % 10;
     const m100 = n % 100;
@@ -723,8 +725,8 @@
     </button>`;
   }
 
-  // тираж – полосой, как „осталось на складе“ в подарке; дата ухода – розовым: время идёт
-  // „уходит сегодня“, „уходит завтра“, „уходит 13.10“ – когда хвост уйдёт из маркета
+  // тираж – полосой, как «осталось на складе» в подарке; дата ухода – розовым: время идёт
+  // «уходит сегодня», «уходит завтра», «уходит 13.10» – когда хвост уйдёт из маркета
   function leaveText(ends) {
     const day = (t) => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
     const days = Math.round((day(ends.getTime()) - day(now())) / 86400000);
@@ -736,14 +738,14 @@
     const coll = Object.values(COLLECTIONS).find((c) => c.items.includes(item.id));
     const deal = dealFor(item);
     // срок словами: скидка – до конца дня, временный – когда уходит, сезонный – до конца сезона;
-    // у тиражного срока нет, но и „всегда“ не скажешь – о нём говорит склад ниже
+    // у тиражного срока нет, но и «всегда» не скажешь – о нём говорит склад ниже
     const leave = deal ? `скидка −${deal.off}% только для тебя – до\u00a0конца дня`
       : item.weekly ? DAYS[S.day].leave
       : item.ends ? leaveText(item.ends)
       : coll ? coll.until.replace("до", "в маркете до")
       : item.stock ? "" : "всегда в\u00a0маркете";
     const always = leave === "всегда в\u00a0маркете";
-    const quoted = item.kind === "стикерпак" ? `„${item.name}“` : item.name;
+    const quoted = item.kind === "стикерпак" ? `«${item.name}»` : item.name;
     $("[data-title]", ctx.sheet).textContent = quoted;
     $("[data-body]", ctx.sheet).innerHTML = `
       ${leave ? `<p class="mw-sheet__leave${always && !deal ? " mw-sheet__leave--always" : ""}">${leave}</p>` : ""}
@@ -758,7 +760,7 @@
       ${buyMarkup(item)}`;
   }
 
-  function openSheet(app, id, opener) {
+  function openSheet(app, id, opener, { focus = true } = {}) {
     const ctx = sheetFor(app);
     ctx.item = ITEMS[id];
     ctx.opener = opener;
@@ -770,7 +772,7 @@
     ctx.backdrop.classList.add("is-open");
     ctx.sheet.classList.add("is-open");
     $$(".screen, .tabbar", app).forEach((el) => (el.inert = true));
-    requestAnimationFrame(() => ctx.sheet.focus({ preventScroll: true }));
+    if (focus) requestAnimationFrame(() => ctx.sheet.focus({ preventScroll: true }));
   }
 
   function closeSheet(ctx) {
@@ -809,8 +811,8 @@
     handle.addEventListener("pointercancel", end);
   }
 
-  // покупка – как сейчас: одно нажатие „КУПИТЬ“; монеты списываются, кнопка на месте
-  // становится „у тебя“, ценник в ленте – тоже
+  // покупка – как сейчас: одно нажатие «КУПИТЬ»; монеты списываются, кнопка на месте
+  // становится «у тебя», ценник в ленте – тоже
   function buy(ctx) {
     const item = ctx.item;
     const price = priceOf(item);
@@ -822,7 +824,7 @@
     rerender();
   }
 
-  // ── Экран „все“ ───────────────────────────────────────────────────────
+  // ── Экран «все» ───────────────────────────────────────────────────────
   const marketApp = $("#app-market");
   const all = $("#screen-all");
   let allOpener = null;
@@ -884,7 +886,7 @@
     $(`#market-tab-${S.tab}`).focus();
   });
 
-  // пульт: личная скидка – есть или нет; „кончится через 10 секунд“ – видно, как раздел уходит
+  // пульт: личная скидка – есть или нет; «кончится через 10 секунд» – видно, как раздел уходит
   $$("[data-deal]").forEach((b) =>
     b.addEventListener("click", () => {
       const v = b.dataset.deal;
@@ -926,23 +928,54 @@
     $("#market-scroll").scrollTop = 0;
   }
 
-  // ── Живые упаковки – видео: играют, пока видны ───────────────────────
-  // лента перерисовывается целиком – новые <video> подхватываем наблюдателем за DOM
+  // ── Живые упаковки – видео: грузятся и играют, пока видны ────────────
+  // лента перерисовывается целиком – новые <video> подхватываем наблюдателем за DOM. src – только когда
+  // видео подъехало к экрану: до этого виден постер, и первый экран не ждёт ролики всей ленты.
+  // В презентации телефон скрытого слайда на паузе: presentation.js шлёт {type: "mw-pause", paused}
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const seen = new Set();
+  let paused = Boolean(window.frameElement) && window.frameElement.dataset.paused === "true";
+  let sky = null;
+  function playback(v) {
+    if (!seen.has(v) || paused || reducedMotion.matches) return v.pause();
+    if (!v.getAttribute("src")) v.src = v.dataset.src;
+    v.play().catch(() => {});
+  }
   const playIfSeen = "IntersectionObserver" in window
     ? new IntersectionObserver((entries) => entries.forEach(({ target, isIntersecting }) => {
-        if (isIntersecting && !reducedMotion.matches) target.play().catch(() => {});
-        else target.pause();
+        if (!target.isConnected) {
+          seen.delete(target);
+          return playIfSeen.unobserve(target);
+        }
+        if (isIntersecting) seen.add(target);
+        else seen.delete(target);
+        playback(target);
       }), { rootMargin: "120px 0px" })
     : null;
   function watchVideos() {
     $$(".mw-video:not([data-watched])").forEach((v) => {
       v.dataset.watched = "";
-      if (playIfSeen) playIfSeen.observe(v);
-      else if (!reducedMotion.matches) v.play().catch(() => {});
+      if (playIfSeen) return playIfSeen.observe(v);
+      seen.add(v);
+      playback(v);
     });
   }
   new MutationObserver(watchVideos).observe(document.body, { childList: true, subtree: true });
+  addEventListener("message", (e) => {
+    if (e.origin !== location.origin || !e.data || e.data.type !== "mw-pause" || paused === e.data.paused) return;
+    paused = e.data.paused;
+    seen.forEach(playback);
+    // слайд показали – переписка в открытой шторке проигрывается заново: в фоне её никто не видел
+    if (!paused) $$(".mw-sheet.is-open").forEach((sheet) => {
+      sheet.classList.remove("is-entering");
+      void sheet.offsetWidth;
+      sheet.classList.add("is-entering");
+      setTimeout(() => sheet.classList.remove("is-entering"), 2000);
+    });
+    if (!sky) return;
+    if (paused) sky.stop();
+    else sky.set(sky.mode);
+  });
 
   // ── Стенд в окне ──────────────────────────────────────────────────────
   // ?embed=market|chat – только один телефон, без пульта и подписей: для презентации (presentation.html).
@@ -963,7 +996,8 @@
   fit();
   addEventListener("resize", fit);
 
-  window.BlinkSky && window.BlinkSky.start($(".market__sky"), { mode: "stars" });
+  sky = window.BlinkSky ? window.BlinkSky.start($(".market__sky"), { mode: "stars" }) : null;
+  if (sky && paused) sky.stop();
 
   // ?tab=stickers – вкладка; ?day=sun|last|mon – день; ?item=<id> – сразу шторка предмета; ?chat – она же в чате;
   // ?deal=off – скидки нет, ?deal=soon – скидка кончится через 10 секунд; ?focus=<раздел> – лента сразу на нём
@@ -982,15 +1016,17 @@
     const next = (target) => (target - now()) % 1000 || 1000;
     setTimeout(loop, Math.max(20, Math.min(next(WEEK_ENDS[DAYS[S.day].week]), S.dealEnds > now() ? next(S.dealEnds) : 1000)));
   })();
-  if (ITEMS[q.get("item")]) openSheet(q.has("chat") ? $("#app-chat") : marketApp, q.get("item"), null);
+  // во встраивании шторка из адреса фокус не забирает: стрелки листают презентацию, а не прототип
+  if (ITEMS[q.get("item")]) openSheet(q.has("chat") ? $("#app-chat") : marketApp, q.get("item"), null, { focus: !embed });
   if (q.has("all")) openAll(null);
 
-  // ?focus=hero|novelties|grid|friends|deal – лента прокручена так, что раздел под шапкой. Видео упаковок
-  // узнают свою высоту по мере загрузки – раздел держим на месте, пока человек сам не тронул ленту
-  // [раздел, отступ от верха экрана]: у скидки над ней видно ещё и друзей
+  // ?focus=hero|novelties|grid|friends|deal – лента прокручена так, что раздел под шапкой. Шрифты и картинки
+  // догружаются и сдвигают ленту – раздел держим на месте, пока человек сам не тронул ленту
+  // [раздел, отступ от верха экрана]: у сетки над ней видно низ героя целиком (название и цена
+  // не под статус-баром), у скидки – ещё и друзей
   const FOCUS = {
     novelties: ["[aria-labelledby='week-title']", 96],
-    grid: [".mw-catalog", 96],
+    grid: [".mw-catalog", 150],
     friends: ["[aria-labelledby='friends-title']", 96],
     deal: [".mw-deal-block", 300],
   };
@@ -1005,9 +1041,18 @@
       scroller.scrollTop += el.getBoundingClientRect().top - scroller.getBoundingClientRect().top - offset;
     };
     place();
-    $$("#feed video").forEach((v) => v.addEventListener("loadedmetadata", place, { once: true }));
+    document.fonts.ready.then(place);
     setTimeout(place, 600);
     setTimeout(place, 1500);
+  }
+  // ?embed: первый экран отрисован (шрифты и картинки в кадре) – телефон говорит презентации «готов»,
+  // и она убирает загрузку, не дожидаясь, пока догрузится вся лента. Ждём не дольше 3 s
+  if (embed && parent !== window) {
+    const phone = embed === "chat" ? $("#app-chat") : marketApp;
+    const pending = $$("img", phone).filter((img) => !img.complete && img.loading !== "lazy" && img.getBoundingClientRect().top < 844);
+    const settled = (img) => new Promise((ok) => ["load", "error"].forEach((e) => img.addEventListener(e, ok, { once: true })));
+    Promise.race([document.fonts.ready.then(() => Promise.all(pending.map(settled))), new Promise((ok) => setTimeout(ok, 3000))])
+      .then(() => requestAnimationFrame(() => requestAnimationFrame(() => parent.postMessage({ type: "mw-ready" }, location.origin))));
   }
   window.MarketWeek = { S, ITEMS, WEEKS, openSheet, rerender };
 })();

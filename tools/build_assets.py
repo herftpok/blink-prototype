@@ -1037,6 +1037,11 @@ def write_mp4(frames: list[Image.Image], dest: Path, fps: int, width_px: int = 3
         dest.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(["swift", str(Path(__file__).with_name("encode_video.swift")), tmp, str(dest), str(fps)],
                        check=True, capture_output=True)
+        # AVAssetWriter переставляет moov в начало через временный файл; в песочнице он остаётся рядом
+        for junk in dest.parent.glob(f"{dest.name}.sb-*"):
+            junk.unlink()
+        # постер – первый кадр петли, <имя>-poster.webp: виден сразу, пока видео не догрузилось
+        save_webp(Image.open(Path(tmp) / "0000.png"), dest.with_name(f"{dest.stem}-poster.webp"), 80)
 
 
 def video_crops(path: str, boxes: dict[str, tuple[int, int, int, int]], dest: Path, thresh: int,

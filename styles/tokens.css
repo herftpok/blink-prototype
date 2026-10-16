@@ -244,6 +244,7 @@
   --duration-screen: 0.28s;
   --duration-sheet: 0.38s;
   --duration-live: 1.8s;                       /* пульс live-точки */
+  --duration-loader: 1.2s;                     /* пульс стикера blink, пока экран грузится */
   --press-scale-row: 0.99;
   --press-scale-wide: 0.98;
   --press-scale-button: 0.96;

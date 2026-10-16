@@ -92,39 +92,34 @@
   text-wrap: pretty;
 }
 
-/* ── Факты: большое число и одна строка, источник мелко ─────────────── */
+/* ── Что даёт: два-три пункта – польза жирно, под ней одна строка зачем ── */
 
-.dk-facts {
+.dk-gains__label {
+  margin-top: var(--space-28);
+}
+
+.dk-gains {
   display: grid;
-  gap: var(--space-20);
+  gap: var(--space-16);
   width: 100%;
-  margin-top: var(--space-32);
+  margin-top: var(--space-12);
   list-style: none;
 }
 
-.dk-fact {
+.dk-gain {
   display: grid;
-  grid-template-columns: 184px 1fr;
-  column-gap: var(--space-20);
-  row-gap: var(--space-4);
-  align-items: baseline;
+  gap: var(--space-4);
+  padding-left: var(--space-16);
+  border-left: 2px solid var(--color-surface-raised);
 }
 
-.dk-fact__n {
-  grid-row: span 2;
-  font: var(--type-sheet-title);
-  letter-spacing: var(--tracking-title);
-  white-space: nowrap;
+.dk-gain__name {
+  font: var(--type-gift-title);
 }
 
-.dk-fact__text {
+.dk-gain__text {
   color: var(--color-text-secondary);
   font: var(--type-distance);
-}
-
-.dk-fact__src {
-  color: var(--color-text-dim);
-  font: var(--type-compact);
 }
 
 /* что меряем – одна строка-вывод внизу слайда */
@@ -176,8 +171,32 @@
   transition: opacity var(--duration-screen) ease;
 }
 
+/* пока телефон грузится – по центру на чёрном пульсирует стикер blink; прототип прислал «готов» –
+   стикер гаснет, экран проявляется */
+.dk-phone__loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: calc(96px * var(--s));
+  margin: calc(-48px * var(--s)) 0 0 calc(-48px * var(--s));
+  pointer-events: none;
+  animation: dk-loader var(--duration-loader) ease-in-out infinite alternate;
+  transition: opacity var(--duration-screen) ease;
+}
+
 .dk-phone.is-loaded iframe {
   opacity: 1;
+}
+
+.dk-phone.is-loaded .dk-phone__loader {
+  opacity: 0;
+  animation-play-state: paused;
+}
+
+@keyframes dk-loader {
+  from { transform: scale(0.86) rotate(-6deg); }
+  to { transform: scale(1) rotate(6deg); }
 }
 
 /* что показать в телефоне – переключатели под ним; выбранный – белым и с белой рамкой */
@@ -210,7 +229,7 @@
 
 /* ── Обложка ─────────────────────────────────────────────────────────── */
 
-/* „прототип“ – наклеенная надпись, как „новые стикеры“ в баннере маркета */
+/* «прототип» – наклеенная надпись, как «новые стикеры» в баннере маркета */
 .dk-cover__kicker {
   --sticker-size: 20px;
   margin: 0 0 var(--space-4) var(--space-4);
@@ -228,51 +247,33 @@
   width: 112px;
 }
 
-.dk-cover__hint {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  margin-top: var(--space-32);
-  color: var(--color-text-dim);
-  font: var(--type-distance);
-}
+/* ── Обложка: пять изменений – номер, название и что сделали; пункт ведёт на свой слайд ── */
 
-.dk-key {
-  display: inline-grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--color-chip-border);
-  border-radius: var(--radius-10);
-  background: var(--color-chip-fill);
-  color: var(--color-text);
-}
-
-/* ── Главное: пять изменений, у каждого – цифра и одна строка ───────── */
-
-.dk-slide--summary {
-  grid-template-columns: minmax(0, 880px);
-}
-
-.dk-summary__list {
+.dk-summary {
   display: grid;
-  gap: var(--space-14);
-  margin-top: var(--space-28);
+  gap: var(--space-8);
+  width: 100%;
+  margin-top: var(--space-24);
   list-style: none;
 }
 
 .dk-summary__item {
+  --press-scale: var(--press-scale-wide);
   display: grid;
-  grid-template-columns: 44px minmax(0, 300px) 1fr;
-  column-gap: var(--space-20);
+  grid-template-columns: 32px minmax(0, 1fr);
+  column-gap: var(--space-14);
+  row-gap: var(--space-2);
   align-items: center;
-  padding: var(--space-16) var(--space-20);
+  padding: var(--space-12) var(--space-16);
   border-radius: var(--radius-20);
   background: var(--color-surface);
+  color: var(--color-text);
+  text-decoration: none;
 }
 
 /* номер изменения – наклейкой со стикер-числом */
 .dk-summary__n {
+  grid-row: span 2;
   font: var(--sticker-number-font);
   color: var(--color-text-on-light);
   text-shadow: var(--outline-number-3);
@@ -280,18 +281,12 @@
 }
 
 .dk-summary__name {
-  font: var(--type-gift-title);
+  font: var(--type-label);
 }
 
-.dk-summary__fact {
+.dk-summary__text {
   color: var(--color-text-secondary);
   font: var(--type-distance);
-}
-
-.dk-summary__fact b {
-  margin-right: var(--space-4);
-  color: var(--color-text);
-  font: var(--type-gift-title);
 }
 
 /* ── Листалка ────────────────────────────────────────────────────────── */
@@ -333,6 +328,10 @@
 @media (hover: hover) and (pointer: fine) {
   .dk-toggle:hover {
     color: var(--color-text);
+  }
+
+  .dk-summary__item:hover {
+    background: var(--color-surface-raised);
   }
 }
 
@@ -384,26 +383,15 @@
     transform: none;
   }
 
-  .dk-fact {
-    grid-template-columns: minmax(0, 1fr);
-  }
 
-  .dk-fact__n {
-    grid-row: auto;
-  }
-
-  .dk-summary__item {
-    grid-template-columns: 36px minmax(0, 1fr);
-    row-gap: var(--space-4);
-  }
-
-  .dk-summary__fact {
-    grid-column: 2;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .dk-slide {
     transform: none;
+  }
+
+  .dk-phone__loader {
+    animation: none;
   }
 }
