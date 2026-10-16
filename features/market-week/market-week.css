@@ -64,6 +64,16 @@
   gap: var(--space-8);
 }
 
+.panel__row {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.panel__row > .panel__button {
+  flex: 1;
+  min-width: 0;
+}
+
 .panel__button {
   --press-scale: var(--press-scale-wide);
   display: inline-flex;
@@ -84,6 +94,12 @@
   color: var(--color-text);
 }
 
+/* вкладка без экрана („подарки“): как неактивная вкладка, но не нажимается и не реагирует */
+.mw-tab--inert {
+  cursor: default;
+  pointer-events: none;
+}
+
 /* ── Лента ───────────────────────────────────────────────────────────── */
 
 .mw-feed {
@@ -101,6 +117,8 @@
 
 /* заголовок секции и справа – срок или „все“ */
 .mw-head {
+  position: relative;
+  z-index: 1;                                     /* над полосой друзей, которая заходит под заголовок */
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -108,15 +126,143 @@
   padding: 0 var(--gutter);
 }
 
-.mw-head__note {
-  flex-shrink: 0;
-  color: var(--color-text-muted);
-  font: var(--type-distance);
+/* Отсчёт – в ценнике новинки („осталось 3 дня“, в последние сутки „02:12:28“) и в карточке скидки:
+   цифры табличные; в последнюю минуту строка стучит */
+.mw-timer__value {
+  font-variant-numeric: tabular-nums;
 }
 
-/* последний день недели: срок – розовым, время идёт */
-.mw-head__note--soon {
+.mw-timer__colon {
+  animation: mw-colon 1s steps(1, end) infinite;
+}
+
+@keyframes mw-colon {
+  50% { opacity: 0.25; }
+}
+
+.mw-chip__stock.is-urgent {
+  animation: mw-urgent 1s var(--ease-out-soft) infinite;
+  transform-origin: 0 50%;
+}
+
+@keyframes mw-urgent {
+  0%, 100% { transform: none; }
+  30% { transform: scale(1.08); }
+}
+
+/* ── Только для тебя: личная скидка на сутки ───────────────────────── */
+
+/* карточка с сеткой точек (как превью в шторке): упаковка слева выходит за верх карточки,
+   справа имя, вид и ценник со старой ценой зачёркнутой */
+.mw-deal {
+  --press-scale: var(--press-scale-wide);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+  width: calc(100% - var(--gutter) * 2);
+  height: 132px;
+  margin: calc(var(--space-24) * 2) var(--gutter) 0;   /* отступ от друзей: до баннера наверху – больше экрана (правило 33) */
+  padding: 0 var(--space-16) 0 var(--space-12);
+  border: 2px solid var(--color-surface);
+  border-radius: var(--radius-24);
+  background:
+    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    var(--color-bg);
+  text-align: left;
+}
+
+/* у стикеров скидка – сразу под „стикерами друзей“; лента стикеров короче, и чтобы скидка не попала
+   на один экран с баннером „хэллоуин“ (правило 33: между ними не меньше 844), отступ над друзьями
+   больше обычного вдвое (64; нужно хотя бы 60) */
+.mw-friends--stickers {
+  margin-top: calc(var(--space-32) * 2);
+}
+
+/* у хвостов над скидкой – ночная карта друзей, её низ растворяется в чёрном: карточка заходит
+   под растворённый край, иначе пустота между блоками кажется вдвое больше */
+.mw-friends--sky + .mw-deal-block .mw-deal {
+  margin-top: calc(var(--space-20) * -2);
+}
+
+.mw-deal__art {
+  position: relative;
+  flex-shrink: 0;
+  align-self: flex-end;
+  width: 96px;
+  margin-bottom: var(--space-10);
+}
+
+.mw-deal__pack {
+  width: 100%;
+  transform: rotate(-4deg);
+  filter: drop-shadow(0 10px 20px var(--color-glass-button));
+}
+
+/* скидка – крупное стикер-число, наклеено на правый верхний угол карточки, наполовину за край */
+.mw-deal__off {
+  --sticker-size: 32px;
+  position: absolute;
+  top: -18px;
+  right: var(--space-12);
+  transform: rotate(-8deg);
+}
+
+.mw-deal__info {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.mw-deal__name {
+  max-width: 100%;
+  overflow: hidden;
+  font: var(--type-gift-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* сколько осталось скидке – розовым (время идёт), цифры табличные; в последнюю минуту стучит */
+.mw-deal__note {
   color: var(--color-pink);
+  font: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+  transform-origin: 0 50%;
+}
+
+.mw-deal__note.is-urgent {
+  animation: mw-urgent 1s var(--ease-out-soft) infinite;
+}
+
+/* цена и сколько осталось – одной строкой, на всю ширину карточки */
+.mw-deal__price {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-top: var(--space-10);
+}
+
+.mw-deal__price .price-chip {
+  margin-top: 0;
+}
+
+/* витрина только что сменилась: новинки появляются по очереди */
+.mw-feed.is-fresh .mw-hero,
+.mw-feed.is-fresh .mw-offers .mw-item {
+  animation: mw-fresh 0.42s var(--ease-spring) both;
+}
+
+.mw-feed.is-fresh .mw-offers .mw-item:nth-child(1) { animation-delay: 0.12s; }
+.mw-feed.is-fresh .mw-offers .mw-item:nth-child(2) { animation-delay: 0.2s; }
+.mw-feed.is-fresh .mw-offers .mw-item:nth-child(3) { animation-delay: 0.28s; }
+.mw-feed.is-fresh .mw-offers .mw-item:nth-child(4) { animation-delay: 0.36s; }
+
+@keyframes mw-fresh {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: none; }
 }
 
 .mw-head .more-link {
@@ -133,15 +279,16 @@
   --icon-size: 13px;
 }
 
-/* ── Предмет недели: примерка на твоём пине + упаковка, наклеенная на угол карты ── */
+/* ── Предмет недели у хвостов: низкий баннер. Карта с твоим пином и хвостом,
+   упаковка наклеена на её нижний угол, рядом имя и цена ── */
 
 .mw-hero {
   --press-scale: var(--press-scale-wide);
   position: relative;
   display: block;
   width: 100%;
-  height: 382px;
-  margin-top: var(--space-14);
+  height: 214px;
+  margin-top: var(--space-12);
   text-align: left;
 }
 
@@ -150,109 +297,194 @@
   top: 0;
   left: var(--gutter);
   right: var(--gutter);
-  height: 250px;
+  height: 150px;
   overflow: hidden;
-  border-radius: var(--radius-modal);
+  border-radius: var(--radius-24);
   background: var(--color-surface);
 }
 
+/* камера приближена: карта крупнее в 1.5 раза (map-tail – 342 pt) – вместе с пином */
 .mw-hero__tiles {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: -50%;
+  left: -12%;
+  width: 513px;
+  height: auto;
   max-width: none;
-  object-fit: cover;
-}
-
-/* у стикерпака вместо карты – карточка с сеткой точек, как в шторке */
-.mw-hero__map--dots {
-  display: grid;
-  place-items: center;
-  border: 2px solid var(--color-surface);
-  background:
-    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
-    var(--color-bg);
-}
-
-/* стикер – справа, слева на угол наклеена упаковка */
-.mw-hero__sticker {
-  width: 172px;
-  margin: 0 0 30px 120px;
-  transform: rotate(6deg);
-}
-
-/* нет отдельной картинки – на карточке сама упаковка, крупно; цена – под именем */
-.mw-hero__solo {
-  width: 150px;
-  transform: rotate(-4deg);
-}
-
-.mw-hero--solo {
-  height: 360px;
-}
-
-.mw-hero--solo .mw-hero__name {
-  left: var(--gutter);
-  align-items: flex-start;
-}
-
-.mw-hero--solo .mw-hero__name .price-chip {
-  margin-top: var(--space-8);
 }
 
 .mw-hero .mw-rider {
-  left: 64%;
-  top: 58%;
+  left: 66%;
+  top: 80%;
 }
 
-/* упаковка выходит за нижний край карты – как наклейка на углу */
-.mw-hero__pack-wrap {
-  position: absolute;
-  top: 160px;
-  left: 30px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 152px;
+/* пин в баннере – тот же пин 52, приближенный камерой целиком, с хвостом (как фокус в стилях пинов) */
+.mw-rider--zoom {
+  transform: scale(1.5);
+  transform-origin: 0 0;
 }
 
 .mw-hero__pack {
-  width: 100%;
+  position: absolute;
+  top: 78px;
+  left: 30px;
+  width: 104px;
   transform: rotate(-6deg);
-  filter: drop-shadow(0 12px 24px var(--color-glass-button));
+  filter: drop-shadow(0 10px 20px var(--color-glass-button));
+  pointer-events: none;
 }
 
 .mw-hero__name {
   position: absolute;
-  top: 266px;
-  left: 204px;
+  top: 160px;
+  left: 150px;
   right: var(--gutter);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-4);
   min-width: 0;
 }
 
-/* длинное имя – в две строки, дальше многоточие */
 .mw-hero__title {
-  display: -webkit-box;
   overflow: hidden;
-  font: var(--type-section-title);
-  text-wrap: balance;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  font: var(--type-gift-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.mw-hero__kind {
-  color: var(--color-text-muted);
-  font: var(--type-gift-kind);
-  letter-spacing: 0.02em;
+/* название и справа от него – почему этот хвост наверху, со стикером огня */
+.mw-hero__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  min-width: 0;
 }
 
-.mw-hero__name .mw-stock {
-  margin-top: var(--space-4);
+.mw-hero__why {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-text-secondary);
+  font: var(--type-caption);
+  white-space: nowrap;
 }
+
+.mw-hero__why-sticker {
+  width: 20px;
+  height: 20px;
+  margin: -2px 0;
+  transform: rotate(-8deg);
+}
+
+.mw-hero__price {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.mw-hero__price .price-chip {
+  margin-top: 0;
+}
+
+/* ── Сезонный баннер стикеров: сцена праздника и стикеры наборов ─────── */
+
+.mw-season {
+  --press-scale: var(--press-scale-wide);
+  position: relative;
+  display: block;
+  width: calc(100% - var(--gutter) * 2);
+  height: 196px;
+  margin: var(--space-24) var(--gutter) 0;
+  text-align: left;
+}
+
+/* сцена – market/halloween_background.jpg: луна справа, дом – за текстом */
+.mw-season__scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--radius-24);
+  background: var(--color-surface);
+}
+
+/* сцена крупнее баннера и сдвинута: луна – главная точка справа от текста, дом за текстом */
+.mw-season__scene img {
+  position: absolute;
+  top: -2%;
+  left: -22%;
+  width: 122%;                                    /* правый край картинки – вровень с баннером */
+  height: auto;
+  max-width: none;
+}
+
+/* текст на сцене читается: слева сцена уходит в чёрный, луна остаётся яркой */
+.mw-season__scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.6) 34%, rgba(0, 0, 0, 0) 58%),
+    radial-gradient(70% 60% at 0% 100%, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 100%);   /* фото-тыквы не спорят с нашей */
+}
+
+/* заголовок крупно и плотно, под ним срок – розовой наклейкой, как стикер со временем */
+.mw-season__text {
+  position: absolute;
+  left: var(--space-20);
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-10);
+  transform: translateY(-50%);
+}
+
+/* „новые стикеры“ – наклеенная надпись: прямой Montserrat 800 со скруглённой белой обводкой
+   (стикер-число), без наклона; мельче заголовка и вплотную к нему – одна подпись над словом */
+.mw-season__kicker {
+  --sticker-size: 15px;
+  margin: 0 0 calc(var(--space-10) * -1 + var(--space-2)) var(--space-4);   /* от „хэллоуин“ – 2 pt */
+  letter-spacing: 0.02em;                         /* обводка 3 pt не слепляет буквы */
+}
+
+.mw-season__title {
+  font: var(--type-season-title);
+  letter-spacing: -0.03em;
+  text-shadow: var(--shadow-text-on-media);
+}
+
+/* срок – розовая наклейка с наклоном, отступает от заголовка вниз */
+.mw-season__until {
+  margin-top: var(--space-8);
+  padding: var(--space-4) var(--space-12);
+  border-radius: var(--radius-pill);
+  background: var(--color-pink);
+  color: var(--color-text-on-light);
+  font: var(--type-season-tag);
+  transform: rotate(-6deg);
+  transform-origin: 0 50%;
+}
+
+/* Каждый стикер – на своём месте в сцене и целиком в баннере: мышь силуэтом на луне,
+   привидение парит рядом, тыква на переднем плане, зомби – у ограды */
+.mw-season__stickers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mw-season__sticker {
+  position: absolute;
+  max-width: none;
+  filter: drop-shadow(0 8px 14px var(--color-glass-button));
+}
+
+/* луна на сцене – в 67 % ширины и около 52 pt от верха (снято по рендеру): мышь ровно на ней */
+.mw-season__sticker--bats { left: calc(67% - 29px); top: 24px; width: 58px; transform: rotate(-12deg); }
+.mw-season__sticker--ghost { right: 8px; top: 12px; width: 60px; transform: rotate(10deg); }
+.mw-season__sticker--pumpkin { right: 12px; bottom: 10px; width: 88px; transform: rotate(6deg); }
+.mw-season__sticker--zombie { left: 47%; bottom: 12px; width: 74px; transform: rotate(-8deg); }
 
 /* ── Пин с хвостом. Точка – острие пина; хвост справа уходит под кадр – растёт из пина ── */
 
@@ -272,10 +504,20 @@
   display: none;
 }
 
+/* крыло – в центре кадра 52 (на 26 выше острия), хвост справа уходит под кадр */
+.mw-rider__wing {
+  position: absolute;
+  left: 0;
+  top: -26px;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--heading, 0deg));
+}
+
 .mw-rider__tail {
   position: absolute;
   right: -4px;
-  top: -52px;
+  top: -26px;
   width: auto;
   max-width: none;
   height: 50px;
@@ -284,19 +526,41 @@
   pointer-events: none;
 }
 
+/* фигурка-хвост (мышь, призрак, зомби) летит следом: позади пина и чуть выше, покачивается */
+.mw-rider__follower {
+  position: absolute;
+  left: -82px;
+  top: -70px;
+  width: 48px;
+  max-width: none;
+  filter: drop-shadow(0 4px 6px var(--color-glass-button));
+  animation: mw-follow 1.6s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes mw-follow {
+  from { transform: translateY(0) rotate(-8deg); }
+  to { transform: translateY(-5px) rotate(4deg); }
+}
+
 /* хвост живой: чуть тянется и сжимается, как пламя или ткань на ветру */
 @keyframes mw-tail {
   from { transform: scaleX(0.94); }
   to { transform: scaleX(1.05); }
 }
 
-/* ── Предложения недели: 2 × 2, упаковки вразнобой ───────────────────── */
+/* ── Предложения недели: 2 × 2, как сетка эталона, упаковки вразнобой ── */
 
 .mw-offers {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-24) var(--space-12);
+  margin-top: var(--space-16);
   padding: 0 var(--gutter);
+}
+
+.mw-hero + .mw-offers {
+  margin-top: var(--space-12);
 }
 
 .mw-item {
@@ -308,7 +572,16 @@
 }
 
 .mw-item__pack {
-  width: 140px;
+  width: 132px;
+  max-width: 100%;
+  pointer-events: none;
+}
+
+/* видео живой упаковки – на чёрном фоне, как сама запись; размер – как у картинки упаковки */
+.mw-video {
+  display: block;
+  height: auto;
+  background: var(--color-bg);
   pointer-events: none;
 }
 
@@ -316,6 +589,12 @@
 .mw-offers .mw-item:nth-child(4n + 2) .mw-item__pack { transform: rotate(4deg); }
 .mw-offers .mw-item:nth-child(4n + 3) .mw-item__pack { transform: rotate(2deg); }
 .mw-offers .mw-item:nth-child(4n) .mw-item__pack { transform: rotate(-4deg); }
+
+/* ценник: цена и старая цена зачёркнутой, или „у тебя“. Ширина – по содержимому, не сжимается:
+   „1500 | осталось 68“ на 375 чуть шире карточки и уходит в промежуток между карточками (12 pt) */
+.mw-chip {
+  width: max-content;
+}
 
 /* ценник: цена и старая цена зачёркнутой, или „у тебя“ */
 .mw-chip__old {
@@ -332,16 +611,18 @@
   --icon-size: 13px;
 }
 
-/* тираж – текстом-голограммой, как „осталось на складе“ у лимитированных */
-.mw-stock {
-  margin-top: var(--space-6);
-  background: var(--gradient-holo);
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
-  font: var(--type-gift-note);
+/* тираж – в ценнике после тонкого разделителя, словами и розовым: „осталось 42“ (как „осталось
+   09:42“ у скидки). Полная полоса „осталось на складе“ – в шторке */
+.mw-chip__stock {
+  display: inline-flex;
+  align-items: center;
+  height: 14px;
+  margin-left: var(--space-4);
+  padding-left: var(--space-6);
+  border-left: 1px solid var(--color-divider);
+  color: var(--color-pink);
+  font: var(--type-button-small);
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 /* ── Полки: горизонтально, следующая карточка выглядывает ───────────── */
@@ -380,11 +661,11 @@
 .mw-friend__art {
   display: flex;
   align-items: flex-end;
-  height: 146px;
+  height: 140px;
 }
 
 .mw-friend__pack {
-  width: 112px;
+  width: 116px;
   pointer-events: none;
 }
 
@@ -395,8 +676,8 @@
   position: absolute;
   top: -6px;
   left: 0;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border: 2px solid var(--color-bg);
   border-radius: var(--radius-squircle);
   object-fit: cover;
@@ -418,18 +699,85 @@
   font: var(--type-status);
 }
 
+/* ── „у друзей“ с хвостами: общая полоса города, друзья летят по ней ─── */
+
+/* верх полосы прозрачный – заголовок секции ложится на него, высота не теряется */
+.mw-sky {
+  margin-top: -28px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.mw-sky::-webkit-scrollbar {
+  display: none;
+}
+
+.mw-sky__city {
+  position: relative;
+  width: calc(var(--w) * 1px);
+  height: 220px;
+}
+
+/* ночная карта растворяется в чёрном мягким овалом во все стороны – как в ночлегах
+   (features/overnights). Маска – только на карте, пины не трогает */
+.mw-sky__map {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  overflow: hidden;
+  -webkit-mask-image: radial-gradient(ellipse 62% 50% at 50% 50%, var(--color-bg) 38%, transparent 100%);
+          mask-image: radial-gradient(ellipse 62% 50% at 50% 50%, var(--color-bg) 38%, transparent 100%);
+  pointer-events: none;
+}
+
+.mw-sky__tile {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 42%;
+}
+
+/* друг: зона нажатия вокруг пина, острие – в (--x, --y) полосы */
+.mw-flyer {
+  --press-scale: var(--press-scale-button);
+  position: absolute;
+  left: calc(var(--x) * 1px - 70px);
+  top: calc(var(--y) * 1px - 80px);
+  width: 140px;
+  height: 96px;
+}
+
+.mw-flyer .mw-rider {
+  left: 70px;
+  top: 80px;
+}
+
+/* дальний друг – пин 36: весь пин с хвостом уменьшен от острия */
+.mw-rider--far {
+  transform: scale(calc(36 / 52));
+  transform-origin: 0 0;
+}
+
+/* тёмный хвост (тень) на ночной карте светится по краю – как огонь в ночлегах, своего цвета нет */
+.mw-rider--pale .mw-rider__tail {
+  filter: drop-shadow(0 0 5px var(--color-text-dim));
+}
+
+/* в полке упаковки крупные, как в сетке: третья уходит за край – видно, что ряд листается */
 .mw-item--shelf .mw-item__pack {
-  width: 124px;
+  width: 132px;
 }
 
 .mw-shelf--packs .mw-item:nth-child(odd) .mw-item__pack { transform: rotate(-3deg); }
 .mw-shelf--packs .mw-item:nth-child(even) .mw-item__pack { transform: rotate(3deg); }
 
-/* ── „уже у тебя“ и архив – раскладка эталона, но в потоке ленты ───── */
+/* ── „уже у тебя“ и архив: заголовки эталона, карточки в один ряд ───── */
 
 .mw-owned {
   position: relative;
-  margin-top: 56px;
+  margin-top: 44px;
 }
 
 /* заголовок раздела из market.css стоит по координатам – здесь он в потоке */
@@ -438,38 +786,33 @@
   top: auto;
 }
 
-/* карточки: две рядом и третья по центру ниже (x 46 / 225 / 135 на холсте 390) */
 .mw-owned__grid {
-  position: relative;
-  height: 368px;
-  margin-top: 42px;
-}
-
-.mw-owned__grid--two {
-  height: 148px;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-12);
+  margin-top: var(--space-20);
+  padding: 0 var(--gutter);
 }
 
 .mw-owned__card {
-  position: absolute;
-  width: 124px;
+  position: relative;
+  width: 104px;
 }
 
-.mw-owned__card img {
+.mw-owned__card img,
+.mw-owned__card video {
   width: 100%;
 }
 
-.mw-owned__card--0 { left: calc(50% - 149px); top: 0; }
-.mw-owned__card--1 { left: calc(50% + 30px); top: 1px; }
-.mw-owned__card--2 { left: calc(50% - 60px); top: 221px; }
-
 .mw-owned__selected {
-  left: calc(50% - 139px);
-  top: 149px;
+  left: 4px;
+  top: calc(100% + 2px);
 }
 
+/* лента сверху, заголовок архива – под ней */
 .mw-archive {
-  margin-top: 70px;
-  padding-top: 172px;                             /* лента сверху, заголовок – на 172 ниже её верха */
+  margin-top: 64px;
+  padding-top: 150px;
 }
 
 .mw-archive__tape {
@@ -478,10 +821,6 @@
   left: 0;
   width: 100%;
   pointer-events: none;
-}
-
-.mw-archive .mw-owned__grid {
-  margin-top: 87px;
 }
 
 /* ── „все“: подборка сеткой ─────────────────────────────────────────── */
@@ -552,6 +891,11 @@
   font: var(--type-caption);
 }
 
+/* постоянный товар никуда не уходит – подпись серая, без розового */
+.mw-sheet__leave--always {
+  color: var(--color-text-muted);
+}
+
 .mw-sheet__text {
   margin-top: var(--space-6);
   color: var(--color-text-muted);
@@ -594,33 +938,28 @@
   color: var(--color-text-muted);
 }
 
-/* превью: на карте – твой пин с хвостом, у стикеров – стикер на карточке с сеткой точек */
+/* ── Превью: как предмет выглядит в приложении ──────────────────────── */
+
 .mw-preview {
   position: relative;
   flex-shrink: 0;
-  height: 292px;
   margin-top: var(--space-16);
   overflow: hidden;
   border-radius: var(--radius-modal);
 }
 
-.mw-preview--dots {
-  display: grid;
-  place-items: center;
-  border: 2px solid var(--color-surface);
-  background:
-    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
-    var(--color-bg);
+/* хвост – твоя карта. Камера приближена в 1.5 раза к твоему пину: карта и пины друзей крупнее
+   вместе с ним, размеры пинов между собой – 52 / 36 / 20 */
+.mw-preview--map {
+  height: 300px;
+  background: var(--color-surface);
 }
 
-.mw-preview__sticker {
-  width: 190px;
-  transform: rotate(-4deg);
-}
-
-.mw-preview__pack {
-  width: 170px;
-  transform: rotate(-4deg);
+.mw-preview__camera {
+  position: absolute;
+  inset: 0;
+  transform: scale(1.5);
+  transform-origin: 58% 70%;                      /* камера – на твоём пине */
 }
 
 .mw-preview__tiles {
@@ -632,9 +971,125 @@
   object-fit: cover;
 }
 
-.mw-preview .mw-rider {
-  left: 56%;
-  top: 56%;
+/* пин в превью уже приближен камерой – свой масштаб баннера не нужен */
+.mw-preview__camera .mw-rider--zoom {
+  transform: none;
+}
+
+.mw-preview__me {
+  left: 58%;
+  top: 70%;
+}
+
+.mw-preview__friend {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 0;
+  height: 0;
+}
+
+.mw-preview__friend .pin {
+  left: 0;
+  top: 0;
+}
+
+/* хвоста без упаковки пока нет – упаковка наклеена на угол карты */
+.mw-preview__pack-tag {
+  position: absolute;
+  left: var(--space-12);
+  bottom: var(--space-12);
+  width: 96px;
+  transform: rotate(-6deg);
+  filter: drop-shadow(0 10px 20px var(--color-glass-button));
+}
+
+/* стикер – переписка: шапка с другом и сообщения теми же пузырями, что в чате */
+.mw-preview--chat {
+  padding: var(--space-14) 0 var(--space-16);
+  border: 2px solid var(--color-surface);
+  background: var(--color-bg);
+}
+
+.mw-chat-peer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding: 0 var(--space-14) var(--space-12);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.mw-chat-peer__avatar {
+  --avatar-size: 32px;
+}
+
+.mw-chat-peer__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.mw-chat-peer__name {
+  font: var(--type-friend-name);
+}
+
+.mw-chat-peer__status {
+  color: var(--color-text-muted);
+  font: var(--type-compact);
+}
+
+.mw-chat-feed {
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--space-14);
+}
+
+.mw-chat-feed .message-row {
+  padding: 0 var(--space-12);
+}
+
+/* стикер-ответ чуть наклонён, как наклейка */
+.mw-chat-msg--sticker .bubble--sticker img {
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  transform: rotate(-6deg);
+}
+
+/* при открытии шторки переписка идёт по очереди: вопрос друга, твой стикер, его ответ */
+.mw-sheet.is-entering .mw-chat-msg {
+  animation: mw-msg-in 0.32s var(--ease-out-soft) both;
+  animation-delay: calc(0.25s + var(--i) * 0.45s);
+}
+
+.mw-sheet.is-entering .mw-chat-msg--sticker {
+  animation-name: mw-sticker-in;
+  animation-timing-function: var(--ease-spring);
+}
+
+@keyframes mw-msg-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes mw-sticker-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+
+/* стикерпак без отдельного стикера – упаковка на карточке с сеткой точек */
+.mw-preview--dots {
+  display: grid;
+  place-items: center;
+  height: 292px;
+  border: 2px solid var(--color-surface);
+  background:
+    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    var(--color-bg);
+}
+
+.mw-preview__pack {
+  width: 170px;
+  transform: rotate(-4deg);
 }
 
 /* у кого из друзей уже есть: лица 34 внахлёст и „+N“ */
@@ -704,7 +1159,8 @@
   color: var(--color-text-muted);
 }
 
-.mw-buy--owned {
+.mw-buy--owned,
+.mw-buy--free {
   justify-content: center;
 }
 
@@ -731,6 +1187,54 @@
 .bubble--sticker.mw-chat-sticker img {
   height: auto;
   transform: rotate(-6deg);
+}
+
+/* ── Встраивание в презентацию (?embed=market|chat): только телефон 390×844 ── */
+/* рамку со скруглением и масштаб даёт презентация; здесь – телефон во всю страницу и всегда как на
+   превью (статус-бар, safe-area 54 / 34), даже в узком окне – правила телефона ниже не действуют */
+.is-embed,
+.is-embed body {
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.is-embed .stage {
+  display: block;
+  min-height: 0;
+  padding: 0;
+}
+
+.is-embed .stage__phones,
+.is-embed .stage__side,
+.is-embed .device {
+  display: block;
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  zoom: 1;
+}
+
+/* после правила выше: у него та же специфичность */
+.is-embed .stage__head,
+.is-embed .panel,
+.is-embed .stage__caption,
+.is-embed--market [aria-labelledby="side-chat"],
+.is-embed--chat [aria-labelledby="side-market"] {
+  display: none;
+}
+
+.is-embed .app {
+  --safe-top: inherit;
+  --safe-bottom: inherit;
+  width: 390px;
+  height: 844px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.is-embed .status-bar,
+.is-embed .home-indicator {
+  display: block;
 }
 
 /* ── Телефон: стенд складывается в колонку ───────────────────────────── */
@@ -780,7 +1284,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mw-rider__tail {
+  .mw-rider__tail,
+  .mw-rider__follower,
+  .mw-sheet.is-entering .mw-chat-msg,
+  .mw-chip__stock.is-urgent,
+  .mw-deal__note.is-urgent,
+  .mw-timer__colon,
+  .mw-feed.is-fresh .mw-hero,
+  .mw-feed.is-fresh .mw-offers .mw-item {
     animation: none;
   }
 }

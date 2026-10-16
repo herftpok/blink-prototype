@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – маркет недели: что изменилось</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="presentation.css">
+</head>
+<body class="dk">
+<!-- Презентация обновлений маркета: на каждом слайде&nbsp;– живой прототип (index.html?embed=…),
+     открытый в нужном месте. Телефон грузится, только пока слайд на экране: в нём видео упаковок -->
+<canvas class="dk__sky" aria-hidden="true"></canvas>
+
+<main class="dk__deck" id="deck" aria-roledescription="презентация" aria-label="маркет недели: что изменилось">
+
+  <!-- 1. Обложка -->
+  <section class="dk-slide dk-slide--cover" aria-roledescription="слайд" aria-label="маркет недели">
+    <div class="dk-slide__text">
+      <img class="dk-slide__sticker" src="../../assets/stickers/blink.webp" alt="">
+      <p class="dk-cover__kicker sticker-number">прототип</p>
+      <h1 class="dk-cover__title">маркет недели</h1>
+      <p class="dk-slide__lead">пять изменений витрины маркета&nbsp;– зачем каждое и что оно даёт; основа&nbsp;– два исследования ротируемых магазинов, про интерфейсы и про механики возврата</p>
+      <p class="dk-cover__hint"><span class="dk-key">→</span> листать стрелками; телефон&nbsp;– живой, его можно листать и нажимать</p>
+    </div>
+    <div class="dk-slide__stage">
+      <div class="dk-phone" data-src="index.html?embed=market&amp;tab=tails"><iframe title="маркет недели: вкладка хвостов" tabindex="-1"></iframe></div>
+    </div>
+  </section>
+
+  <!-- 2. Главное -->
+  <section class="dk-slide dk-slide--summary" aria-roledescription="слайд" aria-label="главное">
+    <div class="dk-summary">
+      <p class="caps-label">главное</p>
+      <h2 class="dk-slide__title">каждое изменение опирается на данные</h2>
+      <ol class="dk-summary__list">
+        <li class="dk-summary__item">
+          <span class="dk-summary__n">1</span>
+          <span class="dk-summary__name">ограничения&nbsp;– прямо в ленте</span>
+          <span class="dk-summary__fact"><b>€562 500</b> заплатила Epic за таймеры, после которых товар не уходил; у нас&nbsp;– только настоящий срок и тираж</span>
+        </li>
+        <li class="dk-summary__item">
+          <span class="dk-summary__n">2</span>
+          <span class="dk-summary__name">свой повод зайти в каждой вкладке</span>
+          <span class="dk-summary__fact"><b>84%</b> кликов по карусели&nbsp;– в первый слайд, поэтому один баннер, а не листалка</span>
+        </li>
+        <li class="dk-summary__item">
+          <span class="dk-summary__n">3</span>
+          <span class="dk-summary__name">покупки друзей</span>
+          <span class="dk-summary__fact"><b>+1.7 п.п.</b> к вероятности купить самому на той же неделе, если купил друг</span>
+        </li>
+        <li class="dk-summary__item">
+          <span class="dk-summary__n">4</span>
+          <span class="dk-summary__name">скидка только для тебя</span>
+          <span class="dk-summary__fact"><b>+12–20%</b> дают персональные офферы в контролируемых тестах</span>
+        </li>
+        <li class="dk-summary__item">
+          <span class="dk-summary__n">5</span>
+          <span class="dk-summary__name">стикер&nbsp;– в переписке</span>
+          <span class="dk-summary__fact"><b>116% → 9%</b> упал рост магазина iMessage, когда его спрятали от переписки</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 3. Ограничения в ленте -->
+  <section class="dk-slide" aria-roledescription="слайд" aria-label="1&nbsp;– ограничения в ленте">
+    <div class="dk-slide__text">
+      <p class="caps-label dk-slide__label">1 · лента</p>
+      <img class="dk-slide__sticker" src="../../assets/stickers/diamond.webp" alt="">
+      <h2 class="dk-slide__title">срок и тираж видно прямо в ценнике</h2>
+      <p class="dk-slide__lead">розовым рядом с ценой&nbsp;– „ещё 3 дня“ или „осталось 42“: решение принимают на витрине, а не в шторке</p>
+      <ul class="dk-facts">
+        <li class="dk-fact"><b class="dk-fact__n">€562 500</b><span class="dk-fact__text">штраф ACM для Epic за таймеры, после которых товар оставался в магазине</span><span class="dk-fact__src">ACM, Нидерланды, 2024</span></li>
+        <li class="dk-fact"><b class="dk-fact__n">штуки &gt; дни</b><span class="dk-fact__text">„осталось N“ действует сильнее, чем „осталось N дней“</span><span class="dk-fact__src">Aggarwal, Jun, Huh, Journal of Advertising, 2011</span></li>
+        <li class="dk-fact"><b class="dk-fact__n">1 метка</b><span class="dk-fact__text">на карточке одно ограничение: бейджи работают, пока их мало</span><span class="dk-fact__src">Baymard Institute</span></li>
+      </ul>
+      <p class="dk-measure"><span class="caps-label">что меряем</span>конверсию витрина → покупка у товаров со сроком и тиражом против таких же без ограничений</p>
+    </div>
+    <div class="dk-slide__stage">
+      <div class="dk-phone" data-src="index.html?embed=market&amp;tab=tails&amp;focus=grid"><iframe title="лента хвостов: медузы и золото с ограничениями" tabindex="-1"></iframe></div>
+      <div class="dk-toggles" role="group" aria-label="что показать">
+        <button class="dk-toggle pressable" type="button" aria-pressed="true" data-src="index.html?embed=market&amp;tab=tails&amp;focus=grid">хвосты</button>
+        <button class="dk-toggle pressable" type="button" aria-pressed="false" data-src="index.html?embed=market&amp;tab=stickers&amp;focus=novelties">стикеры</button>
+        <button class="dk-toggle pressable" type="button" aria-pressed="false" data-src="index.html?embed=market&amp;tab=stickers&amp;focus=novelties&amp;day=last">смена витрины через 10 с</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Hero-блок -->
+  <section class="dk-slide" aria-roledescription="слайд" aria-label="2&nbsp;– свой повод зайти">
+    <div class="dk-slide__text">
+      <p class="caps-label dk-slide__label">2 · первый экран</p>
+      <img class="dk-slide__sticker" src="../../assets/stickers/eyes.webp" alt="">
+      <h2 class="dk-slide__title">у каждой вкладки&nbsp;– свой повод зайти</h2>
+      <p class="dk-slide__lead">в стикерах&nbsp;– сезонный баннер со всеми наборами, в хвостах&nbsp;– хит недели, сразу надетый на твой пин</p>
+      <ul class="dk-facts">
+        <li class="dk-fact"><b class="dk-fact__n">84%</b><span class="dk-fact__text">кликов по карусели приходится на первый слайд&nbsp;– поэтому один статичный баннер</span><span class="dk-fact__src">Runyon, Notre Dame; NN/g</span></li>
+        <li class="dk-fact"><b class="dk-fact__n">56%</b><span class="dk-fact__text">людей начинают страницу товара с картинки&nbsp;– хвост показываем на карте, а не в коробке</span><span class="dk-fact__src">Baymard Institute</span></li>
+        <li class="dk-fact"><b class="dk-fact__n">×5</b><span class="dk-fact__text">подарков в Одноклассниках на Новый год 2020 против прошлого года: праздник&nbsp;– лучший повод вернуться</span><span class="dk-fact__src">Sostav, 2020</span></li>
+      </ul>
+      <p class="dk-measure"><span class="caps-label">что меряем</span>долю визитов маркета, в которых открыли товар из баннера</p>
+    </div>
+    <div class="dk-slide__stage">
+      <div class="dk-phone" data-src="index.html?embed=market&amp;tab=stickers"><iframe title="первый экран вкладки стикеров" tabindex="-1"></iframe></div>
+      <div class="dk-toggles" role="group" aria-label="что показать">
+        <button class="dk-toggle pressable" type="button" aria-pressed="true" data-src="index.html?embed=market&amp;tab=stickers">стикеры</button>
+        <button class="dk-toggle pressable" type="button" aria-pressed="false" data-src="index.html?embed=market&amp;tab=tails">хвосты</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Покупки друзей -->
+  <section class="dk-slide" aria-roledescription="слайд" aria-label="3&nbsp;– покупки друзей">
+    <div class="dk-slide__text">
+      <p class="caps-label dk-slide__label">3 · друзья</p>
+      <img class="dk-slide__sticker" src="../../assets/stickers/heart.webp" alt="">
+      <h2 class="dk-slide__title">покупка друга&nbsp;– лучший повод купить самому</h2>
+      <p class="dk-slide__lead">в хвостах друзья летят по ночной карте со своими хвостами, в стикерах&nbsp;– что они взяли и когда</p>
+      <ul class="dk-facts">
+        <li class="dk-fact"><b class="dk-fact__n">+1.7 п.п.</b><span class="dk-fact__text">к вероятности купить игру на той же неделе, если её купил друг</span><span class="dk-fact__src">108 млн пользователей Steam, Murrian et al., 2024</span></li>
+        <li class="dk-fact"><b class="dk-fact__n">×2</b><span class="dk-fact__text">сильнее влияют давние друзья, чем самые популярные пользователи&nbsp;– поэтому друзья, а не „популярное“</span><span class="dk-fact__src">там же</span></li>
+        <li class="dk-fact"><b class="dk-fact__n">519 игроков</b><span class="dk-fact__text">реальные покупки предсказывает социальный мотив, а не новизна</span><span class="dk-fact__src">Hamari et al., Computers in Human Behavior, 2017</span></li>
+      </ul>
+      <p class="dk-measure"><span class="caps-label">что меряем</span>конверсию визит → покупка у тех, кто видел блок друзей, против блока „популярное“</p>
+    </div>
+    <div class="dk-slide__stage">
+      <div class="dk-phone" data-src="index.html?embed=market&amp;tab=tails&amp;focus=friends"><iframe title="хвосты друзей на ночной карте" tabindex="-1"></iframe></div>
+      <div class="dk-toggles" role="group" aria-label="что показать">
+        <button class="dk-toggle pressable" type="button" aria-pressed="true" data-src="index.html?embed=market&amp;tab=tails&amp;focus=friends">хвосты</button>
+        <button class="dk-toggle pressable" type="button" aria-pressed="false" data-src="index.html?embed=market&amp;tab=stickers&amp;focus=friends">стикеры</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Скидка только для тебя -->
+  <section class="dk-slide" aria-roledescription="слайд" aria-label="4&nbsp;– скидка только для тебя">
+    <div class="dk-slide__text">
+      <p class="caps-label dk-slide__label">4 · скидка</p>
+      <img class="dk-slide__sticker" src="../../assets/stickers/money.webp" alt="">
+      <h2 class="dk-slide__title">скидка на один товар&nbsp;– под тебя и на сутки</h2>
+      <p class="dk-slide__lead">алгоритм выбирает товар по твоей активности в маркете&nbsp;– что смотрел и что уже есть; срок&nbsp;– честный таймер до конца дня</p>
+      <ul class="dk-facts">
+        <li class="dk-fact"><b class="dk-fact__n">+12–20%</b><span class="dk-fact__text">дают персональные офферы в контролируемых тестах&nbsp;– единственная механика возврата с такими данными</span><span class="dk-fact__src">King, KDD 2023; Firebase</span></li>
+        <li class="dk-fact"><b class="dk-fact__n">−40%</b><span class="dk-fact__text">скидку пишем процентом: он действует сильнее суммы</span><span class="dk-fact__src">метаанализ 20 исследований, Krishna et al.</span></li>
+        <li class="dk-fact"><b class="dk-fact__n">по вкусу</b><span class="dk-fact__text">подбор по интересам, а не по истории трат или уязвимости&nbsp;– там проходит граница честного</span><span class="dk-fact__src">Forbrukerrådet, Insert Coin, 2022</span></li>
+      </ul>
+      <p class="dk-measure"><span class="caps-label">что меряем</span>покупки со скидкой и выручку на пользователя&nbsp;– без падения покупок остального каталога</p>
+    </div>
+    <div class="dk-slide__stage">
+      <div class="dk-phone" data-src="index.html?embed=market&amp;tab=tails&amp;focus=deal"><iframe title="скидка только для тебя в ленте хвостов" tabindex="-1"></iframe></div>
+      <div class="dk-toggles" role="group" aria-label="что показать">
+        <button class="dk-toggle pressable" type="button" aria-pressed="true" data-src="index.html?embed=market&amp;tab=tails&amp;focus=deal">хвосты</button>
+        <button class="dk-toggle pressable" type="button" aria-pressed="false" data-src="index.html?embed=market&amp;tab=stickers&amp;focus=deal">стикеры</button>
+        <button class="dk-toggle pressable" type="button" aria-pressed="false" data-src="index.html?embed=market&amp;tab=tails&amp;focus=deal&amp;deal=soon">скидка кончится через 10 с</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Стикер в переписке -->
+  <section class="dk-slide" aria-roledescription="слайд" aria-label="5&nbsp;– стикер в переписке">
+    <div class="dk-slide__text">
+      <p class="caps-label dk-slide__label">5 · шторка стикера</p>
+      <img class="dk-slide__sticker" src="../../assets/stickers/kiss.webp" alt="">
+      <h2 class="dk-slide__title">стикер показываем в переписке, а не в коробке</h2>
+      <p class="dk-slide__lead">в шторке&nbsp;– диалог с другом, и видно, когда этот стикер отправить; в маркет ведёт и чужой стикер в чате</p>
+      <ul class="dk-facts">
+        <li class="dk-fact"><b class="dk-fact__n">116% → 9%</b><span class="dk-fact__text">упал месячный рост магазина iMessage за полгода, когда его спрятали от переписки</span><span class="dk-fact__src">TechCrunch, 2017</span></li>
+        <li class="dk-fact"><b class="dk-fact__n">9%</b><span class="dk-fact__text">сообщений в LINE&nbsp;– стикеры: магазин живёт там, где пишут</span><span class="dk-fact__src">LINE, 2015</span></li>
+        <li class="dk-fact"><b class="dk-fact__n">жалоба №1</b><span class="dk-fact__text">у игроков на покупки&nbsp;– товар выглядел не так, как в магазине; контекст снимает этот риск</span><span class="dk-fact__src">Petrovskaya, Deterding, Zendle, CHI 2022</span></li>
+      </ul>
+      <p class="dk-measure"><span class="caps-label">что меряем</span>конверсию шторка → покупка и долю стикеров, отправленных в первые сутки после покупки</p>
+    </div>
+    <div class="dk-slide__stage">
+      <div class="dk-phone" data-src="index.html?embed=market&amp;tab=stickers&amp;item=zombie"><iframe title="шторка стикерпака: стикер в переписке" tabindex="-1"></iframe></div>
+      <div class="dk-toggles" role="group" aria-label="что показать">
+        <button class="dk-toggle pressable" type="button" aria-pressed="true" data-src="index.html?embed=market&amp;tab=stickers&amp;item=zombie">„жутко весело“</button>
+        <button class="dk-toggle pressable" type="button" aria-pressed="false" data-src="index.html?embed=market&amp;tab=stickers&amp;item=bats">„летучие мыши“</button>
+        <button class="dk-toggle pressable" type="button" aria-pressed="false" data-src="index.html?embed=chat&amp;tab=stickers">из чата</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Листать: стрелки, кнопки, точки -->
+<nav class="dk-nav" aria-label="слайды">
+  <button class="icon-button icon-button--header dk-nav__prev pressable" type="button" id="dk-prev" aria-label="предыдущий слайд">
+    <i class="icon icon--back" aria-hidden="true"></i>
+  </button>
+  <span class="dk-nav__count" id="dk-count" aria-live="polite"></span>
+  <button class="icon-button icon-button--header dk-nav__next pressable" type="button" id="dk-next" aria-label="следующий слайд">
+    <i class="icon icon--back" aria-hidden="true"></i>
+  </button>
+</nav>
+
+<script src="../../scripts/particles.js"></script>
+<script src="presentation.js"></script>
+</body>
+</html>

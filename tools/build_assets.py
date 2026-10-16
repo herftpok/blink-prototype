@@ -908,9 +908,73 @@ def build_market() -> None:
     # стикер „жутко весело“ без карточки – со шторки стикерпака (сетка точек уходит как звёзды):
     # стикер-сообщение в чате и превью набора (features/market-week)
     cutout_on_black("market/unlimited_sticker.png", (88, 402, 272, 576), d / "sticker-zombie.webp", width_px=552)
+    # хэллоуинский баннер стикеров (features/market-week): стикеры наборов без упаковок и фон.
+    # Зомби – со шторки выше (чистый), остальные – из упаковок, у меха порог бликов выше
+    sticker_from_package("market/items/item box-6.png", d / "sticker-bat.webp", streak=9)
+    sticker_from_package("market/items/item box-7.png", d / "sticker-ghost.webp")
+    sticker_from_package("market/items/item box-8.png", d / "sticker-pumpkin.webp")
+    # постоянные товары маркета недели: стикерпаки из 3D-стикеров и хвост-комета в пустых упаковках
+    for sticker in ("thumbs-up", "fire", "heart", "kiss"):
+        package_with(OUT / "stickers" / f"{sticker}.webp", d / "always" / f"pack-{sticker}.webp", "bag")
+    package_with(OUT / "tails" / "comet.webp", d / "always" / "box-comet.webp", "box", angle=40, scale=0.86)
+    # фон – 3D-сцена Andres Siimon, Unsplash License (unsplash.com/photos/Ec24DczLlMY)
+    resize_to("market/halloween_background.jpg", d / "halloween-bg.webp", 1400, 82)
 
 
-def video_package(path: str, dest: Path, fps: int = 15, width_px: int = 264) -> None:
+def sticker_from_package(path: str, dest: Path, streak: float = 5) -> None:
+    """Стикер из упаковки market/items (@4x) без упаковки. Окно упаковки полупрозрачное, стикер в нём
+    непрозрачный – берём самый большой непрозрачный кусок в окне. Поверх стикера лежат блики плёнки:
+    тонкие светлые штрихи вверх-вправо. Медиана вдоль линии поперёк штрихов стирает тонкую полосу
+    целиком; заменяем только там, где пиксель светлее медианы поперёк, но не вдоль – фактура меха
+    и ткани отзывается в обе стороны одинаково и остаётся. streak – порог: у меха выше, иначе мех смажется."""
+    from scipy import ndimage
+    arr = rgba(path).astype(np.float64)
+    body = arr[:, :, 3] > 0.97 * 255
+    window = np.zeros_like(body)
+    window[130:620, 90:620] = True                     # окно упаковки: без шапки, ярлыка и рамки
+    body &= window
+    lab, n = ndimage.label(body)
+    sizes = ndimage.sum(body, lab, range(1, n + 1))
+    body = ndimage.binary_fill_holes(lab == np.argmax(sizes) + 1)
+    rgb = arr[:, :, :3]
+    across = np.eye(17, dtype=bool)                    # поперёк штрихов: вниз-вправо
+    along = np.fliplr(across)
+    lum = rgb.mean(axis=2)
+    score = (lum - ndimage.median_filter(lum, footprint=across)) - np.maximum(0, lum - ndimage.median_filter(lum, footprint=along))
+    mask = ndimage.binary_dilation(ndimage.uniform_filter(score, 3) > streak, iterations=2) & body
+    for c in range(3):
+        rgb[:, :, c] = np.where(mask, ndimage.median_filter(rgb[:, :, c], footprint=across), rgb[:, :, c])
+    out = np.dstack([rgb, np.where(body, arr[:, :, 3], 0)])
+    ys, xs = np.where(body)
+    img = Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), "RGBA").crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
+    save_webp(img, dest, 90)
+
+
+def package_with(art: Path, dest: Path, kind: str, angle: float = 0, scale: float = 0.7) -> None:
+    """Упаковка маркета с предметом внутри – для постоянных товаров (features/market-week).
+    Пустая упаковка market/sticker_package.png (пакет, kind="bag") или tale_package.png (блистер,
+    kind="box") – окно прозрачное, с бликами плёнки. Под неё кладём тёмное нутро, как у упаковок
+    market/items, и предмет – веб-копию 3D-стикера или хвоста; плёнка ложится поверх предмета.
+    Ширина 390 px – как у market/items/*.webp."""
+    from PIL import ImageDraw
+    pkg = Image.open(src("market/sticker_package.png" if kind == "bag" else "market/tale_package.png")).convert("RGBA")
+    w, h = pkg.size
+    # окно: под крышкой пакета (или рамкой блистера) до низа, скругление как у упаковки
+    box = (0.13, 0.19, 0.87, 0.94) if kind == "bag" else (0.15, 0.13, 0.85, 0.9)
+    inner = Image.new("L", pkg.size, 0)
+    ImageDraw.Draw(inner).rounded_rectangle([box[0] * w, box[1] * h, box[2] * w, box[3] * h], radius=0.08 * w, fill=255)
+    out = Image.new("RGBA", pkg.size, (0, 0, 0, 0))
+    out.paste((10, 10, 10, 255), mask=inner)
+    item = Image.open(art).convert("RGBA").rotate(angle, resample=Image.BICUBIC, expand=True)
+    k = scale * w / max(item.size)
+    item = item.resize((round(item.width * k), round(item.height * k)), Image.LANCZOS)
+    cy = (box[1] + box[3]) / 2 * h
+    out.alpha_composite(item, (round(w / 2 - item.width / 2), round(cy - item.height / 2)))
+    out.alpha_composite(pkg)
+    save_webp(out.resize((390, round(390 * h / w)), Image.LANCZOS), dest, 90)
+
+
+def video_package(path: str, dest: Path, fps: int = 15, width_px: int = 264, mp4: Path | None = None) -> None:
     """Анимированная упаковка из видео (HEVC без альфы) → анимированный WebP с прозрачным фоном.
     Кадры – системным AVFoundation (tools/extract_frames.swift: ffmpeg может не быть). Чёрный фон
     вокруг упаковки убираем заливкой от углов: светлый контур упаковки её останавливает."""
@@ -921,11 +985,16 @@ def video_package(path: str, dest: Path, fps: int = 15, width_px: int = 264) -> 
         subprocess.run(["swift", str(Path(__file__).with_name("extract_frames.swift")), str(src(path)), tmp, str(fps)],
                        check=True, capture_output=True)
         frames = []
-        for f in sorted(Path(tmp).glob("*.png")):
-            im = Image.open(f).convert("RGBA")
+        shots = [Image.open(f).convert("RGBA") for f in sorted(Path(tmp).glob("*.png"))]
+        loop = shots[seamless_loop(shots, fps)]
+        for im in loop:
             w, h = im.size
             for corner in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
                 ImageDraw.floodfill(im, corner, (0, 0, 0, 0), thresh=40)
+        if mp4:
+            write_mp4(loop, mp4, fps)                      # те же кадры видео – для сетки на чёрном
+        for im in loop:
+            w, h = im.size
             if width_px != w:
                 im = im.resize((width_px, round(h * width_px / w)), Image.LANCZOS)
             frames.append(im)
@@ -934,12 +1003,137 @@ def video_package(path: str, dest: Path, fps: int = 15, width_px: int = 264) -> 
                    quality=80, method=4, lossless=False)
 
 
+def seamless_loop(frames: list[Image.Image], fps: int) -> slice:
+    """Отрезок записи, который замыкается без шва. Записи маркета – не петли: анимация в приложении
+    повторяется раз в ~2 s, а в конце записи кадр далёк от первого, и петля „подпрыгивает“.
+    Ищем начало a и длину P (в кадрах), при которых кадр a+P почти совпадает с кадром a –
+    тогда кадры [a, a+P) идут по кругу ровно. P ищем от 1.5 до 2.5 s. Сравниваем уменьшенные серые кадры."""
+    periods = range(round(fps * 1.5), round(fps * 2.5))
+    g = [np.asarray(f.convert("L").reduce(2)).astype(np.int16) for f in frames]
+    best = None
+    for p in periods:
+        for a in range(0, len(g) - p):
+            seam = np.abs(g[a + p] - g[a]).mean()
+            if best is None or seam < best[0]:
+                best = (seam, a, p)
+    _, a, p = best
+    return slice(a, a + p)
+
+
+def write_mp4(frames: list[Image.Image], dest: Path, fps: int, width_px: int = 360) -> None:
+    """Живой предмет на чёрном фоне – H.264 MP4 (tools/encode_video.swift, AVFoundation). Анимированный
+    WebP браузер декодирует кадр за кадром на процессоре, и шесть–восемь таких картинок на экране
+    дёргаются; видео декодирует видеочип. Альфы в видео нет – только для предметов на чёрном фоне."""
+    import subprocess
+    import tempfile
+    w = width_px - width_px % 2
+    h = round(frames[0].height * w / frames[0].width)
+    h -= h % 2
+    with tempfile.TemporaryDirectory() as tmp:
+        for i, f in enumerate(frames):
+            bg = Image.new("RGB", f.size, (0, 0, 0))
+            bg.paste(f, mask=f.split()[3])
+            bg.resize((w, h), Image.LANCZOS).save(Path(tmp) / f"{i:04d}.png")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["swift", str(Path(__file__).with_name("encode_video.swift")), tmp, str(dest), str(fps)],
+                       check=True, capture_output=True)
+
+
+def video_crops(path: str, boxes: dict[str, tuple[int, int, int, int]], dest: Path, thresh: int,
+                fps: int = 60, width_px: int = 288, bare: dict[str, int] | None = None,
+                mp4: tuple[str, ...] = ()) -> None:
+    """Несколько живых предметов из одного видео (запись маркета на чёрном, HEVC без альфы) –
+    каждый своим анимированным WebP с прозрачным фоном. boxes – рамка предмета в px видео без ценника.
+    Фон убираем заливкой от углов рамки: её останавливает контур упаковки (thresh 40) или тёмно-серая
+    рамка карточки (thresh 14). Потом оставляем только самый большой кусок – водяной знак
+    „Снято в BLINK“ и звёзды фона отдельно от предмета и уходят.
+    bare – {имя: отрезать сверху px}: ещё и хвост без упаковки, bare-<имя>.webp – для примерки на пине.
+    Окно упаковки – её контур, сжатый внутрь на 34 px (без стекла по краю), и без верха (подвес,
+    ярлык LIMITED); внутри окна фон почти чёрный – альфа по яркости, цвет распремножаем.
+    Кадры – с частотой записи (60); WebP – каждый второй (30 в секунду, вес), mp4 – {имя}.mp4 на все 60
+    для предметов на чёрном фоне (сетка, коллекция)."""
+    import subprocess
+    import tempfile
+    from PIL import ImageDraw
+    from scipy import ndimage
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["swift", str(Path(__file__).with_name("extract_frames.swift")), str(src(path)), tmp, str(fps)],
+                       check=True, capture_output=True)
+        files = sorted(Path(tmp).glob("*.png"))
+        for name, box in boxes.items():
+            # в памяти – только рамка предмета, не весь кадр: 60 кадров в секунду × 4 s – сотни мегабайт
+            crops = [Image.open(f).convert("RGBA").crop(box) for f in files]
+            _video_item(name, crops[seamless_loop(crops, fps)], dest, thresh, fps, width_px, bare, mp4)
+
+
+def _video_item(name: str, loop: list[Image.Image], dest: Path, thresh: int, fps: int, width_px: int,
+                bare: dict[str, int] | None, mp4: tuple[str, ...]) -> None:
+    """Один предмет из video_crops: кадры петли уже в рамке предмета."""
+    from PIL import ImageDraw
+    from scipy import ndimage
+    frames, bare_frames, full = [], [], []
+    for k, shot in enumerate(loop):
+        im = shot.copy()
+        w, h = im.size
+        for corner in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
+            ImageDraw.floodfill(im, corner, (0, 0, 0, 0), thresh=thresh)
+        arr = np.asarray(im).copy()
+        lab, n = ndimage.label(arr[:, :, 3] > 0)
+        if n > 1:
+            sizes = ndimage.sum(np.ones(lab.shape), lab, range(1, n + 1))
+            arr[lab != np.argmax(sizes) + 1, 3] = 0
+        im = Image.fromarray(arr, "RGBA")
+        if name in mp4:
+            full.append(im)
+        if k % 2:
+            continue                                   # WebP и хвост для примерки – 30 кадров в секунду
+        if bare and name in bare:
+            pkg = ndimage.binary_fill_holes(arr[:, :, 3] > 0)
+            win = ndimage.binary_erosion(pkg, iterations=34)
+            win[: bare[name]] = False
+            rgb = np.asarray(shot.convert("RGB")).astype(np.float64)
+            # у края окна хвост не обрывается прямым срезом, а растворяется за 16 px
+            fade = np.clip(ndimage.distance_transform_edt(win) / 16, 0, 1)
+            a = np.clip((rgb.max(axis=2) - 30) / 45, 0, 1) * fade
+            bare_frames.append(np.dstack([np.clip(rgb / np.maximum(a[:, :, None], 1e-3), 0, 255), a * 255]).astype(np.uint8))
+        if width_px != w:
+            im = im.resize((width_px, round(h * width_px / w)), Image.LANCZOS)
+        frames.append(im)
+    (dest / f"{name}.webp").parent.mkdir(parents=True, exist_ok=True)
+    frames[0].save(dest / f"{name}.webp", save_all=True, append_images=frames[1:], duration=round(2000 / fps),
+                   loop=0, quality=78, method=4, lossless=False)
+    if full:
+        write_mp4(full, dest / f"{name}.mp4", fps)
+    if bare_frames:
+        # одна рамка на все кадры – по общему контуру хвоста, чтобы он не прыгал
+        ys, xs = np.where(np.max([f[:, :, 3] for f in bare_frames], axis=0) > 12)
+        crop = (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1)
+        out = [Image.fromarray(f, "RGBA").crop(crop) for f in bare_frames]
+        out[0].save(dest / f"bare-{name}.webp", save_all=True, append_images=out[1:], duration=round(2000 / fps),
+                    loop=0, quality=78, method=4, lossless=False)
+
+
 def build_market_motion() -> None:
     """Живые призы маркета: упаковки хвостов с анимацией и звезда blink vip (APNG как есть)."""
     d = OUT / "market"
-    video_package("market/tail_animation.mov", d / "anim-tail-shadow.webp")
-    video_package("market/tail_animation1.mov", d / "anim-tail-fire.webp")
+    # записи – 60 кадров в секунду; WebP – 30 (вес), видео тени для сетки – тоже 30: петля одна
+    video_package("market/tail_animation.mov", d / "anim-tail-shadow.webp", fps=30, mp4=d / "tails" / "shadow.mp4")
+    video_package("market/tail_animation1.mov", d / "anim-tail-fire.webp", fps=30)
     shutil.copyfile(src("market/star-loop.png"), d / "vip-star.png")
+    # хвосты из записей маркета (features/market-week): рамки в px кадра 888 по ширине, без ценника.
+    # Упаковки – в продажу, карточки без упаковки – в „уже у тебя“ и архив. Тень (tales1) и огонь
+    # уже есть выше – anim-tail-shadow, anim-tail-fire
+    tails = d / "tails"
+    video_crops("market/tales.mov", {"paper": (100, 2, 405, 386), "jelly": (480, 2, 785, 386),
+                                     "gold": (104, 484, 404, 868), "scroll": (476, 484, 790, 868)}, tails, 40,
+                bare={"paper": 96, "jelly": 96, "gold": 140, "scroll": 96}, mp4=("paper", "jelly", "gold", "scroll"))
+    video_crops("market/tales1.mov", {"paws": (100, 26, 405, 386), "crystal": (480, 26, 782, 386)}, tails, 40,
+                bare={"paws": 96, "crystal": 96}, mp4=("paws", "crystal"))
+    video_crops("market/tales2.mov", {"card-easter": (110, 44, 420, 400), "card-neon": (490, 44, 800, 400),
+                                      "card-cat": (110, 520, 420, 880), "card-heart": (484, 520, 800, 880)}, tails, 14,
+                mp4=("card-easter", "card-neon", "card-cat", "card-heart"))
+    video_crops("market/tales3.mov", {"card-comet": (110, 490, 420, 845), "card-jewelry": (484, 490, 800, 845)}, tails, 14,
+                mp4=("card-comet", "card-jewelry"))
 
 
 def build_pins() -> None:

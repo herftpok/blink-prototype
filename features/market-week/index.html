@@ -78,7 +78,16 @@
         <p class="panel__label caps-label" id="panel-day">какой день</p>
         <button class="panel__button pressable" type="button" role="radio" data-day="thu">четверг, 8.10</button>
         <button class="panel__button pressable" type="button" role="radio" data-day="sun">воскресенье, 11.10 – последний день недели</button>
+        <button class="panel__button pressable" type="button" role="radio" data-day="last">воскресенье, 23:59:50 – смена витрины через 10 секунд</button>
         <button class="panel__button pressable" type="button" role="radio" data-day="mon">понедельник, 12.10 – новая витрина</button>
+      </div>
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-deal">
+        <p class="panel__label caps-label" id="panel-deal">скидка только для тебя</p>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" role="radio" data-deal="on">есть</button>
+          <button class="panel__button pressable" type="button" role="radio" data-deal="off">нет</button>
+        </div>
+        <button class="panel__button pressable" type="button" data-deal="soon">скидка кончится через 10 секунд</button>
       </div>
       <div class="panel__group">
         <p class="panel__label caps-label">ещё</p>

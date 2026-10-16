@@ -144,6 +144,8 @@
   --type-comment-label: 600 14px/17px var(--font-text);     /* „коммент к подарку“ */
   --type-comment: 500 17px/22px var(--font-text);           /* текст коммента и плейсхолдер */
   --type-item-text: 500 15px/20px var(--font-text);         /* описание предмета в шторке маркета (market/unlimited_sticker.png) */
+  --type-season-title: 800 38px/40px var(--font-ui);        /* заголовок сезонного баннера маркета („хэллоуин“), трекинг −0.03em */
+  --type-season-tag: 700 15px/20px var(--font-ui);          /* срок на розовой наклейке баннера („до 31.10“) */
   --tracking-title: -0.02em;                   /* заголовок экрана */
   --tracking-city: -0.04em;                    /* „москва“ на карте (карту ещё не пересматривали) */
   --tracking-section: 0;                       /* заголовок секции */

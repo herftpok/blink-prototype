@@ -1,0 +1,409 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Презентация обновлений маркета (presentation.html). Слайд – текст слева
+   и живой телефон справа: iframe index.html?embed=…, 390×844, масштаб –
+   presentation.js → fit(). Токены и компоненты – ../../styles.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.dk {
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+/* звёзды фона маркета – холстом за слайдами (scripts/particles.js) */
+.dk__sky {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.dk__deck {
+  position: relative;
+  height: 100dvh;
+}
+
+/* ── Слайд ───────────────────────────────────────────────────────────── */
+
+/* слайды лежат друг на друге, виден один; смена – прозрачностью и лёгким сдвигом */
+.dk-slide {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 600px) auto;
+  justify-content: center;
+  align-items: center;
+  column-gap: 72px;
+  padding: var(--space-32) 56px 96px;              /* снизу – место для листалки */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition:
+    opacity var(--duration-screen) ease,
+    transform var(--duration-screen) var(--ease-emphasized),
+    visibility 0s linear var(--duration-screen);
+}
+
+.dk-slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity var(--duration-screen) ease,
+    transform var(--duration-screen) var(--ease-emphasized),
+    visibility 0s;
+}
+
+.dk-slide__text {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.dk-slide__label {
+  margin-bottom: var(--space-12);
+}
+
+/* графическая метафора слайда – 3D-стикер, наклеен справа над заголовком */
+.dk-slide__sticker {
+  position: absolute;
+  top: -22px;
+  right: 0;
+  width: 84px;
+  transform: rotate(8deg);
+  pointer-events: none;
+}
+
+.dk-slide__title {
+  max-width: 500px;
+  font: var(--type-screen-title);
+  letter-spacing: var(--tracking-title);
+  text-wrap: balance;
+}
+
+.dk-slide__lead {
+  max-width: 540px;
+  margin-top: var(--space-14);
+  color: var(--color-text-secondary);
+  font: var(--type-bio);
+  text-wrap: pretty;
+}
+
+/* ── Факты: большое число и одна строка, источник мелко ─────────────── */
+
+.dk-facts {
+  display: grid;
+  gap: var(--space-20);
+  width: 100%;
+  margin-top: var(--space-32);
+  list-style: none;
+}
+
+.dk-fact {
+  display: grid;
+  grid-template-columns: 184px 1fr;
+  column-gap: var(--space-20);
+  row-gap: var(--space-4);
+  align-items: baseline;
+}
+
+.dk-fact__n {
+  grid-row: span 2;
+  font: var(--type-sheet-title);
+  letter-spacing: var(--tracking-title);
+  white-space: nowrap;
+}
+
+.dk-fact__text {
+  color: var(--color-text-secondary);
+  font: var(--type-distance);
+}
+
+.dk-fact__src {
+  color: var(--color-text-dim);
+  font: var(--type-compact);
+}
+
+/* что меряем – одна строка-вывод внизу слайда */
+.dk-measure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  margin-top: var(--space-32);
+  padding: var(--space-16) var(--space-20);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--type-meta);
+}
+
+/* ── Телефон: живой прототип в рамке, масштаб --s ───────────────────── */
+
+.dk-slide__stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-16);
+}
+
+/* рамка – как у телефона на стендах (base.css → .app), скругление 55 в масштабе */
+.dk-phone {
+  --s: 0.8;
+  position: relative;
+  width: calc(390px * var(--s));
+  height: calc(844px * var(--s));
+  overflow: hidden;
+  border-radius: calc(55px * var(--s));
+  background: var(--color-bg);
+  box-shadow:
+    0 0 0 1px var(--color-surface-raised),
+    0 0 0 7px var(--color-surface),
+    var(--shadow-sheet);
+}
+
+.dk-phone iframe {
+  display: block;
+  width: 390px;
+  height: 844px;
+  border: 0;
+  opacity: 0;
+  transform: scale(var(--s));
+  transform-origin: 0 0;
+  transition: opacity var(--duration-screen) ease;
+}
+
+.dk-phone.is-loaded iframe {
+  opacity: 1;
+}
+
+/* что показать в телефоне – переключатели под ним; выбранный – белым и с белой рамкой */
+.dk-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-8);
+  max-width: 420px;
+}
+
+.dk-toggle {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--space-14);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-chip-fill);
+  color: var(--color-text-dim);
+  font: var(--type-label);
+  white-space: nowrap;
+}
+
+.dk-toggle[aria-pressed="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+/* ── Обложка ─────────────────────────────────────────────────────────── */
+
+/* „прототип“ – наклеенная надпись, как „новые стикеры“ в баннере маркета */
+.dk-cover__kicker {
+  --sticker-size: 20px;
+  margin: 0 0 var(--space-4) var(--space-4);
+  letter-spacing: 0.02em;
+}
+
+.dk-cover__title {
+  font: var(--type-season-title);
+  letter-spacing: -0.03em;
+}
+
+.dk-slide--cover .dk-slide__sticker {
+  top: -40px;
+  right: 40px;
+  width: 112px;
+}
+
+.dk-cover__hint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-top: var(--space-32);
+  color: var(--color-text-dim);
+  font: var(--type-distance);
+}
+
+.dk-key {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-10);
+  background: var(--color-chip-fill);
+  color: var(--color-text);
+}
+
+/* ── Главное: пять изменений, у каждого – цифра и одна строка ───────── */
+
+.dk-slide--summary {
+  grid-template-columns: minmax(0, 880px);
+}
+
+.dk-summary__list {
+  display: grid;
+  gap: var(--space-14);
+  margin-top: var(--space-28);
+  list-style: none;
+}
+
+.dk-summary__item {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 300px) 1fr;
+  column-gap: var(--space-20);
+  align-items: center;
+  padding: var(--space-16) var(--space-20);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+}
+
+/* номер изменения – наклейкой со стикер-числом */
+.dk-summary__n {
+  font: var(--sticker-number-font);
+  color: var(--color-text-on-light);
+  text-shadow: var(--outline-number-3);
+  transform: rotate(-6deg);
+}
+
+.dk-summary__name {
+  font: var(--type-gift-title);
+}
+
+.dk-summary__fact {
+  color: var(--color-text-secondary);
+  font: var(--type-distance);
+}
+
+.dk-summary__fact b {
+  margin-right: var(--space-4);
+  color: var(--color-text);
+  font: var(--type-gift-title);
+}
+
+/* ── Листалка ────────────────────────────────────────────────────────── */
+
+.dk-nav {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-24);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  transform: translateX(-50%);
+}
+
+.dk-nav .icon-button {
+  display: grid;
+  place-items: center;
+  background: var(--color-bg);
+}
+
+.dk-nav__next .icon {
+  transform: scaleX(-1);
+}
+
+.dk-nav .icon-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.dk-nav__count {
+  min-width: 52px;
+  color: var(--color-text-dim);
+  font: var(--type-label);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dk-toggle:hover {
+    color: var(--color-text);
+  }
+}
+
+/* ── Узкий экран: текст сверху, телефон под ним, слайд листается вниз ── */
+
+@media (max-width: 960px) {
+  .dk-slide {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    justify-items: center;
+    row-gap: var(--space-32);
+    padding: var(--space-24) var(--gutter) 112px;
+    overflow-y: auto;
+  }
+
+  .dk-slide__text {
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .dk-slide__sticker {
+    width: 64px;
+    top: -8px;
+  }
+
+  .dk-slide__title {
+    max-width: calc(100% - 72px);
+    font: var(--type-sheet-title);
+  }
+
+  .dk-cover__title {
+    max-width: calc(100% - 96px);
+  }
+
+  .dk-slide--cover .dk-slide__sticker {
+    top: -12px;
+    right: 0;
+    width: 88px;
+  }
+
+  /* листалка – полосой внизу, контент уходит под неё в чёрное */
+  .dk-nav {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    padding: var(--space-32) 0 calc(var(--safe-bottom) + var(--space-4));
+    background: var(--gradient-fade-bottom);
+    transform: none;
+  }
+
+  .dk-fact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dk-fact__n {
+    grid-row: auto;
+  }
+
+  .dk-summary__item {
+    grid-template-columns: 36px minmax(0, 1fr);
+    row-gap: var(--space-4);
+  }
+
+  .dk-summary__fact {
+    grid-column: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-slide {
+    transform: none;
+  }
+}
