@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – стили карты: все экраны</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="states.css">
+</head>
+<body>
+<!-- Раскладка: все экраны и состояния стилей карты с номерами – чтобы сказать «в 7 поправить …».
+     Список и подписи – states.js, снимки – tools/shoot_map_styles.py; экран открывает живой стенд в этом состоянии -->
+<main class="board">
+  <header class="board__head">
+    <h1 class="board__title">стили карты</h1>
+    <p class="board__lead">все экраны и&nbsp;состояния фичи по&nbsp;номерам. экран открывает живой стенд в&nbsp;этом состоянии</p>
+    <a class="button button--primary board__stand pressable" href="index.html">открыть стенд</a>
+  </header>
+  <div data-board></div>
+</main>
+<script src="states.js"></script>
+<script src="board.js"></script>
+</body>
+</html>

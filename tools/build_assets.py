@@ -22,7 +22,7 @@ import shutil
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[2]          # папка Blink DS
 OUT = ROOT / "prototype" / "assets"
@@ -196,6 +196,13 @@ SVG_ICONS = {
     "contacts":      "Friends/contact_glyph.svg",          # „тел книга“
     "badge-star":    "Friends/star_counter.svg",           # звезда-счётчик (заявки, непрочитанные)
     "school":        "profile/glyph_school.svg",           # вход в школы „где учишься?“
+    # настройки (styles/settings/IMG_9838.PNG): строки модалки «настройки»
+    "notifications": "styles/settings/Hide Icon.svg",      # уведомления – колокольчик
+    "visibility":    "styles/settings/Hide Icon-1.svg",    # настройки видимости – глаз
+    "map-style":     "styles/settings/Hide Icon-2.svg",    # стиль карты – глобус с материками
+    "devices":       "styles/settings/24.svg",             # устройства
+    "help":          "styles/settings/Hide Icon-3.svg",    # помощь – спасательный круг
+    "about":         "styles/settings/Hide Icon-4.svg",    # о приложении – вопрос в круге
 }
 
 # Иконки, которых нет в SVG: вырезаны из PNG-ассетов и референсных скриншотов.
@@ -228,6 +235,16 @@ RASTER_ICONS = {
     "location":   (SCREEN_PROFILE, (353, 1211, 397, 1265), dict(bg="rows")),
     # маркет: плюс на белой кнопке у баланса (market/Coin balance.png снят @4x)
     "plus":       ("market/Coin balance.png", (546, 50, 606, 110), dict(bg=(255, 255, 255), fg=(0, 0, 0))),
+    # редактирование профиля (styles/profile.png): строки «пол», «дата рождения», «стиль пина»
+    "gender":     ("styles/profile.png", (42, 1737, 126, 1821), dict(bg=(0, 0, 0), fg=(255, 255, 255))),
+    "calendar":   ("styles/profile.png", (45, 1909, 123, 1985), dict(bg=(0, 0, 0), fg=(255, 255, 255))),
+    "waves":      ("styles/profile.png", (48, 2087, 120, 2141), dict(bg=(0, 0, 0), fg=(255, 255, 255))),
+    # настройки (styles/settings/IMG_9838.PNG): «приватность» – щит (своего SVG нет) и соцсети серым #7F7F7F
+    "privacy":    ("styles/settings/IMG_9838.PNG", (42, 620, 126, 704), dict(bg=(0, 0, 0), fg=(255, 255, 255))),
+    "telegram":   ("styles/settings/IMG_9838.PNG", (42, 2138, 126, 2226), dict(bg=(0, 0, 0), fg=(127, 127, 127))),
+    "vk":         ("styles/settings/IMG_9838.PNG", (174, 2138, 258, 2226), dict(bg=(0, 0, 0), fg=(127, 127, 127))),
+    "tiktok":     ("styles/settings/IMG_9838.PNG", (312, 2138, 384, 2226), dict(bg=(0, 0, 0), fg=(127, 127, 127))),
+    "youtube":    ("styles/settings/IMG_9838.PNG", (440, 2138, 520, 2226), dict(bg=(0, 0, 0), fg=(127, 127, 127))),
 }
 
 ALPHA_ICONS = {
@@ -1159,6 +1176,147 @@ def build_pins() -> None:
         live_avatar(f"avatars/p{i}.png", OUT / "people" / f"live-{i}.webp")
 
 
+def build_map_styles() -> None:
+    """
+    Стили карты (features/map-styles): картинки стилей для превью, шторки предмета и упаковки в маркете.
+    Источники – styles/: стандартный светлый и тёмный – карточка экрана «стиль карты»
+    (settings/standart.png, standart-1.png, внутри белой рамки: 1038 px = 346 pt), её пин старого вида
+    закрыт заплаткой из того же ряда домов (наш пин ляжет сверху); зима – фото с превью-стенда
+    (photo_2026-10-19…jpg, без служебной плашки сверху); майнкрафт – два рендера image (1).png, image (2).png;
+    гта и гарри поттер – скриншоты симулятора (14.01.20 и 14.01.17, одна камера): вырезано место между
+    кнопками карты и служебными подписями DEV тестового сервера – 496×600 px, другого чистого места
+    на них нет. Плоские виды (14.02.01, 14.01.57) не взяты: подписи DEV там лежат на настоящих.
+    Тёмной зимы нет – она получена из светлой таблицей цветов, снятой с пары светлый → тёмный стандартного
+    стиля (тот же кадр): цвет в цвет, а где пара молчит (белый снег) – по яркости. До настоящего рендера.
+    Детализация (ползунок на экране стиля): «средняя» и «низкая» – тот же кадр, отрисованный в 55 % и 32 %
+    разрешения, – как стиль выглядит на слабом телефоне. До рендеров с настоящими уровнями детализации.
+    У каждой картинки есть -thumb (600 px) – для плиток, упаковок и «уже у тебя».
+    Иконки приложения для модалки настроек – settings/app-icon-1…4.png.
+    """
+    from scipy import ndimage
+
+    d = OUT / "map-styles"
+    d.mkdir(parents=True, exist_ok=True)
+    # скриншоты симулятора 1128×2124, одна камера у всех стилей; в именах файлов – неразрывные пробелы
+    shots = {
+        "potter": "styles/Снимок экрана\u00a0— 2026-10-09 в\u00a014.01.17.png",
+        "gta": "styles/Снимок экрана\u00a0— 2026-10-09 в\u00a014.01.20.png",
+    }
+
+    def patch(img: Image.Image, box: tuple[int, int, int, int], dx: int, dy: int = 0, feather: float = 6) -> Image.Image:
+        """Закрыть рамку box куском той же картинки со сдвигом (dx, dy); края растворяются."""
+        x0, y0, x1, y1 = box
+        f = int(feather * 2)
+        piece = img.crop((x0 + dx - f, y0 + dy - f, x1 + dx + f, y1 + dy + f))
+        m = Image.new("L", piece.size, 0)
+        m.paste(255, (f, f, piece.width - f, piece.height - f))
+        m = m.filter(ImageFilter.GaussianBlur(feather))
+        img.paste(piece, (x0 - f, y0 - f), m)
+        return img
+
+    def save(img: Image.Image, name: str, width: int | None = None, quality: int = 86) -> None:
+        if width and img.width > width:
+            img = img.resize((width, round(img.height * width / img.width)), Image.LANCZOS)
+        save_webp(img, d / f"{name}.webp", quality)
+        # для плиток, упаковок и «уже у тебя» (до 300 pt @2x) – лёгкая копия 600 px
+        thumb = img.resize((600, round(img.height * 600 / img.width)), Image.LANCZOS) if img.width > 600 else img
+        save_webp(thumb, d / f"{name}-thumb.webp", 84)
+        # детализация: тот же кадр в меньшем разрешении, растянутый обратно
+        for level, k in (("mid", 0.55), ("low", 0.32)):
+            small = img.resize((max(1, round(img.width * k)), max(1, round(img.height * k))), Image.BILINEAR)
+            save_webp(small.resize(img.size, Image.BILINEAR), d / f"{name}-{level}.webp", quality)
+
+    # стандартный: карточка экрана «стиль карты», внутри рамки 6 pt; пин старого вида – по центру
+    inner = (66, 462, 1104, 1500)
+    for theme, path in (("light", "styles/settings/standart.png"), ("dark", "styles/settings/standart-1.png")):
+        img = Image.open(src(path)).convert("RGB")
+        img = patch(img, (452, 836, 722, 1112), -280, 105, feather=4)  # вдоль улицы: ряд домов не рвётся
+        img = patch(img, (66, 1410, 500, 1500), 520, 0, feather=8)       # BLINKMAPS в углу
+        # без скруглённых углов рамки: внутрь на радиус (16 pt)
+        save(img.crop((inner[0] + 48, inner[1] + 48, inner[2] - 48, inner[3] - 48)), f"standard-{theme}")
+
+    # таблица цветов светлый → тёмный по паре кадров стандартного стиля (без пина и вотермарка)
+    light = np.asarray(Image.open(src("styles/settings/standart.png")).convert("RGB")).astype(np.float32)
+    dark = np.asarray(Image.open(src("styles/settings/standart-1.png")).convert("RGB")).astype(np.float32)
+    known = np.zeros(light.shape[:2], bool)
+    known[inner[1]:inner[3], inner[0]:inner[2]] = True
+    known[836:1112, 452:722] = False                       # пин
+    known[1380:1500, 66:520] = False                       # BLINKMAPS
+    lp, dp = light[known], dark[known]
+    n = 17
+    cell = np.clip(np.round(lp / 255 * (n - 1)).astype(int), 0, n - 1)
+    flat = (cell[:, 0] * n + cell[:, 1]) * n + cell[:, 2]
+    sums = np.zeros((n ** 3, 3))
+    count = np.zeros(n ** 3)
+    np.add.at(sums, flat, dp)
+    np.add.at(count, flat, 1)
+    # по яркости: средний тёмный цвет для каждой ступени светлого, дальше последней ступени – она же
+    lum = lp.mean(axis=1)
+    steps = np.linspace(0, 255, 33)
+    curve = []
+    for i in range(32):
+        sel = (lum >= steps[i]) & (lum < steps[i + 1])
+        curve.append(dp[sel].mean(axis=0) if sel.sum() > 50 else None)
+    last = next(c for c in reversed(curve) if c is not None)
+    first = next(c for c in curve if c is not None)
+    filled, prev = [], first
+    for c in curve:
+        prev = c if c is not None else prev
+        filled.append(prev)
+    curve = np.array(filled)
+    curve[-4:] = last
+    centers = np.stack(np.meshgrid(*[np.arange(n)] * 3, indexing="ij"), -1).reshape(-1, 3) / (n - 1) * 255
+    by_lum = curve[np.clip((centers.mean(axis=1) / 255 * 32).astype(int), 0, 31)]
+    w = np.clip(count / 400, 0, 1)[:, None]                 # мало точек – больше веса яркости
+    lut = np.where(count[:, None] > 0, sums / np.maximum(count, 1)[:, None], by_lum) * w + by_lum * (1 - w)
+    lut = ndimage.gaussian_filter(lut.reshape(n, n, n, 3), (0.6, 0.6, 0.6, 0))
+
+    def to_dark(img: Image.Image) -> Image.Image:
+        a = np.asarray(img.convert("RGB")).astype(np.float32) / 255 * (n - 1)
+        i0 = np.clip(np.floor(a).astype(int), 0, n - 2)
+        f = a - i0
+        out = np.zeros_like(a)
+        for bx in (0, 1):
+            for by in (0, 1):
+                for bz in (0, 1):
+                    wt = (f[..., 0] if bx else 1 - f[..., 0]) * (f[..., 1] if by else 1 - f[..., 1]) * (f[..., 2] if bz else 1 - f[..., 2])
+                    out += wt[..., None] * lut[i0[..., 0] + bx, i0[..., 1] + by, i0[..., 2] + bz]
+        # снег: таблица переводит белое в цвет дорог тёмной темы – крыши слепили бы.
+        # Белое уводим в приглушённый сине-серый, светлее домов тёмной темы
+        lum = np.asarray(img.convert("L")).astype(np.float32)
+        k = np.clip((lum - 238) / 16, 0, 1)[..., None]
+        k = k * k * (3 - 2 * k)
+        out = out * (1 - k) + np.array([118, 128, 164], np.float32) * k
+        return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
+
+    # зима: фото без служебной плашки сверху
+    winter = Image.open(src("styles/photo_2026-10-19_17-59-02.jpg")).convert("RGB").crop((0, 44, 1280, 1156))
+    save(winter, "winter-light")
+    save(to_dark(winter), "winter-dark")
+
+    # майнкрафт: два рендера
+    save(Image.open(src("styles/image (1).png")).convert("RGB"), "minecraft", 1500)
+    save(Image.open(src("styles/image (2).png")).convert("RGB"), "minecraft-2", 1400)
+
+    # иконки приложения для модалки «настройки» (styles/settings/IMG_9838.PNG, карусель 577–669 pt):
+    # первая – сама иконка blink (blink-icon.png), вторая–четвёртая – вырезаны, 60 pt @3x, углы iOS
+    s_dir = OUT / "settings"
+    s_dir.mkdir(parents=True, exist_ok=True)
+    shot = Image.open(src("styles/settings/IMG_9838.PNG")).convert("RGBA")
+    for i, x in enumerate((348, 564, 780), start=2):
+        icon = np.array(shot.crop((x, 1785, x + 180, 1965))).astype(np.float32)
+        icon[:, :, 3] *= rounded_mask(180, 180, 40)
+        save_png(icon, s_dir / f"app-icon-{i}.png")
+    resize_to("blink-icon.png", s_dir / "app-icon-1.png", 180, fmt="png")
+
+    # гта и гарри поттер: место между кнопками карты – кремль и река. Кадр маленький: в превью его
+    # растянет в полтора раза – растягиваем здесь, LANCZOS с лёгкой резкостью, а не билинейно в браузере
+    for name, shot in shots.items():
+        img = Image.open(src(shot)).convert("RGB").crop((280, 990, 776, 1590))
+        img = img.resize((744, 900), Image.LANCZOS).filter(ImageFilter.UnsharpMask(radius=1.4, percent=55, threshold=2))
+        save(img, name)
+
+
 def rebuild_profile_theme(dest: Path) -> None:
     """
     Фон-тема профиля (свечение лайм → голубой → фиолетовый) есть только на
@@ -1239,6 +1397,7 @@ def main() -> None:
     build_stickers()
     build_people()
     build_pins()
+    build_map_styles()
     build_browser()
     build_share()
     build_overnights()

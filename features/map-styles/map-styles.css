@@ -1,0 +1,1375 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Стили карты (styles/SD1-Платные стили карты.pdf).
+   Общие токены и компоненты – ../../styles; маркет – screens/market.css и scripts/market.js,
+   профиль – screens/profile.css. Здесь: стенд, вкладка «стили» в маркете (упаковка – сложенная
+   карта), шторка стиля, редактирование профиля (styles/profile.png), настройки и экран
+   «стиль карты» (styles/settings/standart*.png). Координаты эталонов – pt холста 390×844.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Стенд (в продукт не идёт) ───────────────────────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-16);
+  min-height: 100dvh;
+  padding: var(--space-20) var(--space-24);
+}
+
+.stage__head {
+  text-align: center;
+}
+
+.stage__title {
+  font: var(--type-section-title);
+}
+
+.stage__lead {
+  margin-top: var(--space-4);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.stage__phones {
+  display: grid;
+  grid-template-columns: 390px 240px;
+  align-items: start;
+  column-gap: var(--space-24);
+  zoom: var(--stage-zoom, 1);                     /* телефон и пульт целиком в окне: map-styles.js → fit() */
+}
+
+.stage__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-14);
+}
+
+.stage .device {
+  min-height: 0;
+  padding: 0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  padding-top: 30px;                              /* вровень с телефоном, а не с подписью */
+}
+
+.panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.panel__row {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.panel__row > .panel__button {
+  flex: 1;
+  min-width: 0;
+}
+
+.panel__button {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-12);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-map-chip);
+  text-align: center;
+}
+
+.panel__button[aria-checked="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+/* ── Маркет, вкладка «стили» ─────────────────────────────────────────── */
+
+.ms-shop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px var(--gutter) 200px;              /* снизу – запас под таб-бар */
+}
+
+/* Новинка крупно, остальные стили сеткой в две колонки, у каждого свой лёгкий наклон, как у упаковок.
+   Упаковка – снимок: твоя карта в этом стиле, без названия – оно в шторке стиля */
+.ms-pack {
+  --press-scale: var(--press-scale-button);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-14);
+}
+
+.ms-pack--hero { --tilt: -3deg; }
+.ms-pack--grid:nth-child(odd) { --tilt: 3deg; }
+.ms-pack--grid:nth-child(even) { --tilt: -2deg; }
+
+.ms-pack__art {
+  position: relative;
+  display: block;
+  transform: rotate(var(--tilt, 0deg));
+}
+
+/* снимок – твоя карта в этом стиле: белая рамка, как у превью на экране стиля, и твой пин */
+.ms-photo {
+  --pw: 270px;
+  --ph: 196px;
+  position: relative;
+  display: block;
+  width: var(--pw);
+  height: var(--ph);
+  border: 5px solid var(--color-text);
+  border-radius: 21px;
+  background: var(--color-text);
+  box-shadow: var(--shadow-chip);
+}
+
+.ms-pack--grid .ms-photo {
+  --pw: 152px;
+  --ph: 128px;
+  border-width: 4px;
+  border-radius: 18px;
+}
+
+.ms-photo__map {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--radius-16);
+}
+
+.ms-pack--grid .ms-photo__map {
+  border-radius: var(--radius-14);
+}
+
+.ms-photo__map img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ms-photo__pin {
+  position: absolute;
+  left: 50%;
+  top: 64%;
+  width: 0;
+  height: 0;
+}
+
+.ms-photo__pin .pin {
+  left: 0;
+  top: 0;
+}
+
+.ms-shop__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-28) var(--space-12);
+  width: 100%;
+  margin-top: 56px;
+  justify-items: center;
+}
+
+/* ценник: тираж – после разделителя розовым, как в новом маркете */
+.ms-chip {
+  width: max-content;
+}
+
+.ms-chip__stock {
+  display: inline-flex;
+  align-items: center;
+  height: 14px;
+  margin-left: var(--space-4);
+  padding-left: var(--space-6);
+  border-left: 1px solid var(--color-divider);
+  color: var(--color-pink);
+  font: var(--type-button-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.ms-chip--owned {
+  gap: var(--space-6);
+  padding: 0 var(--space-10) 0 var(--space-6);
+}
+
+.ms-chip__check {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-selected);
+  color: var(--color-text-on-light);
+}
+
+.ms-chip__check .icon {
+  --icon-size: 11px;
+}
+
+/* «уже у тебя» – как в маркете: заголовок с подписью, наклеены с поворотом −2° */
+.ms-shop__section {
+  margin-top: 72px;
+  text-align: center;
+  transform: rotate(-2deg);
+}
+
+.ms-shop__owned {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px var(--space-12);
+  width: 100%;
+  margin-top: var(--space-32);
+}
+
+/* стиль в коллекции: нажатие – шторка стиля с «НАДЕТЬ»; надетый – в лаймовой рамке и «выбрано» */
+.ms-owned {
+  --press-scale: var(--press-scale-button);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+  padding: 0 var(--space-6);
+  text-align: left;
+}
+
+.ms-owned__thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 3px solid var(--color-surface-raised);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  transform: rotate(-3deg);
+}
+
+.ms-owned:nth-child(even) .ms-owned__thumb {
+  transform: rotate(2deg);
+}
+
+.ms-owned__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ms-owned[data-on="true"] .ms-owned__thumb {
+  border-color: var(--color-selected);
+}
+
+.ms-owned__vip {
+  position: absolute;
+  top: -12px;
+  right: -2px;
+  width: 36px;
+  transform: rotate(10deg);
+  pointer-events: none;
+}
+
+.ms-owned__selected {
+  position: static;
+  margin-top: calc(var(--space-4) * -1);
+}
+
+/* ── Подложка над шторками – градиент маркета, как над «кому подаришь?» ── */
+
+.ms-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: var(--gradient-market-backdrop);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-screen) ease, visibility 0s linear var(--duration-screen);
+}
+
+.ms-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--duration-screen) ease, visibility 0s;
+}
+
+/* шторка стиля открывается и поверх экрана стиля */
+.ms-backdrop--item {
+  z-index: 80;
+}
+
+/* ── Редактирование профиля (styles/profile.png) ─────────────────────── */
+
+/* шторка на весь рост: верх 56.7, r38 – как «кому подаришь?»; лента внутри листается,
+   крестик – в конце ленты, на 30 ниже центра последней строки, как на эталоне */
+.ms-page {
+  top: 56.7px;
+  max-height: none;
+  padding: 0;
+}
+
+.ms-page__scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding: 0 var(--gutter) calc(var(--safe-bottom) + var(--space-16));
+}
+
+.ms-page__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* лента листается: дети в колонке не сжимаются под её высоту */
+.ms-page__scroll > * {
+  flex-shrink: 0;
+}
+
+/* фото 110 (108–218 на эталоне) с белой полосой «изменить» внизу */
+.ms-avatar {
+  --press-scale: var(--press-scale-button);
+  position: relative;
+  flex-shrink: 0;
+  align-self: center;
+  width: 110px;
+  height: 110px;
+  margin-top: 34.3px;                             /* 108 − 56.7 − грэббер 17 */
+  overflow: hidden;
+  border-radius: var(--radius-squircle);
+  background: url("../../assets/profile/theme-glow.webp") 50% 30% / 390px auto no-repeat;
+}
+
+.ms-avatar__photo {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 128px;
+  max-width: none;
+  transform: translateX(-50%);
+}
+
+.ms-avatar__edit {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  place-items: center;
+  height: 36px;
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+  font: var(--type-label);
+  font-weight: 500;
+}
+
+/* поле с подписью – как коммент к подарку: подпись SF 14/600 серым, текст SF 17/500 */
+.ms-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 65px;
+  margin-top: var(--space-16);
+  padding: 10px var(--gutter) 11px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-16);
+  background: var(--color-surface);
+}
+
+.ms-avatar + .ms-field {
+  margin-top: 36px;                               /* 218 → 254 */
+}
+
+.ms-field__label {
+  color: var(--color-text-muted);
+  font: var(--type-comment-label);
+}
+
+.ms-field__input {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: var(--type-comment);
+  resize: none;
+}
+
+.ms-field__input:focus {
+  outline: none;
+}
+
+.ms-field:focus-within {
+  border-color: var(--color-outline);
+}
+
+.ms-field--bio {
+  min-height: 125px;
+}
+
+/* строки: шаг 57 (центры 593, 650, 707), иконка 24 с x 16, подпись с 52, шеврон до 374 */
+.ms-rows {
+  margin: 23.5px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ms-row {
+  --press-scale: var(--press-scale-row);
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  width: 100%;
+  height: 57px;
+  text-align: left;
+}
+
+.ms-row > .icon:first-child {
+  --icon-size: 24px;
+  color: var(--color-text);
+}
+
+.ms-row__label {
+  flex-shrink: 0;
+  font: var(--type-label);
+  letter-spacing: var(--tracking-title);
+}
+
+/* значение прижато вправо и уступает место подписи: длинное – с многоточием */
+.ms-row__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font: var(--type-row-value);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms-row__chevron {
+  --icon-size: 18px;
+  margin-left: 1px;
+  color: var(--color-outline);
+}
+
+/* крестик внизу (styles/profile.png, standart.png): светлая плашка 46, r14, чёрный крестик */
+.ms-close {
+  --press-scale: var(--press-scale-button);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  align-self: center;
+  width: 46px;
+  height: 46px;
+  margin-top: 1.5px;
+  border-radius: var(--radius-14);
+  background: var(--gradient-chip-light);
+  box-shadow: inset 0 0 0 1px var(--color-text), var(--shadow-chip);
+  color: var(--color-text-on-light);
+}
+
+.ms-close .icon {
+  --icon-size: 18px;
+}
+
+/* ── Профиль: тема и карандаш слева, шестерёнка настроек справа, «маркета» нет ── */
+
+#screen-profile .profile__topbar {
+  padding-right: var(--gutter);
+}
+
+/* ── Настройки (styles/settings/IMG_9838.PNG, всё листается – figma: настройки.png) ── */
+
+/* шторка на весь рост: верх 47.7, над ней градиент маркета */
+.ms-page--settings {
+  top: 47.7px;
+}
+
+/* заголовок: x-высота с 102.7, базовая линия на 118 */
+.ms-settings__title {
+  margin-top: 26.4px;
+  font: var(--type-settings-title);
+}
+
+/* строки через 56 (центры 164.5, 220.7 … 500.7): иконка 24 с x 16, подпись с 56 */
+.ms-settings__list {
+  margin: 11.4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ms-setting {
+  --press-scale: var(--press-scale-row);
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  width: 100%;
+  height: 56px;
+  font: var(--type-settings-row);
+  letter-spacing: var(--tracking-settings-row);
+  text-align: left;
+}
+
+.ms-setting .icon {
+  --icon-size: 24px;
+}
+
+/* подписи разделов: КАПС серым, «ТВОЯ ИКОНКА ПРИЛОЖЕНИЯ» с 551 */
+.ms-settings__caps {
+  margin-top: 19px;
+  color: var(--color-text-muted);
+  font: var(--type-settings-caps);
+  text-transform: uppercase;
+}
+
+/* иконки приложения: плашка #242424 577–669, r24, иконки 60 через 12 с x 44, выбранная – с белой
+   галочкой на углу */
+.ms-icons {
+  display: flex;
+  gap: var(--space-12);
+  margin-top: 13px;
+  padding: 18px 28px;
+  overflow-x: auto;
+  border-radius: var(--radius-24);
+  background: var(--color-surface-raised);
+  scrollbar-width: none;
+}
+
+.ms-icons::-webkit-scrollbar {
+  display: none;
+}
+
+.ms-icons__item {
+  --press-scale: var(--press-scale-button);
+  position: relative;
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+}
+
+.ms-icons__item img {
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--radius-ios-app-icon) * 60 / 38);   /* маска иконки iOS: та же доля, что у иконки 38 в пуше */
+  object-fit: cover;
+}
+
+.ms-icons__check {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--color-surface-raised);
+  border-radius: 50%;
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity var(--duration-state) ease, transform var(--duration-state) ease;
+}
+
+.ms-icons__check .icon {
+  --icon-size: 12px;
+}
+
+.ms-icons__item[aria-checked="true"] .ms-icons__check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* соцсети: глифы 24 серым через 44 (715–739) */
+.ms-socials {
+  display: flex;
+  gap: var(--space-20);
+  margin-top: 11px;
+}
+
+.ms-socials__item {
+  --press-scale: var(--press-scale-small);
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: var(--color-text-muted);
+}
+
+.ms-socials__item .icon {
+  --icon-size: 24px;
+}
+
+/* «выйти», «удалить аккаунт» – серым, через 51 (центры 784 и 835) */
+.ms-settings__link {
+  --press-scale: var(--press-scale-row);
+  align-self: flex-start;
+  height: 51px;
+  margin-top: 0;
+  color: var(--color-text-muted);
+  font: var(--type-settings-row);
+  letter-spacing: var(--tracking-settings-row);
+}
+
+.ms-socials + .ms-settings__link {
+  margin-top: 19px;
+}
+
+/* ── Экран «стиль карты» (styles/settings/standart*.png) ─────────────── */
+
+.ms-style {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  background: var(--color-bg);
+  transform: translateY(100%);
+  transition: transform var(--duration-sheet) var(--ease-emphasized);
+}
+
+.ms-style.is-open {
+  transform: translateY(0);
+}
+
+.ms-style[hidden] {
+  display: none;
+}
+
+.ms-style:focus {
+  outline: none;
+}
+
+.ms-style__scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding: 90.3px var(--gutter) 150px;            /* базовая линия заголовка – 118.7 */
+}
+
+.ms-style__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.ms-style__title {
+  font: var(--type-modal-title);
+  letter-spacing: var(--tracking-title);
+}
+
+/* превью 358 в белой рамке 6, r22 снаружи и 16 внутри (148 – верх на эталоне); на эталоне
+   превью квадратное, здесь ниже – 220: под ним встали выбор стиля, тема и детализация с пояснениями,
+   а крестик остался на своём месте */
+.ms-preview {
+  position: relative;
+  height: 220px;
+  margin-top: 21.7px;
+  border: 6px solid var(--color-text);
+  border-radius: 22px;
+  background: var(--color-text);
+}
+
+.ms-preview__map {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--radius-16);
+  background: var(--color-surface);
+}
+
+.ms-preview__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity var(--duration-screen) ease;
+}
+
+.ms-preview__img.is-in {
+  opacity: 1;
+}
+
+.ms-preview__pin {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: 0;
+  height: 0;
+}
+
+.ms-preview__pin .pin {
+  left: 0;
+  top: 0;
+}
+
+/* выбор стиля: прямоугольники 120×80 лентой вбок, третий выглядывает из-за края; цена или vip –
+   пилюлей в левом нижнем углу картинки */
+.ms-picker {
+  display: flex;
+  gap: var(--space-8);
+  margin: var(--space-14) calc(var(--gutter) * -1) 0;
+  padding: 2px var(--gutter);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding: 0 var(--gutter);
+  scrollbar-width: none;
+}
+
+.ms-picker::-webkit-scrollbar {
+  display: none;
+}
+
+.ms-tile {
+  --press-scale: var(--press-scale-button);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  flex-shrink: 0;
+  width: 120px;
+  scroll-snap-align: start;
+}
+
+.ms-tile__thumb {
+  display: block;
+  width: 120px;
+  height: 80px;
+  overflow: hidden;
+  border-radius: var(--radius-16);
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 2px transparent;
+  transition: box-shadow var(--duration-state) ease;
+}
+
+.ms-tile__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* выбран – белая рамка 2.5 внутрь поверх картинки, как у плиток выбора */
+.ms-tile[aria-pressed="true"] .ms-tile__thumb {
+  position: relative;
+}
+
+.ms-tile[aria-pressed="true"] .ms-tile__thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 3px var(--color-text), inset 0 0 0 5px var(--color-bg);
+}
+
+/* подпись – как у плиток «трях», «номер»: SF 12/500 */
+.ms-tile__name {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font: var(--type-tile);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms-tile[aria-pressed="true"] .ms-tile__name {
+  color: var(--color-text);
+}
+
+/* чего нет – цена или vip на нижнем крае картинки: тёмная пилюля, как ценник маркета */
+.ms-tile__chip {
+  position: absolute;
+  top: 52px;
+  left: var(--space-6);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: 22px;
+  padding: 0 var(--space-8) 0 3px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-card);
+  color: var(--color-text);
+  font: var(--type-gift-note);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  width: max-content;
+}
+
+.ms-tile__coin,
+.ms-tile__vip {
+  width: 16px;
+  height: 16px;
+}
+
+.ms-tile__vip {
+  margin-left: var(--space-2);
+}
+
+.ms-options {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-14);
+}
+
+/* тема: рамка 2 #242424, r16, выбранный сегмент – плашка #242424 r12 (16 − 4), КАПС.
+   У стиля без темы – выключен: всё серое, отмечен «светлый», под ним – почему */
+.ms-segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  height: 48px;
+  padding: var(--space-4);
+  border: 2px solid var(--color-surface-raised);
+  border-radius: var(--radius-16);
+}
+
+.ms-segmented__item {
+  --press-scale: var(--press-scale-button);
+  border-radius: var(--radius-12);
+  color: var(--color-text-muted);
+  font: var(--type-segment);
+  letter-spacing: var(--tracking-segment);
+  text-transform: uppercase;
+  transition: background-color var(--duration-state) ease, color var(--duration-state) ease;
+}
+
+.ms-segmented__item[aria-checked="true"] {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.ms-segmented.is-off {
+  border-color: var(--color-surface);
+}
+
+.ms-segmented.is-off .ms-segmented__item {
+  color: var(--color-text-faint);
+  cursor: default;
+}
+
+.ms-segmented.is-off .ms-segmented__item[aria-checked="true"] {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+/* пояснение под настройкой: SF 13 серым */
+.ms-note {
+  margin-top: var(--space-8);
+  padding: 0 var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-note);
+  text-wrap: pretty;
+}
+
+.ms-note__line {
+  display: block;
+}
+
+.ms-note__sticker {
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  margin: -3px 0 0;
+  vertical-align: middle;
+}
+
+/* детализация: та же рамка; сверху подпись, ползунок в три шага, под ним уровни – выбранный белым,
+   у того, что советуем этому телефону, – большой палец */
+.ms-detail {
+  --value: 2;
+  position: relative;
+  overflow-x: clip;                               /* рейка бегунка сдвинута transform: за рамкой её не видно и ленту вбок она не растягивает */
+  overflow-clip-margin: 6px;
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-24);                    /* отдельный блок: от темы и её пояснения – с отступом */
+  padding: 10px var(--space-14) 9px;
+  border: 2px solid var(--color-surface-raised);
+  border-radius: var(--radius-16);
+}
+
+.ms-detail__label {
+  color: var(--color-text-muted);
+  font: var(--type-segment);
+  letter-spacing: var(--tracking-segment);
+  text-transform: uppercase;
+}
+
+.ms-detail__track {
+  position: relative;
+  height: 4px;
+  margin: 12px 12px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+}
+
+.ms-detail__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-text);
+  transform: scaleX(calc(var(--value) / 2));
+  transform-origin: 0 50%;
+  transition: transform var(--duration-state) ease;
+}
+
+.ms-detail__tick {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--at) * 50%);
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+}
+
+.ms-detail__tick.is-on {
+  background: var(--color-text);
+}
+
+/* бегунок едет по рейке шириной с дорожку: translateX(50 %) рейки – полшага */
+.ms-detail__rail {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translateX(calc(var(--value) * 50%));
+  transition: transform var(--duration-state) ease;
+}
+
+.ms-detail__thumb {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border-radius: 50%;
+  background: var(--color-text);
+  box-shadow: var(--shadow-chip);
+}
+
+/* сам ползунок – родной range поверх дорожки, невидимый: клавиатура и скринридер как у системного.
+   Шире дорожки на полбегунка с каждой стороны – тогда его шаги ложатся на отметки */
+.ms-detail__input {
+  position: absolute;
+  top: -14px;
+  bottom: -14px;
+  left: -12px;
+  width: calc(100% + 24px);
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+          appearance: none;
+}
+
+.ms-detail__input::-webkit-slider-thumb {
+  width: 24px;
+  height: 24px;
+  -webkit-appearance: none;
+          appearance: none;
+}
+
+.ms-detail__input::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: 0;
+}
+
+.ms-detail:focus-within .ms-detail__thumb {
+  box-shadow: var(--shadow-chip), 0 0 0 3px var(--color-bg), 0 0 0 5px var(--color-text);
+}
+
+.ms-detail:has(.ms-detail__input:not(:focus-visible)) .ms-detail__thumb {
+  box-shadow: var(--shadow-chip);
+}
+
+/* уровни под отметками: крайние – по краям, средний – по центру; выбранный белым */
+.ms-detail__stops {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ms-detail__stop {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-text-muted);
+  font: var(--type-tile);
+}
+
+.ms-detail__stop.is-on {
+  color: var(--color-text);
+}
+
+.ms-detail__rec {
+  display: none;
+  width: 16px;
+  height: 16px;
+  margin: -2px 0;
+}
+
+.ms-detail__stop.is-recommended .ms-detail__rec {
+  display: block;
+}
+
+/* у стиля без детализации: всё серое, бегунка нет, почему – в пояснении */
+.ms-detail.is-off {
+  border-color: var(--color-surface);
+}
+
+.ms-detail.is-off .ms-detail__stop {
+  color: var(--color-text-faint);
+}
+
+.ms-detail.is-off .ms-detail__track,
+.ms-detail.is-off .ms-detail__tick {
+  background: var(--color-surface);
+}
+
+.ms-detail.is-off .ms-detail__fill,
+.ms-detail.is-off .ms-detail__rail {
+  display: none;
+}
+
+.ms-detail.is-off .ms-detail__input {
+  cursor: default;
+}
+
+/* крестик экрана – на 734–780, по центру */
+.ms-style__close {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + 30px);
+  margin: 0 0 0 -23px;
+}
+
+/* ── Шторка стиля: карточка товара ───────────────────────────────────── */
+
+.ms-item {
+  z-index: 81;
+  padding: 0 var(--space-24) calc(var(--safe-bottom) + var(--space-28));
+}
+
+.ms-item__title {
+  margin-top: var(--space-24);
+  font: var(--type-sheet-title);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms-item__body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.ms-item__leave {
+  margin-top: var(--space-4);
+  color: var(--color-pink);
+  font: var(--type-caption);
+}
+
+.ms-item__text {
+  margin-top: var(--space-6);
+  color: var(--color-text-muted);
+  font: var(--type-item-text);
+  text-wrap: pretty;
+}
+
+/* какая у стиля тема – одной строкой под описанием: «тема» серым, значение справа; только светлая – серым */
+.ms-theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  min-height: 48px;
+  margin-top: var(--space-16);
+  padding: 0 var(--space-16);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+}
+
+.ms-theme-row__label {
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+.ms-theme-row__value {
+  font: var(--type-label);
+}
+
+.ms-theme-row.is-off .ms-theme-row__value {
+  color: var(--color-text-muted);
+}
+
+.ms-item__stock {
+  margin-top: var(--space-16);
+}
+
+.ms-item__stock-bar {
+  height: 28px;
+  padding: 3px;
+  border-radius: var(--radius-10);
+  background: var(--color-banner-fill);
+  overflow: hidden;
+}
+
+.ms-item__stock-fill {
+  width: calc(var(--share) * 100%);
+  height: 100%;
+  border-radius: 7px;                             /* 10 − 3 */
+  background: var(--gradient-holo);
+}
+
+.ms-item__stock-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 9px;
+  font: var(--type-gift-note);
+}
+
+.ms-item__stock-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.ms-item__stock-total {
+  color: var(--color-text-muted);
+}
+
+/* снимки стиля: твой пин и друзья на этой карте; несколько – листаются вбок, соседний выглядывает */
+.ms-shots {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-10);
+  margin: var(--space-16) calc(var(--space-24) * -1) 0;
+  padding: 0 var(--space-24);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--space-24);
+  scrollbar-width: none;
+}
+
+.ms-shots::-webkit-scrollbar {
+  display: none;
+}
+
+.ms-shot {
+  position: relative;
+  flex: 0 0 100%;
+  height: 250px;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-modal);
+  background: var(--color-surface);
+  scroll-snap-align: start;
+}
+
+.ms-shots--many .ms-shot {
+  flex-basis: 88%;
+}
+
+.ms-shot__map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ms-shot__pin {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 0;
+  height: 0;
+}
+
+.ms-shot__pin .pin {
+  left: 0;
+  top: 0;
+}
+
+/* подпись темы на снимке – плашка карты: светлое стекло, SF 13 */
+.ms-shot__label {
+  position: absolute;
+  top: var(--space-12);
+  left: var(--space-12);
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--space-10);
+  border-radius: var(--radius-pill);
+  background: var(--color-map-chip);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  box-shadow: var(--shadow-map-chip);
+  color: var(--color-text-on-map);
+  font: var(--type-map-chip-strong);
+}
+
+.ms-dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-6);
+  margin-top: var(--space-10);
+}
+
+.ms-dots__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  transition: background-color var(--duration-state) ease;
+}
+
+.ms-dots__dot.is-on {
+  background: var(--color-text);
+}
+
+.ms-item__friends {
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+  min-height: 34px;
+  margin-top: var(--space-20);
+  color: var(--color-text-muted);
+  font: var(--type-gift-option);
+  letter-spacing: 0.02em;
+}
+
+.ms-item__friends--none {
+  justify-content: center;
+}
+
+.ms-faces {
+  display: flex;
+  padding-left: 9px;
+}
+
+.ms-faces__img,
+.ms-faces__more {
+  width: 34px;
+  height: 34px;
+  margin-left: -9px;
+  border: 2px solid var(--color-bg);
+  border-radius: var(--radius-squircle);
+}
+
+.ms-faces__img {
+  object-fit: cover;
+}
+
+.ms-faces__more {
+  display: grid;
+  place-items: center;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font: var(--type-button-compact);
+}
+
+/* CTA: «КУПИТЬ» и цена по краям; «выбрать», «оформить blink vip», «выбран» – по центру */
+.ms-cta {
+  flex-shrink: 0;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: var(--space-20);
+  padding: 0 var(--space-16);
+}
+
+.ms-cta--center {
+  justify-content: center;
+}
+
+.ms-cta__price {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-variant-numeric: tabular-nums;
+}
+
+.ms-cta__coin {
+  width: 22px;
+  height: 22px;
+}
+
+.ms-cta__vip {
+  width: 26px;
+  height: 26px;
+  margin: -4px 0;
+}
+
+
+/* ── Телефон: стенд складывается в колонку ───────────────────────────── */
+
+@media (max-width: 480px) {
+  .stage {
+    gap: 0;
+    padding: 0;
+  }
+
+  .stage__head {
+    padding: var(--space-20) var(--gutter);
+  }
+
+  .stage__phones {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    zoom: 1;
+  }
+
+  .stage__side {
+    width: 100%;
+    gap: 0;
+  }
+
+  .stage__side .device {
+    align-self: stretch;
+  }
+
+  .stage__caption {
+    align-self: stretch;
+    padding: var(--space-12) var(--gutter);
+  }
+
+  .panel {
+    align-self: stretch;
+    padding: var(--space-8) var(--gutter) var(--space-24);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel__button:hover {
+    border-color: var(--color-text-dim);
+    color: var(--color-text);
+  }
+
+  .ms-segmented__item:not([aria-checked="true"]):hover {
+    color: var(--color-text-secondary);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ms-style,
+  .ms-preview__img,
+  .ms-detail__fill,
+  .ms-detail__rail {
+    transition: none;
+  }
+}

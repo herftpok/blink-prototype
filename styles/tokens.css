@@ -146,6 +146,15 @@
   --type-item-text: 500 15px/20px var(--font-text);         /* описание предмета в шторке маркета (market/unlimited_sticker.png) */
   --type-season-title: 800 38px/40px var(--font-ui);        /* заголовок сезонного баннера маркета („хэллоуин“), трекинг −0.03em */
   --type-season-tag: 700 15px/20px var(--font-ui);          /* срок на розовой наклейке баннера („до 31.10“) */
+  --type-modal-title: 700 29px/36px var(--font-ui);         /* „стиль карты“ – экран на весь рост с крестиком внизу (styles/settings/standart.png), fit-font, трекинг −0.02em */
+  --type-row-value: 500 15.5px/20px var(--font-ui);         /* „мужской“, „дементор“ – значение строки редактирования профиля (styles/profile.png), fit-font */
+  --type-segment: 700 12.5px/16px var(--font-ui);           /* „СВЕТЛЫЙ · ТЁМНЫЙ · СИСТЕМНЫЙ“ – переключатель темы карты, КАПС, fit-font */
+  --tracking-segment: -0.04em;
+  --type-settings-title: 700 28px/34px var(--font-text);    /* „настройки“ – модалка настроек системным шрифтом (styles/settings/IMG_9838.PNG): x-высота 15.3 при ширине 143 – SF, не Montserrat */
+  --type-settings-row: 600 17px/22px var(--font-text);      /* „уведомления“, „выйти“ – строки там же: SF 17 semibold, как в списках iOS (по ширинам трёх подписей) */
+  --type-settings-caps: 600 12px/16px var(--font-text);     /* „ТВОЯ ИКОНКА ПРИЛОЖЕНИЯ“ – там же, КАПС */
+  --tracking-settings-row: -0.02em;            /* SF 17 в iOS идёт с поджатым трекингом */
+  --type-note: 400 13px/17px var(--font-text);              /* пояснение под настройкой: как работает детализация, почему темы нет */
   --tracking-title: -0.02em;                   /* заголовок экрана */
   --tracking-city: -0.04em;                    /* „москва“ на карте (карту ещё не пересматривали) */
   --tracking-section: 0;                       /* заголовок секции */

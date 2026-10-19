@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – стили карты</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/screens/market.css">
+  <link rel="stylesheet" href="../../styles/screens/profile.css">
+  <link rel="stylesheet" href="map-styles.css">
+</head>
+<body>
+<div class="stage">
+
+  <!-- Стенд: подписи и пульт – только для показа, в продукт не идут -->
+  <header class="stage__head">
+    <h1 class="stage__title">стили карты</h1>
+    <p class="stage__lead">стиль покупается в маркете, а меняется там же, в профиле и в настройках</p>
+  </header>
+
+  <div class="stage__phones" id="stage-phones">
+    <section class="stage__side" aria-labelledby="side-phone">
+      <h2 class="stage__caption caps-label" id="side-phone">ты</h2>
+      <div class="device">
+        <main class="app" id="app" data-status="dark" data-home="light" aria-label="телефон">
+          <div class="status-bar" aria-hidden="true">
+            <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+            <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+            <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+          </div>
+
+          <!-- ═══ МАРКЕТ: разметку собирает scripts/market.js, вкладка «стили» – map-styles.js ═══ -->
+          <section class="screen market" id="screen-market" aria-label="маркет" hidden></section>
+
+          <!-- ═══ ТЫ (профиль, profile/profile.png): кнопки сверху ведут в редактирование и настройки ═══ -->
+          <section class="screen profile" id="screen-profile" aria-label="профиль">
+            <div class="screen__scroll">
+              <div class="profile__content">
+                <div class="profile__theme" aria-hidden="true"></div>
+
+                <!-- сверху: тема и карандаш слева, шестерёнка настроек – в правом углу; «маркета» в профиле нет -->
+                <div class="profile__topbar">
+                  <div class="profile__tools">
+                    <button class="icon-button icon-button--glass pressable" type="button" aria-label="тема профиля"><i class="icon icon--palette" aria-hidden="true"></i></button>
+                    <button class="icon-button icon-button--glass pressable" type="button" aria-label="редактировать профиль" data-open="edit"><i class="icon icon--edit" aria-hidden="true"></i></button>
+                  </div>
+                  <button class="icon-button icon-button--glass pressable" type="button" aria-label="настройки" data-open="settings"><i class="icon icon--settings" aria-hidden="true"></i></button>
+                </div>
+
+                <div class="profile__hero">
+                  <div class="profile__gifts" id="profile-gifts"></div>
+                  <img class="profile__avatar" id="profile-avatar" src="../../assets/people/me-cutout.webp" alt="фото профиля">
+                  <button class="username-pill pressable" type="button">
+                    <span class="share-button" aria-hidden="true"><i class="icon icon--share"></i></span>
+                    <span id="profile-username"></span>
+                    <span class="visually-hidden">поделиться профилем</span>
+                  </button>
+                </div>
+
+                <h1 class="profile__name" id="profile-name"></h1>
+                <p class="profile__bio" id="profile-bio"></p>
+                <p class="profile__location"><i class="icon icon--location" aria-hidden="true"></i><span id="profile-city"></span></p>
+                <div class="profile__entry">
+                  <button class="chip pressable" type="button"><i class="icon icon--school" aria-hidden="true"></i>где учишься?</button>
+                </div>
+
+                <div class="profile-stats">
+                  <button class="stat stat--friends pressable" type="button" id="stat-friends">
+                    <img class="stat__art" src="../../assets/profile/profile-friends.webp" alt="">
+                    <span class="stat__badge"><img src="../../assets/profile/beautiful-profile-counter.webp" alt=""><span id="stat-friends-new"></span></span>
+                    <span class="stat__label">друзья</span>
+                  </button>
+                  <button class="stat stat--views pressable" type="button" id="stat-views">
+                    <img class="stat__art" src="../../assets/profile/profile-views.webp" alt="">
+                    <img class="stat__eyes" src="../../assets/stickers/eyes.webp" alt="">
+                  </button>
+                  <button class="stat stat--stars pressable" type="button" id="stat-stars">
+                    <img class="stat__glow" src="../../assets/profile/image-stars-profile-light.webp" alt="">
+                    <img class="stat__art" src="../../assets/profile/image-stars-profile.webp" alt="">
+                    <span class="stat__badge"><img src="../../assets/profile/beautiful-profile-counter.webp" alt=""><span id="stat-stars-new"></span></span>
+                  </button>
+                  <button class="stat stat--checkins pressable" type="button" id="stat-checkins">
+                    <img class="stat__art" src="../../assets/profile/profile-checkins.webp" alt="">
+                    <span class="stat__label">чекины</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <nav class="tabbar" aria-label="разделы">
+            <button class="tabbar__item pressable" type="button" data-tab="map"><i class="icon icon--pin" aria-hidden="true"></i>карта</button>
+            <button class="tabbar__item pressable" type="button" data-tab="friends"><i class="icon icon--friends" aria-hidden="true"></i>друзья</button>
+            <button class="tabbar__item pressable" type="button" data-tab="chats"><i class="icon icon--chat" aria-hidden="true"></i>чаты</button>
+            <button class="tabbar__item pressable" type="button" data-tab="market"><i class="icon icon--market" aria-hidden="true"></i>маркет</button>
+            <button class="tabbar__item pressable" type="button" data-tab="profile" aria-current="page"><img class="tabbar__avatar" src="../../assets/people/me-cutout.webp" alt="">ты</button>
+          </nav>
+
+          <!-- ═══ Редактирование профиля (styles/profile.png): шторка на весь рост над градиентом маркета ═══ -->
+          <div class="ms-backdrop" data-backdrop="edit"></div>
+          <div class="sheet ms-page" id="sheet-edit" role="dialog" aria-modal="true" aria-label="редактирование профиля" tabindex="-1">
+            <div class="sheet__handle" data-drag>
+              <div class="sheet__grabber" aria-hidden="true"></div>
+            </div>
+            <div class="ms-page__scroll">
+              <button class="ms-avatar pressable" type="button" aria-label="изменить фото">
+                <img class="ms-avatar__photo" src="../../assets/people/me-cutout.webp" alt="">
+                <span class="ms-avatar__edit" aria-hidden="true">изменить</span>
+              </button>
+
+              <label class="ms-field">
+                <span class="ms-field__label">никнейм</span>
+                <input class="ms-field__input" id="edit-username" type="text" autocomplete="off" autocapitalize="none" spellcheck="false">
+              </label>
+              <label class="ms-field">
+                <span class="ms-field__label">имя</span>
+                <input class="ms-field__input" id="edit-name" type="text" autocomplete="off">
+              </label>
+              <label class="ms-field ms-field--bio">
+                <span class="ms-field__label">био</span>
+                <textarea class="ms-field__input" id="edit-bio" rows="4" maxlength="140"></textarea>
+              </label>
+
+              <ul class="ms-rows" role="list">
+                <li><button class="ms-row pressable" type="button"><i class="icon icon--gender" aria-hidden="true"></i><span class="ms-row__label">пол</span><span class="ms-row__value">мужской</span><i class="icon icon--chevron ms-row__chevron" aria-hidden="true"></i></button></li>
+                <li><button class="ms-row pressable" type="button"><i class="icon icon--calendar" aria-hidden="true"></i><span class="ms-row__label">дата рождения</span><span class="ms-row__value">17 мар 1998</span><i class="icon icon--chevron ms-row__chevron" aria-hidden="true"></i></button></li>
+                <li><button class="ms-row pressable" type="button"><i class="icon icon--waves" aria-hidden="true"></i><span class="ms-row__label">стиль пина</span><span class="ms-row__value">дементор</span><i class="icon icon--chevron ms-row__chevron" aria-hidden="true"></i></button></li>
+                <li><button class="ms-row pressable" type="button" data-open="style"><i class="icon icon--map-style" aria-hidden="true"></i><span class="ms-row__label">стиль карты</span><span class="ms-row__value" data-style-name></span><i class="icon icon--chevron ms-row__chevron" aria-hidden="true"></i></button></li>
+              </ul>
+
+              <button class="ms-close pressable" type="button" data-close aria-label="закрыть"><i class="icon icon--close" aria-hidden="true"></i></button>
+            </div>
+          </div>
+
+          <!-- ═══ Настройки (styles/settings/IMG_9838.PNG): шторка на весь рост над градиентом маркета ═══ -->
+          <div class="ms-backdrop" data-backdrop="settings"></div>
+          <div class="sheet ms-page ms-page--settings" id="sheet-settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
+            <div class="sheet__handle" data-drag>
+              <div class="sheet__grabber" aria-hidden="true"></div>
+            </div>
+            <div class="ms-page__scroll">
+              <h2 class="ms-settings__title" id="settings-title">настройки</h2>
+              <ul class="ms-settings__list" role="list">
+                <li><button class="ms-setting pressable" type="button"><i class="icon icon--notifications" aria-hidden="true"></i>уведомления</button></li>
+                <li><button class="ms-setting pressable" type="button"><i class="icon icon--privacy" aria-hidden="true"></i>приватность</button></li>
+                <li><button class="ms-setting pressable" type="button"><i class="icon icon--visibility" aria-hidden="true"></i>настройки видимости</button></li>
+                <li><button class="ms-setting pressable" type="button" data-open="style"><i class="icon icon--map-style" aria-hidden="true"></i>стиль карты</button></li>
+                <li><button class="ms-setting pressable" type="button"><i class="icon icon--devices" aria-hidden="true"></i>устройства</button></li>
+                <li><button class="ms-setting pressable" type="button"><i class="icon icon--help" aria-hidden="true"></i>помощь</button></li>
+                <li><button class="ms-setting pressable" type="button"><i class="icon icon--about" aria-hidden="true"></i>о приложении</button></li>
+              </ul>
+
+              <h3 class="ms-settings__caps" id="app-icons-title">твоя иконка приложения</h3>
+              <div class="ms-icons" id="app-icons" role="radiogroup" aria-labelledby="app-icons-title">
+                <button class="ms-icons__item pressable" type="button" role="radio" data-icon="1" aria-label="blink"><img src="../../assets/settings/app-icon-1.png" alt=""><span class="ms-icons__check" aria-hidden="true"><i class="icon icon--check"></i></span></button>
+                <button class="ms-icons__item pressable" type="button" role="radio" data-icon="2" aria-label="театр"><img src="../../assets/settings/app-icon-2.png" alt=""><span class="ms-icons__check" aria-hidden="true"><i class="icon icon--check"></i></span></button>
+                <button class="ms-icons__item pressable" type="button" role="radio" data-icon="3" aria-label="луг"><img src="../../assets/settings/app-icon-3.png" alt=""><span class="ms-icons__check" aria-hidden="true"><i class="icon icon--check"></i></span></button>
+                <button class="ms-icons__item pressable" type="button" role="radio" data-icon="4" aria-label="осень"><img src="../../assets/settings/app-icon-4.png" alt=""><span class="ms-icons__check" aria-hidden="true"><i class="icon icon--check"></i></span></button>
+              </div>
+
+              <h3 class="ms-settings__caps">а ещё мы смешные! подписывайся!</h3>
+              <div class="ms-socials">
+                <button class="ms-socials__item pressable" type="button" aria-label="telegram"><i class="icon icon--telegram" aria-hidden="true"></i></button>
+                <button class="ms-socials__item pressable" type="button" aria-label="вконтакте"><i class="icon icon--vk" aria-hidden="true"></i></button>
+                <button class="ms-socials__item pressable" type="button" aria-label="tiktok"><i class="icon icon--tiktok" aria-hidden="true"></i></button>
+                <button class="ms-socials__item pressable" type="button" aria-label="youtube"><i class="icon icon--youtube" aria-hidden="true"></i></button>
+              </div>
+
+              <button class="ms-settings__link pressable" type="button">выйти</button>
+              <button class="ms-settings__link pressable" type="button">удалить аккаунт</button>
+            </div>
+          </div>
+
+          <!-- ═══ Экран «стиль карты» (styles/settings/standart*.png): на весь рост, снизу, крестик внизу ═══ -->
+          <section class="ms-style" id="screen-style" role="dialog" aria-modal="true" aria-labelledby="style-title" tabindex="-1" hidden>
+            <div class="ms-style__scroll">
+              <h1 class="ms-style__title" id="style-title">стиль карты</h1>
+
+              <!-- превью: выбранный стиль с твоим пином, в белой рамке -->
+              <div class="ms-preview" id="preview" role="img" aria-live="polite">
+                <div class="ms-preview__map" id="preview-map"></div>
+                <span class="ms-preview__pin" id="preview-pin"></span>
+              </div>
+
+              <div class="ms-picker" id="picker" role="radiogroup" aria-label="стиль"></div>
+
+              <div class="ms-options">
+                <!-- тема: у стиля без темы переключатель выключен, под ним – почему -->
+                <div class="ms-segmented" id="theme" role="radiogroup" aria-label="тема" aria-describedby="theme-note">
+                  <button class="ms-segmented__item pressable" type="button" role="radio" data-theme="light">светлый</button>
+                  <button class="ms-segmented__item pressable" type="button" role="radio" data-theme="dark">тёмный</button>
+                  <button class="ms-segmented__item pressable" type="button" role="radio" data-theme="system">системный</button>
+                </div>
+                <p class="ms-note ms-note--theme" id="theme-note" hidden></p>
+
+                <!-- детализация: ползунок в три шага; большой палец – уровень, который подходит этому телефону -->
+                <div class="ms-detail" id="detail">
+                  <label class="ms-detail__label" for="detail-input">детализация</label>
+                  <span class="ms-detail__track">
+                    <span class="ms-detail__fill" aria-hidden="true"></span>
+                    <span class="ms-detail__tick" style="--at:0" aria-hidden="true"></span>
+                    <span class="ms-detail__tick" style="--at:1" aria-hidden="true"></span>
+                    <span class="ms-detail__tick" style="--at:2" aria-hidden="true"></span>
+                    <span class="ms-detail__rail" aria-hidden="true"><span class="ms-detail__thumb"></span></span>
+                    <input class="ms-detail__input" id="detail-input" type="range" min="0" max="2" step="1" value="2" aria-describedby="detail-note">
+                  </span>
+                  <span class="ms-detail__stops" aria-hidden="true">
+                    <span class="ms-detail__stop" data-stop="0"><img class="ms-detail__rec" src="../../assets/stickers/thumbs-up.webp" alt="">низкая</span>
+                    <span class="ms-detail__stop" data-stop="1"><img class="ms-detail__rec" src="../../assets/stickers/thumbs-up.webp" alt="">средняя</span>
+                    <span class="ms-detail__stop" data-stop="2"><img class="ms-detail__rec" src="../../assets/stickers/thumbs-up.webp" alt="">высокая</span>
+                  </span>
+                </div>
+                <p class="ms-note" id="detail-note"></p>
+              </div>
+            </div>
+
+            <button class="ms-close ms-style__close pressable" type="button" data-close aria-label="закрыть"><i class="icon icon--close" aria-hidden="true"></i></button>
+          </section>
+
+          <!-- ═══ Шторка стиля: карточка товара маркета (купить, выбрать, blink vip) ═══ -->
+          <div class="ms-backdrop ms-backdrop--item" data-backdrop="item"></div>
+          <div class="sheet ms-item" id="sheet-item" role="dialog" aria-modal="true" aria-labelledby="item-title" tabindex="-1">
+            <div class="sheet__handle" data-drag>
+              <div class="sheet__grabber" aria-hidden="true"></div>
+              <h2 class="ms-item__title" id="item-title"></h2>
+            </div>
+            <div class="ms-item__body" id="item-body"></div>
+          </div>
+
+          <div class="home-indicator" aria-hidden="true"></div>
+        </main>
+      </div>
+    </section>
+
+    <!-- Пульт: откуда открыть и есть ли подписка -->
+    <aside class="panel" aria-label="пульт показа">
+      <div class="panel__group">
+        <p class="panel__label caps-label">открыть</p>
+        <button class="panel__button pressable" type="button" data-show="market">маркет, вкладка «стили»</button>
+        <button class="panel__button pressable" type="button" data-show="edit">профиль → карандаш</button>
+        <button class="panel__button pressable" type="button" data-show="settings">профиль → настройки</button>
+      </div>
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-device">
+        <p class="panel__label caps-label" id="panel-device">телефон</p>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" role="radio" data-device="strong">мощный</button>
+          <button class="panel__button pressable" type="button" role="radio" data-device="mid">средний</button>
+          <button class="panel__button pressable" type="button" role="radio" data-device="weak">слабый</button>
+        </div>
+      </div>
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-vip">
+        <p class="panel__label caps-label" id="panel-vip">blink vip</p>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" role="radio" data-vip="off">нет</button>
+          <button class="panel__button pressable" type="button" role="radio" data-vip="on">есть</button>
+        </div>
+      </div>
+      <div class="panel__group">
+        <p class="panel__label caps-label">ещё</p>
+        <button class="panel__button pressable" type="button" data-show="reset">с начала</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="../../scripts/data.js"></script>
+<script src="../../scripts/pin.js"></script>
+<script src="../../scripts/particles.js"></script>
+<script src="../../scripts/market.js"></script>
+<script src="states.js"></script>
+<script src="map-styles.js"></script>
+</body>
+</html>

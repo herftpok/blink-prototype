@@ -1,0 +1,151 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Раскладка стилей карты (states.html): все экраны и состояния по сценариям, с номерами.
+   Стенд, не продукт. Сетка и подписи – как у раскладки новогодней фичи (features/new-year/states.css),
+   номер – стикер-число на углу снимка, чтобы на него было удобно сослаться.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.board {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: var(--space-32) var(--space-24) calc(var(--space-32) * 2);
+}
+
+.board__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+}
+
+.board__title {
+  font: var(--type-screen-title);
+  letter-spacing: var(--tracking-title);
+}
+
+.board__lead {
+  max-width: 520px;
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+.board__stand {
+  width: auto;
+  margin-top: var(--space-12);
+  padding: 0 var(--space-24);
+  text-decoration: none;
+}
+
+.board__group {
+  margin-top: calc(var(--space-32) * 1.5);
+}
+
+.board__group-title {
+  font: var(--type-section-title);
+}
+
+/* номера экранов в сценарии – серым в строке заголовка, как количество у «мои друзья 9» */
+.board__range {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.board__group-text {
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+.board__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 52px var(--space-24);                      /* сверху у карточки – номер над снимком */
+  margin-top: 44px;
+  padding: 0;
+  list-style: none;
+}
+
+/* ссылка на карточку по номеру (#7) – карточка не прячется под край окна */
+.board-card {
+  scroll-margin-top: 56px;
+}
+
+.board-card__link {
+  --press-scale: var(--press-scale-wide);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+.board-card__frame {
+  position: relative;
+  display: block;
+  margin-bottom: var(--space-8);
+  transition: transform var(--duration-screen) var(--ease-emphasized);
+}
+
+.board-card__shot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* номер наклеен над левым верхним углом снимка, с наклоном – как стикер-число в профиле;
+   на снимок заходит только низом, часы статус-бара не закрывает */
+.board-card__number {
+  --sticker-size: 36px;
+  position: absolute;
+  bottom: calc(100% - 6px);
+  left: -6px;
+  transform: rotate(-8deg);
+  transform-origin: 0 100%;
+}
+
+.board-card:target .board-card__frame {
+  outline: 3px solid var(--color-pink);
+  outline-offset: 6px;
+  border-radius: var(--radius-24);
+}
+
+.board-card__title {
+  font: var(--type-label);
+}
+
+.board-card__text {
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .board-card__link:hover .board-card__frame {
+    transform: translateY(-4px);
+  }
+}
+
+@media (max-width: 480px) {
+  .board {
+    padding: var(--space-24) var(--gutter) calc(var(--space-32) * 1.5);
+  }
+
+  .board__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 44px var(--space-12);
+    margin-top: 36px;
+  }
+
+  .board-card__number {
+    --sticker-size: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-card__frame {
+    transition: none;
+  }
+}
