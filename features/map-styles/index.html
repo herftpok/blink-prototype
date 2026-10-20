@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="../../styles/base.css">
   <link rel="stylesheet" href="../../styles/icons.css">
   <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/screens/map.css">
   <link rel="stylesheet" href="../../styles/screens/market.css">
   <link rel="stylesheet" href="../../styles/screens/profile.css">
   <link rel="stylesheet" href="map-styles.css">
@@ -38,6 +39,52 @@
             <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
             <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
           </div>
+
+          <!-- ═══ КАРТА (Map/map_with_ui.png) в надетом стиле; над «мой мир» – баннер «стиль поменялся» ═══ -->
+          <section class="screen map ms-map" id="screen-map" aria-label="карта" hidden>
+            <div class="map__canvas">
+              <img class="map__tiles ms-map__tiles" id="map-tiles" src="" alt="">
+              <div class="map__pins" id="map-pins"></div>
+            </div>
+
+            <header class="map__header">
+              <h1 class="map__city" id="map-city"></h1>
+              <p class="map__weather">
+                <time>09:53</time>
+                <span class="map__weather-temp"><span aria-hidden="true">☔</span><span>−15&nbsp;°C</span></span>
+              </p>
+              <button class="map-chip map__steps pressable" type="button">
+                <i class="icon icon--steps" aria-hidden="true"></i><span>345 шагов · 9 место</span>
+              </button>
+            </header>
+
+            <div class="map__tools">
+              <button class="icon-button icon-button--map pressable" type="button" aria-label="места"><i class="icon icon--places" aria-hidden="true"></i></button>
+              <button class="icon-button icon-button--map pressable" type="button" aria-label="пространства"><i class="icon icon--space" aria-hidden="true"></i></button>
+              <button class="icon-button icon-button--map pressable" type="button" aria-label="игры"><i class="icon icon--games" aria-hidden="true"></i></button>
+            </div>
+
+            <!-- стиль поменялся сам (оформил blink vip – надели зиму): лёгкий баннер над «мой мир»,
+                 можно отменить или закрыть -->
+            <div class="ms-update" id="style-update" role="status" aria-live="polite" hidden>
+              <span class="ms-update__thumb" aria-hidden="true"><img id="style-update-thumb" src="" alt=""></span>
+              <span class="ms-update__text">
+                <span class="ms-update__title" id="style-update-title"></span>
+                <span class="ms-update__note" id="style-update-note"></span>
+              </span>
+              <button class="ms-update__undo pressable" type="button" data-act="undo-style">отменить</button>
+              <button class="ms-update__close pressable" type="button" data-act="close-update" aria-label="закрыть"><i class="icon icon--close" aria-hidden="true"></i></button>
+            </div>
+
+            <div class="map__actions">
+              <button class="map-button map-button--world pressable" type="button">
+                <i class="icon icon--globe" aria-hidden="true"></i>мой мир
+              </button>
+              <button class="map-button map-button--locate pressable" type="button" aria-label="показать, где я">
+                <i class="icon icon--crosshair" aria-hidden="true"></i>
+              </button>
+            </div>
+          </section>
 
           <!-- ═══ МАРКЕТ: разметку собирает scripts/market.js, вкладка «стили» – map-styles.js ═══ -->
           <section class="screen market" id="screen-market" aria-label="маркет" hidden></section>
@@ -246,6 +293,7 @@
     <aside class="panel" aria-label="пульт показа">
       <div class="panel__group">
         <p class="panel__label caps-label">открыть</p>
+        <button class="panel__button pressable" type="button" data-show="map">карта</button>
         <button class="panel__button pressable" type="button" data-show="market">маркет, вкладка «стили»</button>
         <button class="panel__button pressable" type="button" data-show="edit">профиль → карандаш</button>
         <button class="panel__button pressable" type="button" data-show="settings">профиль → настройки</button>
@@ -260,6 +308,7 @@
       </div>
       <div class="panel__group" role="radiogroup" aria-labelledby="panel-vip">
         <p class="panel__label caps-label" id="panel-vip">blink vip</p>
+        <!-- «есть» – как будто подписку только что оформили: зима надевается сама, карта с баннером -->
         <div class="panel__row">
           <button class="panel__button pressable" type="button" role="radio" data-vip="off">нет</button>
           <button class="panel__button pressable" type="button" role="radio" data-vip="on">есть</button>

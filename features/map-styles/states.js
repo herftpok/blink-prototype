@@ -11,6 +11,7 @@ window.MapStylesStates = {
     { id: "profile", title: "профиль → карандаш", text: "строка «стиль карты» в редактировании профиля" },
     { id: "settings", title: "профиль → настройки", text: "«стиль карты» – один из пунктов настроек" },
     { id: "style", title: "экран «стиль карты»", text: "один экран из профиля и настроек: стиль, тема, детализация" },
+    { id: "map", title: "карта: стиль поменялся сам", text: "оформил blink vip – зима надета, баннер с «отменить»" },
   ],
 
   STATES: [
@@ -64,5 +65,8 @@ window.MapStylesStates = {
       query: "open=style&vip=1&current=winter&theme=dark" },
     { id: "style-buy", group: "style", title: "чужой стиль", text: "шторка покупки поверх экрана стиля",
       query: "open=style", act: ["tile:potter"] },
+
+    { id: "map-vip", group: "map", title: "зима надета с blink vip", text: "лёгкий баннер над «мой мир»: отменить или закрыть",
+      query: "", act: ["vip-on"] },
   ],
 };

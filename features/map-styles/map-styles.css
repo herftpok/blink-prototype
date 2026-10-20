@@ -94,6 +94,115 @@
   color: var(--color-text);
 }
 
+/* ── Карта: надетый стиль на весь экран и баннер «стиль поменялся» ──── */
+
+.ms-map__tiles {
+  object-position: 50% 50%;
+  transition: opacity var(--duration-screen) ease;
+}
+
+/* Баннер над «мой мир» (690): классическая плашка карты – белое стекло, как у «мой мир», r20, тень плашки.
+   Слева снимок стиля 44 (r 20 − 8 = 12), текст в две строки, справа «ОТМЕНИТЬ» – чёрная компактная
+   кнопка (на светлой карте кнопки чёрные) – и крестик. Выезжает снизу, к «мой мир» */
+.ms-update {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--safe-bottom) + 80px + 40px + var(--space-12));
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 60px;
+  padding: var(--space-8) var(--space-4) var(--space-8) var(--space-8);
+  border-radius: var(--radius-20);
+  background: var(--color-map-button-light);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  box-shadow: var(--shadow-map-chip);
+  color: var(--color-text-on-map);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity var(--duration-screen) ease, transform var(--duration-screen) var(--ease-emphasized);
+}
+
+.ms-update.is-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* что надели – снимок стиля, как плитка на экране стиля */
+.ms-update__thumb {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: var(--radius-12);
+}
+
+.ms-update__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ms-update__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.ms-update__title {
+  overflow: hidden;
+  font: var(--type-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms-update__note {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font: var(--type-map-chip);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* «ОТМЕНИТЬ» – компактная кнопка, как «ДОБАВИТЬ» в карточке, только чёрная: на светлой карте */
+.ms-update__undo {
+  --press-scale: var(--press-scale-button);
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 var(--space-12);
+  border-radius: var(--radius-12);
+  background: var(--color-map-button);
+  color: var(--color-text);
+  font: var(--type-button-compact);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+}
+
+.ms-update__close {
+  --press-scale: var(--press-scale-small);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 44px;
+  color: var(--color-text-muted);
+}
+
+.ms-update__close .icon {
+  --icon-size: 13px;
+}
+
+.ms-update__undo:focus-visible,
+.ms-update__close:focus-visible {
+  outline: 2px solid var(--color-text-on-map);
+  outline-offset: 2px;
+}
+
 /* ── Маркет, вкладка «стили» ─────────────────────────────────────────── */
 
 .ms-shop {
@@ -1366,6 +1475,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ms-update,
+  .ms-map__tiles,
   .ms-style,
   .ms-preview__img,
   .ms-detail__fill,

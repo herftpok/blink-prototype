@@ -46,22 +46,22 @@
   // art – картинки assets/map-styles (build_assets.py → build_map_styles); focus – что в кадре превью.
   // shots – снимки в шторке: тема (светлая и тёмная) или второй рендер.
   const STYLES = [
-    { id: "standard", name: "стандартный", kind: "base", themes: true, detail: true,
+    { id: "standard", name: "стандартный", kind: "base", themes: true, detail: true, city: "петербург",
       art: { light: "standard-light", dark: "standard-dark" }, focus: "50% 50%" },
-    { id: "winter", name: "зима", kind: "season", themes: true, detail: true,
+    { id: "winter", name: "зима", kind: "season", themes: true, detail: true, city: "петербург",
       art: { light: "winter-light", dark: "winter-dark" }, focus: "40% 45%",
       leave: "до весны", text: "снег на крышах, а по улицам ездят снегоуборочные машины. весной его сменит весенний стиль",
       shots: [{ theme: "light", label: "светлая", focus: "34% 42%" }, { theme: "dark", label: "тёмная", focus: "34% 42%" }],
       friends: 3 },
-    { id: "gta", name: "гта", kind: "custom", price: 2500, stock: { left: 42, total: 100 }, detail: false,
+    { id: "gta", name: "гта", kind: "custom", price: 2500, city: "москва", stock: { left: 42, total: 100 }, detail: false,
       art: { light: "gta" }, focus: "50% 62%", packFocus: "50% 6%",
       text: "карта в цветах гта – тёмный асфальт и значки мест как в игре",
       shots: [{ focus: "50% 92%" }], friends: 5 },
-    { id: "potter", name: "гарри поттер", kind: "custom", price: 3000, until: "31.01", detail: true,
+    { id: "potter", name: "гарри поттер", kind: "custom", price: 3000, until: "31.01", detail: true, city: "москва",
       art: { light: "potter" }, focus: "50% 55%",
       text: "город на старом пергаменте, подписи от руки – как карта мародёров",
       shots: [{ focus: "50% 56%" }], friends: 0 },
-    { id: "minecraft", name: "майнкрафт", kind: "custom", price: 3000, until: "30.11", detail: true,
+    { id: "minecraft", name: "майнкрафт", kind: "custom", price: 3000, until: "30.11", detail: true, city: "петербург",
       art: { light: "minecraft" }, focus: "45% 50%",
       text: "весь город собран из кубиков, даже вода",
       shots: [{ focus: "45% 50%" }, { art: "minecraft-2", focus: "45% 52%" }], friends: 2 },
@@ -94,13 +94,15 @@
   // картинка стиля для плиток, упаковок и «уже у тебя» – лёгкая копия; у стилей с темой – в выбранной теме
   const thumbUrl = (style) => `${A}/map-styles/${style.art[themeOf(style)] || style.art.light}-thumb.webp`;
 
-  // ── Таб-бар: маркет и ты; у карты, друзей и чатов экранов в этой фиче нет ─
-  const BASE_STATUS = { profile: "dark", market: "light" };
+  // ── Таб-бар: карта, маркет и ты; у друзей и чатов экранов в этой фиче нет ─
+  // статус-бар и индикатор «домой»: на светлой карте – чёрные
+  const BASE_STATUS = { map: "dark", profile: "dark", market: "light" };
   let tab = "profile";
 
   function showTab(next) {
     if (!BASE_STATUS[next]) return;
     tab = next;
+    $("#screen-map").hidden = next !== "map";
     $("#screen-market").hidden = next !== "market";
     $("#screen-profile").hidden = next !== "profile";
     $$(".tabbar__item").forEach((item) => {
@@ -301,6 +303,53 @@
       : `в «${esc(style.name)}» меняются только цвета и&nbsp;значки – настраивать нечего`;
   }
 
+  // ── Карта в надетом стиле ─────────────────────────────────────────────
+  // стандартный светлый – подложка карты приложения (Map/map_background.png), остальные – картинка стиля
+  function mapArt(style) {
+    if (style.id === "standard" && themeOf(style) === "light") return `${A}/map/map-hd.webp`;
+    return artUrl(style);
+  }
+
+  function renderMap() {
+    const style = byId(S.current);
+    const tiles = $("#map-tiles");
+    const url = mapArt(style);
+    if (tiles.getAttribute("src") !== url) tiles.src = url;
+    tiles.style.objectPosition = style.focus;
+    $("#map-city").textContent = style.city;
+  }
+
+  // Стиль поменялся сам – баннер над «мой мир»: какой стиль надели и почему, «отменить» возвращает
+  // прежний, крестик – убирает баннер. Решение пользователя (п. 3a документа); у других экранов Blink
+  // тостов нет, это единственный такой баннер – на карте, лёгкий, без подложки-плашки
+  let changed = null;                     // { from, to } – что вернуть по «отменить»
+
+  function showUpdate(from, to, why) {
+    changed = { from, to };
+    const style = byId(to);
+    $("#style-update-thumb").src = thumbUrl(style);
+    $("#style-update-thumb").style.objectPosition = style.focus;
+    $("#style-update-title").textContent = `на карте ${style.name}`;
+    $("#style-update-note").textContent = why;
+    const box = $("#style-update");
+    box.hidden = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add("is-in")));
+  }
+
+  function hideUpdate() {
+    const box = $("#style-update");
+    changed = null;
+    box.classList.remove("is-in");
+    setTimeout(() => { if (!box.classList.contains("is-in")) box.hidden = true; }, 300);
+  }
+
+  function undoUpdate() {
+    if (!changed) return;
+    S.current = changed.from;
+    renderAll();
+    hideUpdate();
+  }
+
   // значения в шторках профиля
   function renderEntries() {
     const style = byId(S.current);
@@ -308,6 +357,7 @@
   }
 
   function renderAll() {
+    renderMap();
     renderShop();
     renderPicker();
     renderPreview();
@@ -450,6 +500,7 @@
   function syncChrome() {
     const top = stack[stack.length - 1];
     app.dataset.status = top ? LAYERS[top.name].status : BASE_STATUS[tab];
+    app.dataset.home = !top && tab === "map" ? "dark" : "light";
     $$(".screen, .tabbar", app).forEach((el) => (el.inert = stack.length > 0));
     Object.entries(LAYERS).forEach(([name, layer]) => {
       layer.el().inert = !top || top.name !== name;
@@ -564,6 +615,8 @@
     if (!act) return;
     if (act.dataset.act === "buy") buy();
     if (act.dataset.act === "wear") wear();
+    if (act.dataset.act === "undo-style") undoUpdate();
+    if (act.dataset.act === "close-update") hideUpdate();
     // «оформить blink vip» – лендинга подписки в задаче нет: кнопка только отвечает на нажатие
   });
 
@@ -604,6 +657,7 @@
   // ── Пульт стенда ──────────────────────────────────────────────────────
   function show(what) {
     closeAll();
+    if (what === "map") showTab("map");
     if (what === "market") {
       showTab("market");
       market.selectTab("styles");
@@ -621,12 +675,22 @@
     $$("[data-device]").forEach((button) => button.setAttribute("aria-checked", String(button.dataset.device === S.device)));
   }
 
+  // Оформил blink vip – сезонный стиль надевается сам (п. 3a документа): карта с баннером «на карте
+  // зима», можно отменить. Подписка кончилась – сезонный стиль уходит, возвращается стандартный
   function setVip(on) {
+    if (on === S.vip) return;
     S.vip = on;
-    // сезонный стиль не остаётся без подписки: возвращается стандартный
+    const from = S.current;
+    if (on) S.current = "winter";
     if (!on && byId(S.current).kind === "season") S.current = "standard";
     renderAll();
     syncPanel();
+    if (on && from !== "winter") {
+      closeAll();
+      showTab("map");
+      showUpdate(from, "winter", "стиль из blink vip");
+    }
+    if (!on) hideUpdate();
   }
 
   document.addEventListener("click", (e) => {
@@ -667,7 +731,7 @@
 
   // ── Старт ─────────────────────────────────────────────────────────────
   // ссылки на состояния: ?vip=1, ?owned=gta,potter, ?current=gta, ?theme=dark, ?detail=0, ?device=weak,
-  // ?open=market|edit|settings|style|item:<id>;
+  // ?open=map|market|edit|settings|style|item:<id>;
   // или ?state=<id> – состояние из раскладки (states.js)
   const url = new URLSearchParams(location.search);
   const preset = (window.MapStylesStates?.STATES || []).find((state) => state.id === url.get("state"));
@@ -690,6 +754,7 @@
     "picker-end": () => ($("#picker").scrollLeft = 1e5),
     "style-end": () => ($(".ms-style__scroll").scrollTop = 1e5),
     tile: (id) => openItem(id, $(`#picker [data-tile="${id}"]`)),
+    "vip-on": () => setVip(true),
   };
   const device = DEVICES[params.get("device")] !== undefined ? params.get("device") : START.device;
   setState({
@@ -704,6 +769,13 @@
 
   renderProfile();
   $("#preview-pin").innerHTML = window.BlinkPin.markup({ name: ME.name, photo: ME.live, size: 52, tag: "span", assets: A });
+  // друзья на карте – пины 52 / 36 / 20 по близости, ты – в середине
+  $("#map-pins").innerHTML = [
+    window.BlinkPin.markup({ name: "наташка", photo: `${A}/people/live-1.webp`, size: 52, state: "home", minutes: 22, tag: "span", assets: A, attrs: 'style="--x:96;--y:300"' }),
+    window.BlinkPin.markup({ name: FRIENDS.lyova.name, photo: FRIENDS.lyova.live, size: 36, online: true, state: "staying", minutes: 12, tag: "span", assets: A, attrs: 'style="--x:286;--y:250"' }),
+    window.BlinkPin.markup({ name: FRIENDS.sonya.name, photo: FRIENDS.sonya.live, size: 20, state: "home", tag: "span", assets: A, attrs: 'style="--x:300;--y:520"' }),
+    window.BlinkPin.markup({ name: ME.name, photo: ME.live, size: 52, tag: "span", assets: A, attrs: 'style="--x:180;--y:470"' }),
+  ].join("");
   market = window.BlinkMarket.mount($("#screen-market"), {
     assets: A,
     coins: S.coins,
@@ -717,6 +789,7 @@
   showTab("profile");
 
   const openParam = params.get("open") || "";
+  if (openParam === "map") show("map");
   if (openParam === "market") show("market");
   if (openParam === "edit" || openParam === "settings") show(openParam);
   if (openParam === "style") {
