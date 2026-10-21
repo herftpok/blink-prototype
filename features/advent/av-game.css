@@ -1,0 +1,1194 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Цу-е-фа («камень, ножницы, бумага» с другом на ставку) и большой розыгрыш – av-game.js.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.av-game {
+  position: absolute;
+  inset: calc(var(--safe-top) + 66px) 0 0;
+}
+
+/* ── лобби: звезда за пятерых друзей, вызов, кого вызвать ───────────── */
+
+.avsn-lobby {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: var(--space-8) var(--gutter) calc(var(--safe-bottom) + var(--space-24));
+  scrollbar-width: none;
+}
+
+.avsn-goal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-10) var(--space-14) var(--space-10) var(--space-10);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+}
+
+.avsn-goal__star {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  filter: grayscale(0.85) brightness(0.7);
+}
+
+.avsn-goal__star.is-done {
+  filter: drop-shadow(0 0 12px rgba(255, 211, 107, 0.6));
+}
+
+.avsn-goal__title {
+  font: var(--type-row-title);
+}
+
+.avsn-goal__slots {
+  display: flex;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+}
+
+/* обыгранный друг – его лицо в слоте; пустой слот – снежок в тени */
+.avsn-goal__face,
+.avsn-goal__slot {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-squircle);
+}
+
+.avsn-goal__face {
+  object-fit: cover;
+}
+
+.avsn-goal__slot {
+  display: grid;
+  place-items: center;
+  background: var(--color-surface-raised);
+}
+
+.avsn-goal__slot img {
+  width: 24px;
+  height: 24px;
+  opacity: 0.3;
+}
+
+/* друг уже вызвал – карточка с розовой рамкой: новое */
+.avsn-call {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  margin-top: var(--space-12);
+  padding: var(--space-12);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 2px var(--color-pink);
+}
+
+.avsn-call__face {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-squircle);
+  object-fit: cover;
+}
+
+.avsn-call__ball {
+  position: absolute;
+  left: 40px;
+  top: 34px;
+  width: 30px;
+  height: 30px;
+  transform: rotate(-12deg);
+}
+
+.avsn-call__text {
+  flex: 1;
+  min-width: 0;
+  font: var(--type-distance);
+  color: var(--color-text-secondary);
+}
+
+.avsn-call__text b {
+  font: var(--type-friend-name);
+  color: var(--color-text);
+}
+
+.avsn-call__cta,
+.avsn-row__cta {
+  --press-scale: var(--press-scale-button);
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 var(--space-14);
+  border-radius: var(--radius-12);
+  font: var(--type-button-compact);
+  letter-spacing: var(--tracking-button-small);
+  text-transform: uppercase;
+}
+
+.avsn-call__cta {
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+.avsn-row__cta {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.avsn-row__cta:disabled {
+  opacity: 0.35;
+}
+
+.avsn-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: var(--space-24) 0 var(--space-4);
+  font: var(--type-caps-label);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.avsn-head__link {
+  font: var(--type-map-chip);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── ставка: плитки, выигрыш и шансы подарка ────────────────────────── */
+
+.avsn-bet__tiles {
+  margin-top: var(--space-8);
+}
+
+.avsn-bet__tiles .choice-tile {
+  height: 56px;
+}
+
+.avsn-bet__tiles .choice-tile:disabled {
+  opacity: 0.35;
+}
+
+.avsn-bet__tiles .choice-tile__value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font: var(--type-gift-title);
+}
+
+.avsn-bet__flake {
+  width: 18px;
+  height: 18px;
+}
+
+/* выигрыш: банк крупно, справа – чем больше ставка, тем лучше подарок */
+.avsn-win {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: var(--space-12);
+  margin-top: var(--space-8);
+  padding: var(--space-12) var(--space-14);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+}
+
+.avsn-win__label {
+  font: var(--type-tile);
+  color: var(--color-text-muted);
+}
+
+.avsn-win__value {
+  grid-row: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font: var(--type-screen-title);
+  letter-spacing: var(--tracking-title);
+  font-variant-numeric: tabular-nums;
+}
+
+.avsn-win__value img {
+  width: 30px;
+  height: 30px;
+}
+
+.avsn-win__plus {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  font: var(--type-tile);
+  color: var(--color-text-muted);
+}
+
+.avsn-odds {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  display: flex;
+  gap: var(--space-8);
+  list-style: none;
+}
+
+.avsn-odds__tier {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font: var(--type-tile);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.avsn-odds__tier img {
+  width: 30px;
+  height: 30px;
+}
+
+.avsn-odds__tier.is-out {
+  opacity: 0.3;
+}
+
+.avsn-call__stake {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font: var(--type-friend-name);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.avsn-call__stake img {
+  width: 16px;
+  height: 16px;
+}
+
+.avsn-call__cta:disabled {
+  opacity: 0.35;
+}
+
+.avsn-rows {
+  list-style: none;
+}
+
+.avsn-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 64px;
+}
+
+.avsn-row__photo {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+}
+
+.avsn-row__photo img {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-squircle);
+  object-fit: cover;
+}
+
+/* в сети – точка, как на аватаре в чатах */
+.avsn-row__photo.is-online::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-online);
+  box-shadow: 0 0 0 2.5px var(--color-bg);
+}
+
+.avsn-row__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.avsn-row__name {
+  font: var(--type-friend-name);
+}
+
+.avsn-row__status {
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.avsn-empty {
+  margin-top: var(--space-16);
+  text-align: center;
+}
+
+.avsn-empty__title {
+  margin-bottom: var(--space-12);
+  font: var(--type-section-title);
+}
+
+/* подарки на ёлке – сколько осталось по уровням, внизу списка */
+.avs-left {
+  --press-scale: var(--press-scale-wide);
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  height: 44px;
+  margin: var(--space-20) auto 0;
+  padding: 0 var(--space-8) 0 var(--space-6);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font: var(--type-label);
+  white-space: nowrap;
+}
+
+.avs-left__tree {
+  width: 34px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.avs-left__tier {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.avs-left__tier img {
+  width: 24px;
+  height: 24px;
+}
+
+.avs-left__tier.is-out {
+  color: var(--color-text-faint);
+}
+
+.avs-left__tier.is-out img {
+  opacity: 0.35;
+}
+
+.avs-left .icon {
+  --icon-size: 16px;
+  color: var(--color-text-muted);
+}
+
+/* ── бой ────────────────────────────────────────────────────────────── */
+
+.avsn-duel {
+  position: absolute;
+  inset: 0;
+}
+
+.avsn-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 var(--gutter);
+}
+
+.avsn-score__side {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.avsn-score__me,
+.avsn-score__face {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-squircle);
+  object-fit: cover;
+  background: var(--color-surface);
+}
+
+.avsn-score__me {
+  object-fit: contain;
+  object-position: 50% 100%;
+}
+
+.avsn-score .sticker-number {
+  --sticker-size: 34px;
+}
+
+.avsn-score .sticker-number.is-pop {
+  animation: avs-pop 0.4s var(--ease-spring);
+}
+
+@keyframes avs-pop {
+  from { scale: 0.5; }
+}
+
+/* банк посередине: обе ставки */
+.avsn-score__pot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 5px var(--space-12) 6px var(--space-10);
+  border-radius: var(--radius-pill);
+  background: var(--color-banner-fill);
+  font: var(--type-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.avsn-score__pot img {
+  width: 18px;
+  height: 18px;
+}
+
+.avsn-score__label {
+  margin-right: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.avsn-score__pips {
+  display: inline-flex;
+  gap: var(--space-4);
+}
+
+/* победы в партии: два кружка на игрока, выигранный раунд – снежинка */
+.avsn-pip {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+}
+
+.avsn-pip.is-on {
+  background: url("renders/snowflake.webp") 50% 50% / 100% no-repeat;
+  animation: avs-pop 0.4s var(--ease-spring);
+}
+
+/* ринг: рука друга сверху (перевёрнута), твоя снизу, между ними – «камень… ножницы… бумага… цу-е-фа!» */
+.avsn-ring {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 64px;
+  bottom: calc(var(--safe-bottom) + var(--space-8) + 92px + var(--space-12));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.avsn-hand {
+  width: 170px;
+  height: 212px;
+  object-fit: contain;
+  transition: scale var(--duration-state) ease, opacity var(--duration-state) ease;
+}
+
+.avsn-hand--them {
+  rotate: 180deg;
+}
+
+/* трясутся в такт счёту: вверх-вниз на каждое слово */
+.avsn-hand.is-shaking {
+  animation: avsn-shake-me 0.36s ease-in-out infinite;
+}
+
+.avsn-hand--them.is-shaking {
+  animation-name: avsn-shake-them;
+}
+
+@keyframes avsn-shake-me {
+  50% { translate: 0 -26px; }
+}
+
+@keyframes avsn-shake-them {
+  50% { translate: 0 26px; }
+}
+
+/* раунд сыгран: победивший жест крупнее, проигравший гаснет */
+.avsn-hand.is-win {
+  scale: 1.1;
+  animation: avs-pop 0.4s var(--ease-spring);
+}
+
+.avsn-hand.is-lose {
+  opacity: 0.4;
+  scale: 0.9;
+}
+
+.avsn-chant {
+  min-height: 32px;
+  padding: 0 var(--gutter);
+  font: var(--type-sheet-title);
+  font-size: 24px;
+  line-height: 30px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* твой ход: три плитки с жестами */
+.avsn-moves {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--safe-bottom) + var(--space-8));
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+}
+
+.avsn-move {
+  --press-scale: var(--press-scale-button);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 92px;
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  font: var(--type-tile);
+  color: var(--color-text-secondary);
+}
+
+.avsn-move img {
+  width: 56px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.avsn-move:disabled {
+  opacity: 0.35;
+}
+
+.avsn-move.is-picked {
+  opacity: 1;
+  box-shadow: inset 0 0 0 2px var(--color-text);
+  color: var(--color-text);
+}
+
+/* ── итог ───────────────────────────────────────────────────────────── */
+
+.avsn-result {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-32) var(--gutter) 0;
+  text-align: center;
+}
+
+.avsn-vs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.avsn-vs__side {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  opacity: 0.55;
+}
+
+.avsn-vs__side.is-winner {
+  opacity: 1;
+  scale: 1.08;
+}
+
+.avsn-result.is-draw .avsn-vs__side {
+  opacity: 1;
+}
+
+.avsn-vs__me,
+.avsn-vs__face {
+  width: 112px;
+  height: 112px;
+  border-radius: var(--radius-squircle);
+  object-fit: cover;
+  background: var(--color-surface);
+}
+
+.avsn-vs__me {
+  object-fit: contain;
+  object-position: 50% 100%;
+}
+
+.avsn-vs__score {
+  --sticker-size: 44px;
+  position: absolute;
+  right: -10px;
+  top: 84px;
+  transform: rotate(-6deg);
+}
+
+.avsn-vs__name {
+  margin-top: var(--space-8);
+  font: var(--type-row-title);
+}
+
+.avsn-vs__ball {
+  object-fit: contain;
+  width: 54px;
+  height: 54px;
+}
+
+.avsn-result__title {
+  margin-top: var(--space-32);
+  font: var(--type-sheet-title);
+}
+
+/* сколько снежинок: победа – весь банк, проигрыш – ставка ушла (приглушено), ничья – ставка назад */
+.avsn-sum {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin-top: var(--space-12);
+  transform: rotate(-4deg);
+}
+
+.avsn-sum img {
+  width: 40px;
+  height: 40px;
+}
+
+.avsn-sum .sticker-number {
+  --sticker-size: 52px;
+}
+
+.avsn-sum.is-lose {
+  opacity: 0.5;
+}
+
+.avsn-sum.is-win {
+  animation: avs-pop 0.5s var(--ease-spring);
+}
+
+.avsn-result__line {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+  font: var(--type-meta);
+  color: var(--color-text-secondary);
+}
+
+.avsn-result__line img {
+  width: 28px;
+  height: 22px;
+  object-fit: contain;
+}
+
+/* победа – ёлка с подарками ждёт тряски; проигрыш и ничья – билеты в розыгрыш */
+.avsn-result__art {
+  width: 220px;
+  margin-top: var(--space-16);
+}
+
+.avsn-result__actions {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--safe-bottom) + var(--space-8));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.avsn-cta {
+  width: 100%;
+}
+
+.avs-cta__price {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-left: var(--space-8);
+  font: var(--type-gift-title);
+  letter-spacing: 0;
+}
+
+.avs-cta__price img {
+  width: 22px;
+  height: 22px;
+}
+
+/* подарок с ёлки – прямо в итоге победы */
+.avsn-gift {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--space-16);
+}
+
+.avsn-gift__img,
+.avsn-gift__glow {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+}
+
+.avsn-gift__img {
+  position: relative;
+  animation: avg-pop 0.5s var(--ease-spring) both;
+  animation-delay: 0.3s;
+}
+
+.avsn-gift__glow {
+  position: absolute;
+  top: 0;
+  filter: blur(34px) saturate(2);
+  opacity: 0.7;
+}
+
+.avsn-gift .avg-tier {
+  margin-top: var(--space-8);
+}
+
+.avsn-gift__title {
+  margin-top: var(--space-8);
+  font: var(--type-gift-title);
+  text-align: center;
+}
+
+.avsn-gift__kind {
+  margin-top: 2px;
+  font: var(--type-map-chip);
+  color: var(--color-text-muted);
+}
+
+/* ── шторка подарка ─────────────────────────────────────────────────── */
+
+.avg-prize {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: var(--space-4);
+  text-align: center;
+}
+
+.avg-prize__art {
+  position: relative;
+  width: 168px;
+  height: 168px;
+}
+
+.avg-prize__img,
+.avg-prize__glow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.avg-prize__img {
+  animation: avg-pop 0.5s var(--ease-spring) both;
+}
+
+.avg-prize__glow {
+  filter: blur(34px) saturate(2);
+  opacity: 0.7;
+}
+
+@keyframes avg-pop {
+  from { opacity: 0; transform: scale(0.5) rotate(-12deg); }
+}
+
+/* уровень подарка: обычный – тёмная плашка, редкий – белая, эпический – розовая,
+   легендарный – голограмма лимитированных предметов маркета */
+.avg-tier {
+  margin-top: var(--space-12);
+  padding: 3px var(--space-10) 4px;
+  border-radius: var(--radius-pill);
+  font: var(--type-gift-note);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.avg-tier--rare {
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+.avg-tier--epic {
+  background: var(--color-pink);
+  color: var(--color-text-on-light);
+}
+
+.avg-tier--legend {
+  background: var(--gradient-holo);
+  color: var(--color-text-on-light);
+}
+
+.avg-prize__title {
+  margin-top: var(--space-10);
+  font: var(--type-sheet-title);
+  text-wrap: balance;
+}
+
+.avg-prize__kind {
+  margin-top: var(--space-4);
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+}
+
+.avg-prize__tickets {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin-top: var(--space-16);
+  font: var(--type-label);
+}
+
+.avg-prize__tickets img {
+  width: 30px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.avg-prize__cta {
+  align-self: stretch;
+  margin-top: var(--space-24);
+}
+
+/* ── шторка «что под ёлкой» ─────────────────────────────────────────── */
+
+.av-pool {
+  max-height: calc(100% - var(--safe-top) - 40px);
+}
+
+.av-pool .sheet__handle {
+  padding-bottom: var(--space-8);
+}
+
+.av-pool__title {
+  margin-top: var(--space-12);
+}
+
+.av-pool__body {
+  overflow-y: auto;
+  margin: 0 calc(var(--gutter) * -1);
+  padding: 0 var(--gutter) var(--space-16);
+  scrollbar-width: none;
+}
+
+.avg-star {
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+  padding: var(--space-12);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+}
+
+.avg-star__img {
+  width: 64px;
+  height: 64px;
+}
+
+.avg-star__title {
+  font: var(--type-row-title);
+}
+
+.avg-star__kind {
+  margin-top: 2px;
+  font: var(--type-map-chip);
+  color: var(--color-text-muted);
+}
+
+.avg-pool__tier {
+  margin-top: var(--space-20);
+}
+
+.avg-pool__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.avg-pool__head .avg-tier {
+  margin-top: 0;
+}
+
+.avg-pool__count {
+  font: var(--type-label);
+  color: var(--color-text-muted);
+}
+
+.avg-pool__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-8);
+  margin-top: var(--space-10);
+  list-style: none;
+}
+
+.avg-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-10) var(--space-6) var(--space-12);
+  border-radius: var(--radius-20);
+  background: var(--color-surface-card);
+  text-align: center;
+}
+
+.avg-item__img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.avg-item__title {
+  font: var(--type-tile);
+  color: var(--color-text-secondary);
+  text-wrap: balance;
+}
+
+/* уже вынут из ёлки: приглушён, сверху лаймовая галочка «твоё» – как «выбрано» в маркете */
+.avg-item.is-got .avg-item__img {
+  opacity: 0.4;
+}
+
+.avg-item__got {
+  position: absolute;
+  top: var(--space-6);
+  right: var(--space-6);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font: var(--type-tile);
+  color: var(--color-selected);
+}
+
+.avg-item__got .icon {
+  --icon-size: 14px;
+}
+
+.avg-pool__social {
+  margin-top: var(--space-20);
+  font: var(--type-map-chip);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* ── розыгрыш ───────────────────────────────────────────────────────── */
+
+.av-draw__scroll {
+  padding-bottom: calc(var(--safe-bottom) + var(--space-16));
+}
+
+.avd-carousel {
+  display: flex;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+  padding: 0 calc((100% - 260px) / 2);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.avd-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.avd-slide {
+  flex: 0 0 260px;
+  scroll-snap-align: center;
+}
+
+.avd-globe {
+  position: relative;
+  width: 260px;
+  height: 260px;
+}
+
+.avd-globe__back,
+.avd-globe__glass {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* приз внутри стекла: между основанием со снегом и бликами стекла */
+.avd-globe__prize {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  width: 46%;
+  height: 46%;
+  margin-left: -23%;
+  object-fit: contain;
+  animation: av-float 3.6s ease-in-out infinite;
+}
+
+.avd-globe.is-shaken {
+  animation: avc-shake 1.2s ease-in-out;
+}
+
+.avd-globe__mine {
+  position: absolute;
+  right: 18px;
+  bottom: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 2px var(--space-8) 3px var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-pink);
+  color: var(--color-text-on-light);
+  font: var(--type-season-tag);
+  transform: rotate(-6deg);
+}
+
+.avd-globe__mine img {
+  width: 26px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.avd-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 var(--gutter);
+  text-align: center;
+}
+
+.avd-info__until {
+  padding: 1px var(--space-8) 2px;
+  border-radius: var(--radius-pill);
+  background: var(--color-pink);
+  color: var(--color-text-on-light);
+  font: var(--type-season-tag);
+  transform: rotate(-3deg);
+}
+
+.avd-info__title {
+  margin-top: var(--space-10);
+  font: var(--type-sheet-title);
+  text-wrap: balance;
+}
+
+.avd-info__when {
+  margin-top: var(--space-4);
+  font: var(--type-map-chip);
+  color: var(--color-text-muted);
+}
+
+.avd-info__chance {
+  margin-top: var(--space-12);
+  font: var(--type-label);
+  color: var(--color-text-secondary);
+}
+
+.avd-put {
+  display: flex;
+  align-items: center;
+  gap: var(--space-24);
+  margin-top: var(--space-16);
+}
+
+.avd-step {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-14);
+  background: var(--color-surface-raised);
+  font: var(--type-section-title);
+}
+
+.avd-step .icon {
+  --icon-size: 16px;
+}
+
+.avd-step:disabled {
+  opacity: 0.35;
+}
+
+.avd-put__count {
+  min-width: 40px;
+  font: var(--type-screen-title);
+  font-variant-numeric: tabular-nums;
+}
+
+.avd-cta {
+  align-self: stretch;
+  margin-top: var(--space-16);
+}
+
+.avg-prize__kicker {
+  margin-bottom: var(--space-4);
+  font: var(--type-label);
+  color: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avd-globe__prize,
+  .avsn-hand.is-shaking {
+    animation: none;
+  }
+}
+
+/* низкий телефон: итог боя плотнее, ёлка не уходит под кнопку */
+@container (max-height: 720px) {
+  .avsn-result {
+    padding-top: var(--space-16);
+  }
+
+  .avsn-vs__me,
+  .avsn-vs__face {
+    width: 88px;
+    height: 88px;
+  }
+
+  .avsn-vs__score {
+    top: 62px;
+  }
+
+  .avsn-result__title {
+    margin-top: var(--space-24);
+  }
+
+  .avsn-result__art {
+    width: 120px;
+  }
+
+  .avsn-sum .sticker-number {
+    --sticker-size: 40px;
+  }
+}
+
+/* низкий телефон: руки и плитки ходов меньше, чтобы твоя рука не уходила под плитки */
+@container (max-height: 720px) {
+  .avsn-hand {
+    width: 124px;
+    height: 154px;
+  }
+
+  .avsn-move {
+    height: 78px;
+  }
+
+  .avsn-ring {
+    bottom: calc(var(--safe-bottom) + var(--space-8) + 78px + var(--space-8));
+  }
+
+  .avsn-move img {
+    width: 46px;
+    height: 52px;
+  }
+}

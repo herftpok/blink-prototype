@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – адвент</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="advent.css">
+  <link rel="stylesheet" href="av-cards.css">
+  <link rel="stylesheet" href="av-game.css">
+</head>
+<body>
+<div class="stage">
+
+  <!-- Стенд: подписи и пульт – только для показа, в продукт не идут -->
+  <header class="stage__head">
+    <h1 class="stage__title">адвент</h1>
+    <p class="stage__lead">14&nbsp;декабря – 11&nbsp;января: каждый день карточка о&nbsp;твоём годе, снежинки за&nbsp;вход и&nbsp;задания, цу-е-фа с&nbsp;друзьями на&nbsp;ставку и&nbsp;большой розыгрыш</p>
+    <a class="stage__link" href="states.html">все экраны и&nbsp;состояния</a>
+  </header>
+
+  <div class="stage__phones">
+    <section class="stage__side" aria-label="телефон">
+      <div class="stage__phone">
+        <main class="app av" id="app" data-status="light" data-home="light">
+          <div class="status-bar" aria-hidden="true">
+            <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+            <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+            <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+          </div>
+
+          <!-- Снег за всеми экранами: один холст на телефон -->
+          <canvas class="av-sky" id="sky" aria-hidden="true"></canvas>
+
+          <!-- ── 1. Адвент: календарь ─────────────────────────────────── -->
+          <section class="screen av-screen av-home" id="screen-home" aria-labelledby="home-title">
+            <img class="av-frost" src="../../assets/aktirovka/frost-screen.webp" alt="">
+            <div class="screen__scroll av-home__scroll" id="home-scroll">
+              <header class="av-bar">
+                <button class="icon-button icon-button--header av-bar__back pressable" type="button" aria-label="назад" data-act="exit">
+                  <i class="icon icon--back" aria-hidden="true"></i>
+                </button>
+                <h1 class="av-bar__title" id="home-title">адвент</h1>
+                <button class="av-balance pressable" type="button" data-go="game" aria-label="снежинки, к игре цу-е-фа">
+                  <img class="av-balance__icon" src="renders/snowflake.webp" alt="">
+                  <span class="av-balance__value" data-balance>0</span>
+                </button>
+              </header>
+              <!-- на что тратить: цу-е-фа и розыгрыш – над календарём, две плитки в ширину экрана -->
+              <nav class="av-entries" aria-label="потратить снежинки">
+                <button class="av-entry pressable" type="button" data-go="game">
+                  <img class="av-entry__art" src="renders/hand-scissors.webp" alt="">
+                  <span class="av-entry__text">
+                    <span class="av-entry__title">цу-е-фа</span>
+                    <span class="av-entry__meta ellipsis" id="dock-game"></span>
+                  </span>
+                </button>
+                <button class="av-entry pressable" type="button" data-go="draw">
+                  <img class="av-entry__art" src="renders/globe.webp" alt="">
+                  <span class="av-entry__text">
+                    <span class="av-entry__title">розыгрыш</span>
+                    <span class="av-entry__meta ellipsis" id="dock-draw"></span>
+                  </span>
+                </button>
+              </nav>
+              <div class="av-calendar" id="calendar"></div>
+            </div>
+
+          </section>
+
+          <!-- ── 2. День: предмет дня, карточка, снежинки ─────────────── -->
+          <section class="screen av-screen av-day" id="screen-day" aria-labelledby="day-title" hidden>
+            <div class="screen__scroll av-day__scroll" id="day-scroll">
+              <header class="av-bar">
+                <button class="icon-button icon-button--header av-bar__back pressable" type="button" aria-label="к календарю" data-act="back">
+                  <i class="icon icon--back" aria-hidden="true"></i>
+                </button>
+                <p class="av-bar__title" id="day-date"></p>
+                <button class="av-balance pressable" type="button" data-go="game" aria-label="снежинки, к игре цу-е-фа">
+                  <img class="av-balance__icon" src="renders/snowflake.webp" alt="">
+                  <span class="av-balance__value" data-balance>0</span>
+                </button>
+              </header>
+              <div class="av-day__hero" id="day-hero">
+                <img class="av-day__glow" id="day-glow" src="" alt="">
+                <img class="av-day__mound" src="renders/mound.webp" alt="">
+                <!-- сюда прилетает предмет из календаря -->
+                <div class="av-day__slot" id="day-slot"></div>
+              </div>
+              <div class="av-day__body" id="day-body"></div>
+            </div>
+          </section>
+
+          <!-- ── 3. Карточка статистики: на весь экран, как сторис ──────── -->
+          <section class="screen av-screen av-stat" id="screen-stat" aria-labelledby="stat-title" hidden>
+            <canvas class="av-sky" id="stat-sky" aria-hidden="true"></canvas>
+            <div class="av-stat__card" id="stat-card"></div>
+            <footer class="av-stat__footer">
+              <button class="button button--primary av-stat__share pressable" type="button" id="stat-share">
+                <i class="icon icon--share" aria-hidden="true"></i><span>поделиться</span>
+              </button>
+            </footer>
+            <button class="icon-button av-close pressable" type="button" aria-label="закрыть" data-act="close-stat">
+              <i class="icon icon--close" aria-hidden="true"></i>
+            </button>
+          </section>
+
+          <!-- ── 4. Цу-е-фа: «камень, ножницы, бумага» с другом на ставку ─ -->
+          <section class="screen av-screen av-game-screen" id="screen-game" aria-labelledby="game-title" hidden>
+            <header class="av-bar av-bar--fixed">
+              <button class="icon-button icon-button--header av-bar__back pressable" type="button" aria-label="назад" data-act="back">
+                <i class="icon icon--back" aria-hidden="true"></i>
+              </button>
+              <h2 class="av-bar__title" id="game-title">цу-е-фа</h2>
+              <span class="av-balance" aria-label="снежинки">
+                <img class="av-balance__icon" src="renders/snowflake.webp" alt="">
+                <span class="av-balance__value" data-balance>0</span>
+              </span>
+            </header>
+            <div class="av-game" id="game"></div>
+          </section>
+
+          <!-- ── 5. Большой розыгрыш ──────────────────────────────────── -->
+          <section class="screen av-screen av-draw" id="screen-draw" aria-labelledby="draw-title" hidden>
+            <div class="screen__scroll av-draw__scroll">
+              <header class="av-bar">
+                <button class="icon-button icon-button--header av-bar__back pressable" type="button" aria-label="назад" data-act="back">
+                  <i class="icon icon--back" aria-hidden="true"></i>
+                </button>
+                <h2 class="av-bar__title" id="draw-title">розыгрыш</h2>
+                <span class="av-balance av-balance--tickets" aria-label="билеты">
+                  <img class="av-balance__icon av-balance__icon--ticket" src="renders/ticket.webp" alt="">
+                  <span class="av-balance__value" data-tickets>0</span>
+                </span>
+              </header>
+              <div class="av-draw__body" id="draw"></div>
+            </div>
+          </section>
+
+          <div class="scrim" id="scrim"></div>
+
+          <!-- Шторка: подарок с ёлки и золотая звезда -->
+          <div class="sheet av-sheet av-prize" id="sheet-prize" role="dialog" aria-modal="true" aria-labelledby="prize-title" tabindex="-1">
+            <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div></div>
+            <div class="av-prize__body" id="prize-body"></div>
+          </div>
+
+          <!-- Шторка: подарки на ёлке (весь пул, честно) -->
+          <div class="sheet av-sheet av-pool" id="sheet-pool" role="dialog" aria-modal="true" aria-labelledby="pool-title" tabindex="-1">
+            <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div>
+              <h2 class="sheet__title av-pool__title" id="pool-title">подарки на ёлке</h2>
+            </div>
+            <div class="av-pool__body" id="pool-body"></div>
+          </div>
+
+          <!-- Шторка: поделиться карточкой -->
+          <div class="sheet av-sheet av-share" id="sheet-share" role="dialog" aria-modal="true" aria-labelledby="share-title" tabindex="-1">
+            <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div>
+              <h2 class="sheet__title" id="share-title">поделиться</h2>
+            </div>
+            <figure class="av-share__story" id="share-story" aria-label="превью сторис"></figure>
+            <button class="button button--primary av-share__cta pressable" type="button" id="share-cta">
+              <i class="icon icon--share" aria-hidden="true"></i><span id="share-cta-label">в сторис</span>
+            </button>
+          </div>
+
+          <!-- Слой полёта: предмет из календаря в шапку дня, снежинки в баланс, билеты в шар -->
+          <div class="av-fly" id="fly" aria-hidden="true"></div>
+          <canvas class="av-fx" id="fx" aria-hidden="true"></canvas>
+          <p class="visually-hidden" id="announce" aria-live="polite"></p>
+          <div class="home-indicator" aria-hidden="true"></div>
+        </main>
+      </div>
+    </section>
+
+    <!-- Пульт: любой день и любое состояние одной кнопкой -->
+    <aside class="panel" aria-label="пульт показа">
+      <div class="panel__group" role="group" aria-labelledby="panel-today">
+        <p class="panel__label caps-label" id="panel-today">сегодня</p>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" data-panel="prev" aria-label="день назад">‹</button>
+          <span class="panel__value" id="panel-date"></span>
+          <button class="panel__button pressable" type="button" data-panel="next" aria-label="день вперёд">›</button>
+        </div>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" data-panel-date="14.12">14.12</button>
+          <button class="panel__button pressable" type="button" data-panel-date="22.12">22.12</button>
+          <button class="panel__button pressable" type="button" data-panel-date="31.12">31.12</button>
+          <button class="panel__button pressable" type="button" data-panel-date="05.01">05.01</button>
+        </div>
+      </div>
+
+      <div class="panel__group" role="group" aria-labelledby="panel-user">
+        <p class="panel__label caps-label" id="panel-user">человек</p>
+        <button class="panel__button pressable" type="button" role="switch" aria-checked="false" data-toggle="empty">мало данных – запасные карточки</button>
+        <button class="panel__button pressable" type="button" role="switch" aria-checked="false" data-toggle="vip">есть blink vip</button>
+      </div>
+
+      <div class="panel__group" role="group" aria-labelledby="panel-tree">
+        <p class="panel__label caps-label" id="panel-tree">цу-е-фа</p>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" data-panel="flakes">+500 снежинок</button>
+          <button class="panel__button pressable" type="button" data-panel="zero">0 снежинок</button>
+        </div>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" data-panel="almost">4 друга обыграно</button>
+          <button class="panel__button pressable" type="button" data-panel="empty-pool">ёлка пуста</button>
+        </div>
+      </div>
+
+      <button class="panel__button pressable" type="button" data-panel="reset">с начала</button>
+    </aside>
+  </div>
+</div>
+
+<script src="../../scripts/particles.js"></script>
+<script src="../../scripts/pin.js"></script>
+<script src="av-data.js"></script>
+<script src="av-cards.js"></script>
+<script src="av-game.js"></script>
+<script src="advent.js"></script>
+</body>
+</html>

@@ -1,0 +1,756 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Адвент. Общие токены и компоненты – ../../styles, здесь раскладка фичи:
+   календарь, день, карточки статистики, ёлка, розыгрыш и стенд с пультом.
+   Предметы дней – рендеры three.js (renders/*.webp, av-models.js) и 3D-стикеры.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Стенд (в продукт не идёт) ───────────────────────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-16);
+  min-height: 100dvh;
+  padding: var(--space-20) var(--space-24);
+}
+
+.stage__head {
+  max-width: 640px;
+  text-align: center;
+}
+
+.stage__title {
+  font: var(--type-section-title);
+}
+
+.stage__lead {
+  margin-top: var(--space-4);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+  text-wrap: balance;
+}
+
+.stage__link {
+  display: inline-block;
+  margin-top: var(--space-8);
+  color: var(--color-text);
+  font: var(--type-map-chip);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.stage__phones {
+  display: grid;
+  grid-template-columns: 390px 244px;
+  align-items: start;
+  column-gap: var(--space-24);
+  zoom: var(--stage-zoom, 1);
+}
+
+.stage__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+}
+
+.panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.panel__label {
+  margin-bottom: var(--space-2);
+}
+
+.panel__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.panel__row > .panel__button {
+  flex: 1;
+  min-width: 0;
+}
+
+.panel__value {
+  flex: 2;
+  font: var(--type-label);
+  text-align: center;
+}
+
+.panel__button {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-12);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-map-chip);
+  text-align: center;
+}
+
+.panel__button[aria-checked="true"],
+.panel__button[aria-pressed="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel__button:hover {
+    border-color: var(--color-text-dim);
+    color: var(--color-text);
+  }
+}
+
+@media (max-width: 480px) {
+  .stage {
+    gap: 0;
+    padding: 0;
+  }
+
+  .stage__head {
+    padding: var(--space-20) var(--gutter);
+  }
+
+  .stage__phones {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    zoom: 1;
+  }
+
+  .stage__side,
+  .stage__phone {
+    align-self: stretch;
+  }
+
+  .panel {
+    padding: var(--space-24) var(--gutter);
+  }
+}
+
+/* ── Телефон: снег за экранами ───────────────────────────────────────── */
+
+.av-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* экраны прозрачные: снег один на весь телефон и не прыгает при переходах */
+.av-screen {
+  background: transparent;
+}
+
+.av-screen[hidden] {
+  display: none;
+}
+
+/* ── Шапка экрана: назад · заголовок · баланс на одной линии ─────────── */
+
+.av-bar {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 46px;
+  margin: calc(var(--safe-top) + var(--space-12)) var(--gutter) 0;
+}
+
+.av-bar--fixed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.av-bar__back {
+  justify-self: start;
+  background: var(--color-bg);
+}
+
+.av-bar__back .icon {
+  --icon-size: 24px;
+}
+
+.av-bar__title {
+  font: var(--type-header-name);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Баланс снежинок – как баланс монет в маркете: стекло, предмет 28 и число */
+.av-balance {
+  --press-scale: var(--press-scale-button);
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: 40px;
+  padding: 0 var(--space-14) 0 var(--space-6);
+  border-radius: var(--radius-16);
+  background: var(--color-banner-fill);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+}
+
+.av-balance__icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.av-balance__icon--ticket {
+  width: 34px;
+  transform: rotate(-8deg);
+}
+
+.av-balance__value {
+  font: var(--type-coin-balance);
+  letter-spacing: var(--tracking-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* снежинки долетели: баланс подпрыгивает */
+.av-balance.is-bump {
+  animation: av-bump 0.42s var(--ease-out-soft);
+}
+
+@keyframes av-bump {
+  40% { transform: scale(1.12); }
+}
+
+/* ── 1. Календарь: одна сетка 4 × 8, как в референсе ────────────────── */
+
+/* иней по верхнему краю, как на зимнем окне (frost-screen из «отмены уроков»): только углы сверху */
+.av-frost {
+  position: absolute;
+  inset: 0;
+  z-index: 5;                                  /* иней на стекле – поверх ленты, как на окне */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
+  -webkit-mask-image: radial-gradient(ellipse 62% 22% at 50% 0%, transparent 60%, #000 100%), linear-gradient(180deg, #000 0%, transparent 26%);
+  -webkit-mask-composite: source-in;
+          mask-image: radial-gradient(ellipse 62% 22% at 50% 0%, transparent 60%, #000 100%), linear-gradient(180deg, #000 0%, transparent 26%);
+          mask-composite: intersect;
+  pointer-events: none;
+}
+
+.av-home__scroll {
+  padding-bottom: calc(var(--safe-bottom) + var(--space-24));
+}
+
+/* под статус-баром календарь уходит в чёрное, как лента чата под шапкой */
+.av-home::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 4;
+  height: var(--safe-top);
+  background: linear-gradient(180deg, var(--color-bg) 40%, rgba(0, 0, 0, 0));
+  pointer-events: none;
+}
+
+.av-calendar {
+  padding: 0 var(--gutter);
+}
+
+/* ряды стоят на снежных полках: дата сверху, предмет утоплен в сугроб ряда */
+.av-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 120px;
+  gap: 24px var(--space-12);
+  margin-top: var(--space-24);
+}
+
+/* полка – рендер сугроба во всю ширину ряда, чуть за поля экрана */
+.av-ledge {
+  grid-column: 1 / -1;
+  align-self: end;
+  height: 40px;
+  margin: 0 -14px -24px;
+  background: url("renders/ledge.webp") 50% 50% / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.av-cell {
+  --press-scale: var(--press-scale-button);
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.av-cell__art {
+  position: relative;
+  width: 98px;
+  height: 98px;
+}
+
+.av-cell__obj {
+  position: absolute;
+  inset: 6px;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  object-fit: contain;
+  transform: rotate(var(--tilt, 0deg));
+  pointer-events: none;
+}
+
+/* веер стикеров (25.12): три наклейки внахлёст */
+.av-fan {
+  position: absolute;
+  inset: 0;
+}
+
+.av-fan__img {
+  position: absolute;
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+}
+
+.av-fan__img:nth-child(1) { left: 0; top: 24%; transform: rotate(-14deg); }
+.av-fan__img:nth-child(2) { right: 0; top: 24%; transform: rotate(12deg); }
+.av-fan__img:nth-child(3) { left: 19%; top: 6%; }
+
+.av-cell__date {
+  font: var(--type-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+/* прошедший день, который ещё не открывали: белая точка «не прочитано», как в чатах */
+.av-cell__dot {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text);
+}
+
+/* будущее: предмет вморожен в лёд – виден силуэт, не видно деталей */
+.av-cell.is-frozen .av-cell__obj,
+.av-cell.is-frozen .av-fan {
+  filter: blur(2.5px) saturate(0.75);
+  opacity: 0.85;
+  transform: scale(0.66) rotate(var(--tilt, 0deg));
+}
+
+.av-cell__ice {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: rotate(var(--ice-tilt, 0deg));
+  pointer-events: none;
+}
+
+.av-cell.is-frozen .av-cell__date {
+  color: var(--color-text-muted);
+}
+
+/* нажали на будущий день – лёд только вздрагивает */
+.av-cell.is-shaking .av-cell__art {
+  animation: av-shiver 0.4s ease;
+}
+
+@keyframes av-shiver {
+  20% { transform: translateX(-3px) rotate(-2deg); }
+  40% { transform: translateX(3px) rotate(2deg); }
+  60% { transform: translateX(-2px) rotate(-1deg); }
+  80% { transform: translateX(2px); }
+}
+
+/* сегодня: предмет уже без льда, светится и чуть парит; подпись – розовая наклейка */
+.av-cell.is-today .av-cell__obj {
+  animation: av-float 3.2s ease-in-out infinite;
+}
+
+.av-cell__glow {
+  position: absolute;
+  inset: 4%;
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  filter: blur(16px) saturate(1.8);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.av-cell.is-today .av-cell__date {
+  padding: 1px var(--space-8) 2px;
+  border-radius: var(--radius-pill);
+  background: var(--color-pink);
+  color: var(--color-text-on-light);
+  font: var(--type-season-tag);
+  transform: rotate(-4deg);
+}
+
+.av-cell .badge-star {
+  position: absolute;
+  top: 20px;
+  right: 0;
+  z-index: 2;
+}
+
+@keyframes av-float {
+  50% { transform: translateY(-4px) rotate(calc(var(--tilt, 0deg) + 2deg)); }
+}
+
+/* опубликованная версия без игры: плиток нет, баланс – просто счёт снежинок */
+.av--no-game .av-entries {
+  display: none;
+}
+
+.av--no-game .av-balance {
+  pointer-events: none;
+}
+
+/* ── Над календарём: цу-е-фа и розыгрыш – две плитки в ширину экрана ─── */
+
+.av-entries {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+  margin: var(--space-16) var(--gutter) 0;
+}
+
+/* плитка как «добавить с помощью»: #1A1A1A, r20; предмет внутри плитки, ничего не торчит */
+.av-entry {
+  --press-scale: var(--press-scale-wide);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  height: 64px;
+  padding: 0 var(--space-12) 0 var(--space-6);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.av-entry__art {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.av-entry__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.av-entry__title {
+  font: var(--type-row-title);
+}
+
+.av-entry__meta {
+  font: var(--type-map-chip);
+  color: var(--color-text-muted);
+}
+
+/* ── 2. День ─────────────────────────────────────────────────────────── */
+
+.av-day__scroll {
+  padding-bottom: calc(var(--safe-bottom) + var(--space-32));
+}
+
+.av-day__hero {
+  position: relative;
+  height: 262px;
+}
+
+/* предмет стоит на сугробе, вокруг осколки льда: день только что оттаял */
+.av-day__mound {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 330px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.av-day__slot {
+  position: absolute;
+  left: 50%;
+  bottom: 44px;
+  z-index: 1;
+  width: 190px;
+  height: 190px;
+  transform: translateX(-50%);
+}
+
+.av-day__slot > img,
+.av-day__slot > .av-fan {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: av-float 3.6s ease-in-out infinite;
+}
+
+/* свечение – размытая копия самого предмета: неон его же цветов */
+.av-day__glow {
+  position: absolute;
+  left: 50%;
+  bottom: 30px;
+  width: 260px;
+  height: 230px;
+  object-fit: contain;
+  transform: translateX(-50%);
+  filter: blur(40px) saturate(2);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.av-day__body {
+  padding: 0 var(--gutter);
+}
+
+.av-day__head {
+  margin-top: var(--space-8);
+  text-align: center;
+}
+
+.av-day__title {
+  font: var(--type-sheet-title);
+  text-wrap: balance;
+}
+
+.av-day__lead {
+  margin-top: var(--space-4);
+  font: var(--type-meta);
+  color: var(--color-text-muted);
+  text-wrap: balance;
+}
+
+.av-day__cta {
+  width: 100%;
+  margin-top: var(--space-20);
+}
+
+.av-day__section {
+  display: flex;
+  justify-content: space-between;
+  margin: var(--space-32) 0 var(--space-4);
+}
+
+/* строки снежинок дня – как строки друзей: слот 46, текст, справа одна кнопка */
+.av-tasks {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+.av-task {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 64px;
+}
+
+.av-task__art {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+.av-task__art > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* иконка без 3D – в плитке, как «добавить с помощью» */
+.av-task__art--icon {
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-16);
+  background: var(--color-surface);
+}
+
+.av-task__art--icon .icon {
+  --icon-size: 22px;
+}
+
+.av-task__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.av-task__text {
+  font: var(--type-friend-name);
+}
+
+.av-task__reward {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.av-task__flake {
+  width: 16px;
+  height: 16px;
+}
+
+.av-task__boost {
+  color: var(--color-pink);
+}
+
+.av-task__button {
+  --press-scale: var(--press-scale-button);
+  flex-shrink: 0;
+  min-width: 96px;
+  height: 36px;
+  padding: 0 var(--space-12);
+  border-radius: var(--radius-12);
+  font: var(--type-button-compact);
+  letter-spacing: var(--tracking-button-small);
+  text-transform: uppercase;
+}
+
+.av-task__button--do {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.av-task__button--claim {
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+.av-task__state {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 96px;
+  justify-content: center;
+  font: var(--type-map-chip);
+  color: var(--color-text-muted);
+}
+
+.av-task__state .icon {
+  --icon-size: 16px;
+}
+
+/* ── 3. Карточка статистики ──────────────────────────────────────────── */
+
+/* карточка – на весь экран поверх дня: свой чёрный фон и свой снег */
+.av-stat.av-screen {
+  background: var(--color-bg);
+}
+
+.av-stat__card {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.av-stat__footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  padding: var(--space-24) var(--gutter) calc(var(--safe-bottom) + var(--space-8));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, var(--color-bg) 40%);
+}
+
+.av-stat__share {
+  width: 100%;
+}
+
+.av-close {
+  position: absolute;
+  top: calc(var(--safe-top) + var(--space-12));
+  right: var(--gutter);
+  z-index: 6;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-14);
+  background: var(--color-banner-fill);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+}
+
+.av-close .icon {
+  --icon-size: 16px;
+}
+
+/* ── Полёты ──────────────────────────────────────────────────────────── */
+
+.av-fly {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.av-fly__item {
+  position: absolute;
+  left: 0;
+  top: 0;
+  object-fit: contain;
+  will-change: transform;
+}
+
+.av-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 190;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ── Шторки ──────────────────────────────────────────────────────────── */
+
+.av-sheet {
+  z-index: 70;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .av-cell.is-today .av-cell__obj,
+  .av-day__slot > img {
+    animation: none;
+  }
+}

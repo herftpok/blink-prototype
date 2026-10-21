@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>Blink – адвент: рендер предметов</title>
+  <style>
+    body { margin: 0; padding: 16px; background: #000; color: #808080; font: 12px/16px -apple-system, sans-serif; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, 180px); gap: 12px; }
+    figure { margin: 0; }
+    img { width: 180px; height: 180px; background: #111; border-radius: 12px; }
+  </style>
+  <script type="importmap">{ "imports": { "three": "../../vendor/three/three.module.js" } }</script>
+</head>
+<body>
+<!-- Служебная страница: рендерит 3D-предметы адвента в картинки с прозрачным фоном.
+     tools/render_advent.py берёт window.AV_RENDERS и сохраняет renders/*.webp -->
+<div class="grid" id="grid"></div>
+<script type="module">
+import * as THREE from "three";
+import { createLighting } from "../new-year/ny-models.js";
+import { CATALOG } from "./av-models.js";
+
+const SIZE = 512;
+const canvas = document.createElement("canvas");
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(SIZE, SIZE, false);
+renderer.setClearColor(0x000000, 0);
+
+// pitch – наклон камеры: предметы чуть сверху, как 3D-стикеры
+const VIEW = { pitch: 10, pad: 0.56 };
+const only = new URLSearchParams(location.search).get("only");
+
+function shot(make, opts = {}) {
+  const [W, H] = opts.size || [SIZE, SIZE];
+  renderer.setSize(W, H, false);
+  const scene = new THREE.Scene();
+  const lighting = createLighting(THREE, renderer, scene);
+  lighting.update(0, 0);
+  renderer.shadowMap.enabled = false;
+  renderer.toneMappingExposure = opts.exposure ?? 1.0;
+  scene.environmentIntensity = 0.9;
+  const obj = make();
+  scene.add(obj);
+  obj.updateMatrixWorld(true);
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -100, 100);
+  camera.rotation.x = -THREE.MathUtils.degToRad(opts.pitch ?? VIEW.pitch);
+  camera.updateMatrixWorld(true);
+  // рамка – по проекции предмета на экран камеры, с полями
+  const box = new THREE.Box3().setFromObject(obj, true);
+  const corners = [];
+  for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) corners.push(new THREE.Vector3(x, y, z));
+  const inv = camera.matrixWorldInverse;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const c of corners) {
+    c.applyMatrix4(inv);
+    x0 = Math.min(x0, c.x); x1 = Math.max(x1, c.x); y0 = Math.min(y0, c.y); y1 = Math.max(y1, c.y);
+  }
+  const aspect = W / H;
+  const pad = opts.pad ?? VIEW.pad;
+  const halfH = Math.max((x1 - x0) / aspect, y1 - y0) * pad;
+  const halfW = halfH * aspect;
+  const cx = (x0 + x1) / 2;
+  const cy = (y0 + y1) / 2;
+  camera.left = cx - halfW; camera.right = cx + halfW; camera.top = cy + halfH; camera.bottom = cy - halfH;
+  camera.updateProjectionMatrix();
+  renderer.render(scene, camera);
+  return canvas.toDataURL("image/png");
+}
+
+const out = {};
+const grid = document.getElementById("grid");
+for (const [name, entry] of Object.entries(CATALOG)) {
+  if (only && !only.split(",").includes(name)) continue;
+  out[name] = typeof entry === "function" ? shot(entry) : shot(entry.make, entry);
+  grid.insertAdjacentHTML("beforeend", `<figure><img src="${out[name]}" alt=""><figcaption>${name}</figcaption></figure>`);
+}
+window.AV_RENDERS = out;
+window.AV_READY = true;
+</script>
+</body>
+</html>
