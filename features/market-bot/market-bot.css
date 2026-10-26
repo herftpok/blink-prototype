@@ -1,0 +1,633 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Канал маркета: бот blink market пишет о розыгрышах, скидках и новинках.
+   Пузыри и кнопки – по эталонам messanger/chat inside/bot_sample.jpeg и inline_button.png:
+   пузырь бота – чёрный с рамкой 1 pt #242424 (подпись под медиа – залитый #242424), кнопки
+   белые 36 pt шириной в пузырь, Montserrat 700 12 капсом, зазоры 4, между постами 18.
+   Шапка и лента – styles/screens/chat.css, ценник – styles/screens/market.css.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.app,
+.mb-spec,
+.mb-demo {
+  --mb-post-width: 290px;                         /* медиа и подпись: ~ как видео на bot_sample.jpeg */
+  --mb-button-height: 36px;                       /* inline_button.png: 546–582 */
+  --mb-gap: 4px;                                  /* пузырь → кнопка → кнопка */
+  --mb-post-gap: 18px;                            /* между постами: 622 → 640 */
+  --type-mb-text: 400 17px/20px var(--font-text); /* текст бота: три строки в пузыре 74 pt */
+}
+
+/* ── Стенд (в продукт не идёт) ───────────────────────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 100dvh;
+  padding: var(--space-16) var(--space-24);
+}
+
+.stage__head {
+  text-align: center;
+}
+
+.stage__title {
+  font: var(--type-section-title);
+}
+
+.stage__lead {
+  margin-top: var(--space-4);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.stage__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-24);
+  zoom: var(--stage-zoom, 1);                     /* телефон целиком в окне: market-bot.js → fit() */
+}
+
+.stage .device {
+  min-height: 0;
+  padding: 0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  width: 260px;
+  padding-top: var(--space-24);
+}
+
+.panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.panel__row > .panel__button {
+  flex: 1 1 auto;
+}
+
+.panel__button {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-12);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-map-chip);
+}
+
+.panel__button[aria-checked="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.panel__link {
+  color: var(--color-text-muted);
+  font: var(--type-map-chip);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel__button:hover {
+    border-color: var(--color-text-dim);
+    color: var(--color-text);
+  }
+
+  .panel__link:hover {
+    color: var(--color-text);
+  }
+}
+
+@media (max-width: 480px) {
+  .stage {
+    padding: 0;
+  }
+
+  .stage__head,
+  .panel {
+    display: none;
+  }
+
+  .stage__body {
+    display: block;
+    width: 100%;
+  }
+}
+
+/* ── Шапка бота ──────────────────────────────────────────────────────── */
+
+/* аватар бота – 3D-стикер с деньгами blink на сквиркле */
+.mb-bot-avatar .avatar__img {
+  padding: var(--space-4);
+  object-fit: contain;
+}
+
+.mb__name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+/* галочка официального канала – серая, как на bot_sample.jpeg */
+.mb__verified {
+  --icon-size: 16px;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.mb__status {
+  color: var(--color-text-muted);
+}
+
+/* справа у бота кнопки нет – место держим, чтобы имя стояло по центру */
+.mb__header-spacer {
+  flex-shrink: 0;
+  width: 46px;
+}
+
+/* ── Лента ───────────────────────────────────────────────────────────── */
+
+/* композера нет: писать в канал нельзя – лента до самого низа */
+.mb__feed {
+  align-items: flex-start;
+  padding-bottom: calc(var(--safe-bottom) + var(--space-16));
+}
+
+/* под закрепом лента начинается ниже: первый пост не прячется под плашкой; затемнение под шапкой
+   чёрное до низа плашки и уходит в прозрачный за 78 pt – под плашкой лента не мутнеет */
+.mb.has-pin .chat__header::before {
+  height: calc(var(--safe-top) + 200px);
+  background: linear-gradient(180deg, var(--color-bg) calc(var(--safe-top) + 122px), rgba(0, 0, 0, 0) 100%);
+}
+
+.mb.has-pin .mb__feed {
+  padding-top: calc(var(--safe-top) + 66px + 60px);
+}
+
+.mb-date {
+  align-self: center;
+  margin: var(--space-16) 0 var(--space-2);
+  font: var(--type-caption);
+  color: var(--color-text-muted);
+}
+
+/* ── Пост: медиа, обычное сообщение и под ним – чёрное сообщение с кнопками ── */
+
+.mb-post {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;                        /* у каждого сообщения своя ширина, как на bot_sample.jpeg */
+  gap: var(--mb-gap);
+  width: fit-content;
+  max-width: var(--mb-post-width);
+  margin: var(--mb-post-gap) var(--gutter) 0;
+  border-radius: var(--radius-18);
+}
+
+.mb-date + .mb-post {
+  margin-top: var(--space-16);
+}
+
+.mb-media {
+  width: var(--mb-post-width);
+  overflow: hidden;
+  border-radius: var(--radius-18);
+  background: var(--color-surface-card);
+}
+
+.mb-media__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mb-media--photo {
+  aspect-ratio: 16 / 9;
+}
+
+/* вместо картинки – id товара: обложка товара из маркета, вся – кнопка в модалку товара */
+.mb-media--item {
+  --press-scale: var(--press-scale-wide);
+  display: grid;
+}
+
+/* упаковка или подарок на тёмном: картинка поста целиком, по центру */
+.mb-media--pack,
+.mb-media--gift {
+  display: grid;
+  place-items: center;
+  height: 200px;
+  background:
+    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    var(--color-bg);
+  border: 1px solid var(--color-surface-raised);
+}
+
+.mb-media--pack .mb-media__img {
+  width: auto;
+  height: 176px;
+  object-fit: contain;
+  transform: rotate(-4deg);
+}
+
+.mb-media--gift .mb-media__img {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  transform: rotate(6deg);
+}
+
+.mb-bubble {
+  max-width: 100%;
+  padding: var(--space-6) var(--space-12) var(--space-8);   /* bubbles-token.md */
+  border-radius: var(--radius-18);
+  background: var(--color-surface-raised);
+  font: var(--type-mb-text);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* Кнопки – сразу под обычным сообщением, шириной по посту. Технически это отдельное сообщение
+   без текста: на бэке добавляем возможность завести сообщение с кнопкой без самого сообщения */
+.mb-action {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: var(--mb-gap);
+}
+
+/* ── Кнопка бота: белая 36, капс 700 12 (inline_button.png) ─────────── */
+
+.mb-button {
+  --press-scale: var(--press-scale-wide);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  height: var(--mb-button-height);
+  padding: 0 var(--space-12);
+  border-radius: var(--radius-14);
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+  font: var(--type-button-compact);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mb-button:active {
+  background: var(--color-button-pressed);
+}
+
+/* «↗» у ссылки – та же стрелка, что «назад» в шапке, повёрнута наискосок вверх (bot_sample.jpeg) */
+.mb-button__link {
+  --icon-size: 13px;
+  transform: rotate(135deg);
+}
+
+/* С цифрой: действие слева, значение справа – как «КУПИТЬ … 🪙 1500» в модалке товара
+   (market/limited_tale.png). Значение – строчными, серым, тем же шрифтом и на одной базовой линии
+   с надписью, без плашек и цвета; цифры табличные – тикающий срок не дёргает строку */
+.mb-button--counter {
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: 0 var(--space-14);
+}
+
+.mb-button__main {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.mb-counter {
+  color: var(--color-text-muted);
+  font: var(--type-button-compact);
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+}
+
+/* «уже у тебя» и «ты участвуешь» – дело сделано: тёмная с галочкой, как «добавлен» у друзей.
+   У «ты участвуешь» число участников остаётся справа */
+.mb-button--done {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.mb-button--done:active {
+  background: var(--color-surface-raised);
+}
+
+.mb-button__check {
+  --icon-size: 13px;
+}
+
+/* срок вышел, разобрали, розыгрыш закончился – кнопка гаснет до рамки пузыря, не нажимается */
+.mb-button--ended {
+  border: 1px solid var(--color-surface-raised);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+/* ── Закреп: плашка под шапкой ───────────────────────────────────────── */
+
+.mb-pin {
+  --press-scale: var(--press-scale-wide);
+  position: absolute;
+  top: calc(var(--safe-top) + 66px);              /* на 8 ниже кнопок шапки: 12 + 46 + 8 */
+  left: var(--gutter);
+  right: var(--gutter);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  height: 52px;
+  padding: 0 var(--space-12) 0 var(--space-8);
+  border: 1px solid var(--color-tabbar-border);
+  border-radius: var(--radius-16);
+  background: var(--color-tabbar);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+  text-align: left;
+}
+
+.mb-pin[hidden] {
+  display: none;
+}
+
+.mb-pin.is-entering {
+  animation: mb-pin-in var(--duration-screen) var(--ease-emphasized);
+}
+
+@keyframes mb-pin-in {
+  from { opacity: 0; transform: translateY(-8px); }
+}
+
+/* сколько закрепов и какой открыт – полоска из отрезков слева */
+.mb-pin__track {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  width: 2px;
+  height: 36px;
+}
+
+.mb-pin__segment {
+  flex: 1;
+  border-radius: var(--radius-pill);
+  background: var(--color-text-faint);
+}
+
+.mb-pin__segment.is-current {
+  background: var(--color-text);
+}
+
+/* превью поста: радиус вложен в плашку – 16 минус отступ 8 сверху и снизу */
+.mb-pin__thumb {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: calc(var(--radius-16) - var(--space-8));
+  object-fit: cover;
+  background: var(--color-surface-card);
+}
+
+.mb-pin__thumb--pack,
+.mb-pin__thumb--gift {
+  object-fit: contain;
+  padding: var(--space-2);
+}
+
+.mb-pin__thumb[hidden] {
+  display: none;
+}
+
+.mb-pin__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mb-pin__title {
+  font: var(--type-caption);
+  color: var(--color-text);
+}
+
+.mb-pin__preview {
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.mb-pin__icon {
+  --icon-size: 20px;
+  flex-shrink: 0;
+  color: var(--color-text-faint);
+}
+
+/* ── Модалка товара: шторка по эталону market/limited_tale.png, поля 24 ──
+   Та же шторка предмета, что в маркете (features/market-week): градиент маркета над ней,
+   название, описание, склад, превью на сетке точек, друзья, «КУПИТЬ» с ценой справа */
+
+.mb-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: var(--gradient-market-backdrop);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-screen) ease, visibility 0s linear var(--duration-screen);
+}
+
+.mb-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--duration-screen) ease, visibility 0s;
+}
+
+.mb-sheet {
+  padding: 0 var(--space-24) calc(var(--safe-bottom) + var(--space-28));
+}
+
+.mb-sheet__body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.mb-sheet__title {
+  margin-top: var(--space-24);
+  overflow: hidden;
+  font: var(--type-sheet-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* личная скидка – розовым: время идёт */
+.mb-sheet__leave {
+  margin-top: var(--space-4);
+  color: var(--color-pink);
+  font: var(--type-caption);
+}
+
+.mb-sheet__text {
+  margin-top: var(--space-6);
+  color: var(--color-text-muted);
+  font: var(--type-item-text);
+  text-wrap: pretty;
+}
+
+/* остаток тиража: голографическая полоса 28 и «осталось на складе 42/100» */
+.mb-sheet__stock {
+  margin-top: var(--space-16);
+}
+
+.mb-sheet__stock-bar {
+  height: 28px;
+  padding: 3px;
+  overflow: hidden;
+  border-radius: var(--radius-10);
+  background: var(--color-banner-fill);
+}
+
+.mb-sheet__stock-fill {
+  width: calc(var(--share) * 100%);
+  height: 100%;
+  border-radius: calc(var(--radius-10) - 3px);
+  background: var(--gradient-holo);
+}
+
+.mb-sheet__stock-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 9px;
+  font: var(--type-gift-note);
+}
+
+.mb-sheet__stock-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.mb-sheet__stock-total {
+  color: var(--color-text-muted);
+}
+
+.mb-sheet__preview {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  height: 260px;
+  margin-top: var(--space-16);
+  border: 2px solid var(--color-surface);
+  border-radius: var(--radius-modal);
+  background:
+    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    var(--color-bg);
+}
+
+.mb-sheet__pack {
+  width: 160px;
+  transform: rotate(-4deg);
+}
+
+/* у кого из друзей уже есть: лица 34 внахлёст и «+N» */
+.mb-sheet__friends {
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+  min-height: 34px;
+  margin-top: var(--space-24);
+  color: var(--color-text-muted);
+  font: var(--type-gift-option);
+  letter-spacing: 0.02em;
+}
+
+.mb-faces {
+  display: flex;
+  padding-left: 9px;
+}
+
+.mb-faces__img,
+.mb-faces__more {
+  width: 34px;
+  height: 34px;
+  margin-left: -9px;
+  border: 2px solid var(--color-bg);
+  border-radius: var(--radius-squircle);
+}
+
+.mb-faces__img {
+  object-fit: cover;
+}
+
+.mb-faces__more {
+  display: grid;
+  place-items: center;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font: var(--type-button-compact);
+}
+
+/* «КУПИТЬ» слева, цена с монетой справа; личная цена – со старой зачёркнутой */
+.mb-buy {
+  flex-shrink: 0;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: var(--space-20);
+  padding: 0 var(--space-16);
+}
+
+.mb-buy__price {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-variant-numeric: tabular-nums;
+}
+
+.mb-buy__coin {
+  width: 22px;
+  height: 22px;
+}
+
+.mb-buy__old {
+  color: var(--color-text-muted);
+}
+
+.mb-buy--owned {
+  justify-content: center;
+}
+
+.mb-buy--owned:disabled {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  cursor: default;
+}
+
+.mb-buy--owned .icon {
+  --icon-size: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mb-pin.is-entering {
+    animation: none;
+  }
+}

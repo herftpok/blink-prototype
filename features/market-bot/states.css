@@ -1,0 +1,452 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Итоговый документ канала маркета (states.html): экраны по номерам в разделах и описание
+   для разработки. Стенд, не продукт. Карточки экранов – как у раскладки стилей карты
+   (features/map-styles/states.css): номер – стикер-число на углу снимка.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.board {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: var(--space-32) var(--space-24) calc(var(--space-32) * 2);
+}
+
+.board__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+}
+
+.board__title {
+  font: var(--type-screen-title);
+  letter-spacing: var(--tracking-title);
+}
+
+.board__stand {
+  width: auto;
+  margin-top: var(--space-12);
+  padding: 0 var(--space-24);
+  text-decoration: none;
+}
+
+.board__toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+}
+
+.board__toc a {
+  --press-scale: var(--press-scale-wide);
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-label);
+  text-decoration: none;
+}
+
+/* ── Разделы описания ────────────────────────────────────────────────── */
+
+.doc {
+  margin-top: calc(var(--space-32) * 2);
+  scroll-margin-top: var(--space-24);
+}
+
+.doc__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  font: var(--type-section-title);
+}
+
+/* номер пункта задачи – стикер-число, как номера экранов */
+.doc__index {
+  font: var(--sticker-number-font);
+  letter-spacing: -0.02em;
+  color: var(--color-text-on-light);
+  text-shadow: var(--outline-number-3);
+  transform: rotate(-8deg);
+}
+
+.doc__subtitle {
+  margin-top: calc(var(--space-32) * 1.5);
+  font: var(--type-section-title);
+}
+
+.doc__table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--type-distance);
+  overflow-wrap: anywhere;
+}
+
+.doc__table th,
+.doc__table td {
+  padding: var(--space-8) var(--space-10) var(--space-8) 0;
+  border-bottom: 1px solid var(--color-divider);
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc__table thead th {
+  color: var(--color-text-muted);
+  font: var(--type-map-chip-strong);
+}
+
+.doc__table tbody th {
+  font: var(--type-label);
+}
+
+.doc__table td {
+  color: var(--color-text-secondary);
+}
+
+.doc__code {
+  overflow-x: auto;
+  padding: var(--space-16);
+  border: 1px solid var(--color-surface-raised);
+  border-radius: var(--radius-16);
+  background: var(--color-surface-card);
+  color: var(--color-text);
+  font: 400 14px/20px ui-monospace, "SF Mono", Menlo, monospace;   /* код – моноширинный, только в документе */
+}
+
+.doc__table code {
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-6);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font: 400 13px/18px ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* ── Куда цепляется кнопка: живой пост и номера его частей ────────────── */
+
+.doc__anatomy {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-32) calc(var(--space-32) * 2);
+  margin-top: var(--space-32);
+}
+
+.doc__anatomy .mb-post {
+  margin: 0;
+}
+
+/* номер части – стикер-число справа от неё, как номера экранов */
+.doc__anatomy-demo [data-mark] {
+  position: relative;
+}
+
+.doc__anatomy-demo [data-mark]::after {
+  content: attr(data-mark);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + var(--space-14));
+  font: var(--sticker-number-font);
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  color: var(--color-text-on-light);
+  text-shadow: var(--outline-number-3);
+  transform: translateY(-50%) rotate(-8deg);
+}
+
+/* подписи частей поста – как подписи под экранами: номер стикер-числом, текст серым */
+.doc__captions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: part;
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+.doc__captions li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-12);
+  counter-increment: part;
+}
+
+.doc__captions li::before {
+  content: counter(part);
+  flex-shrink: 0;
+  font: var(--sticker-number-font);
+  font-size: 22px;
+  color: var(--color-text-on-light);
+  text-shadow: var(--outline-number-3);
+}
+
+/* два вида кнопки с цифрой – двумя колонками, у каждой: что настраивают в админке и что на кнопке */
+.doc__kinds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));   /* две колонки; одна карточка – в половину, не во всю ширину */
+  gap: var(--space-24) calc(var(--space-32) * 1.5);
+  margin-top: var(--space-24);
+}
+
+.doc__kind {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+  padding: var(--space-24);
+  border: 1px solid var(--color-surface-raised);
+  border-radius: var(--radius-24);
+}
+
+.doc__kind-title {
+  font: var(--type-section-title);
+}
+
+/* выбор цифры в админке → кнопка: название цифры в одну строку, кнопка – на всё остальное */
+.doc__table.doc__choices th[scope="row"] {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.doc__choices td.mb-demo {
+  width: auto;
+}
+
+.doc__choices .mb-button {
+  width: 100%;
+  max-width: var(--mb-post-width);
+}
+
+/* сообщение по связке – живой пост, как в канале */
+.doc__message .mb-post {
+  margin: 0;
+}
+
+.doc__contract-title {
+  margin-top: var(--space-8);
+}
+
+.doc__kind .doc__code {
+  margin: 0;
+}
+
+/* очередность: вторая часть списка продолжает нумерацию первой */
+.doc__captions--from-3 {
+  counter-reset: part 2;
+}
+
+.doc__link {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .doc__link:hover {
+    text-decoration: underline;
+  }
+}
+
+/* таблицы техрешения: слева – что, справа – как; слова слева не рвутся */
+.doc__table th[scope="row"] {
+  width: 32%;
+  padding-right: var(--space-16);
+  overflow-wrap: normal;
+}
+
+/* ── Кнопка во всех состояниях: живая вёрстка, крупно ────────────────── */
+
+.mb-spec {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-24) var(--space-32);
+  margin-top: var(--space-32);
+}
+
+.mb-spec__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+/* кнопка в ширину поста канала, как в ленте */
+.mb-spec__demo {
+  display: flex;
+  flex-direction: column;
+  width: var(--mb-post-width);
+  max-width: 100%;
+}
+
+.mb-spec__item figcaption {
+  color: var(--color-text-muted);
+  font: var(--type-map-chip);
+}
+
+/* ── Экраны: сетка с номерами ────────────────────────────────────────── */
+
+.board__group {
+  margin-top: var(--space-32);
+}
+
+.board__group-title {
+  font: var(--type-label);
+  color: var(--color-text-secondary);
+}
+
+/* номера экранов – серым в строке заголовка, как количество у «мои друзья 9» */
+.board__range {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.board__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 220px));
+  gap: 52px var(--space-24);                      /* сверху у карточки – номер над снимком */
+  margin-top: 44px;
+  padding: 0;
+  list-style: none;
+}
+
+/* ссылка на карточку по номеру (#7) – карточка не прячется под край окна */
+.board-card {
+  scroll-margin-top: 56px;
+}
+
+.board-card__link {
+  --press-scale: var(--press-scale-wide);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+.board-card__frame {
+  position: relative;
+  display: block;
+  margin-bottom: var(--space-8);
+  transition: transform var(--duration-screen) var(--ease-emphasized);
+}
+
+.board-card__shot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* номер наклеен над левым верхним углом снимка, с наклоном – как стикер-число в профиле */
+.board-card__number {
+  --sticker-size: 36px;
+  position: absolute;
+  bottom: calc(100% - 6px);
+  left: -6px;
+  transform: rotate(-8deg);
+  transform-origin: 0 100%;
+}
+
+.board-card:target .board-card__frame {
+  outline: 3px solid var(--color-pink);
+  outline-offset: 6px;
+  border-radius: var(--radius-24);
+}
+
+.board-card__title {
+  font: var(--type-label);
+}
+
+.board-card__text {
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .board-card__link:hover .board-card__frame {
+    transform: translateY(-4px);
+  }
+
+  .board__toc a:hover {
+    border-color: var(--color-text-dim);
+    color: var(--color-text);
+  }
+}
+
+/* в узком окне карточки – одна под другой: кнопки с цифрой рядом с названием цифры не помещаются */
+@media (max-width: 1000px) {
+  .doc__kinds {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .board {
+    padding: var(--space-24) var(--gutter) calc(var(--space-32) * 1.5);
+  }
+
+  .board__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 44px var(--space-12);
+    margin-top: 36px;
+  }
+
+  .board-card__number {
+    --sticker-size: 28px;
+  }
+
+  .doc__kinds,
+  .doc__anatomy {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .doc__anatomy .mb-media {
+    width: 250px;
+  }
+
+  .doc__kind {
+    padding: var(--space-16);
+  }
+
+  .doc__kind .doc__table:not(.doc__choices) th[scope="row"] {
+    width: 40%;
+  }
+
+  /* на телефоне кнопка – под названием цифры, во всю ширину: в строку рядом не помещается */
+  .doc__choices thead {
+    display: none;
+  }
+
+  .doc__choices tr,
+  .doc__choices th,
+  .doc__choices td {
+    display: block;
+    width: auto;
+  }
+
+  .doc__table.doc__choices th[scope="row"] {
+    width: auto;
+    padding-bottom: var(--space-6);
+    border-bottom: 0;
+  }
+
+  .doc__choices td.mb-demo {
+    width: auto;
+    padding-top: 0;
+  }
+
+  .doc__table {
+    table-layout: fixed;
+    font: var(--type-map-chip);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-card__frame {
+    transition: none;
+  }
+}

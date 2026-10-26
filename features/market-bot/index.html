@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – канал маркета</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/screens/chat.css">
+  <link rel="stylesheet" href="../../styles/screens/market.css">
+  <link rel="stylesheet" href="market-bot.css">
+</head>
+<body>
+<div class="stage">
+
+  <!-- Стенд: подпись и пульт – только для показа, в продукт не идут -->
+  <header class="stage__head">
+    <h1 class="stage__title">канал маркета</h1>
+    <p class="stage__lead">история, закреп, цифры в&nbsp;кнопках и&nbsp;личные скидки</p>
+  </header>
+
+  <div class="stage__body">
+    <div class="device">
+      <main class="app" id="app">
+        <div class="status-bar" aria-hidden="true">
+          <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+          <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+          <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+        </div>
+
+        <!-- Канал маркета – чат с ботом по эталонам messanger/chat inside/bot_sample.jpeg и inline_button.png:
+             шапка как у чата, без звонка; писать в канал нельзя – композера нет -->
+        <section class="screen chat mb" id="channel" aria-label="blink market">
+          <div class="chat__scroll" id="scroll">
+            <div class="chat__feed mb__feed" id="feed"></div>
+          </div>
+
+          <header class="chat__header">
+            <button class="icon-button icon-button--header pressable" type="button" aria-label="назад">
+              <i class="icon icon--back" aria-hidden="true"></i>
+            </button>
+            <div class="chat__peer">
+              <span class="avatar avatar--online mb-bot-avatar">
+                <img class="avatar__img" src="../../assets/stickers/money.webp" alt="">
+              </span>
+              <span class="chat__peer-text">
+                <span class="chat__peer-name mb__name">blink market<i class="icon icon--check mb__verified" aria-label="официальный"></i></span>
+                <span class="chat__peer-status mb__status">онлайн</span>
+              </span>
+            </div>
+            <span class="mb__header-spacer" aria-hidden="true"></span>
+          </header>
+
+          <!-- Закреп: плашка под шапкой. Нажатие – лента едет к посту, он подсвечивается,
+               плашка переключается на следующий закреп. Полоска слева – сколько их и какой открыт -->
+          <button class="mb-pin pressable" id="pin" type="button" hidden>
+            <span class="mb-pin__track" id="pin-track" aria-hidden="true"></span>
+            <img class="mb-pin__thumb" id="pin-thumb" src="" alt="">
+            <span class="mb-pin__text">
+              <span class="mb-pin__title ellipsis" id="pin-title"></span>
+              <span class="mb-pin__preview ellipsis" id="pin-preview"></span>
+            </span>
+            <i class="icon icon--pinned mb-pin__icon" aria-hidden="true"></i>
+          </button>
+        </section>
+
+        <!-- Модалка товара: шторка по эталону market/limited_tale.png над градиентом маркета.
+             Открывают «купить» и обложка товара в посте. Крестика нет: нажатие мимо, жест вниз, Esc -->
+        <div class="mb-backdrop" id="backdrop"></div>
+        <div class="sheet mb-sheet" id="item-sheet" role="dialog" aria-modal="true" aria-labelledby="item-title" tabindex="-1">
+          <div class="sheet__handle" id="item-handle">
+            <div class="sheet__grabber" aria-hidden="true"></div>
+            <h2 class="mb-sheet__title" id="item-title"></h2>
+          </div>
+          <div class="mb-sheet__body" id="item-body"></div>
+        </div>
+
+        <p class="visually-hidden" id="announce" aria-live="polite"></p>
+        <div class="home-indicator" aria-hidden="true"></div>
+      </main>
+    </div>
+
+    <aside class="panel" aria-label="пульт показа">
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-viewer">
+        <span class="caps-label" id="panel-viewer">кто смотрит</span>
+        <div class="panel__row" data-control="viewer">
+          <button class="panel__button pressable" type="button" role="radio" data-value="leva">лёва, новорег</button>
+          <button class="panel__button pressable" type="button" role="radio" data-value="sonya">соня</button>
+        </div>
+      </div>
+
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-pins">
+        <span class="caps-label" id="panel-pins">закреп</span>
+        <div class="panel__row" data-control="pins">
+          <button class="panel__button pressable" type="button" role="radio" data-value="0">нет</button>
+          <button class="panel__button pressable" type="button" role="radio" data-value="1">один</button>
+          <button class="panel__button pressable" type="button" role="radio" data-value="2">два, больше нельзя</button>
+        </div>
+      </div>
+
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-clock">
+        <span class="caps-label" id="panel-clock">когда</span>
+        <div class="panel__row" data-control="clock">
+          <button class="panel__button pressable" type="button" role="radio" data-value="now">23.10</button>
+          <button class="panel__button pressable" type="button" role="radio" data-value="last">31.10</button>
+          <button class="panel__button pressable" type="button" role="radio" data-value="after">1.11</button>
+        </div>
+      </div>
+
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-stock">
+        <span class="caps-label" id="panel-stock">золото на складе</span>
+        <div class="panel__row" data-control="stock">
+          <button class="panel__button pressable" type="button" role="radio" data-value="42">42</button>
+          <button class="panel__button pressable" type="button" role="radio" data-value="1">1</button>
+          <button class="panel__button pressable" type="button" role="radio" data-value="0">0</button>
+        </div>
+      </div>
+
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-owned">
+        <span class="caps-label" id="panel-owned">пиксели лёвы</span>
+        <div class="panel__row" data-control="owned">
+          <button class="panel__button pressable" type="button" role="radio" data-value="none">скидка идёт</button>
+          <button class="panel__button pressable" type="button" role="radio" data-value="pixels">уже у&nbsp;тебя</button>
+        </div>
+      </div>
+
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-raffle-show">
+        <span class="caps-label" id="panel-raffle-show">цифра розыгрыша в&nbsp;админке</span>
+        <div class="panel__row" data-control="raffleShow">
+          <button class="panel__button pressable" type="button" role="radio" data-value="participants">участники</button>
+          <button class="panel__button pressable" type="button" role="radio" data-value="time">время до&nbsp;конца</button>
+        </div>
+      </div>
+
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-joined">
+        <span class="caps-label" id="panel-joined">розыгрыш</span>
+        <div class="panel__row" data-control="joined">
+          <button class="panel__button pressable" type="button" role="radio" data-value="0">не&nbsp;участвует</button>
+          <button class="panel__button pressable" type="button" role="radio" data-value="1">участвует</button>
+        </div>
+      </div>
+
+      <div class="panel__group">
+        <span class="caps-label">лента</span>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" id="to-top">к&nbsp;началу истории</button>
+          <button class="panel__button pressable" type="button" id="to-bottom">вниз</button>
+        </div>
+      </div>
+
+      <a class="panel__link" href="states.html">все экраны и&nbsp;описание</a>
+    </aside>
+  </div>
+</div>
+
+<script src="states.js"></script>
+<script src="market-bot.js"></script>
+</body>
+</html>

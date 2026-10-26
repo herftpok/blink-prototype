@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – канал маркета: экраны и описание</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="market-bot.css">
+  <link rel="stylesheet" href="states.css">
+</head>
+<body>
+<!-- Итоговый документ фичи: очередность внедрения, все экраны по номерам с подписями (states.js,
+     снимки – tools/shoot_market_bot.py) и техрешение. Разделы идут в порядке внедрения.
+     Экран открывает живой стенд в этом состоянии -->
+<main class="board">
+  <header class="board__head">
+    <h1 class="board__title">канал маркета</h1>
+    <a class="button button--primary board__stand pressable" href="index.html">открыть стенд</a>
+    <nav class="board__toc" aria-label="разделы">
+      <a href="#order">очередность</a>
+      <a href="#history">1. история</a>
+      <a href="#counters">2. цифры на&nbsp;кнопках</a>
+      <a href="#item">3. товар в&nbsp;посте</a>
+      <a href="#pin">4. закреп</a>
+      <a href="#personal">5. личные сообщения</a>
+    </nav>
+  </header>
+
+  <section class="doc" id="order" aria-labelledby="order-title">
+    <h2 class="doc__title" id="order-title">очередность внедрения</h2>
+    <div class="doc__kinds">
+      <article class="doc__kind">
+        <h3 class="doc__kind-title">обязательный скоп</h3>
+        <ol class="doc__captions">
+          <li><a class="doc__link" href="#history">читать сообщения, написанные до&nbsp;вступления</a></li>
+          <li><a class="doc__link" href="#counters">кнопки с&nbsp;цифрами</a></li>
+        </ol>
+      </article>
+      <article class="doc__kind">
+        <h3 class="doc__kind-title">дальше по&nbsp;приоритету</h3>
+        <ol class="doc__captions doc__captions--from-3">
+          <li><a class="doc__link" href="#item">привязка id товара</a></li>
+          <li><a class="doc__link" href="#pin">закрепы</a></li>
+          <li><span><a class="doc__link" href="#personal">ручка индивидуальных предложений</a> – писать по&nbsp;списку id юзеров уже можно, это остаётся</span></li>
+        </ol>
+      </article>
+    </div>
+  </section>
+
+  <section class="doc" id="history" aria-labelledby="history-title">
+    <h2 class="doc__title" id="history-title"><span class="doc__index">1</span>история канала</h2>
+    <div data-board="history"></div>
+  </section>
+
+  <section class="doc" id="counters" aria-labelledby="counters-title">
+    <h2 class="doc__title" id="counters-title"><span class="doc__index">2</span>цифры на&nbsp;кнопках</h2>
+
+    <!-- Из чего пост с кнопкой: живая вёрстка поста из market-bot.css, номера частей – подписи справа -->
+    <div class="doc__anatomy">
+      <div class="mb-demo doc__anatomy-demo">
+        <article class="mb-post">
+          <figure class="mb-media mb-media--gift"><img class="mb-media__img" src="../../assets/market/gift.webp" alt=""></figure>
+          <p class="mb-bubble" data-mark="1">розыгрыш 10 золотых хвостов
+            участвуй до&nbsp;31.10, итоги&nbsp;– 1.11</p>
+          <div class="mb-action" data-mark="2">
+            <button class="mb-button mb-button--counter pressable" type="button"><span class="mb-button__main"><span class="mb-button__label">участвовать</span></span><span class="mb-counter">1&nbsp;248&nbsp;участников</span></button>
+          </div>
+        </article>
+      </div>
+      <ol class="doc__captions">
+        <li>сообщение – текст, можно с&nbsp;фото, видео или товаром</li>
+        <li>кнопка сразу под&nbsp;ним: надпись слева, цифра справа. Технически это отдельное сообщение без текста – на&nbsp;бэке добавляем возможность завести сообщение с&nbsp;кнопкой без самого сообщения</li>
+      </ol>
+    </div>
+
+    <!-- Кнопка во всех состояниях – живая вёрстка из market-bot.css, а не снимок -->
+    <div class="mb-spec" aria-label="кнопка во всех состояниях">
+      <figure class="mb-spec__item">
+        <div class="mb-spec__demo">
+          <button class="mb-button mb-button--counter pressable" type="button"><span class="mb-button__main"><span class="mb-button__label">смотреть</span></span><span class="mb-counter">ещё 8&nbsp;дней</span></button>
+        </div>
+        <figcaption>срок больше суток</figcaption>
+      </figure>
+      <figure class="mb-spec__item">
+        <div class="mb-spec__demo">
+          <button class="mb-button mb-button--counter pressable" type="button"><span class="mb-button__main"><span class="mb-button__label">купить</span></span><span class="mb-counter">ещё 09:42:07</span></button>
+        </div>
+        <figcaption>последние сутки – секунды идут</figcaption>
+      </figure>
+      <figure class="mb-spec__item">
+        <div class="mb-spec__demo">
+          <button class="mb-button mb-button--counter pressable" type="button"><span class="mb-button__main"><span class="mb-button__label">купить</span></span><span class="mb-counter">осталось 42</span></button>
+        </div>
+        <figcaption>остаток товара – всегда число</figcaption>
+      </figure>
+      <figure class="mb-spec__item">
+        <div class="mb-spec__demo">
+          <button class="mb-button mb-button--counter pressable" type="button"><span class="mb-button__main"><span class="mb-button__label">участвовать</span></span><span class="mb-counter">1&nbsp;248&nbsp;участников</span></button>
+        </div>
+        <figcaption>участники; от&nbsp;10&nbsp;000 – «12.4k»</figcaption>
+      </figure>
+      <figure class="mb-spec__item">
+        <div class="mb-spec__demo">
+          <button class="mb-button mb-button--counter mb-button--done pressable" type="button" aria-pressed="true"><span class="mb-button__main"><i class="icon icon--check mb-button__check" aria-hidden="true"></i><span class="mb-button__label">ты участвуешь</span></span><span class="mb-counter">1&nbsp;249&nbsp;участников</span></button>
+        </div>
+        <figcaption>ты в&nbsp;розыгрыше</figcaption>
+      </figure>
+      <figure class="mb-spec__item">
+        <div class="mb-spec__demo">
+          <button class="mb-button mb-button--done pressable" type="button"><i class="icon icon--check mb-button__check" aria-hidden="true"></i>уже у&nbsp;тебя</button>
+        </div>
+        <figcaption>товар куплен</figcaption>
+      </figure>
+      <figure class="mb-spec__item">
+        <div class="mb-spec__demo">
+          <button class="mb-button mb-button--ended" type="button" disabled>розыгрыш закончился</button>
+        </div>
+        <figcaption>всё закончилось – нажать нельзя</figcaption>
+      </figure>
+      <figure class="mb-spec__item">
+        <div class="mb-spec__demo">
+          <button class="mb-button pressable" type="button"><i class="icon icon--back mb-button__link" aria-hidden="true"></i><span class="mb-button__label">в&nbsp;маркет</span></button>
+        </div>
+        <figcaption>без цифры или ручка не&nbsp;ответила</figcaption>
+      </figure>
+    </div>
+
+    <div data-board="deadline stock people"></div>
+
+    <!-- Техрешение: два вида кнопки с цифрой – что настраивают в админке, что получается на кнопке
+         и что приходит в приложение. Кнопки – живая вёрстка из market-bot.css -->
+    <h3 class="doc__subtitle">как сделать</h3>
+    <div class="doc__kinds">
+      <article class="doc__kind">
+        <h4 class="doc__kind-title">кнопка товара</h4>
+        <table class="doc__table doc__admin">
+          <tbody>
+            <tr><th scope="row">в&nbsp;админке</th><td>привязываем товар по&nbsp;id и&nbsp;выбираем, какую цифру показать</td></tr>
+            <tr><th scope="row">данные</th><td>из&nbsp;маркета, ручка не&nbsp;нужна</td></tr>
+            <tr><th scope="row">нажатие</th><td>модалка товара</td></tr>
+          </tbody>
+        </table>
+        <table class="doc__table doc__choices">
+          <thead><tr><th scope="col">цифра в&nbsp;админке</th><th scope="col">на&nbsp;кнопке</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">остаток</th><td class="mb-demo"><button class="mb-button mb-button--counter pressable" type="button"><span class="mb-button__main"><span class="mb-button__label">купить</span></span><span class="mb-counter">осталось 42</span></button></td></tr>
+            <tr><th scope="row">до&nbsp;конца скидки</th><td class="mb-demo"><button class="mb-button mb-button--counter pressable" type="button"><span class="mb-button__main"><span class="mb-button__label">купить</span></span><span class="mb-counter">ещё 09:42:07</span></button></td></tr>
+            <tr><th scope="row">до&nbsp;архивации</th><td class="mb-demo"><button class="mb-button mb-button--counter pressable" type="button"><span class="mb-button__main"><span class="mb-button__label">смотреть</span></span><span class="mb-counter">ещё 8&nbsp;дней</span></button></td></tr>
+            <tr><th scope="row">без цифры</th><td class="mb-demo"><button class="mb-button pressable" type="button"><span class="mb-button__label">купить</span></button></td></tr>
+          </tbody>
+        </table>
+
+        <h5 class="caps-label doc__contract-title">кнопка в&nbsp;сообщении – что получает приложение</h5>
+        <pre class="doc__code"><code>{
+  "label": "купить",
+  "item_id": "gold",
+  "show": "stock",
+  "value": 42
+}</code></pre>
+        <table class="doc__table">
+          <tbody>
+            <tr><th scope="row"><code>show</code></th><td>что выбрано в&nbsp;админке: <code>stock</code>, <code>sale_ends_at</code>, <code>archive_at</code> или нет</td></tr>
+            <tr><th scope="row"><code>value</code></th><td>число или дата из&nbsp;маркета – ровно то, что показать</td></tr>
+          </tbody>
+        </table>
+      </article>
+
+      <article class="doc__kind">
+        <h4 class="doc__kind-title">кнопка розыгрыша</h4>
+        <table class="doc__table doc__admin">
+          <tbody>
+            <tr><th scope="row">в&nbsp;админке</th><td>подтягиваем ручку розыгрыша и&nbsp;выбираем, что показать</td></tr>
+            <tr><th scope="row">данные</th><td>ручка розыгрыша, контракт ниже</td></tr>
+            <tr><th scope="row">нажатие</th><td>участие – кнопка становится «ты участвуешь»</td></tr>
+          </tbody>
+        </table>
+        <table class="doc__table doc__choices">
+          <thead><tr><th scope="col">цифра в&nbsp;админке</th><th scope="col">на&nbsp;кнопке</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">число участников</th><td class="mb-demo"><button class="mb-button mb-button--counter pressable" type="button"><span class="mb-button__main"><span class="mb-button__label">участвовать</span></span><span class="mb-counter">1&nbsp;248&nbsp;участников</span></button></td></tr>
+            <tr><th scope="row">время до&nbsp;окончания</th><td class="mb-demo"><button class="mb-button mb-button--counter pressable" type="button"><span class="mb-button__main"><span class="mb-button__label">участвовать</span></span><span class="mb-counter">ещё 8&nbsp;дней</span></button></td></tr>
+            <tr><th scope="row">ты участвуешь</th><td class="mb-demo"><button class="mb-button mb-button--counter mb-button--done pressable" type="button" aria-pressed="true"><span class="mb-button__main"><i class="icon icon--check mb-button__check" aria-hidden="true"></i><span class="mb-button__label">ты участвуешь</span></span><span class="mb-counter">1&nbsp;249&nbsp;участников</span></button></td></tr>
+          </tbody>
+        </table>
+
+        <h5 class="caps-label doc__contract-title">ручка розыгрыша → наш бэкенд</h5>
+        <pre class="doc__code"><code>GET &lt;ручка розыгрыша&gt;?user_id=&lt;id&gt;
+
+200 {
+  "participants": 1248,
+  "ends_at": "2026-11-01T00:00:00+03:00",
+  "finished": false,
+  "joined": true
+}</code></pre>
+
+        <h5 class="caps-label doc__contract-title">кнопка в&nbsp;сообщении – что получает приложение</h5>
+        <pre class="doc__code"><code>{
+  "label": "участвовать",
+  "show": "participants",
+  "value": 1248,
+  "finished": false,
+  "joined": true
+}</code></pre>
+        <table class="doc__table">
+          <tbody>
+            <tr><th scope="row"><code>show</code></th><td>что выбрано в&nbsp;админке: <code>participants</code> или <code>ends_at</code>. Ручка отдаёт оба поля, а&nbsp;в&nbsp;приложение уходит одно – выбранное</td></tr>
+            <tr><th scope="row"><code>value</code></th><td>значение выбранного поля из&nbsp;ответа ручки</td></tr>
+            <tr><th scope="row"><code>finished</code></th><td><code>true</code> – кнопка гаснет сразу</td></tr>
+            <tr><th scope="row"><code>joined</code></th><td>участвует&nbsp;ли этот человек</td></tr>
+            <tr><th scope="row">ответ ручки</th><td>до&nbsp;1&nbsp;с; ошибка – кнопка без цифры</td></tr>
+            <tr><th scope="row">кто зовёт</th><td>наш бэкенд, кэш 30&nbsp;с; <code>joined</code> – при открытии канала и&nbsp;после «участвовать»</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </div>
+  </section>
+
+  <section class="doc" id="item" aria-labelledby="item-title">
+    <h2 class="doc__title" id="item-title"><span class="doc__index">3</span>товар в&nbsp;посте</h2>
+    <div data-board="item"></div>
+
+    <!-- Что нужно в админке: вложение к посту – не только фото, но и id товара -->
+    <h3 class="doc__subtitle">в&nbsp;админке</h3>
+    <div class="doc__kinds">
+      <article class="doc__kind">
+        <h4 class="doc__kind-title">вложение к&nbsp;посту</h4>
+        <table class="doc__table doc__admin">
+          <tbody>
+            <tr><th scope="row">что прикрепить</th><td>фото, видео или id товара</td></tr>
+            <tr><th scope="row">если id товара</th><td>вместо картинки – обложка товара из&nbsp;маркета, загружать картинку не&nbsp;нужно</td></tr>
+            <tr><th scope="row">нажатие</th><td>обложка нажимается целиком и&nbsp;открывает модалку товара</td></tr>
+            <tr><th scope="row">кнопка</th><td>к&nbsp;этому&nbsp;же товару – кнопка товара с&nbsp;цифрой (раздел&nbsp;2)</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </div>
+  </section>
+
+  <section class="doc" id="pin" aria-labelledby="pin-title">
+    <h2 class="doc__title" id="pin-title"><span class="doc__index">4</span>закреп</h2>
+    <div data-board="pin"></div>
+  </section>
+
+  <section class="doc" id="personal" aria-labelledby="personal-title">
+    <h2 class="doc__title" id="personal-title"><span class="doc__index">5</span>личные сообщения</h2>
+    <div data-board="personal"></div>
+
+    <!-- Как назначать личные скидки: по списку или ручкой индивидуальных предложений; оба способа дают
+         связку, по связке уходит сообщение. Пост справа – живая вёрстка из market-bot.css -->
+    <h3 class="doc__subtitle">в&nbsp;админке</h3>
+    <div class="doc__kinds">
+      <article class="doc__kind">
+        <h4 class="doc__kind-title">по&nbsp;списку</h4>
+        <table class="doc__table doc__admin">
+          <tbody>
+            <tr><th scope="row">кому</th><td>список id юзеров – так писать уже можно</td></tr>
+            <tr><th scope="row">что</th><td>выбираем товар, размер скидки и&nbsp;длительность</td></tr>
+            <tr><th scope="row">отправка</th><td>вручную, всем из&nbsp;списка сразу</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="doc__kind">
+        <h4 class="doc__kind-title">автоматически</h4>
+        <table class="doc__table doc__admin">
+          <tbody>
+            <tr><th scope="row">кому</th><td>ручка индивидуальных предложений: метод постоянно высчитывает юзеров на&nbsp;скидку</td></tr>
+            <tr><th scope="row">что</th><td>метод сам подбирает товар, размер скидки и&nbsp;длительность</td></tr>
+            <tr><th scope="row">отправка</th><td>сама, как только появилась связка</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </div>
+
+    <div class="doc__kinds">
+      <article class="doc__kind">
+        <h4 class="doc__kind-title">связка</h4>
+        <pre class="doc__code"><code>{
+  "user_id": "48213",
+  "item_id": "pixels",
+  "discount": 40,
+  "duration_hours": 12
+}</code></pre>
+        <table class="doc__table">
+          <tbody>
+            <tr><th scope="row"><code>user_id</code></th><td>кому скидка</td></tr>
+            <tr><th scope="row"><code>item_id</code></th><td>на&nbsp;какой товар</td></tr>
+            <tr><th scope="row"><code>discount</code></th><td>размер скидки, %</td></tr>
+            <tr><th scope="row"><code>duration_hours</code></th><td>сколько действует с&nbsp;момента отправки</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="doc__kind">
+        <h4 class="doc__kind-title">сообщение по&nbsp;связке</h4>
+        <div class="mb-demo doc__message">
+          <article class="mb-post">
+            <span class="mb-media mb-media--pack mb-media--item"><img class="mb-media__img" src="../../assets/market/tail-pixel.webp" alt=""></span>
+            <p class="mb-bubble">лёва, это только тебе 🎁
+              пиксели за&nbsp;300 вместо 500</p>
+            <div class="mb-action">
+              <button class="mb-button mb-button--counter pressable" type="button"><span class="mb-button__main"><span class="mb-button__label">купить</span></span><span class="mb-counter">ещё 12:00:00</span></button>
+            </div>
+          </article>
+        </div>
+        <table class="doc__table doc__admin">
+          <tbody>
+            <tr><th scope="row">вложение</th><td>id товара из&nbsp;связки – обложка из&nbsp;маркета</td></tr>
+            <tr><th scope="row">текст</th><td>по&nbsp;шаблону: «{имя}, это только тебе 🎁 {товар} за&nbsp;{цена со&nbsp;скидкой} вместо {цена}»</td></tr>
+            <tr><th scope="row">кнопка</th><td>«купить», цифра – до&nbsp;конца скидки</td></tr>
+            <tr><th scope="row">видит</th><td>только этот юзер, цена со&nbsp;скидкой – только у&nbsp;него</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </div>
+  </section>
+</main>
+<script src="states.js"></script>
+<script src="board.js"></script>
+</body>
+</html>
