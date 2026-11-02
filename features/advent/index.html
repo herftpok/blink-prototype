@@ -18,6 +18,8 @@
   <link rel="stylesheet" href="advent.css">
   <link rel="stylesheet" href="av-cards.css">
   <link rel="stylesheet" href="av-game.css">
+<link rel="stylesheet" href="av-garland.css">
+<link rel="stylesheet" href="av-lab.css">
 </head>
 <body>
 <div class="stage">
@@ -25,7 +27,7 @@
   <!-- Стенд: подписи и пульт – только для показа, в продукт не идут -->
   <header class="stage__head">
     <h1 class="stage__title">адвент</h1>
-    <p class="stage__lead">14&nbsp;декабря – 11&nbsp;января: каждый день карточка о&nbsp;твоём годе, снежинки за&nbsp;вход и&nbsp;задания, цу-е-фа с&nbsp;друзьями на&nbsp;ставку и&nbsp;большой розыгрыш</p>
+    <p class="stage__lead">14&nbsp;декабря – 11&nbsp;января: каждый день карточка о&nbsp;твоём годе, снежинки за&nbsp;вход и&nbsp;задания, «гирлянда» и&nbsp;большой розыгрыш</p>
     <a class="stage__link" href="states.html">все экраны и&nbsp;состояния</a>
   </header>
 
@@ -51,17 +53,17 @@
                   <i class="icon icon--back" aria-hidden="true"></i>
                 </button>
                 <h1 class="av-bar__title" id="home-title">адвент</h1>
-                <button class="av-balance pressable" type="button" data-go="game" aria-label="снежинки, к игре цу-е-фа">
+                <button class="av-balance pressable" type="button" data-go="game" aria-label="снежинки, к игре">
                   <img class="av-balance__icon" src="renders/snowflake.webp" alt="">
                   <span class="av-balance__value" data-balance>0</span>
                 </button>
               </header>
-              <!-- на что тратить: цу-е-фа и розыгрыш – над календарём, две плитки в ширину экрана -->
+              <!-- на что тратить: гирлянда и розыгрыш – над календарём, две плитки в ширину экрана -->
               <nav class="av-entries" aria-label="потратить снежинки">
                 <button class="av-entry pressable" type="button" data-go="game">
-                  <img class="av-entry__art" src="renders/hand-scissors.webp" alt="">
+                  <img class="av-entry__art" src="renders/garland-bulb-pink.webp" alt="">
                   <span class="av-entry__text">
-                    <span class="av-entry__title">цу-е-фа</span>
+                    <span class="av-entry__title ellipsis">гирлянда</span>
                     <span class="av-entry__meta ellipsis" id="dock-game"></span>
                   </span>
                 </button>
@@ -86,7 +88,7 @@
                   <i class="icon icon--back" aria-hidden="true"></i>
                 </button>
                 <p class="av-bar__title" id="day-date"></p>
-                <button class="av-balance pressable" type="button" data-go="game" aria-label="снежинки, к игре цу-е-фа">
+                <button class="av-balance pressable" type="button" data-go="game" aria-label="снежинки, к игре">
                   <img class="av-balance__icon" src="renders/snowflake.webp" alt="">
                   <span class="av-balance__value" data-balance>0</span>
                 </button>
@@ -115,19 +117,33 @@
             </button>
           </section>
 
-          <!-- ── 4. Цу-е-фа: «камень, ножницы, бумага» с другом на ставку ─ -->
+          <!-- ── 4. Зажги гирлянду: три нажатия, подарок и бонус за точность ─── -->
           <section class="screen av-screen av-game-screen" id="screen-game" aria-labelledby="game-title" hidden>
             <header class="av-bar av-bar--fixed">
               <button class="icon-button icon-button--header av-bar__back pressable" type="button" aria-label="назад" data-act="back">
                 <i class="icon icon--back" aria-hidden="true"></i>
               </button>
-              <h2 class="av-bar__title" id="game-title">цу-е-фа</h2>
+              <h2 class="av-bar__title" id="game-title">гирлянда</h2>
               <span class="av-balance" aria-label="снежинки">
                 <img class="av-balance__icon" src="renders/snowflake.webp" alt="">
                 <span class="av-balance__value" data-balance>0</span>
               </span>
             </header>
             <div class="av-game" id="game"></div>
+          </section>
+
+          <!-- ── 4а. Друзья сегодня: таблица лучших результатов на весь экран ── -->
+          <section class="screen av-screen av-board" id="screen-board" aria-labelledby="board-screen-title" hidden>
+            <div class="screen__scroll av-board__scroll">
+              <header class="av-bar">
+                <button class="icon-button icon-button--header av-bar__back pressable" type="button" aria-label="назад" data-act="back">
+                  <i class="icon icon--back" aria-hidden="true"></i>
+                </button>
+                <h2 class="av-bar__title" id="board-screen-title">друзья сегодня</h2>
+                <span class="av-bar__spacer" aria-hidden="true"></span>
+              </header>
+              <div class="av-board__body" id="board"></div>
+            </div>
           </section>
 
           <!-- ── 5. Большой розыгрыш ──────────────────────────────────── -->
@@ -149,16 +165,16 @@
 
           <div class="scrim" id="scrim"></div>
 
-          <!-- Шторка: подарок с ёлки и золотая звезда -->
+          <!-- Шторка: подарок за гирлянду и золотая звезда -->
           <div class="sheet av-sheet av-prize" id="sheet-prize" role="dialog" aria-modal="true" aria-labelledby="prize-title" tabindex="-1">
             <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div></div>
             <div class="av-prize__body" id="prize-body"></div>
           </div>
 
-          <!-- Шторка: подарки на ёлке (весь пул, честно) -->
+          <!-- Шторка: коллекция подарков (весь пул, честно) -->
           <div class="sheet av-sheet av-pool" id="sheet-pool" role="dialog" aria-modal="true" aria-labelledby="pool-title" tabindex="-1">
             <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div>
-              <h2 class="sheet__title av-pool__title" id="pool-title">подарки на ёлке</h2>
+              <h2 class="sheet__title av-pool__title" id="pool-title">коллекция подарков</h2>
             </div>
             <div class="av-pool__body" id="pool-body"></div>
           </div>
@@ -173,6 +189,15 @@
               <i class="icon icon--share" aria-hidden="true"></i><span id="share-cta-label">в сторис</span>
             </button>
           </div>
+
+          <!-- Пуш: друг обогнал – системный баннер iOS, не чаще раза в день -->
+          <button class="ny-push pressable" type="button" id="push" data-push="garland" aria-label="открыть гирлянду">
+            <img class="ny-push__icon" src="../../assets/system/app-icon.png" alt="">
+            <span class="ny-push__body">
+              <span class="ny-push__head"><span class="ny-push__title">blink</span><span class="ny-push__time">сейчас</span></span>
+              <span class="ny-push__text" id="push-text"></span>
+            </span>
+          </button>
 
           <!-- Слой полёта: предмет из календаря в шапку дня, снежинки в баланс, билеты в шар -->
           <div class="av-fly" id="fly" aria-hidden="true"></div>
@@ -207,14 +232,18 @@
       </div>
 
       <div class="panel__group" role="group" aria-labelledby="panel-tree">
-        <p class="panel__label caps-label" id="panel-tree">цу-е-фа</p>
+        <p class="panel__label caps-label" id="panel-tree">гирлянда</p>
         <div class="panel__row">
           <button class="panel__button pressable" type="button" data-panel="flakes">+500 снежинок</button>
           <button class="panel__button pressable" type="button" data-panel="zero">0 снежинок</button>
         </div>
         <div class="panel__row">
-          <button class="panel__button pressable" type="button" data-panel="almost">4 друга обыграно</button>
-          <button class="panel__button pressable" type="button" data-panel="empty-pool">ёлка пуста</button>
+          <button class="panel__button pressable" type="button" data-panel="tries">снова 3 попытки</button>
+          <button class="panel__button pressable" type="button" data-panel="push">пуш о подарке</button>
+        </div>
+        <div class="panel__row">
+          <button class="panel__button pressable" type="button" data-panel="almost">осталось 3 подарка</button>
+          <button class="panel__button pressable" type="button" data-panel="empty-pool">всё собрано</button>
         </div>
       </div>
 
@@ -227,7 +256,10 @@
 <script src="../../scripts/pin.js"></script>
 <script src="av-data.js"></script>
 <script src="av-cards.js"></script>
+<script src="av-garland-engine.js"></script>
 <script src="av-game.js"></script>
+<script src="av-lab-engine.js"></script>
+<script src="av-lab.js"></script>
 <script src="advent.js"></script>
 </body>
 </html>

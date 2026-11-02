@@ -48,6 +48,12 @@ def main() -> int:
             page.goto(f"http://127.0.0.1:{port}/features/advent/render.html{query}")
             page.wait_for_function("window.AV_READY === true", timeout=240000)
             renders = page.evaluate("window.AV_RENDERS")
+            meta = page.evaluate("window.AV_META || null")
+            if meta:
+                import json
+                for name, m in meta.items():
+                    (OUT / f"{name}.json").write_text(json.dumps(m, ensure_ascii=False, indent=1))
+                    print(f"  {name}.json")
             for name, url in renders.items():
                 img = Image.open(io.BytesIO(base64.b64decode(url.split(",", 1)[1]))).convert("RGBA")
                 img.save(OUT / f"{name}.webp", "WEBP", quality=88, method=6)

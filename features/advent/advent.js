@@ -1,8 +1,8 @@
 /*
- * Адвент: календарь, день, карточка статистики, цу-е-фа и розыгрыш в одном телефоне + пульт.
- * Данные – av-data.js, карточки статистики – av-cards.js, игра «цу-е-фа» и розыгрыш – av-game.js.
+ * Адвент: календарь, день, карточка статистики, «новогодняя гирлянда» и розыгрыш в одном телефоне + пульт.
+ * Данные – av-data.js, карточки статистики – av-cards.js, игра «новогодняя гирлянда» и розыгрыш – av-game.js.
  * Переходы: календарь → день – предмет дня летит из клетки в шапку дня (как в видео-референсе),
- * остальные клетки гаснут; день → карточка – снизу на весь экран; цу-е-фа и розыгрыш – справа.
+ * остальные клетки гаснут; день → карточка – снизу на весь экран; гирлянда и розыгрыш – справа.
  */
 (() => {
   "use strict";
@@ -17,9 +17,8 @@
 
   const app = $("#app");
 
-  // Опубликованная версия (GitHub Pages) – без игры и розыгрыша: игра ещё в работе, а билеты в розыгрыш
-  // берутся только из неё. Локально – всё; ?nogame – посмотреть опубликованный вид локально
-  const GAME_ON = !location.hostname.endsWith("github.io") && !new URLSearchParams(location.search).has("nogame");
+  // Игра и розыгрыш доступны на всех хостах; ?nogame оставляет только календарь.
+  const GAME_ON = !new URLSearchParams(location.search).has("nogame");
   if (!GAME_ON) {
     app.classList.add("av--no-game");
     $$(".av-balance[data-go]").forEach((b) => {
@@ -86,11 +85,11 @@
     balance: 0,
     tickets: 0,
     days: [],              // по дням: login, task, share – "todo" | "done" | "claimed" | "missed"; seen
-    taken: [],             // id подарков с ёлки, которые уже твои
-    beaten: [],            // каких друзей обыграл в цу-е-фа
-    stake: 100,            // выбранная ставка
-    streak: 0,             // обычных подарков подряд
-    star: false,           // золотая звезда собрана
+    taken: [],             // id полученных подарков
+    garland: { attempts: 0 },   // раунды за день
+    clock: "16:48",        // время на телефоне: до новых попыток (00:00) – 7 ч 12 мин
+    events: [],            // аналитика: garland_open, garland_start, garland_finish…
+    star: false,           // рамка за всю коллекцию
     draw: {},              // билеты в шарах: id → сколько положено
     empty: false,          // пульт: мало данных – запасные карточки
     vip: false,
@@ -105,16 +104,6 @@
       t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
-  }
-
-  /** Подарок с ёлки уровня tier (или ближайшего ниже, если уровень кончился) – из оставшихся, без повторов */
-  function takeTier(tier, R = Math.random) {
-    const order = ["common", "rare", "epic", "legend"];
-    for (let k = order.indexOf(tier); k >= 0; k--) {
-      const left = D.POOL.filter((p) => p.tier === order[k] && !S.taken.includes(p.id));
-      if (left.length) return left[Math.floor(R() * left.length)];
-    }
-    return D.POOL.find((p) => !S.taken.includes(p.id)) || null;
   }
 
   /** Состояние на любой «сегодня»: прошлые дни частично собраны, часть бросков сделана */
@@ -140,21 +129,21 @@
       if (d.share === "claimed") earned += D.ECONOMY.share;
     });
     S.taken = [];
-    S.stake = D.ECONOMY.stake;
-    S.streak = 0;
+    S.scoreRewards = {};
+    S.garland = { attempts: 0 };
+    S.events = [];
     S.star = false;
     S.tickets = 0;
     S.draw = {};
     S.balance = earned;
-    S.beaten = [];
     if (todayIdx > 0) {
-      // почти всё заработанное уже было на кону; ставки по 100, побед – около половины
+      // Демонстрационная история: по одному открытому подарку в активный день.
       const ctx = { S, D };
-      const duels = Math.floor((earned * 0.8) / D.ECONOMY.stake);
-      for (let k = 0; k < duels; k++) {
-        if (S.balance < D.ECONOMY.stake) break;
-        const who = D.RIVALS[Math.floor(R() * D.RIVALS.length)].who;
-        window.AV_GAME.resolve(ctx, who, Math.floor(R() * 6), Math.floor(R() * 5), D.ECONOMY.stake, R);
+      for (let i = 0; i < todayIdx && S.balance >= D.ECONOMY.attempt + 40; i++) {
+        const prize = window.AV_GAME.choose(ctx, R);
+        if (!prize) break;
+        S.balance -= D.ECONOMY.attempt;
+        window.AV_GAME.settle(ctx, { prizeId: prize.id });
       }
       // часть билетов уже в шарах
       const placed = Math.floor(S.tickets * 0.4);
@@ -172,6 +161,7 @@
     day: $("#screen-day"),
     stat: $("#screen-stat"),
     game: $("#screen-game"),
+    board: $("#screen-board"),
     draw: $("#screen-draw"),
   };
   const stack = ["home"];
@@ -191,7 +181,7 @@
     app.dataset.screen = name;
   }
 
-  /** Экран справа (цу-е-фа, розыгрыш), под ним предыдущий уходит влево на 30 % */
+  /** Экран справа (гирлянда, розыгрыш), под ним предыдущий уходит влево на 30 % */
   async function push(name, opts = {}) {
     if (busy || current() === name) return;
     busy = true;
@@ -214,6 +204,7 @@
     const name = stack[stack.length - 1];
     if (name === "day") return closeDay();
     if (name === "stat") return closeStat();
+    if (name === "game") window.AV_GAME.pause();
     busy = true;
     stack.pop();
     const back = current();
@@ -319,6 +310,7 @@
 
   async function closeDay() {
     if (busy) return;
+    if (name === "game") window.AV_GAME.pause();
     busy = true;
     stack.pop();
     renderHome();
@@ -362,6 +354,7 @@
 
   async function closeStat() {
     if (busy) return;
+    if (name === "game") window.AV_GAME.pause();
     busy = true;
     stack.pop();
     renderDay();
@@ -390,7 +383,7 @@
     $("#calendar").innerHTML = `<div class="av-grid">${D.DAYS.map((day, i) => cellMarkup(day, i)).join("")}${ledges()}</div>`;
     renderBalance();
     const left = D.POOL.length - S.taken.length;
-    $("#dock-game").textContent = `ставки от${NBSP}${D.ECONOMY.stakes[0]}`;
+    $("#dock-game").innerHTML = `${D.ECONOMY.attempt}<img class="av-entry__flake" src="renders/snowflake.webp" alt="снежинок">`;
     $("#dock-draw").textContent = `${S.tickets}${NBSP}${plural(S.tickets, "билет", "билета", "билетов")}`;
   }
 
@@ -561,10 +554,11 @@
     });
   }
 
-  /* ── 4–5. цу-е-фа и розыгрыш ─────────────────────────────────────────── */
+  /* ── 4–5. новогодняя гирлянда и розыгрыш ────────────────────────────────────── */
 
   const RENDER = {
     game: () => window.AV_GAME.render($("#game"), gameCtx()),
+    board: () => window.AV_GAME.renderBoard($("#board"), gameCtx()),
     draw: () => renderDraw(),
     home: () => renderHome(),
     day: () => renderDay(),
@@ -578,6 +572,8 @@
       toTasks: () => { goToday(); },
       toDraw: () => push("draw"),
       toTree: () => push("game"),
+      openBoard: () => push("board"),
+      openStory: (markup) => openShare(markup),
     };
   }
 
@@ -635,9 +631,13 @@
     window.AV_GAME.prizeEnter(prize, extra, gameCtx());
   }
 
-  function openShare() {
+  // что в шторке «поделиться»: карточка дня (задание «поделись») или подарок из гирлянды
+  let shareKind = "day";
+
+  function openShare(markup) {
     const day = D.DAYS[currentDay];
-    $("#share-story").innerHTML = `<div class="av-share__page">${window.AV_CARDS.render(day, { ...cardCtx(), story: true })}</div>`;
+    shareKind = markup ? "garland" : "day";
+    $("#share-story").innerHTML = `<div class="av-share__page">${markup || window.AV_CARDS.render(day, { ...cardCtx(), story: true })}</div>`;
     $("#share-cta-label").textContent = "в сторис";
     $("#share-cta").dataset.done = "";
     openSheet("share");
@@ -692,6 +692,12 @@
       return;
     }
     if (t.dataset.go === "game") return push("game");
+    if (t.dataset.push === "garland") {
+      // пуш «друг обогнал» – сразу в игру
+      S.events.push({ name: "garland_push_open" });
+      hidePush();
+      return push("game");
+    }
     if (t.dataset.go === "draw") return push("draw");
     if (t.dataset.claim) return claim(t.dataset.claim, t.closest(".av-task") || t);
     if (t.dataset.do) return doTask(t.dataset.do);
@@ -706,7 +712,7 @@
     if (t.dataset.act === "crack") return crackCookie();
     if (t.id === "share-cta") {
       // на телефоне – системный «поделиться»; задание дня выполнено
-      if (currentDay === S.today && S.days[currentDay].share === "todo") S.days[currentDay].share = "done";
+      if (shareKind === "day" && currentDay === S.today && S.days[currentDay].share === "todo") S.days[currentDay].share = "done";
       t.dataset.done = "1";
       $("#share-cta-label").textContent = "готово";
       setTimeout(() => closeSheet(), 600);
@@ -781,7 +787,9 @@
       case "next": return resetTo(Math.min(D.DAYS.length - 1, S.today + 1));
       case "flakes": S.balance += 500; break;
       case "zero": S.balance = 0; break;
-      case "almost": S.beaten = D.RIVALS.slice(0, 4).map((r) => r.who); S.star = false; break;
+      case "tries": S.garland.attempts = 0; break;
+      case "push": return showPush();
+      case "almost": S.taken = D.POOL.slice(3).map((p) => p.id); break;
       case "empty-pool": S.taken = D.POOL.map((p) => p.id); break;
       case "reset": S.empty = false; S.vip = false; return resetTo(8);
       default:
@@ -789,6 +797,17 @@
     renderBalance();
     RENDER[current()]?.({});
   });
+
+  /* ── пуш «друг обогнал» – не чаще раза в день ──────────────────────────── */
+
+  function showPush() {
+    $("#push-text").textContent = "зажги гирлянду – новогодний подарок ждёт";
+    $("#push").classList.add("is-shown");
+  }
+
+  function hidePush() {
+    $("#push").classList.remove("is-shown");
+  }
 
   /* ── состояния для раскладки states.html и ссылок ?state=<id> ─────────── */
 
@@ -843,60 +862,33 @@
         jump(["home", "day", "stat"]);
         break;
       case "share": resetTo(8); currentDay = 8; jump(["home", "day", "stat"]); openShare(); break;
-      case "game-first": resetTo(0); S.balance = D.ECONOMY.login; S.stake = D.ECONOMY.stakes[0]; jump(["home", "game"]); break;
-      case "game": resetTo(8); S.balance = 640; jump(["home", "game"]); break;
-      case "game-high": resetTo(8); S.balance = 640; S.stake = 500; jump(["home", "game"]); break;
-      case "game-poor": resetTo(8); S.balance = 20; S.stake = D.ECONOMY.stakes[0]; jump(["home", "game"]); break;
-      case "game-four": resetTo(dayIdx("05.01")); S.balance = 460; S.beaten = D.RIVALS.slice(0, 4).map((r) => r.who); jump(["home", "game"]); break;
-      case "game-empty": resetTo(dayIdx("09.01")); S.taken = D.POOL.map((p) => p.id); S.balance = 180; jump(["home", "game"]); break;
-      case "duel": resetTo(8); S.balance = 340; jump(["home", "game"]); window.AV_GAME.setView(gameCtx(), "duel", { stake: 300 }); break;
-      case "duel-chant":
-        resetTo(8);
-        S.balance = 340;
-        jump(["home", "game"]);
-        window.AV_GAME.setView(gameCtx(), "duel", { stake: 300 });
-        window.AV_GAME.playRound(gameCtx(), "scissors", "paper");     // снимок ловит «камень… ножницы…»
-        break;
-      case "duel-win-round":
-      case "duel-lose-round": {
-        resetTo(8);
-        S.balance = 340;
-        jump(["home", "game"]);
-        window.AV_GAME.setView(gameCtx(), "duel", { stake: 300, me: kind === "duel-win-round" ? 0 : 1, them: kind === "duel-win-round" ? 1 : 0, round: 2 });
-        const [me, them] = kind === "duel-win-round" ? ["scissors", "paper"] : ["rock", "paper"];
-        window.AV_GAME.playRound(gameCtx(), me, them, { instant: true });
-        break;
-      }
-      case "result-win":
-      case "result-lose":
-      case "prize": {
-        resetTo(8);
-        S.balance = 640;
-        jump(["home", "game"]);
-        const win = kind !== "result-lose";
-        const out = window.AV_GAME.resolve(gameCtx(), "natashka", win ? 2 : 1, win ? 1 : 2, 300);
-        if (kind === "prize") {
-          // на снимке – подарок нужного уровня
-          const want = prizeById(arg);
-          S.taken[S.taken.indexOf(out.prize.id)] = want.id;
-          out.prize = want;
-        }
-        window.AV_GAME.setView(gameCtx(), "result", { me: win ? 2 : 1, them: win ? 1 : 2, stake: 300, ...out });
-        break;
-      }
-      case "star":
-        resetTo(dayIdx("05.01"));
-        S.beaten = D.RIVALS.map((r) => r.who);
-        S.star = true;
-        jump(["home", "game"]);
-        openPrize({ ...D.STAR, tier: "legend" }, { star: true });
-        break;
+      case "garland": case "popper": case "express": case "elka":
+        resetTo(8); S.balance = 90; jump(["home", "game"]); break;
+      case "garland-wheel": case "garland-score": case "garland-ranking":
+        resetTo(kind==='garland-wheel'?8:0); S.balance=90; window.AV_GAME.variant(kind==='garland-wheel'?'wheel':'score'); jump(["home","game"]);
+        if(kind==='garland-ranking')window.AV_GAME.click({dataset:{game:'lab-ranking'}},gameCtx()); break;
+      case "garland-first": resetTo(0); S.balance = 30; jump(["home", "game"]); break;
+      case "garland-play": case "garland-paused":
+        resetTo(8); S.balance = 60; S.garland.attempts = 1; jump(["home", "game"]);
+        window.AV_GAME.setRun(gameCtx(), { playing: kind === "garland-play", paused: kind === "garland-paused" }); break;
+      case "garland-prize": case "garland-perfect": case "garland-miss": case "garland-rare":
+        resetTo(0); S.balance = 60; S.garland.attempts = 1; jump(["home", "game"]);
+        window.AV_GAME.setRun(gameCtx(), { prizeId: kind === "garland-rare" ? D.POOL.find(p=>p.tier==='epic').id : D.POOL[0].id, finale: kind === "garland-perfect", hits: kind === "garland-perfect" ? 3 : kind === "garland-miss" ? 0 : 2 }); break;
+      case "garland-poor": resetTo(8); S.balance = 20; jump(["home", "game"]); break;
+      case "garland-done": resetTo(8); S.garland.attempts = 3; jump(["home", "game"]); break;
+      case "garland-empty": resetTo(8); S.taken = D.POOL.map(p=>p.id); S.star = true; jump(["home", "game"]); break;
+      case "garland-story":
+        resetTo(0); S.balance = 60; jump(["home", "game"]);
+        window.AV_GAME.setRun(gameCtx(), { prizeId: D.POOL[0].id });
+        window.AV_GAME.click({ dataset: { game: "share" } }, gameCtx()); break;
+      case "garland-push": resetTo(8); showPush(); break;
       case "pool": resetTo(8); jump(["home", "game"]); openSheet("pool"); break;
       case "draw": resetTo(8); S.tickets = 9; jump(["home", "draw"]); break;
       case "draw-mine": resetTo(8); S.tickets = 4; S.draw = { console: 7, headphones: 3 }; jump(["home", "draw"]); break;
       case "draw-none": resetTo(8); S.tickets = 0; jump(["home", "draw"]); break;
       default: return false;
     }
+    if (kind !== "garland-push") hidePush();
     renderBalance();
     syncPanel();
     return true;
@@ -906,14 +898,14 @@
 
   const sky = window.BlinkSky ? window.BlinkSky.start($("#sky"), { mode: "snow" }) : null;
   const statSky = window.BlinkSky ? window.BlinkSky.start($("#stat-sky"), { mode: "snow" }) : null;
-  // конфетти цветами системы – поверх всего: победа в цу-е-фа и золотая звезда
+  // конфетти цветами системы – поверх всего: гирлянда, подарок, звезда
   let fx = window.BlinkSky ? window.BlinkSky.start($("#fx"), { mode: "none" }) : null;
   app.addEventListener("av:confetti", () => {
     const colors = getComputedStyle(app).getPropertyValue("--confetti-colors").split(",").map((c) => c.trim());
     fx?.confetti(colors);
   });
 
-  // низкий телефон (SE, 667): карточка статистики сжимается целиком, а не наезжает на кнопку
+  // низкий телефон (SE, 667): карточка статистики и вход в гирлянду сжимаются, а не наезжают на кнопки
   function fitPhone() {
     const h = app.clientHeight || 844;
     app.style.setProperty("--av-fit", String(Math.min(1, h / 844)));
@@ -937,6 +929,6 @@
   window.AV = {
     S, D, stack, screens, openDay: (i) => openDay(i, $(`.av-cell[data-day="${i}"]`)), openStat, closeStat,
     push, pop, resetTo, renderHome, renderDay, openSheet, closeSheet, openShare, current, sky, GAME_ON,
-    setDay: (i) => { currentDay = i; }, showState, openPrize, takeTier, gameCtx,
+    setDay: (i) => { currentDay = i; }, showState, openPrize, gameCtx,
   };
 })();

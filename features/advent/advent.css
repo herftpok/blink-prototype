@@ -435,11 +435,11 @@
   pointer-events: none;
 }
 
-/* ── Над календарём: цу-е-фа и розыгрыш – две плитки в ширину экрана ─── */
+/* ── Над календарём: ёлка до неба и розыгрыш – две плитки в ширину экрана ─── */
 
 .av-entries {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.2fr 1fr;              /* «ёлка до неба» длиннее «розыгрыша» */
   gap: var(--space-8);
   margin: var(--space-16) var(--gutter) 0;
 }

@@ -5,8 +5,8 @@
  */
 import { GROUPS as ALL_GROUPS, STATES as ALL_STATES } from "./states.js";
 
-// опубликованная версия (GitHub Pages) – без игры и розыгрыша, как и сам стенд; ?nogame – то же локально
-const NO_GAME = location.hostname.endsWith("github.io") || new URLSearchParams(location.search).has("nogame");
+// По умолчанию показываем все сценарии; ?nogame оставляет только календарь.
+const NO_GAME = new URLSearchParams(location.search).has("nogame");
 const HIDDEN = NO_GAME ? ["game", "draw"] : [];
 const GROUPS = ALL_GROUPS.filter((g) => !HIDDEN.includes(g.id));
 const STATES = ALL_STATES.filter((s) => !HIDDEN.includes(s.group));
@@ -18,7 +18,7 @@ const number = new Map(STATES.map((state, i) => [state.id, i + 1]));
 
 const card = (state) => `
   <li class="board-card" id="${number.get(state.id)}">
-    <a class="board-card__link pressable" href="index.html?state=${encodeURIComponent(state.id)}${NO_GAME && !location.hostname.endsWith("github.io") ? "&nogame" : ""}"
+    <a class="board-card__link pressable" href="index.html?state=${encodeURIComponent(state.id)}${NO_GAME ? "&nogame" : ""}"
        aria-label="${number.get(state.id)}. ${esc(state.title)}, ${esc(state.text)}">
       <span class="board-card__frame">
         <img class="board-card__shot" src="states/${state.id.replace(":", "-")}.webp" alt="" width="585" height="1266" loading="lazy" decoding="async">

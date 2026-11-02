@@ -71,10 +71,68 @@ function shot(make, opts = {}) {
   return canvas.toDataURL("image/png");
 }
 
+/** Слои: предмет строится один раз, камера – по нему целиком, каждый слой (часть по имени) снимается
+    отдельно в той же рамке – в игре слои лежат друг на друге и совпадают. Плюс точка опоры слоя
+    (низ его рамки по центру) в долях картинки – откуда расти и вокруг чего падать */
+function shotLayers(name, entry) {
+  const [W, H] = entry.size;
+  renderer.setSize(W, H, false);
+  const scene = new THREE.Scene();
+  const lighting = createLighting(THREE, renderer, scene);
+  lighting.update(0, 0);
+  renderer.shadowMap.enabled = false;
+  renderer.toneMappingExposure = entry.exposure ?? 1.0;
+  scene.environmentIntensity = 0.9;
+  const obj = entry.make();
+  scene.add(obj);
+  obj.updateMatrixWorld(true);
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -100, 100);
+  camera.rotation.x = -THREE.MathUtils.degToRad(entry.pitch ?? VIEW.pitch);
+  camera.updateMatrixWorld(true);
+  const proj = (box) => {
+    const inv = camera.matrixWorldInverse;
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+      const c = new THREE.Vector3(x, y, z).applyMatrix4(inv);
+      x0 = Math.min(x0, c.x); x1 = Math.max(x1, c.x); y0 = Math.min(y0, c.y); y1 = Math.max(y1, c.y);
+    }
+    return { x0, x1, y0, y1 };
+  };
+  const all = proj(new THREE.Box3().setFromObject(obj, true));
+  const aspect = W / H;
+  const halfH = Math.max((all.x1 - all.x0) / aspect, all.y1 - all.y0) * (entry.pad ?? VIEW.pad);
+  const halfW = halfH * aspect;
+  const cx = (all.x0 + all.x1) / 2;
+  const cy = (all.y0 + all.y1) / 2;
+  camera.left = cx - halfW; camera.right = cx + halfW; camera.top = cy + halfH; camera.bottom = cy - halfH;
+  camera.updateProjectionMatrix();
+  const meta = {};
+  for (const layer of entry.layers) {
+    obj.children.forEach((c) => { c.visible = c.name === layer; });
+    const part = obj.children.find((c) => c.name === layer);
+    const b = proj(new THREE.Box3().setFromObject(part, true));
+    meta[layer] = {
+      x: +(((b.x0 + b.x1) / 2 - camera.left) / (2 * halfW) * 100).toFixed(1),
+      y: +((camera.top - b.y0) / (2 * halfH) * 100).toFixed(1),
+      top: +((camera.top - b.y1) / (2 * halfH) * 100).toFixed(1),
+    };
+    renderer.render(scene, camera);
+    out[`${name}-${layer}`] = canvas.toDataURL("image/png");
+  }
+  obj.children.forEach((c) => { c.visible = true; });
+  renderer.render(scene, camera);
+  out[name] = canvas.toDataURL("image/png");
+  window.AV_META = { ...(window.AV_META || {}), [name]: meta };
+}
+
 const out = {};
 const grid = document.getElementById("grid");
 for (const [name, entry] of Object.entries(CATALOG)) {
   if (only && !only.split(",").includes(name)) continue;
+  if (entry.layers) {
+    shotLayers(name, entry);
+    continue;
+  }
   out[name] = typeof entry === "function" ? shot(entry) : shot(entry.make, entry);
   grid.insertAdjacentHTML("beforeend", `<figure><img src="${out[name]}" alt=""><figcaption>${name}</figcaption></figure>`);
 }

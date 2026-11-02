@@ -1,416 +1,267 @@
-/*
- * Цу-е-фа – «камень, ножницы, бумага» на ставку с другом – и большой розыгрыш.
- *
- * Выбираешь ставку (30 / 100 / 300 / 500 снежинок), друг ставит столько же. Партия до двух побед:
- * руки в вязаных перчатках трясутся под «камень… ножницы… бумага… цу-е-фа!» и показывают жест.
- * Камень тупит ножницы, ножницы режут бумагу, бумага накрывает камень; одинаково – переигрываем.
- * Друг делает свои ходы, когда принимает вызов (на стенде – случайно). Победа – банк (обе ставки)
- * и подарок с ёлки из твоего пула (25 штук без повторов): чем больше ставка, тем чаще редкие и лучше
- * (ECONOMY.odds). Проигрыш – ставка уходит другу, утешение – билеты в розыгрыш по размеру ставки.
- * Обыграл пятерых разных друзей – золотая звезда, рамка пина: больше её никак не получить.
- *
- * Розыгрыш: шар на каждый приз, билеты кладёшь в любой, они остаются там до розыгрыша.
- */
+/* A short timing game: three catches, a guaranteed gift, one bonus for 3/3. */
 (() => {
   "use strict";
-
-  const $ = (s, r = document) => r.querySelector(s);
-  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const $ = (s, root = document) => root.querySelector(s);
+  const E=window.AV_GARLAND;
   const NBSP = String.fromCharCode(160);
-  const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const ORDER = ["common", "rare", "epic", "legend"];
-
-  // Жесты: кто кого бьёт и как это назвать
-  const MOVES = ["rock", "scissors", "paper"];
-  const MOVE = {
-    rock: { label: "камень", beats: "scissors", verb: "камень тупит ножницы" },
-    scissors: { label: "ножницы", beats: "paper", verb: "ножницы режут бумагу" },
-    paper: { label: "бумага", beats: "rock", verb: "бумага накрывает камень" },
-  };
-  const CHANT = ["камень", "ножницы", "бумага", "цу-е-фа!"];
-  const BEAT_MS = 360;
-
-  let view = "lobby";        // lobby | duel | result
-  let duel = null;           // текущий бой
-  let timers = [];
-  let raf = 0;
-
-  const later = (ms, fn) => { timers.push(setTimeout(fn, reduced() ? 0 : ms)); };
-  const leftOf = (ctx, tier) => ctx.D.POOL.filter((p) => p.tier === tier && !ctx.S.taken.includes(p.id)).length;
-  const poolLeft = (ctx) => ctx.D.POOL.length - ctx.S.taken.length;
-  const person = (ctx, id) => ({ ...ctx.D.PEOPLE[id], id, photo: `../../assets/people/photo-${ctx.D.PEOPLE[id].n}.webp` });
-  const rival = (ctx, id) => ctx.D.RIVALS.find((r) => r.who === id);
-
-  /** Вес уровня подарка при ставке */
-  const weightOf = (ctx, tier, stake) => (ctx.D.ECONOMY.odds[stake] || ctx.D.ECONOMY.odds[ctx.D.ECONOMY.stake])[ORDER.indexOf(tier)];
-
-  /** Шансы уровней при ставке – по тому, что ещё висит на ёлке; в процентах, целыми */
-  function oddsAt(ctx, stake) {
-    const w = ORDER.map((t) => leftOf(ctx, t) * weightOf(ctx, t, stake));
-    const total = w.reduce((a, b) => a + b, 0) || 1;
-    return ORDER.map((t, k) => ({ tier: t, pct: Math.round((w[k] / total) * 100), left: leftOf(ctx, t) }));
+  const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let view='lobby', run=null, timers=[], prizeQueue=[], frame=0, lastTime=0, activeCtx=null;
+  const stopAll=()=>{timers.forEach(clearTimeout);timers=[];cancelAnimationFrame(frame);frame=0;};
+  const leftOf=(ctx,tier)=>ctx.D.POOL.filter(p=>p.tier===tier&&!ctx.S.taken.includes(p.id)).length;
+  const remaining=ctx=>ctx.D.POOL.filter(p=>!ctx.S.taken.includes(p.id));
+  const track=(ctx,name,props={})=>ctx.S.events.push({name,day:ctx.D.DAYS[ctx.S.today].date,at:Date.now(),...props});
+  const untilMidnight=ctx=>{const [h,m]=ctx.S.clock.split(':').map(Number),left=1440-h*60-m;return `${Math.floor(left/60)}${NBSP}ч ${left%60}${NBSP}мин`;};
+  const available=ctx=>ctx.S.balance>=ctx.D.ECONOMY.attempt && ctx.S.garland.attempts<ctx.D.ECONOMY.attemptsPerDay && remaining(ctx).length>0;
+  function cta(ctx){
+    if(!remaining(ctx).length)return '<button class="button button--primary pressable" type="button" data-game="pool">вся коллекция твоя</button>';
+    if(ctx.S.garland.attempts>=ctx.D.ECONOMY.attemptsPerDay)return `<p class="ag-wait">новые попытки через ${untilMidnight(ctx)}</p>`;
+    if(ctx.S.balance<ctx.D.ECONOMY.attempt)return `<button class="button button--secondary pressable" type="button" data-game="earn">не хватает ${ctx.D.ECONOMY.attempt-ctx.S.balance} – к заданиям</button>`;
+    return `<button class="button button--primary pressable" type="button" data-game="start">зажечь<span class="avs-cta__price"><img src="renders/snowflake.webp" alt="снежинок">${ctx.D.ECONOMY.attempt}</span></button>`;
   }
-
-  /** Подарок с ёлки: из оставшихся, вес уровня от ставки; после трёх обычных подряд – редкий или лучше */
-  function pickPrize(ctx, R = Math.random, stake = ctx.D.ECONOMY.stake) {
-    const { S, D } = ctx;
-    const left = D.POOL.filter((p) => !S.taken.includes(p.id));
-    if (!left.length) return null;
-    const noCommon = S.streak >= D.ECONOMY.commonStreak;
-    const cand = noCommon && left.some((p) => p.tier !== "common") ? left.filter((p) => p.tier !== "common") : left;
-    const total = cand.reduce((s, p) => s + weightOf(ctx, p.tier, stake), 0);
-    let r = R() * total;
-    for (const p of cand) {
-      r -= weightOf(ctx, p.tier, stake);
-      if (r <= 0) return p;
+  // Full-bleed 390 × 320 scene. One cable runs beyond both frame edges.
+  // Attachment points share the cubic curve; unequal drops and tilt avoid a mirrored necklace.
+  const cable='M -40 0 C 32 18 58 172 175 175 C 270 180 280 100 430 110';
+  const cubic=(a,b,c,d,t)=>(1-t)**3*a+3*(1-t)**2*t*b+3*(1-t)*t*t*c+t**3*d;
+  const point=p=>p<.5?{x:cubic(-40,32,58,175,p*2),y:cubic(0,18,172,175,p*2)}:
+    {x:cubic(175,270,280,430,(p-.5)*2),y:cubic(175,180,100,110,(p-.5)*2)};
+  const atX=x=>{let lo=0,hi=1;for(let i=0;i<24;i++){const mid=(lo+hi)/2;if(point(mid).x<x)lo=mid;else hi=mid;}return point((lo+hi)/2);};
+  const hangers=[
+    [26,8,-3,.93],[68,20,-4,1.02],[108,10,-1,.96],
+    [150,24,6,1.03],[193,14,-3,1],[235,6,-2,.92],
+    [276,22,-1,1.02],[317,10,-4,.98],[360,17,-1,1.02]
+  ];
+  // Botanical decoration follows the same cable. Deterministic needles stay still during play.
+  function evergreen(){
+    let needles='';
+    for(let x=-12;x<406;x+=4){
+      const q=atX(x),next=atX(x+1),angle=Math.atan2(next.y-q.y,next.x-q.x);
+      for(const side of [-1,1]){
+        const n=13+7*Math.sin(x*.19+side),a=angle+side*(.72+.2*Math.sin(x*.13));
+        const end={x:q.x-Math.cos(a)*n,y:q.y-Math.sin(a)*n};
+        needles+=`<path d="M ${q.x} ${q.y} Q ${(q.x+end.x)/2} ${(q.y+end.y)/2-2} ${end.x} ${end.y}" stroke="${x%12===0?'#538b69':side===1?'#2c6047':'#183e30'}" stroke-width="${x%12===0?1.4:2.1}"/>`;
+      }
     }
-    return cand[cand.length - 1];
+    const berries=[12,89,249,334].map((x,i)=>{const q=atX(x);return `<g transform="translate(${q.x} ${q.y-6})"><circle cx="0" cy="0" r="3.6" fill="#bc3447"/><circle cx="5" cy="4" r="3" fill="#7e182e"/><circle cx="-1" cy="-1" r="1" fill="#f9a1a8"/></g>`;}).join('');
+    const frost=[33,73,120,167,214,292,365].map(x=>{const q=atX(x);return `<path d="M ${q.x-6} ${q.y-5} l 5 -2 4 1" stroke="#cee4df" stroke-opacity=".55" stroke-width="2.6"/>`;}).join('');
+    return `<g class="ag-evergreen" fill="none" stroke-linecap="round">${needles}${berries}${frost}</g>
+      <g class="ag-ribbon" transform="translate(14 62) rotate(-26)">
+        <path d="M 0 0 Q -14 12 -12 38 L -5 31 1 36 Q -4 12 4 2 M 3 1 Q 18 8 25 28 L 27 18 35 20 Q 23 2 7 -2" fill="#9b2338"/>
+        <path d="M 1 0 C -34 -25 -36 14 -3 7 L 4 0 C 24 -29 41 -2 8 6 Z" fill="#c8344b" stroke="#e66677" stroke-width=".7"/>
+        <path d="M -4 -4 Q 1 -7 7 -3 L 8 6 Q 2 9 -3 5 Z" fill="#e04a5c"/>
+      </g>`;
   }
-
-  /** Забрать подарок с ёлки (победа) */
-  function takePrize(ctx, R, stake) {
-    const { S } = ctx;
-    const p = pickPrize(ctx, R, stake);
-    if (!p) return null;
-    S.taken.push(p.id);
-    S.streak = p.tier === "common" ? S.streak + 1 : 0;
-    return p;
+  const bulbColors=['red','gold','cyan','red','gold','red','cyan','gold','red'];
+  const bulbGlow={red:'#ff526c',gold:'#ffd074',cyan:'#79eaff'};
+  const lightGroups=[[3,4,5],[6,7,8],[0,1,2]];
+  const atmosphere=()=>'<div class="ag-atmosphere" aria-hidden="true"><span></span><span></span><span></span></div>';
+  function wire(ctx,preview=false,compact=false){
+    return `<div class="ag-wire" aria-hidden="true"><svg viewBox="0 0 390 320" preserveAspectRatio="${compact?'none':'xMidYMid meet'}" class="ag-cable"><path class="ag-cable__shadow" d="${cable}"/><path d="${cable}"/>${evergreen()}<g class="ag-fairy-lights">${Array.from({length:27},(_,i)=>{const x=8+i*14,q=atX(x);return `<circle data-fairy="${i}" cx="${x}" cy="${q.y-5+(i%3)*4}" r="1.6"/>`;}).join('')}</g></svg>
+      <span class="ag-anchor ag-anchor--left"></span><span class="ag-anchor ag-anchor--right"></span>
+      ${hangers.map(([x,drop,tilt,size],i)=>{const q=atX(x);return `<span class="ag-bulb${preview&&i===4?' is-target':''}${preview&&i===1?' is-current':''}" data-bulb="${i}" style="--x:${q.x/390*100}%;--y:${q.y/320*100}%;--drop:${drop}px;--tilt:${tilt}deg;--size:${size};--bulb-glow:${bulbGlow[bulbColors[i]]};--ignite-delay:${Math.abs(i-E.TARGET_BULBS[lightGroups.findIndex(group=>group.includes(i))])*110}ms">
+        <span class="ag-bulb__halo"></span><span class="ag-bulb__socket"></span><span class="ag-bulb__glass">
+        <img class="ag-bulb__off" src="renders/garland-bulb-${['off','gold','cyan','off','gold','off','cyan','gold','off'][i]}.webp" alt="" draggable="false">
+        <img class="ag-bulb__pink" src="renders/garland-bulb-lit-${bulbColors[i]}.webp" alt="" draggable="false">
+        <img class="ag-bulb__white" src="renders/garland-bulb-white.webp" alt="" draggable="false"></span><span class="ag-bulb__mark"></span></span>`;}).join('')}</div>`;
   }
-
-  const ticketsFor = (ctx, stake) => Math.max(1, Math.round(stake / ctx.D.ECONOMY.ticketsPer));
-
-  /** Итог боя: ставка уже списана при вызове. Победа – банк (×2) и подарок, ничья – ставка назад */
-  function settle(ctx, who, mine, theirs, R, stake = ctx.D.ECONOMY.stake) {
-    const { S, D } = ctx;
-    if (mine > theirs) {
-      S.balance += stake * 2;
-      if (!S.beaten.includes(who)) S.beaten.push(who);
-      if (S.beaten.length >= D.ECONOMY.starFriends) S.star = true;
-      return { result: "win", prize: takePrize(ctx, R, stake), won: stake * 2, tickets: 0 };
+  function render(el,ctx){
+    activeCtx=ctx;
+    if(view==='playing'||view==='paused'||view==='finish')return renderPlay(el,ctx);
+    if(view==='over'&&run)return renderResult(el,ctx);
+    view='lobby';
+    el.innerHTML=`<div class="ag ag--compare"><nav class="ag-variants" aria-label="новые варианты"><button type="button" data-game="lab-score">игра на очки и подарки</button></nav>${atmosphere()}<div class="ag-heading"><h3>зажги<br>гирлянду</h3><p>останови свет<br>на отмеченной лампочке</p></div>
+      <div class="ag-scene ag-scene--preview">${wire(ctx,true)}</div>
+      <div class="ag-bottom"><button class="ag-rewards pressable" type="button" data-game="pool"><img src="renders/ticket.webp" alt="">подарки и правила<i class="icon icon--chevron" aria-hidden="true"></i></button>${cta(ctx)}</div></div>`;
+    track(ctx,'garland_open');
+  }
+  function choose(ctx,random){
+    const pool=remaining(ctx);if(!pool.length)return null;
+    let value;if(random)value=random();else{const n=new Uint32Array(1);crypto.getRandomValues(n);value=n[0]/4294967296;}
+    return pool[Math.min(pool.length-1,Math.floor(Math.max(0,value)*pool.length))];
+  }
+  // Reserve/grant the guaranteed gift before play, so navigation cannot lose it.
+  function settle(ctx,result){
+    if(result.settled)return result.out;
+    const prize=ctx.D.POOL.find(p=>p.id===result.prizeId);
+    if(!prize||ctx.S.taken.includes(prize.id))return null;
+    result.settled=true;ctx.S.taken.push(prize.id);ctx.S.tickets++;
+    const star=ctx.S.taken.length===ctx.D.POOL.length&&!ctx.S.star;
+    if(star)ctx.S.star=true;
+    result.out={prize,tickets:1,star};return result.out;
+  }
+  function bonus(ctx,result){
+    if(!result.play?.over||result.bonusGranted||E.hits(result.play)!==3)return false;
+    result.bonusGranted=true;ctx.S.tickets++;result.out.tickets++;return true;
+  }
+  function start(ctx){
+    if(view!=='lobby'||!available(ctx))return;
+    const prize=choose(ctx);if(!prize)return;
+    stopAll();activeCtx=ctx;ctx.S.balance-=ctx.D.ECONOMY.attempt;ctx.S.garland.attempts++;
+    run={prizeId:prize.id,play:E.create()};settle(ctx,run);
+    view='playing';track(ctx,'garland_start',{attempt:ctx.S.garland.attempts});
+    ctx.renderBalance();renderPlay($('#game'),ctx);$('[data-game="catch"]')?.focus({preventScroll:true});loop(ctx);
+  }
+  function sync(ctx){
+    if(view!=='playing')return;
+    const now=performance.now();E.advance(run.play,now-lastTime);lastTime=now;
+    if(run.play.over)finish(ctx);else paint();
+  }
+  function loop(ctx){
+    lastTime=performance.now();
+    const next=()=>{sync(ctx);if(view==='playing')frame=requestAnimationFrame(next);};
+    frame=requestAnimationFrame(next);
+  }
+  function catchLight(ctx){
+    if(view!=='playing')return;
+    sync(ctx);if(view!=='playing')return;
+    const hit=E.tap(run.play);if(hit===null)return;
+    track(ctx,'garland_catch',{round:run.play.round+1,hit});paint();
+    ctx.announce(hit?'попал!':'чуть мимо');
+    if(run.play.over)finish(ctx);
+  }
+  function paint(){
+    const p=run.play,root=$('#game'),round=p.round,done=p.results[round]!==null;
+    const pos=p.stopped[round]??E.position(p),current=E.bulbAt(pos),target=E.TARGET_BULBS[round];
+    root.querySelectorAll('[data-bulb]').forEach(el=>{
+      const i=+el.dataset.bulb,lit=lightGroups.some((group,r)=>group.includes(i)&&p.results[r]===true);
+      el.classList.toggle('is-lit',lit);
+      el.classList.toggle('is-target',i===target&&!p.over);
+      el.classList.toggle('is-current',i===current&&!p.over);
+      el.classList.toggle('is-missed',i===target&&p.results[round]===false);
+    });
+    const hits=E.hits(p);
+    root.querySelectorAll('.ag-atmosphere span').forEach((el,i)=>el.classList.toggle('is-on',p.results[i]===true));
+    $('.ag',root).classList.toggle('is-finale',p.over);
+    root.querySelectorAll('[data-fairy]').forEach(el=>{
+      const bulb=Math.min(8,Math.floor(+el.dataset.fairy/3));
+      el.classList.toggle('is-lit',lightGroups.some((group,r)=>group.includes(bulb)&&p.results[r]===true));
+    });
+    if(p.over)$('.ag-heading h3',root).innerHTML=hits===3?'гирлянда<br>готова':hits?'готово':'твой подарок';
+    root.querySelectorAll('[data-round]').forEach((el,i)=>{el.classList.toggle('is-active',i===round&&!p.over);el.classList.toggle('is-hit',p.results[i]===true);el.classList.toggle('is-miss',p.results[i]===false);el.setAttribute('aria-label',`${i+1}: ${p.results[i]===true?'попадание':p.results[i]===false?'мимо':'ожидает'}`);});
+    const feedback=$('#garland-feedback',root);
+    feedback.textContent=p.over?'':done?(p.results[round]?'ещё ярче!':'мимо'):'';
+    feedback.classList.toggle('is-hit',p.results[round]===true);
+    const button=$('[data-game="catch"]',root);
+    if(button){button.setAttribute('aria-disabled',String(done||view!=='playing'));button.textContent=p.over?'открываем подарок…':done?(round===2?'готово':'дальше…'):'стоп';}
+    root.classList.toggle('is-caught',done);
+  }
+  function renderPlay(el,ctx){
+    el.innerHTML=`<div class="ag ag-play">${atmosphere()}<div class="ag-heading"><h3>${view==='paused'?'продолжим?':'зажги гирлянду'}</h3></div>
+      <div class="ag-scene">${wire(ctx)}<p class="ag-feedback" id="garland-feedback" aria-live="polite"></p></div>
+      <div class="ag-bottom"><div class="ag-rounds" aria-label="три попытки">${[0,1,2].map(i=>`<span class="ag-round" data-round="${i}"><i class="icon icon--check" aria-hidden="true"></i></span>`).join('')}</div>
+      ${view==='paused'?'<button class="button button--primary pressable" type="button" data-game="resume">продолжить</button>':'<button class="button button--primary pressable ag-catch" type="button" data-game="catch">стоп</button>'}</div></div>`;
+    const button=$('[data-game="catch"]',el);
+    button?.addEventListener('pointerdown',e=>{if(e.button===0)catchLight(ctx);});
+    // A pointer press must not create a second catch on release in the next window.
+    button?.addEventListener('click',e=>{if(e.detail>0)e.stopPropagation();});
+    button?.addEventListener('keydown',e=>{if(e.repeat&&(e.key==='Enter'||e.key===' '))e.preventDefault();});
+    paint();
+  }
+  function finish(ctx){
+    if(view!=='playing')return;
+    view='finish';stopAll();bonus(ctx,run);ctx.renderBalance();paint();
+    track(ctx,'garland_finish',{hits:E.hits(run.play),tickets:run.out.tickets,elapsed:run.play.elapsed});
+    if(!reduced()&&E.hits(run.play)===3)ctx.app.dispatchEvent(new CustomEvent('av:confetti'));
+    ctx.announce('готово! открываем подарок');
+    queueGift(ctx);
+  }
+  function queueGift(ctx){
+    const completed=run;
+    timers.push(setTimeout(()=>{
+      if(view!=='finish'||run!==completed)return;
+      view='over';
+      if(window.AV.current()==='game')renderResult($('#game'),ctx);
+    },reduced()?600:1200));
+  }
+  function pause(){
+    if(view==='playing'){
+      sync(activeCtx);
+      if(view==='playing'){view='paused';run.play.paused=true;stopAll();renderPlay($('#game'),activeCtx);}
     }
-    if (mine === theirs) {
-      S.balance += stake;
-      S.tickets += D.ECONOMY.ticketsDraw;
-      return { result: "draw", prize: null, won: 0, tickets: D.ECONOMY.ticketsDraw };
-    }
-    const t = ticketsFor(ctx, stake);
-    S.tickets += t;
-    return { result: "lose", prize: null, won: 0, tickets: t };
+    // Leaving during the reveal keeps the awarded gift ready for return.
+    if(view==='finish'){stopAll();view='over';}
   }
-
-  /** Бой целиком без анимации (предустановки стенда): списать ставку и подвести итог */
-  function resolve(ctx, who, mine, theirs, stake = ctx.D.ECONOMY.stake, R) {
-    ctx.S.balance -= stake;
-    return settle(ctx, who, mine, theirs, R, stake);
+  function resume(ctx){if(view!=='paused')return;run.play.paused=false;view='playing';renderPlay($('#game'),ctx);$('[data-game="catch"]')?.focus({preventScroll:true});loop(ctx);}
+  function cancel(){stopAll();view='lobby';run=null;prizeQueue=[];}
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else if(activeCtx&&window.AV.current()==='game'&&view==='over')renderResult($('#game'),activeCtx);});
+  function renderResult(el,ctx){
+    const {prize,star,tickets}=run.out,hits=run.play?E.hits(run.play):0;
+    el.innerHTML=`<div class="ap ap-result"><p class="ap-result__label">${hits===3?'точно в цель!':'твой подарок!'}</p>
+      <p class="ag-result-score">${hits*3} из 9 огоньков зажжены</p>
+      <div class="ap-prize-art"><img class="ap-prize-glow" src="${ctx.src(prize.img)}" alt=""><img class="ap-prize-img" src="${ctx.src(prize.img)}" alt="${prize.title}"></div>
+      <div class="ap-result__copy">${tierChip(ctx,prize.tier)}<h3 id="result-title">${prize.title}</h3>
+      <button class="ap-ticket pressable" type="button" data-game="draw"><img src="renders/ticket.webp" alt="">+${tickets} ${tickets===1?'билет':'билета'} в розыгрыш<i class="icon icon--chevron" aria-hidden="true"></i></button>
+      ${tickets===2?'<p class="ag-bonus">+1 за точность</p>':''}
+      ${star?'<p class="ap-star-note">вся коллекция собрана! рамка со звездой тоже твоя</p>':''}</div>
+      <div class="ap-bottom"><button class="button button--primary pressable" type="button" data-game="lobby">отлично</button><button class="ap-pool-link pressable" type="button" data-game="share">поделиться подарком<i class="icon icon--share" aria-hidden="true"></i></button></div></div>`;
+    ctx.announce(`твой подарок: ${prize.title}, ${hits} из 3 попаданий`);
   }
-
-  function stopAll() {
-    timers.forEach(clearTimeout);
-    timers = [];
-    cancelAnimationFrame(raf);
-    raf = 0;
+  function storyMarkup(ctx){
+    const prize=run?.out?.prize||ctx.D.POOL.find(p=>ctx.S.taken.includes(p.id))||ctx.D.POOL[0];
+    return `<article class="avc avc--story ap-story" aria-label="сторис: подарок за гирлянду"><img class="avc-logo" src="../../assets/brand/logo.png" alt="blink"><header class="avc-head"><span class="avc-head__date">мой новогодний подарок</span></header><img class="ap-story__prize" src="${ctx.src(prize.img)}" alt=""><h3>${prize.title}</h3><p>${run?.play?E.hits(run.play)*3:0} из 9 огоньков зажжены</p></article>`;
   }
-
-  /* ── экран: лобби, партия, итог ────────────────────────────────────── */
-
-  function render(el, ctx) {
-    stopAll();
-    if (view === "duel" && duel) return renderDuel(el, ctx);
-    if (view === "result" && duel) return renderResult(el, ctx);
-    view = "lobby";
-    return renderLobby(el, ctx);
-  }
-
-  function renderLobby(el, ctx) {
-    const { S, D } = ctx;
-    const slots = Array.from({ length: D.ECONOMY.starFriends }, (_, k) => {
-      const id = S.beaten[k];
-      return id
-        ? `<img class="avsn-goal__face" src="${person(ctx, id).photo}" alt="${person(ctx, id).name}">`
-        : `<span class="avsn-goal__slot" aria-hidden="true"><img src="renders/hand-rock.webp" alt=""></span>`;
-    }).join("");
-    // вызов от друга показываем, пока на ёлке есть что выиграть
-    const incoming = poolLeft(ctx) ? D.RIVALS.find((r) => r.challenge && !S.beaten.includes(r.who)) : null;
-    const stake = S.stake;
-    const canStake = S.balance >= stake && poolLeft(ctx) > 0;
-    el.innerHTML = `
-      <div class="avsn-lobby">
-        <section class="avsn-goal" aria-label="золотая звезда: обыграно ${S.beaten.length} из ${D.ECONOMY.starFriends} друзей">
-          <img class="avsn-goal__star${S.star ? " is-done" : ""}" src="renders/star-frame.webp" alt="">
-          <div class="avsn-goal__text">
-            <p class="avsn-goal__title">${S.star ? "золотая звезда твоя" : "обыграй пятерых друзей"}</p>
-            <p class="avsn-goal__slots">${slots}</p>
-          </div>
-        </section>
-        ${incoming ? `<section class="avsn-call" aria-label="вызов">
-          <img class="avsn-call__face" src="${person(ctx, incoming.who).photo}" alt="">
-          <img class="avsn-call__ball" src="renders/hand-scissors-blue.webp" alt="">
-          <p class="avsn-call__text"><b>${person(ctx, incoming.who).name}</b> ставит <span class="avsn-call__stake"><img src="renders/snowflake.webp" alt="">${incoming.challenge}</span></p>
-          <button class="avsn-call__cta pressable" type="button" data-duel="${incoming.who}" data-stake="${incoming.challenge}" ${S.balance < incoming.challenge ? "disabled" : ""}>принять</button>
-        </section>` : ""}
-        ${poolLeft(ctx) ? betMarkup(ctx) : `<div class="avsn-empty">
-          <p class="avsn-empty__title">с ёлки снято всё</p>
-          <button class="button button--primary avsn-cta pressable" type="button" data-game="exchange" ${S.balance < D.ECONOMY.exchange * 2 ? "disabled" : ""}>обменять ${D.ECONOMY.exchange * 2} на 2 билета</button>
-        </div>`}
-        <h3 class="avsn-head"><span>кого вызвать</span></h3>
-        <ul class="avsn-rows">${D.RIVALS.filter((r) => r !== incoming).map((r) => {
-          const p = person(ctx, r.who);
-          const won = S.beaten.includes(r.who);
-          return `<li class="avsn-row">
-            <span class="avsn-row__photo${r.online ? " is-online" : ""}"><img src="${p.photo}" alt=""></span>
-            <span class="avsn-row__body"><span class="avsn-row__name">${p.name}</span>
-              <span class="avsn-row__status">${won ? "уже обыграно" : r.status}</span></span>
-            <button class="avsn-row__cta pressable" type="button" data-duel="${r.who}" aria-label="вызвать ${p.name} в цу-е-фа, ставка ${stake}" ${canStake ? "" : "disabled"}>вызвать</button>
-          </li>`;
-        }).join("")}</ul>
-        <button class="avs-left pressable" type="button" data-game="pool" aria-label="подарки на ёлке: осталось ${poolLeft(ctx)} из ${D.POOL.length}">
-          <img class="avs-left__tree" src="renders/xmas-tree.webp" alt="">
-          ${ORDER.map((t) => `<span class="avs-left__tier${leftOf(ctx, t) ? "" : " is-out"}"><img src="renders/${D.TIERS[t].gift}.webp" alt="">${leftOf(ctx, t)}</span>`).join("")}
-          <i class="icon icon--chevron" aria-hidden="true"></i>
-        </button>
-      </div>`;
-  }
-
-  /** Ставка: плитки, выигрыш (банк) и шансы подарка с ёлки при этой ставке */
-  function betMarkup(ctx) {
-    const { S, D } = ctx;
-    const odds = oddsAt(ctx, S.stake);
-    return `<section class="avsn-bet" aria-labelledby="bet-title">
-      <h3 class="avsn-head" id="bet-title"><span>ставка</span>${S.balance < D.ECONOMY.stakes[0]
-        ? `<button class="avsn-head__link pressable" type="button" data-game="earn">заработать снежинки</button>` : ""}</h3>
-      <div class="choice-tiles avsn-bet__tiles" role="radiogroup" aria-labelledby="bet-title" style="--choice-count:${D.ECONOMY.stakes.length}">
-        ${D.ECONOMY.stakes.map((v) => `<button class="choice-tile pressable" type="button" role="radio" data-stake-pick="${v}"
-            aria-checked="${v === S.stake}" ${S.balance < v ? "disabled" : ""}>
-          <span class="choice-tile__value"><img class="avsn-bet__flake" src="renders/snowflake.webp" alt="">${v}</span>
-        </button>`).join("")}
-      </div>
-      <div class="avsn-win">
-        <span class="avsn-win__label">выигрыш</span>
-        <span class="avsn-win__value"><img src="renders/snowflake.webp" alt="снежинок">${S.stake * 2}</span>
-        <span class="avsn-win__plus">и подарок с ёлки</span>
-        <ul class="avsn-odds" aria-label="шансы подарка">${odds.map((o) => `<li class="avsn-odds__tier${o.left ? "" : " is-out"}">
-          <img src="renders/${D.TIERS[o.tier].gift}.webp" alt="${D.TIERS[o.tier].label}"><span>${o.pct}${NBSP}%</span></li>`).join("")}</ul>
-      </div>
-    </section>`;
-  }
-
-  /* ── партия ─────────────────────────────────────────────────────────── */
-
-  function startDuel(ctx, who, stake = ctx.S.stake) {
-    const { S } = ctx;
-    if (!poolLeft(ctx)) return;
-    if (S.balance < stake) return ctx.toTasks();
-    S.balance -= stake;
+  function renderBoard(el,ctx){renderPool(el,ctx);}
+  function afterPrize(){}
+  function nextPrize(){}
+  function setRun(ctx,{prizeId=null,playing=false,paused=false,hits=2,finale=false}={}){
+    stopAll();activeCtx=ctx;
+    const prize=ctx.D.POOL.find(p=>p.id===prizeId)||remaining(ctx)[0]||ctx.D.POOL[0];
+    run={prizeId:prize.id,play:E.create()};settle(ctx,run);
+    if(!run.out)run.out={prize,tickets:1,star:false};
+    if(playing||paused){
+      run.play.elapsed=3200;run.play.roundElapsed=700;run.play.round=1;run.play.results[0]=true;
+      run.play.paused=true;view='paused';renderPlay($('#game'),ctx);
+      if(playing){view='playing';run.play.paused=false;renderPlay($('#game'),ctx);$('[data-game="catch"]')?.focus({preventScroll:true});loop(ctx);}
+    }else{run.play.results=[hits>0,hits>1,hits>2];run.play.over=true;run.play.elapsed=3500;bonus(ctx,run);view=finale?'finish':'over';if(finale){renderPlay($('#game'),ctx);queueGift(ctx);}else renderResult($('#game'),ctx);}
     ctx.renderBalance();
-    duel = { who, stake, me: 0, them: 0, round: 1, busy: false, last: null };
-    view = "duel";
-    render($("#game"), ctx);
   }
-
-  const handSrc = (move, mine) => `renders/hand-${move}${mine ? "" : "-blue"}.webp`;
-  const pips = (n) => Array.from({ length: 2 }, (_, k) => `<i class="avsn-pip${k < n ? " is-on" : ""}"></i>`).join("");
-
-  function renderDuel(el, ctx) {
-    const p = person(ctx, duel.who);
-    const l = duel.last;
-    el.innerHTML = `
-      <div class="avsn-duel" id="duel">
-        <div class="avsn-score">
-          <span class="avsn-score__side">
-            <img class="avsn-score__me" src="../../assets/people/me-cutout.webp" alt="">
-            <span class="avsn-score__pips" id="pips-me" aria-label="твоих побед: ${duel.me}">${pips(duel.me)}</span>
-          </span>
-          <span class="avsn-score__pot" aria-label="банк ${duel.stake * 2}"><span class="avsn-score__label">банк</span><img src="renders/snowflake.webp" alt="">${duel.stake * 2}</span>
-          <span class="avsn-score__side">
-            <span class="avsn-score__pips" id="pips-them" aria-label="побед ${p.gen}: ${duel.them}">${pips(duel.them)}</span>
-            <img class="avsn-score__face" src="${p.photo}" alt="">
-          </span>
-        </div>
-        <div class="avsn-ring">
-          <img class="avsn-hand avsn-hand--them${l ? ` is-${l.out === "lose" ? "win" : l.out === "win" ? "lose" : "draw"}` : ""}" id="hand-them" src="${handSrc(l ? l.them : "rock", false)}" alt="">
-          <p class="avsn-chant" id="chant" aria-live="polite">${l ? l.text : `раунд ${duel.round}`}</p>
-          <img class="avsn-hand avsn-hand--me${l ? ` is-${l.out}` : ""}" id="hand-me" src="${handSrc(l ? l.me : "rock", true)}" alt="">
-        </div>
-        <div class="avsn-moves" role="group" aria-label="твой ход">
-          ${MOVES.map((m) => `<button class="avsn-move pressable" type="button" data-move="${m}">
-            <img src="${handSrc(m, true)}" alt=""><span>${MOVE[m].label}</span>
-          </button>`).join("")}
-        </div>
-      </div>`;
-  }
-
-  /** Ход друга: на стенде случайно (в продукте друг делает ходы, когда принимает вызов) */
-  const theirMove = () => MOVES[Math.floor(Math.random() * 3)];
-
-  const outcome = (me, them) => (me === them ? "draw" : MOVE[me].beats === them ? "win" : "lose");
-
-  /** Раунд: руки трясутся под «камень… ножницы… бумага… цу-е-фа!», потом показывают жесты */
-  function playRound(ctx, me, them = theirMove(), { instant = false } = {}) {
-    if (!duel || duel.busy || view !== "duel") return;
-    duel.busy = true;
-    $$(".avsn-move").forEach((b) => { b.disabled = true; b.classList.toggle("is-picked", b.dataset.move === me); });
-    const hm = $("#hand-me");
-    const ht = $("#hand-them");
-    const chant = $("#chant");
-    [hm, ht].forEach((h) => { h.className = h.className.replace(/ is-(win|lose|draw)/g, ""); });
-    hm.src = handSrc("rock", true);
-    ht.src = handSrc("rock", false);
-    const reveal = () => {
-      const out = outcome(me, them);
-      hm.src = handSrc(me, true);
-      ht.src = handSrc(them, false);
-      hm.classList.remove("is-shaking");
-      ht.classList.remove("is-shaking");
-      if (out === "win") duel.me += 1;
-      if (out === "lose") duel.them += 1;
-      const p = person(ctx, duel.who);
-      const text = out === "draw" ? "ничья – ещё раз" : out === "win" ? `${MOVE[me].verb} – раунд твой` : `${MOVE[them].verb} – раунд ${p.gen}`;
-      duel.last = { me, them, out, text };
-      chant.textContent = text;
-      hm.classList.add(`is-${out}`);
-      ht.classList.add(`is-${out === "win" ? "lose" : out === "lose" ? "win" : "draw"}`);
-      $("#pips-me").innerHTML = pips(duel.me);
-      $("#pips-them").innerHTML = pips(duel.them);
-      later(1300, () => {
-        duel.busy = false;
-        if (duel.me >= 2 || duel.them >= 2) return finishDuel(ctx);
-        if (out !== "draw") duel.round += 1;
-        $$(".avsn-move").forEach((b) => { b.disabled = false; b.classList.remove("is-picked"); });
-      });
-    };
-    if (instant || reduced()) return reveal();
-    hm.classList.add("is-shaking");
-    ht.classList.add("is-shaking");
-    CHANT.forEach((w, k) => later(k * BEAT_MS, () => { chant.textContent = w; }));
-    later(CHANT.length * BEAT_MS, reveal);
-  }
-
-  function finishDuel(ctx) {
-    if (!duel) return;
-    const out = settle(ctx, duel.who, duel.me, duel.them, undefined, duel.stake);
-    duel.result = out.result;
-    duel.prize = out.prize;
-    duel.won = out.won;
-    duel.tickets = out.tickets;
-    duel.newStar = out.result === "win" && ctx.S.beaten.length === ctx.D.ECONOMY.starFriends && !duel.starShown;
-    view = "result";
-    render($("#game"), ctx);
-    payout(ctx);
-  }
-
-  /* ── итог ───────────────────────────────────────────────────────────── */
-
-  function renderResult(el, ctx) {
-    const { S, D } = ctx;
-    const p = person(ctx, duel.who);
-    const win = duel.result === "win";
-    const head = win ? "победа!" : `победа у${NBSP}${p.gen}`;
-    const sum = win ? `+${duel.stake * 2}` : `−${duel.stake}`;
-    const tickets = duel.tickets ?? ticketsFor(ctx, duel.stake);
-    const prize = duel.prize;
-    el.innerHTML = `
-      <div class="avsn-result is-${duel.result}">
-        <div class="avsn-vs">
-          <span class="avsn-vs__side${win ? " is-winner" : ""}">
-            <img class="avsn-vs__me" src="../../assets/people/me-cutout.webp" alt="">
-            <span class="sticker-number avsn-vs__score">${duel.me}</span>
-            <span class="avsn-vs__name">ты</span>
-          </span>
-          <img class="avsn-vs__ball" src="renders/hand-${win ? "paper" : "rock"}.webp" alt="">
-          <span class="avsn-vs__side${win ? "" : " is-winner"}">
-            <img class="avsn-vs__face" src="${p.photo}" alt="">
-            <span class="sticker-number avsn-vs__score">${duel.them}</span>
-            <span class="avsn-vs__name">${p.name}</span>
-          </span>
-        </div>
-        <h2 class="avsn-result__title" id="result-title">${head}</h2>
-        <p class="avsn-sum is-${duel.result}" id="result-sum"><img src="renders/snowflake.webp" alt="снежинок"><span class="sticker-number">${sum}</span></p>
-        ${win && prize ? `<div class="avsn-gift">
-            <img class="avsn-gift__glow" src="${ctx.src(prize.img)}" alt="">
-            <img class="avsn-gift__img" src="${ctx.src(prize.img)}" alt="">
-            <span class="avg-tier avg-tier--${prize.tier}">${D.TIERS[prize.tier].label}</span>
-            <p class="avsn-gift__title">${prize.title}</p>
-            <p class="avsn-gift__kind">${prize.kind}</p>
-          </div>`
-          : `<p class="avsn-result__line"><img src="renders/ticket.webp" alt="">+${tickets}${NBSP}${ctx.plural(tickets, "билет", "билета", "билетов")} в${NBSP}розыгрыш</p>`}
-        <div class="avsn-result__actions">
-          ${win
-            ? (duel.newStar && !duel.starShown
-              ? `<button class="button button--primary avsn-cta pressable" type="button" data-game="show-star">забрать звезду</button>`
-              : `<button class="button button--primary avsn-cta pressable" type="button" data-game="lobby">ещё партия</button>`)
-            : `<button class="button button--primary avsn-cta pressable" type="button" data-duel="${duel.who}" data-stake="${duel.stake}" ${S.balance < duel.stake ? "disabled" : ""}>реванш<span class="avs-cta__price"><img src="renders/snowflake.webp" alt="снежинок">${duel.stake}</span></button>
-               <button class="button button--ghost avsn-cta pressable" type="button" data-game="lobby">к друзьям</button>`}
-        </div>
-      </div>`;
-  }
-
-  /** Выигрыш летит снежинками в баланс шапки, конфетти; проигрыш – сумма приглушена */
-  function payout(ctx) {
-    const sum = $("#result-sum");
-    const bal = $(".av-balance", $("#screen-game"));
-    if (duel.result === "win") {
-      ctx.app.dispatchEvent(new CustomEvent("av:confetti"));
-      ctx.flyFlakes(sum, bal, 8).then(() => {
-        ctx.renderBalance();
-        bal?.classList.remove("is-bump");
-        void bal?.offsetWidth;
-        bal?.classList.add("is-bump");
-      });
-    } else {
-      ctx.renderBalance();
-    }
-  }
-
-  /* ── шторки: подарок с ёлки и звезда ────────────────────────────────── */
+  /* ── шторки: подарок за гирлянду и звезда ─────────────────────────────── */
 
   const tierChip = (ctx, tier) => `<span class="avg-tier avg-tier--${tier}">${ctx.D.TIERS[tier].label}</span>`;
 
   function prizeMarkup(prize, extra, ctx) {
-    const { S, D } = ctx;
+    const { D } = ctx;
+    const more = prizeQueue.length > 0;
+    const cta = more
+      ? `<button class="button button--primary avg-prize__cta pressable" type="button" data-game="next-prize">дальше</button>`
+      : `<button class="button button--primary avg-prize__cta pressable" type="button" data-game="close-prize">отлично</button>`;
     if (extra.star) {
       return `<div class="avg-prize" data-star>
         <div class="avg-prize__art">
           <img class="avg-prize__glow" src="${ctx.src(D.STAR.img)}" alt="">
           <img class="avg-prize__img" src="${ctx.src(D.STAR.img)}" alt="">
         </div>
-        <span class="avg-tier avg-tier--legend">пятеро друзей обыграно</span>
-        <h2 class="avg-prize__title" id="prize-title">золотая звезда твоя</h2>
-        <p class="avg-prize__kind">рамка пина – её увидят друзья на карте</p>
-        <button class="button button--primary avg-prize__cta pressable" type="button" data-game="star">надеть на пин</button>
+        <span class="avg-tier avg-tier--legend">25 подарков</span>
+        <h2 class="avg-prize__title" id="prize-title">звезда на верхушке</h2>
+        <p class="avg-prize__kind">вся коллекция твоя – и эта рамка тоже</p>
+        ${cta}
       </div>`;
     }
-    return "";
+    return `<div class="avg-prize">
+      <div class="avg-prize__art">
+        <img class="avg-prize__glow" src="${ctx.src(prize.img)}" alt="">
+        <img class="avg-prize__img" src="${ctx.src(prize.img)}" alt="">
+      </div>
+      ${tierChip(ctx, prize.tier)}
+      <h2 class="avg-prize__title" id="prize-title">${prize.title}</h2>
+      <p class="avg-prize__kind">${prize.kind}</p>
+      ${cta}
+    </div>`;
   }
 
   function prizeEnter(prize, extra, ctx) {
-    if (!reduced() && (extra.star || prize.tier !== "common")) ctx.app.dispatchEvent(new CustomEvent("av:confetti"));
+    if (!reduced()) ctx.app.dispatchEvent(new CustomEvent("av:confetti"));
   }
 
-  function afterPrize(ctx) {
-    if (window.AV.current() !== "game") return;
-    if (view === "result" && duel?.starShown) {
-      view = "lobby";
-      duel = null;
-    }
-    render($("#game"), ctx);
-  }
-
-  /** Сброс: бой и таймеры не переезжают в другое состояние стенда */
-  function cancel() {
-    stopAll();
-    view = "lobby";
-    duel = null;
-  }
-
-  /* ── шторка «подарки на ёлке» ───────────────────────────────────────── */
+  /* ── шторка «коллекция подарков» ───────────────────────────────────────── */
 
   function renderPool(el, ctx) {
     const { S, D } = ctx;
     el.innerHTML = `
+      <div class="ag-rules"><p>3 нажатия · без таймера</p><p>Останови свет на лампочке с белой обводкой. Каждое попадание зажигает ещё три огонька и добавляет свет на экран. Огонёк движется туда-обратно, пока не нажмёшь. Подарок и билет – за каждый раунд, ещё один билет – за 3 попадания.</p><p>30 снежинок за раунд · до 3 раундов в день</p></div>
       <div class="avg-star">
         <img class="avg-star__img" src="renders/star-frame.webp" alt="">
         <div class="avg-star__text">
-          <p class="avg-star__title">${S.star ? "золотая звезда твоя" : `${D.STAR.title} · ${S.beaten.length} из ${D.ECONOMY.starFriends}`}</p>
+          <p class="avg-star__title">${S.star ? "звезда на верхушке" : D.STAR.title}</p>
           <p class="avg-star__kind">${D.STAR.kind}</p>
         </div>
       </div>
@@ -428,7 +279,7 @@
           }).join("")}</ul>
         </section>`;
       }).join("")}
-      <p class="avg-pool__social">золотую звезду уже собрали ${ctx.fmt(D.starCollectors)}${NBSP}человек</p>`;
+      <p class="avg-pool__social">каждый оставшийся подарок равновероятен<br>в каждом раунде подарок, без повторов</p>`;
   }
 
   /* ── большой розыгрыш ───────────────────────────────────────────────── */
@@ -494,7 +345,7 @@
           <button class="icon-button avd-step pressable" type="button" data-draw="plus" aria-label="больше" ${drawCount >= S.tickets ? "disabled" : ""}><i class="icon icon--plus" aria-hidden="true"></i></button>
         </div>
         <button class="button button--primary avd-cta pressable" type="button" data-draw="put">положить ${drawCount}${NBSP}${ctx.plural(drawCount, "билет", "билета", "билетов")}</button>`
-        : `<button class="button button--primary avd-cta pressable" type="button" data-draw="earn">заработать билеты в цу-е-фа</button>`}`;
+        : `<button class="button button--primary avd-cta pressable" type="button" data-draw="earn">зажечь гирлянду</button>`}`;
   }
 
   function putTickets(ctx) {
@@ -514,65 +365,29 @@
     ctx.announce(`${n} в шаре «${p.title}»`);
   }
 
-  /* ── нажатия ────────────────────────────────────────────────────────── */
 
-  function click(t, ctx) {
-    if (t.dataset.move) return playRound(ctx, t.dataset.move);
-    if (t.dataset.stakePick) {
-      ctx.S.stake = Number(t.dataset.stakePick);
-      render($("#game"), ctx);
-      $(`[data-stake-pick="${ctx.S.stake}"]`)?.focus({ preventScroll: true });
-      return undefined;
+  function click(t,ctx){
+    switch(t.dataset.game){
+      case 'start':return start(ctx);
+      case 'catch':return catchLight(ctx);
+      case 'resume':return resume(ctx);
+      case 'earn':return ctx.toTasks();
+      case 'lobby':view='lobby';return render($('#game'),ctx);
+      case 'pool':return ctx.openPool();
+      case 'draw':return ctx.toDraw();
+      case 'share':track(ctx,'garland_share');return ctx.openStory(storyMarkup(ctx));
+      case 'close-prize':return window.AV.closeSheet();
+      default:break;
     }
-    if (t.dataset.duel) {
-      window.AV.closeSheet(true);
-      return startDuel(ctx, t.dataset.duel, t.dataset.stake ? Number(t.dataset.stake) : ctx.S.stake);
+    switch(t.dataset.draw){
+      case 'minus':drawCount=Math.max(1,drawCount-1);return renderDrawInfo($('#draw'),ctx);
+      case 'plus':drawCount=Math.min(ctx.S.tickets,drawCount+1);return renderDrawInfo($('#draw'),ctx);
+      case 'put':return putTickets(ctx);
+      case 'earn':return ctx.toTree();
+      default:return undefined;
     }
-    switch (t.dataset.game) {
-      case "lobby":
-        window.AV.closeSheet(true);
-        view = "lobby";
-        duel = null;
-        return render($("#game"), ctx);
-      case "show-star":
-        duel.starShown = true;
-        return ctx.openPrize({ ...ctx.D.STAR, tier: "legend" }, { star: true });
-      case "pool": return ctx.openPool();
-      case "earn":
-        window.AV.closeSheet(true);
-        return ctx.toTasks();
-      case "exchange":
-        ctx.S.balance -= ctx.D.ECONOMY.exchange * 2;
-        ctx.S.tickets += 2;
-        ctx.renderBalance();
-        return render($("#game"), ctx);
-      case "star":
-        window.AV.closeSheet();
-        return undefined;
-      default:
-    }
-    switch (t.dataset.draw) {
-      case "minus": drawCount = Math.max(1, drawCount - 1); return renderDrawInfo($("#draw"), ctx);
-      case "plus": drawCount = Math.min(ctx.S.tickets, drawCount + 1); return renderDrawInfo($("#draw"), ctx);
-      case "put": return putTickets(ctx);
-      case "earn": return ctx.toTree();
-      default:
-    }
-    return undefined;
   }
-
-  /** Для снимков и проверок: открыть экран в нужном виде без анимаций */
-  function setView(ctx, v, opts = {}) {
-    stopAll();
-    view = v;
-    duel = v === "lobby" ? null : { who: "natashka", stake: ctx.S.stake, me: 0, them: 0, round: 1, busy: false, last: null, ...opts };
-    render($("#game"), ctx);
-  }
-
-  const state = () => ({ view, duel });
-
-  window.AV_GAME = {
-    render, renderDraw, renderPool, prizeMarkup, prizeEnter, afterPrize, click, cancel,
-    pickPrize, takePrize, settle, resolve, oddsAt, setView, playRound, finishDuel, outcome, state, MOVES,
-  };
+  const state=()=>({view,run});
+  window.AV_GAME={render,renderPool,renderDraw,renderBoard,prizeMarkup,prizeEnter,afterPrize,nextPrize,
+    click,cancel,pause,state,start,settle,bonus,choose,setRun,storyMarkup,wire,atmosphere};
 })();

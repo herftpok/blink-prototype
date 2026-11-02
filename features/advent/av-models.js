@@ -1,6 +1,6 @@
 /* ==========================================================================
    av-models.js – Blink · «адвент»
-   Предметы дней адвента, валюта-снежинка, перчатки «камень, ножницы, бумага», нарядная ёлка, снежные шары
+   Предметы дней адвента, валюта-снежинка, ярус «ёлки до неба», нарядная ёлка, снежные шары
    розыгрыша и призы – three.js, собраны кодом в стиле 3D-стикеров Blink:
    глянцевая пластмасса и «стеклянный» синий, как у стикеров 7, zzz, go.
    Свет и окружение – createLighting из features/new-year (тот же глянец).
@@ -223,7 +223,7 @@ function roundRectShape(w, h, r) {
 const mesh = (geo, mat) => new THREE.Mesh(geo, mat);
 function group(...children) {
   const g = new THREE.Group();
-  children.flat().forEach((c) => c && g.add(c));
+  children.flat(Infinity).forEach((c) => c && g.add(c));
   return g;
 }
 
@@ -580,7 +580,7 @@ export function bell() {
 }
 
 /** Хлопушка – тусовка года */
-export function popper() {
+export function popper({ ready = false } = {}) {
   const stripes = canvasTexture(256, 256, (g, w, h) => {
     g.fillStyle = "#ff75e1";
     g.fillRect(0, 0, w, h);
@@ -601,7 +601,7 @@ export function popper() {
   const R = rng(11);
   const colors = [PAL.pink, PAL.lime, PAL.cyan, PAL.violet, PAL.gold];
   const bits = [];
-  for (let i = 0; i < 26; i++) {
+  for (let i = 0; i < (ready ? 0 : 26); i++) {
     const a = R() * TAU;
     const spread = 0.3 + R() * 0.9;
     const y = 0.7 + R() * 1.2;
@@ -615,7 +615,7 @@ export function popper() {
     bits.push(m);
   }
   const g = group(cone, rim, bits);
-  g.rotation.set(0.2, 0, -0.42);
+  g.rotation.set(0.2, 0, ready ? 0 : -0.42);
   return g;
 }
 
@@ -889,7 +889,7 @@ export function beanie() {
   return g;
 }
 
-/** Золотая звезда – эксклюзив за победы в цу-е-фа над пятью друзьями */
+/** Звезда на верхушку – за ёлку в 40 ярусов, рамка пина */
 export function topStar() {
   const st = mesh(slab(starShape(1, 0.46, 5, 0.16), 0.32, 0.16), toy(0xffb92e, { metalness: 0.55, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.04 }));
   const inner = mesh(slab(starShape(0.55, 0.25, 5, 0.18), 0.1, 0.06), toy(0xfff4c2, { roughness: 0.15, emissive: 0xffd36b, emissiveIntensity: 0.25 }));
@@ -1043,88 +1043,156 @@ export function xmasTree({ seed = 7 } = {}) {
   return g;
 }
 
-/** Рука в вязаной перчатке с меховой опушкой – жест «камень, ножницы, бумага».
-    pose: rock | scissors | paper. Рука смотрит пальцами вверх, к зрителю – тыльной стороной */
-export function glovedHand({ pose = "rock", color = PAL.hotPink } = {}) {
-  const knit = canvasTexture(256, 256, (g, w, h) => {
-    g.fillStyle = `#${new THREE.Color(color).getHexString()}`;
-    g.fillRect(0, 0, w, h);
-    // вязка: вертикальные «косички» – светлые и тёмные полоски
-    for (let x = 0; x < w; x += 16) {
-      g.fillStyle = "rgba(255,255,255,0.10)";
-      g.fillRect(x, 0, 6, h);
-      g.fillStyle = "rgba(0,0,0,0.10)";
-      g.fillRect(x + 9, 0, 4, h);
-    }
-    for (let y = 0; y < h; y += 12) {
-      g.fillStyle = "rgba(0,0,0,0.06)";
-      g.fillRect(0, y, w, 2);
-    }
-  });
-  const glove = toy(0xffffff, { map: knit, roughness: 0.85, clearcoat: 0, sheen: 1, sheenColor: 0xffd0f0, sheenRoughness: 0.5, key: `glove:${color}` });
+/** Ярус ели для «ёлки до неба» – как ярус нарядной ёлки (xmasTree): усечённый конус, приплюснутый по глубине.
+    Лапы – выпуклые «перья» в два ряда внахлёст, нижние свисают остриём, по краю мелкие иголки; в выемках тень,
+    сверху неровный снег, который стекает по лапам. Лапы стоят с шагом spacing по ширине – у широкого и узкого
+    яруса они одинаковые. В игре – набор ширин (ELKA_WIDTHS), берётся ближайшая и чуть растягивается */
+export function elkaLayer({ w = 6, gold = false, h = 1, inset = 0.42, spacing = 0.5 } = {}) {
+  const side = { side: THREE.DoubleSide, vertexColors: true };
+  const green = gold
+    ? toy(0xffffff, { metalness: 0.5, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.1, ...side })
+    : toy(0xffffff, { roughness: 0.5, clearcoat: 0.35, clearcoatRoughness: 0.35, ...side });
+  const shade = gold
+    ? { light: new THREE.Color(0xffd257), dark: new THREE.Color(0x9a5c08) }
+    : { light: new THREE.Color(0x3fcf6c), dark: new THREE.Color(0x0a5a2b) };
+  const snow = snowMat();
+  const R = w / 2;
+  const r = Math.max(0.12, R - inset);
+  const half = (t) => 0.2 + 0.2 * t;                      // полуглубина: плоский ярус, внизу чуть толще
+  const rad = (t) => r + (R - r) * Math.pow(t, 0.8);      // радиус: сверху уже, книзу шире
+  const wave = (X, ph = 0) => (1 + Math.cos((TAU * X) / spacing + ph)) / 2;   // 1 – середина лапы
+  const noise = (X) => 0.5 + 0.25 * Math.sin(X * 7.3 + 1.1) + 0.25 * Math.sin(X * 3.1 + 0.4);
+  const segs = Math.max(120, Math.round(w * 90));
+  // поверхность яруса: точка по (cx, cz) на единичной окружности и высоте t (0 – верх, 1 – низ)
+  const surf = (cx, cz, t) => {
+    const X0 = cx * rad(t);
+    // нижний ряд лап и верхний ряд, сдвинутый на полшага: каждая лапа – выпуклое перо
+    const lower = Math.pow(wave(X0), 3);
+    const upper = Math.pow(wave(X0, Math.PI), 3);
+    const wl = Math.max(0, (t - 0.45) / 0.55);
+    const wu = Math.max(0, 1 - Math.abs(t - 0.42) / 0.3);
+    const wt = Math.max(0, 1 - Math.abs(t - 0.14) / 0.16);   // верхний ряд у макушки – видно у едущего яруса
+    const top = Math.pow(wave(X0), 3);
+    const bulge = 0.06 * lower * wl + 0.045 * upper * wu + 0.035 * top * wt;
+    // иголки по краю: мелкие зубцы на каждой лапе
+    const needles = 0.035 * Math.pow((1 + Math.cos((TAU * X0 * 5) / spacing)) / 2, 2) * Math.pow(t, 6);
+    const tip = Math.pow(wave(X0), 5);
+    const low = Math.pow(t, 3);
+    const corner = Math.pow(Math.abs(cx), 8);            // крайние лапы свисают сильнее
+    return {
+      X: X0 + cx * (bulge + 0.05 * tip * low),
+      Y: h * (0.5 - t) - 0.22 * tip * low - needles + 0.08 * (1 - tip) * Math.pow(t, 6) - 0.1 * corner * t * t,
+      Z: cz * (half(t) + bulge + 0.14 * tip * low),
+      lit: 0.25 + 0.55 * (lower * wl + upper * wu + top * wt) + 0.2 * (1 - t) - 0.15 * (1 - lower) * wl,
+    };
+  };
+  const geo = new THREE.CylinderGeometry(1, 1, 1, segs, 28, true);
+  const P = geo.attributes.position;
+  const col = new Float32Array(P.count * 3);
+  const c = new THREE.Color();
+  for (let i = 0; i < P.count; i++) {
+    const q = surf(P.getX(i), P.getZ(i), 0.5 - P.getY(i));
+    P.setXYZ(i, q.X, q.Y, q.Z);
+    // тень в выемках и под верхним рядом, свет на лапах; книзу темнее
+    c.copy(shade.dark).lerp(shade.light, Math.min(1, Math.max(0, q.lit)));
+    col.set([c.r, c.g, c.b], i * 3);
+  }
+  geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  geo.computeVertexNormals();
   const g = new THREE.Group();
-  // ладонь: скруглённый брусок, тыльная сторона – к зрителю (+Z) с узором
-  const palm = mesh(roundedBox(1.0, 1.08, 0.5, [0.24, 0.24, 0.22], 4), glove);
-  g.add(palm);
-  // вышитая снежинка на тыльной стороне: белые лучи с веточками
-  const thread = toy(0xffffff, { roughness: 0.7, clearcoat: 0, sheen: 1, sheenColor: 0xffffff, sheenRoughness: 0.4 });
-  for (let k = 0; k < 6; k++) {
-    const a = (k / 6) * TAU + Math.PI / 2;
-    const dx = Math.cos(a);
-    const dy = Math.sin(a);
-    const c = [0, -0.05, 0.27];
-    g.add(mesh(capsule(c, [c[0] + dx * 0.27, c[1] + dy * 0.27, 0.27], 0.028), thread));
-    for (const sd of [-1, 1]) {
-      const b = a + sd * 0.8;
-      const o = [c[0] + dx * 0.16, c[1] + dy * 0.16, 0.27];
-      g.add(mesh(capsule(o, [o[0] + Math.cos(b) * 0.08, o[1] + Math.sin(b) * 0.08, 0.27], 0.022), thread));
-    }
+  g.add(mesh(geo, green));
+  // снег лежит на лапах в видимой части яруса (верх прячется под следующим ярусом, как у xmasTree):
+  // верхний край неровный, нижний – языками по лапам верхнего ряда, кончики лап остаются зелёными
+  const band = new THREE.CylinderGeometry(1, 1, 1, segs, 12, true);
+  const BP = band.attributes.position;
+  for (let i = 0; i < BP.count; i++) {
+    const cx = BP.getX(i);
+    const cz = BP.getZ(i);
+    const sb = 0.5 - BP.getY(i);                         // 0 – верх полосы, 1 – низ
+    const X = cx * R;
+    const t0 = 0.4 + 0.05 * noise(X * 1.7);
+    const t1 = 0.56 + 0.16 * Math.pow(wave(X, Math.PI), 2) * noise(X) + 0.04 * noise(X * 2.3);
+    const t = t0 + (t1 - t0) * sb;
+    const q = surf(cx, cz, t);
+    const lift = 0.02 + 0.025 * Math.sin(Math.PI * sb);  // пухлый: толще посередине полосы
+    BP.setXYZ(i, q.X + cx * lift, q.Y + 0.01, q.Z + cz * (lift + 0.03));
   }
-  const r = 0.135;
-  const tipY = 0.5;
-  // пальцы: x и длина; вытянутый – вверх, согнутый – загнут к зрителю и вниз (кулак)
-  const fingers = [
-    { x: -0.34, len: 0.62 },   // указательный (слева – правая рука тыльной стороной)
-    { x: -0.11, len: 0.7 },    // средний
-    { x: 0.12, len: 0.64 },    // безымянный
-    { x: 0.35, len: 0.5 },     // мизинец
-  ];
-  const up = { rock: [0, 0, 0, 0], scissors: [1, 1, 0, 0], paper: [1, 1, 1, 1] }[pose];
-  const spread = { rock: [0, 0, 0, 0], scissors: [-0.26, 0.2, 0, 0], paper: [-0.16, -0.05, 0.06, 0.18] }[pose];
-  fingers.forEach((f, i) => {
-    if (up[i]) {
-      const a = spread[i];
-      const x1 = f.x + Math.sin(a) * f.len;
-      const y1 = tipY + Math.cos(a) * f.len;
-      g.add(mesh(capsule([f.x, tipY - 0.05, 0], [x1, y1, 0], r), glove));
-    } else {
-      // согнутый: от костяшки вперёд и вниз – два сегмента
-      g.add(mesh(capsule([f.x, tipY - 0.04, 0.02], [f.x, tipY + 0.1, 0.24], r), glove));
-      g.add(mesh(capsule([f.x, tipY + 0.1, 0.24], [f.x, tipY - 0.12, 0.42], r * 0.95), glove));
-    }
-  });
-  // большой палец: у камня и ножниц – поперёк согнутых пальцев, у бумаги – в сторону
-  if (pose === "paper") {
-    g.add(mesh(capsule([-0.46, -0.18, 0.02], [-0.82, 0.22, 0.08], r * 1.08), glove));
-  } else {
-    g.add(mesh(capsule([-0.46, -0.12, 0.12], [-0.3, 0.2, 0.42], r * 1.08), glove));
-    g.add(mesh(capsule([-0.3, 0.2, 0.42], [0.08, 0.3, 0.5], r), glove));
+  band.computeVertexNormals();
+  g.add(mesh(band, snow));
+  // снежная подушка сверху – комьями, закрывает горловину
+  const top = new THREE.SphereGeometry(1, Math.max(64, Math.round(w * 40)), 16);
+  const TP = top.attributes.position;
+  for (let i = 0; i < TP.count; i++) {
+    const x = TP.getX(i);
+    const z = TP.getZ(i);
+    const k = 1 + (0.35 * Math.sin(x * r * 13) + 0.2 * Math.sin(x * r * 29 + z * 3)) * Math.max(0, TP.getY(i));
+    TP.setY(i, TP.getY(i) * k);
   }
-  // меховая опушка на запястье – как у шапки Деда Мороза
-  const cuff = mesh(new THREE.TorusGeometry(0.42, 0.2, 18, 48), toy(0xffffff, { roughness: 0.9, clearcoat: 0, sheen: 1, sheenColor: 0xffffff, sheenRoughness: 0.3 }));
-  cuff.rotation.x = Math.PI / 2;
-  cuff.scale.set(1.22, 0.62, 1);
-  cuff.position.y = -0.62;
-  g.add(cuff);
-  const wrist = mesh(new THREE.CylinderGeometry(0.4, 0.42, 0.26, 32), glove);
-  wrist.position.y = -0.82;
-  g.add(wrist);
-  g.rotation.set(-0.08, 0.18, 0);
+  top.computeVertexNormals();
+  const pillow = mesh(top, snow);
+  pillow.scale.set(r * 0.98 + 0.03, 0.13, half(0) * 1.05);
+  pillow.position.y = h * 0.5 + 0.02;
+  g.add(pillow);
+  return g;
+}
+
+// ширины ярусов в высотах яруса: набор рендеров elka-layer-<i>
+export const ELKA_WIDTHS = [0.6, 1.2, 1.8, 2.4, 3, 3.6, 4.2, 4.8, 5.4, 6, 6.6, 7.2, 7.8, 8.4, 9, 9.6, 10.2];
+
+/** Ёлочный шар для яруса: глянцевый, с колпачком и петлёй */
+export function bauble({ color = PAL.hotPink } = {}) {
+  const ball = mesh(new THREE.SphereGeometry(1, 48, 32), color === PAL.gold ? metal(0xffc23d, 0.12) : toy(color, { roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.03 }));
+  const cap = mesh(new THREE.CylinderGeometry(0.3, 0.34, 0.26, 24), metal(PAL.silver, 0.2));
+  cap.position.y = 1.0;
+  const loop = mesh(new THREE.TorusGeometry(0.16, 0.05, 12, 24), metal(PAL.silver, 0.2));
+  loop.position.y = 1.24;
+  return group(ball, cap, loop);
+}
+
+/** Ствол под ёлкой: короткий, с бороздками коры */
+export function elkaTrunk() {
+  const geo = new THREE.CylinderGeometry(0.4, 0.5, 1, 48, 6);
+  const P = geo.attributes.position;
+  for (let i = 0; i < P.count; i++) {
+    const x = P.getX(i);
+    const z = P.getZ(i);
+    const a = Math.atan2(z, x);
+    const f = 1 + 0.05 * Math.cos(a * 14);
+    P.setXYZ(i, x * f, P.getY(i), z * f);
+  }
+  geo.computeVertexNormals();
+  return mesh(geo, toy(0x8a5230, { roughness: 0.55, clearcoat: 0.3 }));
+}
+
+
+/** Christmas C9 drop: coloured lacquered glass, brass collar and green holder. */
+export function garlandBulb({ lit = false, color = PAL.red } = {}) {
+  const g = new THREE.Group();
+  const glass = mesh(lathe([[0,-1.10],[.045,-1.04],[.12,-.87],[.24,-.62],[.32,-.34],[.33,-.12],[.29,.10],[.21,.29],[.18,.40],[0,.40]],64),
+    toy(color, {roughness:.16,metalness:.08,clearcoat:1,clearcoatRoughness:.025,
+      emissive:color,emissiveIntensity:lit ? .68 : .035}));
+  g.add(glass);
+  const cap=mesh(new THREE.CylinderGeometry(.215,.205,.18,48),metal(PAL.gold,.3));cap.position.y=.46;g.add(cap);
+  for(let i=0;i<3;i++){
+    const ridge=mesh(new THREE.TorusGeometry(.215,.015,8,48),metal(PAL.gold,.24));
+    ridge.rotation.x=Math.PI/2;ridge.position.y=.40+i*.052;g.add(ridge);
+  }
+  const holder=mesh(new THREE.CylinderGeometry(.16,.19,.24,32),toy(0x174537,{roughness:.5}));holder.position.y=.67;g.add(holder);
+  const neck=mesh(new THREE.CylinderGeometry(.065,.10,.12,24),toy(0x174537));neck.position.y=.84;g.add(neck);
+  g.rotation.y=-.12;
   return g;
 }
 
 /** Каталог для рендера: имя → фабрика и ракурс */
 export const CATALOG = {
+  "garland-bulb-off": {make:()=>garlandBulb(),size:[256,512],pitch:0,pad:.55},
+  "garland-bulb-pink": {make:()=>garlandBulb({lit:true,color:PAL.pink}),size:[256,512],pitch:0,pad:.55},
+  "garland-bulb-white": {make:()=>garlandBulb({lit:true,color:PAL.snow}),size:[256,512],pitch:0,pad:.55},
+  "garland-bulb-gold": {make:()=>garlandBulb({color:PAL.gold}),size:[256,512],pitch:0,pad:.55},
+  "garland-bulb-cyan": {make:()=>garlandBulb({color:PAL.cyan}),size:[256,512],pitch:0,pad:.55},
+  "garland-bulb-lit-red": {make:()=>garlandBulb({lit:true,color:PAL.red}),size:[256,512],pitch:0,pad:.55},
+  "garland-bulb-lit-gold": {make:()=>garlandBulb({lit:true,color:PAL.gold}),size:[256,512],pitch:0,pad:.55},
+  "garland-bulb-lit-cyan": {make:()=>garlandBulb({lit:true,color:PAL.cyan}),size:[256,512],pitch:0,pad:.55},
   snowflake: () => snowflake(),
   "ice": () => iceCube(),
   "ornament-pink": () => ornament({ color: PAL.hotPink, accent: PAL.white, pattern: "stripes" }),
@@ -1139,6 +1207,7 @@ export const CATALOG = {
   microphone: () => microphone(),
   bell: () => bell(),
   popper: () => popper(),
+  "popper-ready": () => popper({ ready: true }),
   ticket: () => ticket(),
   gamepad: () => gamepad(),
   headphones: () => headphones(),
@@ -1152,13 +1221,17 @@ export const CATALOG = {
   "cookie-choco": () => fortuneCookie3({ groove: 0.62, beta: 1.6, glaze: 0x7a4a2e }),
   "cookie-choco-left": () => fortuneCookie3({ groove: 0.62, beta: 1.6, glaze: 0x7a4a2e, part: "left" }),
   "cookie-choco-right": () => fortuneCookie3({ groove: 0.62, beta: 1.6, glaze: 0x7a4a2e, part: "right" }),
-  "hand-rock": { make: () => glovedHand({ pose: "rock" }), size: [512, 640], pad: 0.54 },
-  "hand-scissors": { make: () => glovedHand({ pose: "scissors" }), size: [512, 640], pad: 0.54 },
-  "hand-paper": { make: () => glovedHand({ pose: "paper" }), size: [512, 640], pad: 0.54 },
-  "hand-rock-blue": { make: () => glovedHand({ pose: "rock", color: 0x4fc3ff }), size: [512, 640], pad: 0.54 },
-  "hand-scissors-blue": { make: () => glovedHand({ pose: "scissors", color: 0x4fc3ff }), size: [512, 640], pad: 0.54 },
-  "hand-paper-blue": { make: () => glovedHand({ pose: "paper", color: 0x4fc3ff }), size: [512, 640], pad: 0.54 },
   "xmas-tree": { make: () => xmasTree(), size: [640, 760], pad: 0.52, pitch: 8 },
+  ...Object.fromEntries(ELKA_WIDTHS.flatMap((w, i) => [
+    [`elka-layer-${i}`, { make: () => elkaLayer({ w }), size: [Math.round((w + 0.5) * 120), 170], pad: 0.52, pitch: 10 }],
+    [`elka-layer-gold-${i}`, { make: () => elkaLayer({ w, gold: true }), size: [Math.round((w + 0.5) * 120), 170], pad: 0.52, pitch: 10 }],
+  ])),
+  "elka-trunk": { make: () => elkaTrunk(), size: [240, 240], pad: 0.55, pitch: 16 },
+  "bauble-pink": { make: () => bauble({ color: PAL.hotPink }), size: [120, 150], pad: 0.55, pitch: 6 },
+  "bauble-cyan": { make: () => bauble({ color: PAL.cyan }), size: [120, 150], pad: 0.55, pitch: 6 },
+  "bauble-gold": { make: () => bauble({ color: PAL.gold }), size: [120, 150], pad: 0.55, pitch: 6 },
+  "bauble-violet": { make: () => bauble({ color: 0x8f5bff }), size: [120, 150], pad: 0.55, pitch: 6 },
+  "bauble-red": { make: () => bauble({ color: PAL.red }), size: [120, 150], pad: 0.55, pitch: 6 },
   ledge: { make: () => snowLedge(), size: [1074, 120], pad: 0.52, pitch: 10 },
   "gift-pink": () => giftBox(),
   "gift-cyan": () => giftBox({ color: PAL.cyan, ribbon: PAL.hotPink }),
