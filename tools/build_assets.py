@@ -1388,6 +1388,27 @@ def build_system() -> None:
     resize_to("blink-icon.png", s / "app-icon.png", 114, fmt="png")
 
 
+def build_advent_cookies() -> None:
+    """ImageGen masters, full canvas, same framing; WebP preserves alpha."""
+    folder = Path(__file__).resolve().parents[1] / "features/advent/renders"
+    for color in ("cyan", "violet", "pink"):
+        source = folder / f"fortune-cookie-{color}.png"
+        if source.exists():
+            with Image.open(source) as image:
+                image.save(folder / f"fortune-cookie-{color}.webp", "WEBP", quality=92, method=6)
+
+
+def build_advent_recap() -> None:
+    """ImageGen master of the unopened personal recap cards; alpha is preserved."""
+    folder = Path(__file__).resolve().parents[1] / "features/advent/renders"
+    source = folder / "recap-cards.png"
+    if source.exists():
+        with Image.open(source) as image:
+            image.thumbnail((480, 480), Image.Resampling.LANCZOS)
+            image.save(folder / "recap-cards.webp", "WEBP", quality=92, method=6)
+
+
+
 def main() -> None:
     if OUT.exists():
         shutil.rmtree(OUT)
@@ -1406,6 +1427,8 @@ def main() -> None:
     build_market_motion()
     build_screens_art()
     build_system()
+    build_advent_cookies()
+    build_advent_recap()
     total = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())
     print(f"assets: {sum(1 for p in OUT.rglob('*') if p.is_file())} files, {total / 1024:.0f} KB")
     print(f"icons.css: {ICONS_CSS.stat().st_size / 1024:.0f} KB, {len(icons)} icons")

@@ -130,6 +130,7 @@
     });
     S.taken = [];
     S.scoreRewards = {};
+    S.wheelRecent = [];
     S.garland = { attempts: 0 };
     S.events = [];
     S.star = false;
@@ -295,13 +296,13 @@
 
   /** Календарь гаснет вокруг нажатой клетки (или проявляется обратно) */
   function fadeHome(keep, from, to, delay = 0) {
-    const els = $$(".av-cell, .av-ledge, .av-bar, .av-dock", screens.home).filter((el) => el !== keep);
+    const els = $$(".av-cell, .av-today, .av-entries, .av-home-tasks, .av-calendar__head, .av-bar, .av-dock", screens.home).filter((el) => el !== keep);
     els.forEach((el) => anim(el, [{ opacity: from }, { opacity: to }], { duration: 240, delay }));
-    if (keep) $$(".av-cell__date, .badge-star, .av-cell__dot", keep).forEach((el) => anim(el, [{ opacity: from }, { opacity: to }], { duration: 160, delay }));
+    if (keep) $$(".av-cell__date, .badge-star, .av-cell__dot, .av-today__copy, .av-today__open", keep).forEach((el) => anim(el, [{ opacity: from }, { opacity: to }], { duration: 160, delay }));
   }
 
   function resetHomeFade() {
-    $$(".av-cell, .av-ledge, .av-bar, .av-dock, .av-cell__date, .badge-star, .av-cell__dot", screens.home).forEach((el) => {
+    $$(".av-cell, .av-today, .av-entries, .av-home-tasks, .av-calendar__head, .av-bar, .av-dock, .av-cell__date, .badge-star, .av-cell__dot, .av-today__copy, .av-today__open", screens.home).forEach((el) => {
       el.getAnimations().forEach((a) => a.cancel());
       el.style.opacity = "";
     });
@@ -341,13 +342,14 @@
   async function openStat() {
     if (busy) return;
     busy = true;
-    S.days[currentDay].seen = true;
+    const from = current();
+    if (!D.DAYS[currentDay].prediction || S.days[currentDay].cracked) S.days[currentDay].seen = true;
     renderStat();
     show("stat");
     stack.push("stat");
     await anim(screens.stat, [{ transform: "translateY(100%)" }, { transform: "translateY(0)" }], { duration: 380 }).then((a) => a.cancel());
     window.AV_CARDS.enter($("#stat-card"));
-    screens.day.hidden = true;
+    screens[from].hidden = true;
     busy = false;
     focusScreen("stat");
   }
@@ -357,12 +359,19 @@
     if (name === "game") window.AV_GAME.pause();
     busy = true;
     stack.pop();
-    renderDay();
-    show("day");
+    const back = current();
+    RENDER[back]?.({ refresh: true });
+    show(back);
     await anim(screens.stat, [{ transform: "translateY(0)" }, { transform: "translateY(100%)" }], { duration: 320 }).then((a) => a.cancel());
     screens.stat.hidden = true;
     busy = false;
-    focusScreen("day");
+    focusScreen(back);
+  }
+
+  function openTodayStat() {
+    if (busy) return;
+    currentDay = S.today;
+    return openStat();
   }
 
   /* ── 1. календарь ────────────────────────────────────────────────────── */
@@ -373,16 +382,28 @@
     return "open";
   }
 
-  /** Сколько снежинок дня ещё можно забрать сегодня – звезда-счётчик на клетке */
+  /** Сколько заданий дня ещё не выполнено. */
   function waiting(i) {
     const d = S.days[i];
     return ["login", "task", "share"].filter((k) => d[k] === "todo" || d[k] === "done").length;
   }
 
   function renderHome() {
-    $("#calendar").innerHTML = `<div class="av-grid">${D.DAYS.map((day, i) => cellMarkup(day, i)).join("")}${ledges()}</div>`;
+    const day = D.DAYS[S.today];
+    const seen = S.days[S.today].seen;
+    const main = day.prediction ? objMarkup(day,"av-today__main") : '<img class="av-today__main" src="renders/recap-cards.webp" alt="">';
+    const topic = objMarkup({ obj: day.charm || day.hero }, "av-today__topic-img");
+    $("#home-today").classList.toggle("is-seen", seen);
+    $("#home-today").innerHTML = `<figure class="av-today__figure">
+      <button class="av-today__art pressable" data-act="open-today" type="button" aria-label="смотреть карточку">${main}<span class="av-today__topic${S.today === 0 ? " av-today__topic--app" : ""}">${topic}</span></button>
+    </figure><div class="av-today__copy">
+      <h2 id="today-title">${seen ? day.title : "каждый день — новый факт о тебе"}</h2>
+      ${seen ? `<p class="av-today__seen"><i class="icon icon--check" aria-hidden="true"></i>${day.prediction ? "предсказание прочитано" : "факт просмотрен"}</p>` : ""}
+    </div><button class="button ${seen ? "button--secondary" : "button--primary"} av-today__open pressable" data-act="open-today" type="button">${seen ? "посмотреть ещё раз" : "смотреть"}</button>`;
+    $("#home-task-list").innerHTML = tasksMarkup(S.today);
+    $("#home-wheel-preview").innerHTML = window.AV_GAME.wheelPreview({ D, S, src });
+    $("#calendar").innerHTML = `<div class="av-grid">${D.DAYS.map((day, i) => cellMarkup(day, i)).join("")}</div>`;
     renderBalance();
-    const left = D.POOL.length - S.taken.length;
     $("#dock-game").innerHTML = `${D.ECONOMY.attempt}<img class="av-entry__flake" src="renders/snowflake.webp" alt="снежинок">`;
     $("#dock-draw").textContent = `${S.tickets}${NBSP}${plural(S.tickets, "билет", "билета", "билетов")}`;
   }
@@ -398,14 +419,14 @@
   function cellMarkup(day, i) {
     const st = cellState(i);
     const d = S.days[i];
-    const ice = st === "frozen" ? `<img class="av-cell__ice" src="renders/ice.webp" alt="" style="--ice-tilt:${tilt(i + 3, 4)}deg">` : "";
-    const glow = st === "today" ? `<img class="av-cell__glow" src="${objSrc(day)}" alt="">` : "";
+    const ice = st === "frozen" ? `<img class="av-cell__ice" src="renders/ice.webp" alt="" style="--ice-tilt:${tilt(i+3,4)}deg">` : "";
+    const glow = "";
     const n = st === "today" ? waiting(i) : 0;
     const badge = n ? `<span class="badge-star" aria-hidden="true"><i class="icon icon--badge-star"></i><span class="badge-star__value">${n}</span></span>` : "";
     const dot = st === "open" && !d.seen ? `<span class="av-cell__dot" aria-hidden="true"></span>` : "";
     const label = st === "frozen"
       ? `${dayName(day)}, ещё закрыто`
-      : `${dayName(day)}, ${day.title}${st === "today" ? ", сегодня" : ""}${dot ? ", не открыто" : ""}${n ? `, снежинок ждёт: ${n}` : ""}`;
+      : `${dayName(day)}, ${day.title}${st === "today" ? ", сегодня" : ""}${dot ? ", не открыто" : ""}${n ? `, заданий осталось: ${n}` : ""}`;
     return `<button class="av-cell is-${st} pressable" type="button" data-day="${i}" aria-label="${label}" style="--tilt:${tilt(i)}deg;grid-row:${Math.floor(i / COLS) + 1};grid-column:${(i % COLS) + 1}">
       <span class="av-cell__art">${glow}${objMarkup(day, "av-cell__obj")}${ice}</span>
       ${badge}${dot}
@@ -427,14 +448,7 @@
     $("#day-date").textContent = dayName(day);
     $("#day-slot").innerHTML = objMarkup(day, "av-day__obj");
     $("#day-glow").src = objSrc(day);
-    const d = S.days[i];
-    const flake = `<img class="av-task__flake" src="renders/snowflake.webp" alt="">`;
-    const k = day.task.boost || 1;
-    const rows = [
-      { key: "login", art: `<img class="av-task__art" src="renders/snowflake.webp" alt="">`, text: "за вход", reward: D.ECONOMY.login },
-      { key: "task", art: `<span class="av-task__art">${objMarkup(day, "av-task__obj")}</span>`, text: day.task.text, reward: day.task.reward * k, boost: k > 1 },
-      { key: "share", art: `<span class="av-task__art av-task__art--icon"><i class="icon icon--share" aria-hidden="true"></i></span>`, text: day.prediction ? "поделись предсказанием" : "поделись карточкой дня", reward: D.ECONOMY.share },
-    ];
+    const rows = taskRows(day);
     $("#day-body").innerHTML = `
       <div class="av-day__head">
         <h2 class="av-day__title" id="day-title">${day.title}</h2>
@@ -442,57 +456,66 @@
       </div>
       <button class="button button--primary av-day__cta pressable" type="button" data-act="open-stat">${day.prediction ? "открыть предсказание" : "смотреть"}</button>
       <h3 class="av-day__section caps-label"><span>${isToday ? "снежинки дня" : "снежинки этого дня"}</span><span>${rows.reduce((t, r) => t + r.reward, 0)}</span></h3>
-      <ul class="av-tasks">${rows.map((r) => taskRow(r, d[r.key], flake, isToday)).join("")}</ul>`;
+      ${tasksMarkup(i)}`;
     renderBalance();
   }
 
-  function taskRow(r, state, flake, isToday) {
-    let action = "";
-    if (state === "todo" && isToday) {
-      action = r.key === "login"
-        ? `<button class="av-task__button av-task__button--claim pressable" type="button" data-claim="login">забрать</button>`
-        : `<button class="av-task__button av-task__button--do pressable" type="button" data-do="${r.key}">сделать</button>`;
-    } else if (state === "done") {
-      action = `<button class="av-task__button av-task__button--claim pressable" type="button" data-claim="${r.key}">забрать</button>`;
-    } else if (state === "claimed") {
-      action = `<span class="av-task__state"><i class="icon icon--check" aria-hidden="true"></i>получено</span>`;
-    } else {
-      action = `<span class="av-task__state">день прошёл</span>`;
-    }
-    return `<li class="av-task" data-row="${r.key}">
-      ${r.art}
+  function taskRows(day) {
+    const k = day.task.boost || 1;
+    return [
+      { key: "login", title: "ежедневный вход", description: "просто открой blink", instruction: "снежинки начисляются за первый вход в blink за день", reward: D.ECONOMY.login },
+      { key: "task", title: day.task.title, description: day.task.description, instruction: day.task.instruction, reward: day.task.reward * k },
+      { key: "share", title: day.prediction ? "поделись предсказанием" : "поделись карточкой", description: "открой карточку и отправь её в сторис", instruction: day.prediction ? "открой предсказание, разломи печенье и нажми «поделиться». Отправь карточку в сторис." : "открой сегодняшнюю карточку, нажми «поделиться» и отправь её в сторис", reward: D.ECONOMY.share },
+    ];
+  }
+
+  function tasksMarkup(i) {
+    const flake = `<img class="av-task__flake" src="renders/snowflake.webp" alt="снежинок">`;
+    return `<ul class="av-tasks">${taskRows(D.DAYS[i]).map((r) => taskRow(r, S.days[i][r.key], flake, i)).join("")}</ul>`;
+  }
+
+  function taskRow(r, state, flake, i) {
+    const done = state === "claimed";
+    const available = i === S.today && state !== "missed";
+    const action = done
+      ? '<span class="av-task__state" role="img" aria-label="выполнено"><i class="icon icon--check" aria-hidden="true"></i></span>'
+      : available ? `<button class="av-task__info pressable" type="button" data-task-help="${r.key}" data-task-day="${i}" aria-label="инструкция: ${r.title}">инструкция</button>`
+      : '<span class="av-task__expired">день прошёл</span>';
+    return `<li class="av-task${done ? " is-done" : ""}" data-row="${r.key}">
       <div class="av-task__body">
-        <span class="av-task__text">${r.text}</span>
-        <span class="av-task__reward">${flake}+${r.reward}${r.boost ? `<span class="av-task__boost">${NBSP}×2 в праздники</span>` : ""}</span>
+        <span class="av-task__text">${r.title}</span>
+        <span class="av-task__description">${r.description}</span>
       </div>
-      ${action}
+      <div class="av-task__aside"><span class="av-task__reward"><span>${r.reward}</span>${flake}</span>${action}</div>
     </li>`;
   }
 
-  /** Задание выполнено (на стенде – по нажатию «сделать»: экранов заданий в задаче нет) */
-  function doTask(key) {
-    S.days[currentDay][key] = "done";
-    if (key === "share") return openStat();
-    renderDay();
-    $(`[data-claim="${key}"]`)?.focus({ preventScroll: true });
-  }
-
-  /** Забрать снежинки: летят из строки в баланс шапки */
-  function claim(key, fromEl) {
-    const day = D.DAYS[currentDay];
-    const k = day.task.boost || 1;
-    const amount = key === "login" ? D.ECONOMY.login : key === "share" ? D.ECONOMY.share : day.task.reward * k;
-    S.days[currentDay][key] = "claimed";
+  /** Завершение приходит от действия, а не от открытия инструкции. Состояние и баланс меняются атомарно. */
+  function completeTask(key, i = S.today, { animate = true, refresh = true } = {}) {
+    if (!["login", "task", "share"].includes(key) || i !== S.today) return false;
+    const state = S.days[i];
+    if (!state || state[key] === "claimed" || state[key] === "missed") return false;
+    const amount = taskRows(D.DAYS[i]).find((r) => r.key === key).reward;
+    state[key] = "claimed";
+    S.balance += amount;
+    S.events.push({ name: "newyear_task_complete", day: D.DAYS[i].date, key, amount });
+    renderBalance();
+    const fromEl = $(`[data-row="${key}"]`, screens[current()]);
     const target = $(".av-balance", screens[current()]);
-    flyFlakes(fromEl, target, 6).then(() => {
-      S.balance += amount;
-      renderBalance();
+    if (animate && fromEl && target && (current() !== "day" || currentDay === i)) flyFlakes(fromEl, target, 6).then(() => {
       target.classList.remove("is-bump");
       void target.offsetWidth;
       target.classList.add("is-bump");
     });
-    renderDay();
-    announce(`+${amount} снежинок`);
+    if (refresh) {
+      $("#home-task-list").innerHTML = tasksMarkup(S.today);
+      if (current() === "day") renderDay();
+      if (openSheetName === "task") renderTaskHelp();
+      const cell = $(`.av-cell[data-day="${i}"]`);
+      if (cell) cell.outerHTML = cellMarkup(D.DAYS[i], i);
+    }
+    if (animate) announce(`+${amount} снежинок`);
+    return true;
   }
 
   function flyFlakes(fromEl, toEl, count = 6, img = "renders/snowflake.webp", size = 26) {
@@ -547,10 +570,15 @@
   }
 
   function crackCookie() {
+    const i = currentDay, state = S.days[i];
     window.AV_CARDS.crack($("#stat-card"), () => {
-      S.days[currentDay].cracked = true;
-      syncStatButton();
-      announce(D.DAYS[currentDay].prediction);
+      if (S.days[i] !== state) return;
+      state.cracked = true;
+      if (current() === "stat" && currentDay === i) {
+        state.seen = true;
+        syncStatButton();
+        announce(D.DAYS[i].prediction);
+      }
     });
   }
 
@@ -578,7 +606,7 @@
   }
 
   function goToday() {
-    // из игры к заданиям: назад в календарь и сразу в «сегодня»
+    // Задания сегодняшнего дня теперь сразу на главной.
     while (stack.length > 1) {
       const name = stack.pop();
       screens[name].hidden = true;
@@ -586,8 +614,7 @@
     renderHome();
     show("home");
     currentDay = S.today;
-    const cell = $(`.av-cell[data-day="${S.today}"]`);
-    openDay(S.today, cell);
+    $("#home-scroll").scrollTop = Math.max(0, $("#home-tasks").offsetTop - 24);
   }
 
   function renderDraw() {
@@ -597,9 +624,28 @@
 
   /* ── шторки ──────────────────────────────────────────────────────────── */
 
-  const sheets = { prize: $("#sheet-prize"), pool: $("#sheet-pool"), share: $("#sheet-share") };
+  const sheets = { prize: $("#sheet-prize"), pool: $("#sheet-pool"), share: $("#sheet-share"), task: $("#sheet-task") };
   let openSheetName = null;
   let sheetReturn = null;
+  let taskHelp = { key: "task", day: 0 };
+
+  function renderTaskHelp() {
+    const row = taskRows(D.DAYS[taskHelp.day]).find((r) => r.key === taskHelp.key);
+    const done = S.days[taskHelp.day][taskHelp.key] === "claimed";
+    $("#task-help-title").textContent = row.title;
+    $("#task-help-text").textContent = row.instruction;
+    $("#task-help-reward").innerHTML = `<span>${row.reward}<img class="av-task__flake" src="renders/snowflake.webp" alt="снежинок"></span><span>${done ? "уже начислено" : "начислим автоматически"}</span>`;
+    const action = $("#task-help-action");
+    action.textContent = taskHelp.key === "share" && !done ? "смотреть" : "понятно";
+    action.dataset.card = String(taskHelp.key === "share" && !done);
+  }
+
+  function openTaskHelp(key, i) {
+    if (!D.DAYS[i] || !["login", "task", "share"].includes(key)) return;
+    taskHelp = { key, day: i };
+    renderTaskHelp();
+    openSheet("task");
+  }
 
   function openSheet(name) {
     if (openSheetName) closeSheet(true);
@@ -691,6 +737,7 @@
       openDay(i, cell);
       return;
     }
+    if (t.dataset.act === "open-today") return openTodayStat();
     if (t.dataset.go === "game") return push("game");
     if (t.dataset.push === "garland") {
       // пуш «друг обогнал» – сразу в игру
@@ -699,8 +746,13 @@
       return push("game");
     }
     if (t.dataset.go === "draw") return push("draw");
-    if (t.dataset.claim) return claim(t.dataset.claim, t.closest(".av-task") || t);
-    if (t.dataset.do) return doTask(t.dataset.do);
+    if (t.dataset.taskHelp) return openTaskHelp(t.dataset.taskHelp, Number(t.dataset.taskDay));
+    if (t.id === "task-help-action") {
+      const watch = t.dataset.card === "true";
+      closeSheet();
+      if (watch) { currentDay = taskHelp.day; return openStat(); }
+      return;
+    }
     switch (t.dataset.act) {
       case "back": return pop();
       case "exit": return undefined;                // выход из адвента – в приложение (вне задачи)
@@ -712,16 +764,20 @@
     if (t.dataset.act === "crack") return crackCookie();
     if (t.id === "share-cta") {
       // на телефоне – системный «поделиться»; задание дня выполнено
-      if (shareKind === "day" && currentDay === S.today && S.days[currentDay].share === "todo") S.days[currentDay].share = "done";
+      if (shareKind === "day") completeTask("share", currentDay, { animate: false });
       t.dataset.done = "1";
       $("#share-cta-label").textContent = "готово";
-      setTimeout(() => closeSheet(), 600);
+      setTimeout(() => { if (openSheetName === "share") closeSheet(); }, 600);
       return;
     }
     window.AV_GAME.click(t, gameCtx());
   });
 
   $("#scrim").addEventListener("click", () => closeSheet());
+
+  window.addEventListener("advent:task-completed", (e) => {
+    if (Number.isInteger(e.detail?.day)) completeTask(e.detail.key, e.detail.day);
+  });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Tab") document.documentElement.classList.add("kb");
@@ -751,19 +807,14 @@
   function resetTo(idx) {
     window.AV_GAME.cancel();
     preset(idx);
+    completeTask("login", idx, { animate: false, refresh: false });
     // любые открытые экраны – назад в календарь
     while (stack.length > 1) screens[stack.pop()].hidden = true;
     if (openSheetName) closeSheet(true);
     show("home");
     renderHome();
-    // сегодня всегда на первом экране: календарь докручен до него
-    const scroller = $("#home-scroll");
-    scroller.scrollTop = 0;
-    const today = $(`.av-cell[data-day="${S.today}"]`, scroller);
-    // докручиваем, только если сегодня не видно на первом экране
-    if (today && today.offsetTop + today.offsetHeight > scroller.clientHeight - 40) {
-      scroller.scrollTop = today.offsetTop + today.offsetHeight / 2 - scroller.clientHeight * 0.45;
-    }
+    // Сегодня вынесено в начало: календарь сохраняет все даты без принудительной прокрутки.
+    $("#home-scroll").scrollTop = 0;
     syncPanel();
   }
 
@@ -787,6 +838,8 @@
       case "next": return resetTo(Math.min(D.DAYS.length - 1, S.today + 1));
       case "flakes": S.balance += 500; break;
       case "zero": S.balance = 0; break;
+      case "tickets": S.tickets = 30; break;
+      case "task-done": return window.dispatchEvent(new CustomEvent("advent:task-completed", { detail: { key: "task", day: S.today } }));
       case "tries": S.garland.attempts = 0; break;
       case "push": return showPush();
       case "almost": S.taken = D.POOL.slice(3).map((p) => p.id); break;
@@ -801,7 +854,7 @@
   /* ── пуш «друг обогнал» – не чаще раза в день ──────────────────────────── */
 
   function showPush() {
-    $("#push-text").textContent = "зажги гирлянду – новогодний подарок ждёт";
+    $("#push-text").textContent = "крути колесо — новогодний подарок ждёт";
     $("#push").classList.add("is-shown");
   }
 
@@ -837,14 +890,15 @@
     const [kind, arg] = id.split(":");
     switch (kind) {
       case "home-first": resetTo(0); break;
+      case "home-seen": resetTo(0); S.days[0].seen = true; renderHome(); break;
       case "home": resetTo(8); break;
       case "home-late": resetTo(dayIdx("05.01")); break;
       case "home-end": resetTo(dayIdx("11.01")); break;
+      case "task-help": resetTo(8); openTaskHelp(arg === "share" ? "share" : "task", 8); break;
       case "day-today": resetTo(8); currentDay = 8; jump(["home", "day"]); break;
       case "day-claimed":
         resetTo(8); currentDay = 8;
-        Object.assign(S.days[8], { login: "claimed", task: "done" });
-        S.balance += D.ECONOMY.login;
+        completeTask("task", 8, { animate: false, refresh: false });
         jump(["home", "day"]);
         break;
       case "day-past": resetTo(8); currentDay = 2; jump(["home", "day"]); break;
@@ -862,26 +916,27 @@
         jump(["home", "day", "stat"]);
         break;
       case "share": resetTo(8); currentDay = 8; jump(["home", "day", "stat"]); openShare(); break;
-      case "garland": case "popper": case "express": case "elka":
+      case "wheel": case "garland": case "popper": case "express": case "elka":
         resetTo(8); S.balance = 90; jump(["home", "game"]); break;
       case "garland-wheel": case "garland-score": case "garland-ranking":
         resetTo(kind==='garland-wheel'?8:0); S.balance=90; window.AV_GAME.variant(kind==='garland-wheel'?'wheel':'score'); jump(["home","game"]);
         if(kind==='garland-ranking')window.AV_GAME.click({dataset:{game:'lab-ranking'}},gameCtx()); break;
-      case "garland-first": resetTo(0); S.balance = 30; jump(["home", "game"]); break;
+      case "wheel-first": case "garland-first": resetTo(0); S.balance = 30; jump(["home", "game"]); break;
       case "garland-play": case "garland-paused":
         resetTo(8); S.balance = 60; S.garland.attempts = 1; jump(["home", "game"]);
         window.AV_GAME.setRun(gameCtx(), { playing: kind === "garland-play", paused: kind === "garland-paused" }); break;
       case "garland-prize": case "garland-perfect": case "garland-miss": case "garland-rare":
         resetTo(0); S.balance = 60; S.garland.attempts = 1; jump(["home", "game"]);
         window.AV_GAME.setRun(gameCtx(), { prizeId: kind === "garland-rare" ? D.POOL.find(p=>p.tier==='epic').id : D.POOL[0].id, finale: kind === "garland-perfect", hits: kind === "garland-perfect" ? 3 : kind === "garland-miss" ? 0 : 2 }); break;
-      case "garland-poor": resetTo(8); S.balance = 20; jump(["home", "game"]); break;
+      case "wheel-poor": case "garland-poor": resetTo(8); S.balance = 20; jump(["home", "game"]); break;
       case "garland-done": resetTo(8); S.garland.attempts = 3; jump(["home", "game"]); break;
-      case "garland-empty": resetTo(8); S.taken = D.POOL.map(p=>p.id); S.star = true; jump(["home", "game"]); break;
+      case "wheel-empty": case "garland-empty": resetTo(8); S.taken = D.POOL.map(p=>p.id); S.star = true; jump(["home", "game"]); break;
       case "garland-story":
         resetTo(0); S.balance = 60; jump(["home", "game"]);
         window.AV_GAME.setRun(gameCtx(), { prizeId: D.POOL[0].id });
         window.AV_GAME.click({ dataset: { game: "share" } }, gameCtx()); break;
       case "garland-push": resetTo(8); showPush(); break;
+      case "garland-decoration": resetTo(8); window.AV_GAME.decoration(); jump(["home","game"]); break;
       case "pool": resetTo(8); jump(["home", "game"]); openSheet("pool"); break;
       case "draw": resetTo(8); S.tickets = 9; jump(["home", "draw"]); break;
       case "draw-mine": resetTo(8); S.tickets = 4; S.draw = { console: 7, headphones: 3 }; jump(["home", "draw"]); break;
@@ -929,6 +984,6 @@
   window.AV = {
     S, D, stack, screens, openDay: (i) => openDay(i, $(`.av-cell[data-day="${i}"]`)), openStat, closeStat,
     push, pop, resetTo, renderHome, renderDay, openSheet, closeSheet, openShare, current, sky, GAME_ON,
-    setDay: (i) => { currentDay = i; }, showState, openPrize, gameCtx,
+    setDay: (i) => { currentDay = i; }, showState, openPrize, gameCtx, completeTask,
   };
 })();

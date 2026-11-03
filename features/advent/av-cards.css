@@ -1087,3 +1087,13 @@
 .av-share .sheet__handle {
   padding-bottom: var(--space-4);
 }
+/* Baked wafer, with a matching fractured edge on both halves. */
+.avc-cookie__half--left {clip-path:inset(0 50% 0 0);transform-origin:25% 50%;}
+.avc-cookie__half--right {clip-path:inset(0 0 0 50%);transform-origin:75% 50%;}
+.avc-cookie__whole {animation:avc-cookie-breathe 4s ease-in-out infinite;}
+@keyframes avc-cookie-breathe {50%{transform:translateY(-6px) rotate(-2deg);}}
+.avc--prediction.is-cracked .avc-cookie__half--left {transform:translate(-38px,-50px) rotate(-16deg) scale(.85);}
+.avc--prediction.is-cracked .avc-cookie__half--right {transform:translate(38px,-50px) rotate(16deg) scale(.85);}
+.avc-paper {border-radius:0;box-shadow:0 8px 30px #0005;}
+.avc-paper__kicker {text-transform:none;letter-spacing:0;font:var(--type-label);}
+@media(prefers-reduced-motion:reduce) {.avc-cookie__whole {animation:none;}}

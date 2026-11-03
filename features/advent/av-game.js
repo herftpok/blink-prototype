@@ -16,7 +16,7 @@
     if(!remaining(ctx).length)return '<button class="button button--primary pressable" type="button" data-game="pool">вся коллекция твоя</button>';
     if(ctx.S.garland.attempts>=ctx.D.ECONOMY.attemptsPerDay)return `<p class="ag-wait">новые попытки через ${untilMidnight(ctx)}</p>`;
     if(ctx.S.balance<ctx.D.ECONOMY.attempt)return `<button class="button button--secondary pressable" type="button" data-game="earn">не хватает ${ctx.D.ECONOMY.attempt-ctx.S.balance} – к заданиям</button>`;
-    return `<button class="button button--primary pressable" type="button" data-game="start">зажечь<span class="avs-cta__price"><img src="renders/snowflake.webp" alt="снежинок">${ctx.D.ECONOMY.attempt}</span></button>`;
+    return `<button class="button button--primary pressable" type="button" data-game="start">зажечь<span class="avs-cta__price">${ctx.D.ECONOMY.attempt}<img src="renders/snowflake.webp" alt="снежинок"></span></button>`;
   }
   // Full-bleed 390 × 320 scene. One cable runs beyond both frame edges.
   // Attachment points share the cubic curve; unequal drops and tilt avoid a mirrored necklace.
@@ -230,7 +230,7 @@
           <img class="avg-prize__glow" src="${ctx.src(D.STAR.img)}" alt="">
           <img class="avg-prize__img" src="${ctx.src(D.STAR.img)}" alt="">
         </div>
-        <span class="avg-tier avg-tier--legend">25 подарков</span>
+        <span class="avg-tier avg-tier--legend">${ctx.D.POOL.length} подарков</span>
         <h2 class="avg-prize__title" id="prize-title">звезда на верхушке</h2>
         <p class="avg-prize__kind">вся коллекция твоя – и эта рамка тоже</p>
         ${cta}
@@ -286,46 +286,26 @@
 
   let drawIndex = 1;
   let drawCount = 3;
+  let drawSending = false;
 
   function renderDraw(el, ctx) {
     const { S, D } = ctx;
-    const slides = D.DRAW.prizes.map((p, i) => {
+    const choices = D.DRAW.prizes.map((p, i) => {
       const mine = S.draw[p.id] || 0;
-      return `<article class="avd-slide" data-prize="${i}" aria-label="${p.title}">
-        <div class="avd-globe">
-          <img class="avd-globe__back" src="renders/globe-back.webp" alt="">
-          <img class="avd-globe__prize" src="${ctx.src(p.img)}" alt="">
-          <img class="avd-globe__glass" src="renders/globe-glass.webp" alt="">
-          ${mine ? `<span class="avd-globe__mine"><img src="renders/ticket.webp" alt="твоих билетов">${mine}</span>` : ""}
-        </div>
-      </article>`;
+      return `<button class="avd-prize pressable${i === drawIndex ? " is-selected" : ""}" type="button" data-draw="select" data-prize="${i}" aria-pressed="${i === drawIndex}" aria-label="${p.title}">
+        <img class="avd-prize__art" src="${ctx.src(p.img)}" alt="">
+        <span class="avd-prize__title">${p.title}</span>
+        <span class="avd-prize__tickets">${mine ? `${mine} ${ctx.plural(mine, "билет", "билета", "билетов")}` : "нет билетов"}</span>
+      </button>`;
     }).join("");
     el.innerHTML = `
-      <div class="avd-carousel" id="draw-carousel">${slides}</div>
+      <p class="avd-when">${D.DRAW.when}</p>
+      <div class="avd-prizes" role="group" aria-label="выбери приз">${choices}</div>
       <div class="avd-info" id="draw-info"></div>`;
-    const car = $("#draw-carousel", el);
-    requestAnimationFrame(() => {
-      const slide = car.children[drawIndex];
-      if (slide) car.scrollLeft = slide.offsetLeft - (car.offsetWidth - slide.offsetWidth) / 2;
-      renderDrawInfo(el, ctx);
-    });
-    let tm = 0;
-    car.addEventListener("scroll", () => {
-      clearTimeout(tm);
-      tm = setTimeout(() => {
-        const mid = car.scrollLeft + car.offsetWidth / 2;
-        const dist = (c) => Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
-        const best = [...car.children].reduce((b, c, i) => (dist(c) < dist(car.children[b]) ? i : b), 0);
-        if (best !== drawIndex) {
-          drawIndex = best;
-          drawCount = Math.min(3, S.tickets) || 1;
-          renderDrawInfo(el, ctx);
-        }
-      }, 90);
-    });
+    renderDrawInfo(el, ctx);
   }
 
-  /** Под шаром – только приз, когда розыгрыш, твой шанс и сколько билетов положить */
+  /** Выбор приза не меняет геометрию сетки и нижних контролов. */
   function renderDrawInfo(root, ctx) {
     const { S, D } = ctx;
     const p = D.DRAW.prizes[drawIndex];
@@ -333,36 +313,46 @@
     drawCount = Math.max(1, Math.min(drawCount, S.tickets || 1));
     const chance = mine
       ? `твой шанс – 1 из ${Math.max(1, Math.round((p.total + mine) / mine)).toLocaleString("ru-RU").replace(/\s/g, NBSP)}`
-      : "";
+      : "ещё не участвуешь";
+    root.querySelectorAll(".avd-prize").forEach((card, index) => {
+      const selected = index === drawIndex;
+      card.classList.toggle("is-selected", selected);
+      card.setAttribute("aria-pressed", String(selected));
+      const count = S.draw[D.DRAW.prizes[index].id] || 0;
+      $(".avd-prize__tickets", card).textContent = count ? `${count} ${ctx.plural(count, "билет", "билета", "билетов")}` : "нет билетов";
+    });
     $("#draw-info", root).innerHTML = `
-      <span class="avd-info__until">до 10.01</span>
-      <h3 class="avd-info__title">${p.title}</h3>
-      <p class="avd-info__when">${D.DRAW.when}</p>
-      ${chance ? `<p class="avd-info__chance">${chance}</p>` : ""}
+      <p class="avd-info__chance">${chance}</p>
       ${S.tickets > 0 ? `<div class="avd-put">
+          <span class="avd-put__label">билеты</span>
           <button class="icon-button avd-step pressable" type="button" data-draw="minus" aria-label="меньше" ${drawCount <= 1 ? "disabled" : ""}><span aria-hidden="true">−</span></button>
           <span class="avd-put__count" aria-live="polite">${drawCount}</span>
           <button class="icon-button avd-step pressable" type="button" data-draw="plus" aria-label="больше" ${drawCount >= S.tickets ? "disabled" : ""}><i class="icon icon--plus" aria-hidden="true"></i></button>
         </div>
-        <button class="button button--primary avd-cta pressable" type="button" data-draw="put">положить ${drawCount}${NBSP}${ctx.plural(drawCount, "билет", "билета", "билетов")}</button>`
-        : `<button class="button button--primary avd-cta pressable" type="button" data-draw="earn">зажечь гирлянду</button>`}`;
+        <button class="button button--primary avd-cta pressable" type="button" data-draw="put" ${drawSending ? "disabled" : ""}>участвовать за ${drawCount}${NBSP}${ctx.plural(drawCount, "билет", "билета", "билетов")}</button>`
+        : `<button class="button button--primary avd-cta pressable" type="button" data-draw="earn">крутить колесо</button>`}`;
   }
 
   function putTickets(ctx) {
     const { S, D } = ctx;
     const p = D.DRAW.prizes[drawIndex];
     const n = Math.min(drawCount, S.tickets);
-    if (!n) return;
     const from = $("[data-draw='put']");
-    const slide = $(`.avd-slide[data-prize="${drawIndex}"] .avd-globe`);
+    if (!n || !from || from.disabled || drawSending) return;
+    drawSending = true;
+    const target = $(`.avd-prize[data-prize="${drawIndex}"] .avd-prize__art`);
     S.tickets -= n;
     S.draw[p.id] = (S.draw[p.id] || 0) + n;
     ctx.renderBalance();
-    ctx.flyFlakes(from, slide, Math.min(6, n + 1), "renders/ticket.webp", 34).then(() => {
-      renderDraw($("#draw"), ctx);
-      $(`.avd-slide[data-prize="${drawIndex}"] .avd-globe`)?.classList.add("is-shaken");
-    });
-    ctx.announce(`${n} в шаре «${p.title}»`);
+    ctx.S.events.push({ name: "raffle_tickets", prizeId: p.id, count: n });
+    const flight = ctx.flyFlakes(from, target, Math.min(6, n + 1), "renders/ticket.webp", 34);
+    renderDrawInfo($("#draw"), ctx);
+    const finish = () => {
+      drawSending = false;
+      renderDrawInfo($("#draw"), ctx);
+    };
+    flight.then(finish, finish);
+    ctx.announce(`${n} билетов на «${p.title}»`);
   }
 
 
@@ -380,6 +370,7 @@
       default:break;
     }
     switch(t.dataset.draw){
+      case 'select':drawIndex=Number(t.dataset.prize);drawCount=Math.min(3,ctx.S.tickets)||1;return renderDrawInfo($('#draw'),ctx);
       case 'minus':drawCount=Math.max(1,drawCount-1);return renderDrawInfo($('#draw'),ctx);
       case 'plus':drawCount=Math.min(ctx.S.tickets,drawCount+1);return renderDrawInfo($('#draw'),ctx);
       case 'put':return putTickets(ctx);

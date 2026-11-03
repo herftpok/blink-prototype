@@ -249,9 +249,9 @@
         ${logo}${head}
         <h1 class="visually-hidden" id="stat-title">предсказание на 2027</h1>
         <button class="avc-cookie pressable" type="button" data-act="crack" aria-label="разломить печенье" ${cracked ? "disabled" : ""}>
-          <img class="avc-cookie__whole" src="renders/${c}.webp" alt="">
-          <img class="avc-cookie__half avc-cookie__half--left" src="renders/${c}-left.webp" alt="">
-          <img class="avc-cookie__half avc-cookie__half--right" src="renders/${c}-right.webp" alt="">
+          <img class="avc-cookie__whole" src="${ctx.src(day.obj)}" alt="">
+          <img class="avc-cookie__half avc-cookie__half--left" src="renders/fortune-cookie-broken.webp" alt="">
+          <img class="avc-cookie__half avc-cookie__half--right" src="renders/fortune-cookie-broken.webp" alt="">
           ${[0, 1, 2, 3, 4, 5, 6, 7].map((k) => `<span class="avc-crumb" style="--k:${k}"></span>`).join("")}
         </button>
         <div class="avc-paper" aria-live="polite">

@@ -115,6 +115,12 @@
   }
 }
 
+/* Узкое окно предпросмотра: пульт под телефоном, без обрезания рамки. */
+@media (min-width: 481px) and (max-width: 720px) {
+  .stage__phones {grid-template-columns:390px;row-gap:var(--space-24);}
+  .panel {width:390px;padding:0 var(--gutter) var(--space-24);}
+}
+
 @media (max-width: 480px) {
   .stage {
     gap: 0;
@@ -566,64 +572,48 @@
   margin: var(--space-32) 0 var(--space-4);
 }
 
-/* строки снежинок дня – как строки друзей: слот 46, текст, справа одна кнопка */
+/* Задания: название и способ выполнения слева, награда и инструкция/статус справа. */
 .av-tasks {
   display: flex;
   flex-direction: column;
   list-style: none;
+  padding: 0 var(--space-16);
+  border-radius: var(--radius-20);
+  background: var(--color-surface-card);
 }
 
 .av-task {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-12);
-  min-height: 64px;
+  min-height: 68px;
+  padding: var(--space-8) 0;
+  border-bottom: 1px solid var(--color-divider);
 }
-
-.av-task__art {
-  position: relative;
-  flex-shrink: 0;
-  width: 46px;
-  height: 46px;
-  object-fit: contain;
-}
-
-.av-task__art > img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* иконка без 3D – в плитке, как «добавить с помощью» */
-.av-task__art--icon {
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-16);
-  background: var(--color-surface);
-}
-
-.av-task__art--icon .icon {
-  --icon-size: 22px;
-}
+.av-task:last-child {border-bottom: 0;}
 
 .av-task__body {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-4);
   min-width: 0;
 }
 
 .av-task__text {
   font: var(--type-friend-name);
 }
+.av-task__description {font:var(--type-note);color:var(--color-text-muted);}
+.av-task__aside {display:flex;align-items:center;gap:var(--space-8);}
 
 .av-task__reward {
   display: inline-flex;
   align-items: center;
   gap: var(--space-4);
-  font: var(--type-distance);
-  color: var(--color-text-muted);
+  font: var(--type-counter);
+  color: var(--color-text);
+  white-space: nowrap;
 }
 
 .av-task__flake {
@@ -631,46 +621,41 @@
   height: 16px;
 }
 
-.av-task__boost {
-  color: var(--color-pink);
-}
-
-.av-task__button {
+.av-task__info {
   --press-scale: var(--press-scale-button);
-  flex-shrink: 0;
-  min-width: 96px;
-  height: 36px;
-  padding: 0 var(--space-12);
+  display:grid;
+  place-items:center;
+  width:auto;
+  min-width:76px;
+  height:32px;
+  padding:0 var(--space-8);
+  font:var(--type-map-chip-strong);
   border-radius: var(--radius-12);
-  font: var(--type-button-compact);
-  letter-spacing: var(--tracking-button-small);
-  text-transform: uppercase;
-}
-
-.av-task__button--do {
   background: var(--color-surface-raised);
   color: var(--color-text);
 }
-
-.av-task__button--claim {
-  background: var(--color-text);
-  color: var(--color-text-on-light);
-}
+.av-task__info .icon {--icon-size:20px;}
 
 .av-task__state {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-4);
-  min-width: 96px;
-  justify-content: center;
-  font: var(--type-map-chip);
-  color: var(--color-text-muted);
+  display:grid;
+  place-items:center;
+  width:40px;
+  height:40px;
+  color:var(--color-selected);
 }
 
 .av-task__state .icon {
-  --icon-size: 16px;
+  --icon-size: 20px;
 }
+.av-task.is-done .av-task__reward {color:var(--color-text-muted);}
+.av-task.is-done {min-height:44px;}
+.av-task.is-done .av-task__description {display:none;}
+.av-task.is-done .av-task__state {height:28px;}
+.av-task__expired {font:var(--type-compact);color:var(--color-text-muted);max-width:40px;text-align:center;}
+.av-task-help__text {margin-top:var(--space-16);font:var(--type-bio);color:var(--color-text-secondary);}
+.av-task-help__reward {display:flex;align-items:center;gap:var(--space-12);margin-top:var(--space-24);font:var(--type-distance);color:var(--color-text-muted);}
+.av-task-help__reward>span:first-child {display:inline-flex;align-items:center;gap:var(--space-4);font:var(--type-counter);color:var(--color-text);}
+.av-task-help__action {width:100%;margin-top:var(--space-24);}
 
 /* ── 3. Карточка статистики ──────────────────────────────────────────── */
 
@@ -754,3 +739,27 @@
     animation: none;
   }
 }
+/* New Year calendar: objects and dates, with room to breathe. */
+.av-home .av-frost {display:block;}
+.av-grid {grid-auto-rows:128px;gap:var(--space-24) var(--space-12);margin-top:var(--space-24);padding-bottom:var(--space-32);}
+.av-ledge {display:none;}
+.av-cell {flex-direction:column;justify-content:flex-start;gap:var(--space-8);}
+.av-cell__art {width:92px;height:92px;}
+.av-cell__date {font:var(--type-meta);color:var(--color-text-secondary);}
+.av-cell.is-today .av-cell__date {padding:0;border-radius:0;background:none;color:var(--color-pink);font:var(--type-meta);font-weight:700;transform:none;}
+.av-cell.is-today .av-cell__obj {animation:none;}
+.av-cell .badge-star {display:none;}
+.av-cell.is-frozen .av-cell__obj,.av-cell.is-frozen .av-fan {filter:blur(2.5px) saturate(.75);opacity:.85;transform:scale(.66) rotate(var(--tilt,0deg));}
+.av-cell__dot {top:5px;right:12px;width:4px;height:4px;}
+.av-entries {gap:var(--space-12);}
+.av-entry {background:var(--color-surface);}
+.av-home .av-sky {opacity:.5;}
+.av:has(.av-home:not([hidden]))>#sky {opacity:.32;}
+.av:has(#screen-game:not([hidden]))>#sky {opacity:.5;}
+
+/* Equal entry tiles: 40pt art and the existing 15pt label leave room for «розыгрыш» at 375pt. */
+.av-entries {grid-template-columns:repeat(2,minmax(0,1fr));}
+.av-entry {gap:var(--space-8);padding:0 var(--space-8);}
+.av-entry__art {width:40px;height:40px;}
+.av-entry__title {font:var(--type-label);white-space:nowrap;}
+.av-entry__text {flex:1;}

@@ -205,7 +205,7 @@ window.AV_DATA = (() => {
     "на карте появится место, куда вы будете возвращаться снова и снова",
     "ты встретишься с тем, с кем давно переписываешься",
   ];
-  const COOKIES = ["cookie", "cookie-pink", "cookie-choco"];
+  const COOKIES = ["fortune-cookie-cyan", "fortune-cookie-violet", "fortune-cookie-pink"];
   const PRED_TASKS = [
     "отправь предсказание другу", "поставь статус на пин", "загляни к друзьям на карту", "напиши другу",
   ];
@@ -218,11 +218,49 @@ window.AV_DATA = (() => {
     });
   });
 
+  // Смысл иллюстрации и инструкция к действию хранятся у дня, а не зависят от заголовка превью.
+  const TASK_GUIDES = [
+    ["друзья на карте", "Открой вкладку «карта» в blink.", "Перейди на карту и посмотри, где сейчас твои друзья."],
+    ["прогулка", "Пройди сегодня 3 000 шагов.", "Разреши blink доступ к движению и пройди за день 3 000 шагов. Шаги за сегодня суммируются."],
+    ["геолокация в фоне", "Включи фоновый доступ к геопозиции.", "В настройках телефона разреши blink определять геопозицию, когда приложение закрыто."],
+    ["твой город", "Выбери город в своём профиле.", "Открой свой профиль, перейди к редактированию и укажи город."],
+    ["твои ночлеги", "Открой «ночлеги» в своём профиле.", "Перейди в свой профиль и открой статистику ночлегов."],
+    ["новое фото", "Обнови аватар в своём профиле.", "Открой свой профиль, нажми на редактирование фото и сохрани новый аватар."],
+    ["давно не общались", "Напиши другу, с которым давно нет переписки.", "Открой давнюю переписку с другом и отправь новое сообщение."],
+    ["спокойной ночи", "Пожелай другу спокойной ночи в чате.", "Выбери друга, открой вашу переписку и отправь пожелание спокойной ночи."],
+    ["голосовое другу", "Запиши и отправь голосовое в любой чат.", "Открой чат с другом, запиши голосовое сообщение и отправь его."],
+    ["новогодний шар", "Отправь шар другу в чате.", "Открой переписку с другом, выбери шар и отправь его."],
+    ["звонок другу", "Позвони другу через blink.", "Открой чат с другом и нажми кнопку звонка."],
+    ["стикер другу", "Отправь любой стикер в чат.", "Открой переписку с другом, выбери стикер и отправь его."],
+    ["напиши другу", "Отправь сообщение своему другу.", "Открой переписку с другом и отправь новое сообщение."],
+    ["новый друг", "Добавь нового друга в blink.", "Отправь заявку в друзья. Задание выполнится после того, как её примут."],
+    ["встреча с другом", "Встреться с другом из blink.", "Договоритесь о встрече с другом. У вас обоих должен быть включён доступ к геопозиции."],
+    ["тусовка вместе", "Встреться сразу с тремя друзьями из blink.", "Соберитесь в одном месте: ты и ещё три друга. У всех должен быть включён доступ к геопозиции."],
+    ["подарок другу", "Отправь другу подарок из маркета.", "Открой маркет, выбери подарок и отправь его любому другу."],
+    ["трях с другом", "Встряхните телефоны рядом друг с другом.", "Встреться с другом, откройте blink и встряхните телефоны рядом друг с другом."],
+  ];
+  const JAN_GUIDES = [
+    ["предсказание другу", "Отправь своё предсказание другу.", "Открой сегодняшнее печенье, разломи его и отправь предсказание другу."],
+    ["статус на карте", "Поставь статус на свой пин.", "Открой карту, нажми на свой пин и добавь статус."],
+    TASK_GUIDES[0], TASK_GUIDES[12],
+  ];
+  const JAN_CHARMS = ["r:letter", "r:sled", "r:ornament-earth", "s:heart", "r:bell", "r:microphone", "r:popper", "s:eyes", "a:overnights/nighthouse.webp", "s:go", "s:kiss"];
+  DAYS.forEach((day, i) => {
+    const [title, description, instruction] = i < 18 ? TASK_GUIDES[i] : JAN_GUIDES[(i - 18) % JAN_GUIDES.length];
+    const sentenceText = (value) => {
+      const text = value[0].toLowerCase() + value.slice(1);
+      return (text.match(/[.!?](?:\s|$)/g) || []).length > 1 ? text : text.replace(/\.$/, "");
+    };
+    Object.assign(day.task, { title, description: sentenceText(description), instruction: sentenceText(instruction) });
+    day.hero = i === 0 ? "a:system/app-icon.png" : day.obj;
+    if (i >= 18) day.charm = JAN_CHARMS[i - 18];
+  });
+
   /* За 30 снежинок – один подарок сразу. Три раунда в день. */
   const ECONOMY = { login: 30, share: 30, attempt: 30, attemptsPerDay: 3 };
 
-  /* ── коллекция подарков: у каждого свой пул, 25 штук, без повторов ──
-     tier: common 13 · rare 7 · epic 4 · legend 1. Выдаются по одному из оставшихся за каждый раунд */
+  /* ── коллекция подарков: у каждого свой пул, 16 штук, без повторов ──
+     tier: common 8 · rare 6 · epic 1 · legend 1. Выдаются по одному из оставшихся за каждый раунд */
   const TIERS = {
     common: { label: "обычный", gift: "gift-pink" },
     rare: { label: "редкий", gift: "gift-cyan" },
@@ -232,31 +270,24 @@ window.AV_DATA = (() => {
   const POOL = [
     { id: "pack-fire", tier: "common", title: "стикерпак «огонь»", kind: "стикерпак", img: "a:market/always/pack-fire.webp" },
     { id: "pack-heart", tier: "common", title: "стикерпак «сердца»", kind: "стикерпак", img: "a:market/always/pack-heart.webp" },
-    { id: "pack-kiss", tier: "common", title: "стикерпак «поцелуи»", kind: "стикерпак", img: "a:market/always/pack-kiss.webp" },
-    { id: "pack-thumb", tier: "common", title: "стикерпак «класс»", kind: "стикерпак", img: "a:market/always/pack-thumbs-up.webp" },
     { id: "coins-100", tier: "common", title: "100 монет", kind: "в маркет", img: "a:market/coin.png" },
-    { id: "coins-200", tier: "common", title: "200 монет", kind: "в маркет", img: "a:market/coin.png" },
     { id: "vip-3", tier: "common", title: "3 дня blink vip", kind: "подписка", img: "a:market/vip-star.png" },
     { id: "coffee", tier: "common", title: "кофе в подарок", kind: "от кофейни-партнёра", img: "r:coffee" },
-    { id: "cinema", tier: "common", title: "кино за полцены", kind: "от кинотеатра-партнёра", img: "r:popcorn" },
     { id: "tail-paper", tier: "common", title: "хвост «бумага»", kind: "хвост", img: "a:market/tails/paper.webp" },
     { id: "tail-paws", tier: "common", title: "хвост «лапки»", kind: "хвост", img: "a:market/tails/paws.webp" },
-    { id: "pack-ornament", tier: "common", title: "стикерпак «ёлочные шары»", kind: "стикерпак", img: "r:ornament-violet" },
     { id: "pack-snow", tier: "common", title: "стикерпак «снежинки»", kind: "стикерпак", img: "r:snowflake" },
     { id: "tail-jelly", tier: "rare", title: "хвост «желе»", kind: "хвост", img: "a:market/tails/jelly.webp" },
     { id: "tail-crystal", tier: "rare", title: "хвост «кристалл»", kind: "хвост", img: "a:market/tails/crystal.webp" },
     { id: "vip-30", tier: "rare", title: "месяц blink vip", kind: "подписка", img: "a:market/vip-star.png" },
     { id: "coins-500", tier: "rare", title: "500 монет", kind: "в маркет", img: "a:market/coin.png" },
     { id: "box-comet", tier: "rare", title: "стикерпак «комета»", kind: "лимитированный", img: "a:market/always/box-comet.webp" },
-    { id: "coffee-month", tier: "rare", title: "кофе каждый день неделю", kind: "от кофейни-партнёра", img: "r:coffee" },
     { id: "beanie", tier: "rare", title: "шапка blink", kind: "привезём домой", img: "r:beanie" },
-    { id: "tail-gold", tier: "epic", title: "хвост «золото»", kind: "хвост", img: "a:market/tails/gold.webp" },
     { id: "plush", tier: "epic", title: "плюшевая звезда blink", kind: "привезём домой", img: "s:blink" },
-    { id: "vip-365", tier: "epic", title: "год blink vip", kind: "подписка", img: "a:market/vip-star.png" },
-    { id: "cinema-year", tier: "epic", title: "два билета в кино каждый месяц", kind: "от кинотеатра-партнёра", img: "r:popcorn" },
+    { id: "pack-kiss", tier: "common", title: "стикерпак «поцелуи»", kind: "стикерпак", img: "a:market/always/pack-kiss.webp" },
+    { id: "pack-thumb", tier: "common", title: "стикерпак «класс»", kind: "стикерпак", img: "a:market/always/pack-thumbs-up.webp" },
     { id: "box", tier: "legend", title: "бокс blink: шапка, худи и звезда", kind: "привезём домой", img: "r:gift-gold" },
   ];
-  const STAR = { id: "star", title: "звезда на верхушку", kind: "за всю коллекцию – 25 подарков", img: "r:star-frame" };
+  const STAR = { id: "star", title: "звезда на верхушку", kind: "за всю коллекцию – 18 подарков", img: "r:star-frame" };
 
   /* ── большой розыгрыш: шар на каждый приз. Билеты в шаре остаются до конца,
      приём закрывается 10.01 в 23:59, розыгрыш – 11.01 в 20:00 вживую. В каждом шаре

@@ -1,0 +1,54 @@
+/* New Year home: daily cover with the topic object, prize actions, tasks, large calendar.
+   Hero composition: 120pt cover + 80pt topic in a 160×128pt collage. Calendar: 104pt art. */
+.av-home__scroll {z-index:2;}
+.av-home .av-frost {z-index:1;opacity:.75;
+ -webkit-mask-image:radial-gradient(ellipse 80px 220px at 0 0,#000,transparent),radial-gradient(ellipse 80px 220px at 100% 0,#000,transparent);
+ -webkit-mask-composite:source-over;
+ mask-image:radial-gradient(ellipse 80px 220px at 0 0,#000,transparent),radial-gradient(ellipse 80px 220px at 100% 0,#000,transparent);
+ mask-composite:add;}
+.av-today {display:grid;grid-template-columns:minmax(0,1fr) 96px;align-items:center;gap:var(--space-12) var(--space-16);padding:var(--space-12) var(--gutter) 0;}
+.av-today__figure {min-width:0;margin:0;text-align:center;}
+.av-today__figure {grid-column:2;grid-row:1;}
+.av-today__art {--press-scale:var(--press-scale-button);position:relative;display:block;width:96px;height:80px;margin:0 auto;}
+.av-today__main {position:absolute;left:0;top:0;display:block;width:72px;height:72px;object-fit:contain;}
+.av-today__topic {position:absolute;right:0;bottom:0;width:48px;height:48px;transform:rotate(8deg);}
+.av-today__topic--app {overflow:hidden;border-radius:var(--radius-20);}
+.av-today__topic-img {display:block;width:100%;height:100%;object-fit:contain;}
+.av-today__copy {grid-column:1;grid-row:1;display:flex;flex-direction:column;gap:var(--space-6);min-width:0;text-align:left;}
+.av-today__copy h2 {font:var(--type-stat-label);text-wrap:balance;}
+.av-today__seen {display:flex;align-items:center;gap:var(--space-4);font:var(--type-map-chip);color:var(--color-text-muted);}
+.av-today__seen .icon {--icon-size:16px;color:var(--color-selected);flex-shrink:0;}
+.av-today__open {grid-column:1/-1;width:100%;margin:0;}
+.av-home .av-entries {margin-top:var(--space-12);gap:var(--space-12);}
+.av-home .av-entry {position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);align-items:center;gap:var(--space-8);height:76px;padding:var(--space-8) var(--space-10);background:var(--color-surface);border:0;border-radius:var(--radius-20);}
+.av-home .av-entry__art {grid-column:1;grid-row:1;width:40px;height:40px;}
+.av-entry__arrow {position:absolute;right:var(--space-8);bottom:var(--space-14);--icon-size:12px;color:var(--color-text-secondary);}
+.av-home .av-entry__text {grid-column:2;grid-row:1;align-items:flex-start;gap:var(--space-4);}
+.av-home .av-entry__title {font:var(--type-label);}
+.av-home .av-entry__meta {max-width:100%;padding-right:var(--space-12);font:var(--type-map-chip);color:var(--color-text-secondary);}
+.av-home-tasks {margin-top:var(--space-20);padding:0 var(--gutter);}
+.av-home-tasks__title {margin-bottom:var(--space-12);font:var(--type-section-title);letter-spacing:var(--tracking-section);}
+/* Read-only miniature of the real 360pt wheel, scaled into the existing 48pt art slot. */
+.av-wheel-mini {position:relative;overflow:clip;pointer-events:none;}
+.av-wheel-mini .nw-wheel {position:absolute;left:0;top:0;width:360px;height:360px;transform:scale(.1111111);transform-origin:0 0;}
+.av-wheel-mini .nw-rotor {transition:none;}
+.av-wheel-mini .nw-wheel circle {stroke:var(--color-text-secondary);stroke-width:4;}
+.av-wheel-mini small {display:none;}
+.av-calendar {margin-top:var(--space-20);}
+.av-calendar__head h2 {font:var(--type-section-title);letter-spacing:var(--tracking-section);}
+.av-home .av-grid {grid-auto-rows:136px;gap:var(--space-24) var(--space-12);margin-top:var(--space-12);}
+.av-home .av-cell__art {width:104px;max-width:100%;height:104px;}
+.av-home .av-cell {gap:var(--space-12);}
+.av-home .av-cell__date {font:var(--type-meta);}
+.av-home .av-cell.is-today .av-cell__date {font:var(--type-caption);}
+@media(max-height:740px) {
+ .av-today {padding-top:var(--space-8);}
+ .av-today__art {height:72px;}
+ .av-home .av-entry {height:68px;}
+ .av-home .av-entries {margin-top:var(--space-8);}
+ .av-home-tasks {margin-top:var(--space-16);}
+ .av-home-tasks__title {margin-bottom:var(--space-8);}
+ .av-home-tasks .av-task.is-done {min-height:36px;padding-block:var(--space-4);}
+ .av-calendar {margin-top:var(--space-16);}
+ .av-home .av-grid {margin-top:var(--space-8);}
+}
