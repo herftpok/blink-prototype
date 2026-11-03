@@ -477,16 +477,18 @@
   function taskRow(r, state, flake, i) {
     const done = state === "claimed";
     const available = i === S.today && state !== "missed";
-    const action = done
+    const status = done
       ? '<span class="av-task__state" role="img" aria-label="выполнено"><i class="icon icon--check" aria-hidden="true"></i></span>'
-      : available ? `<button class="av-task__info pressable" type="button" data-task-help="${r.key}" data-task-day="${i}" aria-label="инструкция: ${r.title}">инструкция</button>`
+      : "";
+    const action = available
+      ? `<button class="av-task__info pressable" type="button" data-task-help="${r.key}" data-task-day="${i}" aria-label="инструкция: ${r.title}">инструкция<i class="icon icon--chevron" aria-hidden="true"></i></button>`
       : '<span class="av-task__expired">день прошёл</span>';
     return `<li class="av-task${done ? " is-done" : ""}" data-row="${r.key}">
-      <div class="av-task__body">
-        <span class="av-task__text">${r.title}</span>
-        <span class="av-task__description">${r.description}</span>
+      <div class="av-task__header">
+        <span class="av-task__heading"><span class="av-task__text">${r.title}</span>${status}</span>
+        <span class="av-task__reward"><span>${r.reward}</span>${flake}</span>
       </div>
-      <div class="av-task__aside"><span class="av-task__reward"><span>${r.reward}</span>${flake}</span>${action}</div>
+      ${done ? "" : `<div class="av-task__body"><span class="av-task__description">${r.description}</span>${action}</div>`}
     </li>`;
   }
 

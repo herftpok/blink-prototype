@@ -572,85 +572,72 @@
   margin: var(--space-32) 0 var(--space-4);
 }
 
-/* Задания: название и способ выполнения слева, награда и инструкция/статус справа. */
+/* Задание: название и награда на одной оси, описание и инструкция — ниже. */
 .av-tasks {
-  display: flex;
-  flex-direction: column;
-  list-style: none;
-  padding: 0 var(--space-16);
-  border-radius: var(--radius-20);
-  background: var(--color-surface-card);
+  display:flex;
+  flex-direction:column;
+  list-style:none;
+  padding:0 var(--space-16);
+  border-radius:var(--radius-20);
+  background:var(--color-surface-card);
 }
-
 .av-task {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-12);
-  min-height: 68px;
-  padding: var(--space-8) 0;
-  border-bottom: 1px solid var(--color-divider);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:var(--space-8);
+  min-height:68px;
+  padding:var(--space-8) 0;
+  border-bottom:1px solid var(--color-divider);
 }
-.av-task:last-child {border-bottom: 0;}
-
-.av-task__body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-width: 0;
+.av-task:last-child {border-bottom:0;}
+.av-task__header,.av-task__body {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:var(--space-12);
+  min-width:0;
 }
-
-.av-task__text {
-  font: var(--type-friend-name);
+.av-task__heading {
+  display:flex;
+  align-items:center;
+  gap:var(--space-8);
+  min-width:0;
 }
-.av-task__description {font:var(--type-note);color:var(--color-text-muted);}
-.av-task__aside {display:flex;align-items:center;gap:var(--space-8);}
-
+.av-task__text {font:var(--type-friend-name);}
+.av-task__description {flex:1;min-width:0;font:var(--type-note);color:var(--color-text-muted);}
 .av-task__reward {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-4);
-  font: var(--type-counter);
-  color: var(--color-text);
-  white-space: nowrap;
+  display:inline-flex;
+  flex-shrink:0;
+  align-items:center;
+  gap:var(--space-4);
+  font:var(--type-counter);
+  color:var(--color-text);
+  white-space:nowrap;
 }
-
-.av-task__flake {
-  width: 16px;
-  height: 16px;
-}
-
+.av-task__flake {width:16px;height:16px;}
 .av-task__info {
-  --press-scale: var(--press-scale-button);
-  display:grid;
-  place-items:center;
-  width:auto;
-  min-width:76px;
+  --press-scale:var(--press-scale-button);
+  position:relative;
+  display:inline-flex;
+  flex-shrink:0;
+  align-items:center;
+  justify-content:flex-end;
+  gap:var(--space-4);
   height:32px;
-  padding:0 var(--space-8);
+  padding:0;
+  background:transparent;
+  color:var(--color-text);
   font:var(--type-map-chip-strong);
-  border-radius: var(--radius-12);
-  background: var(--color-surface-raised);
-  color: var(--color-text);
 }
-.av-task__info .icon {--icon-size:20px;}
-
-.av-task__state {
-  display:grid;
-  place-items:center;
-  width:40px;
-  height:40px;
-  color:var(--color-selected);
-}
-
-.av-task__state .icon {
-  --icon-size: 20px;
-}
-.av-task.is-done .av-task__reward {color:var(--color-text-muted);}
+/* Визуальная высота 32, область касания 44 pt. */
+.av-task__info::after {content:"";position:absolute;inset:calc(-1 * var(--space-6)) 0;}
+.av-task__info .icon {--icon-size:12px;color:var(--color-text-muted);}
+.av-task__state {display:inline-flex;flex-shrink:0;color:var(--color-selected);}
+.av-task__state .icon {--icon-size:16px;}
 .av-task.is-done {min-height:44px;}
-.av-task.is-done .av-task__description {display:none;}
-.av-task.is-done .av-task__state {height:28px;}
+.av-task.is-done .av-task__text {color:var(--color-text-secondary);}
+.av-task.is-done .av-task__reward {color:var(--color-text-muted);}
 .av-task__expired {font:var(--type-compact);color:var(--color-text-muted);max-width:40px;text-align:center;}
 .av-task-help__text {margin-top:var(--space-16);font:var(--type-bio);color:var(--color-text-secondary);}
 .av-task-help__reward {display:flex;align-items:center;gap:var(--space-12);margin-top:var(--space-24);font:var(--type-distance);color:var(--color-text-muted);}
