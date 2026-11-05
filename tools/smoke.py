@@ -1098,7 +1098,7 @@ def check_welcome_quest(browser, port: int, errors: list[str]) -> None:
 
 
 def check_advent(browser, port: int, errors: list[str]) -> None:
-    from smoke_advent_wheel import check_feature
+    from smoke_advent_journey import check_feature
     check_feature(browser, port, errors, check)
 
 

@@ -8,6 +8,7 @@
   "use strict";
 
   const D = window.AV_DATA;
+  const J = window.AV_JOURNEY;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const ASSETS = "../../assets";
@@ -24,11 +25,11 @@
     $$(".av-balance[data-go]").forEach((b) => {
       b.removeAttribute("data-go");
       b.tabIndex = -1;
-      b.setAttribute("aria-label", "снежинки");
+      b.setAttribute("aria-label", "жетоны");
     });
     $("#panel-tree")?.closest(".panel__group")?.setAttribute("hidden", "");
     const lead = $(".stage__lead");
-    if (lead) lead.textContent = "14 декабря – 11 января: каждый день карточка о твоём годе или предсказание на 2027 и снежинки за вход и задания";
+    if (lead) lead.textContent = "14 декабря – 11 января: каждый день карточка о твоём годе или предсказание на 2027 и жетоны за вход и задания";
   }
   const announce = (text) => { $("#announce").textContent = text; };
 
@@ -110,6 +111,7 @@
   function preset(todayIdx) {
     const R = rng(todayIdx * 31 + 7);
     S.today = todayIdx;
+    S.calendarMonth = J.atHome(todayIdx) ? "home" : "train";
     S.days = D.DAYS.map((day, i) => {
       if (i > todayIdx) return { login: "todo", task: "todo", share: "todo", seen: false };
       if (i === todayIdx) return { login: "todo", task: "todo", share: "todo", seen: false };
@@ -121,8 +123,10 @@
         seen: !missed && R() < 0.85,
       };
     });
+    S.days.forEach((state,i) => { if (J.atHome(i)) { state.login="missed"; state.task="missed"; state.share="missed"; state.cracked=state.seen; } });
     let earned = 0;
     S.days.forEach((d, i) => {
+      if (J.atHome(i)) return;
       const k = D.DAYS[i].task.boost || 1;
       if (d.login === "claimed") earned += D.ECONOMY.login;
       if (d.task === "claimed") earned += D.DAYS[i].task.reward * k;
@@ -140,7 +144,7 @@
     if (todayIdx > 0) {
       // Демонстрационная история: по одному открытому подарку в активный день.
       const ctx = { S, D };
-      for (let i = 0; i < todayIdx && S.balance >= D.ECONOMY.attempt + 40; i++) {
+      for (let i = 0; i < Math.min(18, todayIdx) && S.balance >= D.ECONOMY.attempt + 40; i++) {
         const prize = window.AV_GAME.choose(ctx, R);
         if (!prize) break;
         S.balance -= D.ECONOMY.attempt;
@@ -240,7 +244,8 @@
     const b = rectIn(toEl);
     const fly = document.createElement("div");
     fly.className = "av-fly__item";
-    fly.innerHTML = objMarkup(day, "av-fly__obj");
+    const idx=D.DAYS.indexOf(day), seen=S.days[idx]?.seen;
+    fly.innerHTML = `<img class="av-fly__obj" src="${J.A(day.prediction ? (seen ? "cookie" : "stocking") : (seen ? "journal" : "suitcase"))}" alt="">`;
     const inner = fly.firstElementChild;
     inner.style.width = "100%";
     inner.style.height = "100%";
@@ -259,7 +264,7 @@
   }
 
   async function openDay(i, fromCell) {
-    if (busy) return;
+    if (busy || i > S.today) return;
     busy = true;
     currentDay = i;
     const day = D.DAYS[i];
@@ -389,23 +394,29 @@
   }
 
   function renderHome() {
-    const day = D.DAYS[S.today];
-    const seen = S.days[S.today].seen;
-    const main = day.prediction ? objMarkup(day,"av-today__main") : '<img class="av-today__main" src="renders/recap-cards.webp" alt="">';
-    const topic = objMarkup({ obj: day.charm || day.hero }, "av-today__topic-img");
+    const day = D.DAYS[S.today], home = J.atHome(S.today), seen = S.days[S.today].seen;
+    app.dataset.phase = home ? "home" : "train";
+    $("#home-scene").src = J.A(home ? "living-room" : S.today === 0 ? "train-exterior" : "train-window");
+    $("#home-title").textContent = home ? "мы дома" : "новогодний экспресс";
     $("#home-today").classList.toggle("is-seen", seen);
-    $("#home-today").innerHTML = `<figure class="av-today__figure">
-      <button class="av-today__art pressable" data-act="open-today" type="button" aria-label="смотреть карточку">${main}<span class="av-today__topic${S.today === 0 ? " av-today__topic--app" : ""}">${topic}</span></button>
-    </figure><div class="av-today__copy">
-      <h2 id="today-title">${seen ? day.title : "каждый день — новый факт о тебе"}</h2>
-      ${seen ? `<p class="av-today__seen"><i class="icon icon--check" aria-hidden="true"></i>${day.prediction ? "предсказание прочитано" : "факт просмотрен"}</p>` : ""}
-    </div><button class="button ${seen ? "button--secondary" : "button--primary"} av-today__open pressable" data-act="open-today" type="button">${seen ? "посмотреть ещё раз" : "смотреть"}</button>`;
-    $("#home-task-list").innerHTML = tasksMarkup(S.today);
-    $("#home-wheel-preview").innerHTML = window.AV_GAME.wheelPreview({ D, S, src });
-    $("#calendar").innerHTML = `<div class="av-grid">${D.DAYS.map((day, i) => cellMarkup(day, i)).join("")}</div>`;
+    $("#home-today").innerHTML = J.hero({ day, i: S.today, seen, src });
+    $("#home-entries").innerHTML = J.entries(S, D, plural);
+    $("#home-tasks").hidden = home;
+    $("#home-task-list").innerHTML = home ? "" : tasksMarkup(S.today);
+    renderCalendar();
     renderBalance();
-    $("#dock-game").innerHTML = `${D.ECONOMY.attempt}<img class="av-entry__flake" src="renders/snowflake.webp" alt="снежинок">`;
-    $("#dock-draw").textContent = `${S.tickets}${NBSP}${plural(S.tickets, "билет", "билета", "билетов")}`;
+  }
+
+  function renderCalendar() {
+    const month = S.calendarMonth, home = J.atHome(S.today), jan = month === "home";
+    $("#calendar-title").textContent = jan ? "январские вечера" : home ? "твой 2026" : "остановки маршрута";
+    $("#calendar-switch").hidden = !home;
+    $("#calendar-switch").textContent = jan ? "2026" : "январь";
+    $("#calendar-switch").dataset.calendar = jan ? "train" : "home";
+    const days = D.DAYS.map((day, i) => ({day,i})).filter(({i}) => J.atHome(i) === jan);
+    $("#calendar").innerHTML = `<div class="av-grid" role="group" aria-label="${jan ? "дни января" : "остановки декабря"}">${days.map(({day,i}) => cellMarkup(day,i)).join("")}</div>`;
+    const rail = $(".av-grid", $("#calendar")), active = $(".is-today", rail);
+    if (active) rail.scrollLeft = Math.max(0, active.offsetLeft - rail.offsetLeft - (rail.clientWidth - active.clientWidth) / 2);
   }
 
   const COLS = 3;                                     // три дня в ряд: крупнее и спокойнее
@@ -417,21 +428,9 @@
   }
 
   function cellMarkup(day, i) {
-    const st = cellState(i);
-    const d = S.days[i];
-    const ice = st === "frozen" ? `<img class="av-cell__ice" src="renders/ice.webp" alt="" style="--ice-tilt:${tilt(i+3,4)}deg">` : "";
-    const glow = "";
-    const n = st === "today" ? waiting(i) : 0;
-    const badge = n ? `<span class="badge-star" aria-hidden="true"><i class="icon icon--badge-star"></i><span class="badge-star__value">${n}</span></span>` : "";
-    const dot = st === "open" && !d.seen ? `<span class="av-cell__dot" aria-hidden="true"></span>` : "";
-    const label = st === "frozen"
-      ? `${dayName(day)}, ещё закрыто`
-      : `${dayName(day)}, ${day.title}${st === "today" ? ", сегодня" : ""}${dot ? ", не открыто" : ""}${n ? `, заданий осталось: ${n}` : ""}`;
-    return `<button class="av-cell is-${st} pressable" type="button" data-day="${i}" aria-label="${label}" style="--tilt:${tilt(i)}deg;grid-row:${Math.floor(i / COLS) + 1};grid-column:${(i % COLS) + 1}">
-      <span class="av-cell__art">${glow}${objMarkup(day, "av-cell__obj")}${ice}</span>
-      ${badge}${dot}
-      <span class="av-cell__date">${st === "today" ? "сегодня" : day.date}</span>
-    </button>`;
+    const st = cellState(i), d = S.days[i];
+    const label = `${dayName(day)}, ${st === "frozen" ? "ещё закрыто" : day.title}${st === "today" ? ", сегодня" : ""}${st === "open" && !d.seen ? ", не просмотрено" : ""}`;
+    return `<button class="av-cell is-${st} pressable" type="button" data-day="${i}" aria-disabled="${st === "frozen"}" aria-label="${label}"><span class="av-cell__art">${J.art(day,i,d.seen,src)}</span><span class="av-cell__date">${st === "today" ? "сегодня" : day.date}</span>${st === "open" && !d.seen ? '<span class="av-cell__dot" aria-hidden="true"></span>' : ""}</button>`;
   }
 
   function renderBalance() {
@@ -446,7 +445,8 @@
     const day = D.DAYS[i];
     const isToday = i === S.today;
     $("#day-date").textContent = dayName(day);
-    $("#day-slot").innerHTML = objMarkup(day, "av-day__obj");
+    screens.day.dataset.phase = day.prediction ? "home" : "train";
+    $("#day-slot").innerHTML = `<img class="av-day__obj" src="${J.A(day.prediction ? (S.days[i].seen ? "cookie" : "stocking") : (S.days[i].seen ? "journal" : "suitcase"))}" alt="">`;
     $("#day-glow").src = objSrc(day);
     const rows = taskRows(day);
     $("#day-body").innerHTML = `
@@ -455,22 +455,21 @@
         <p class="av-day__lead">${day.lead}</p>
       </div>
       <button class="button button--primary av-day__cta pressable" type="button" data-act="open-stat">${day.prediction ? "открыть предсказание" : "смотреть"}</button>
-      <h3 class="av-day__section caps-label"><span>${isToday ? "снежинки дня" : "снежинки этого дня"}</span><span>${rows.reduce((t, r) => t + r.reward, 0)}</span></h3>
-      ${tasksMarkup(i)}`;
+      ${day.prediction ? "" : `<h3 class="av-day__section caps-label"><span>${isToday ? "жетоны дня" : "жетоны этого дня"}</span><span>${rows.reduce((t, r) => t + r.reward, 0)}</span></h3>${tasksMarkup(i)}`}`;
     renderBalance();
   }
 
   function taskRows(day) {
     const k = day.task.boost || 1;
     return [
-      { key: "login", title: "ежедневный вход", description: "просто открой blink", instruction: "снежинки начисляются за первый вход в blink за день", reward: D.ECONOMY.login },
+      { key: "login", title: "ежедневный вход", description: "просто открой blink", instruction: "жетоны начисляются за первый вход в blink за день", reward: D.ECONOMY.login },
       { key: "task", title: day.task.title, description: day.task.description, instruction: day.task.instruction, reward: day.task.reward * k },
       { key: "share", title: day.prediction ? "поделись предсказанием" : "поделись карточкой", description: "открой карточку и отправь её в сторис", instruction: day.prediction ? "открой предсказание, разломи печенье и нажми «поделиться». Отправь карточку в сторис." : "открой сегодняшнюю карточку, нажми «поделиться» и отправь её в сторис", reward: D.ECONOMY.share },
     ];
   }
 
   function tasksMarkup(i) {
-    const flake = `<img class="av-task__flake" src="renders/snowflake.webp" alt="снежинок">`;
+    const flake = `<img class="av-task__flake" src="art/coin.webp" alt="жетонов">`;
     return `<ul class="av-tasks">${taskRows(D.DAYS[i]).map((r) => taskRow(r, S.days[i][r.key], flake, i)).join("")}</ul>`;
   }
 
@@ -494,7 +493,7 @@
 
   /** Завершение приходит от действия, а не от открытия инструкции. Состояние и баланс меняются атомарно. */
   function completeTask(key, i = S.today, { animate = true, refresh = true } = {}) {
-    if (!["login", "task", "share"].includes(key) || i !== S.today) return false;
+    if (!["login", "task", "share"].includes(key) || i !== S.today || J.atHome(i)) return false;
     const state = S.days[i];
     if (!state || state[key] === "claimed" || state[key] === "missed") return false;
     const amount = taskRows(D.DAYS[i]).find((r) => r.key === key).reward;
@@ -516,11 +515,11 @@
       const cell = $(`.av-cell[data-day="${i}"]`);
       if (cell) cell.outerHTML = cellMarkup(D.DAYS[i], i);
     }
-    if (animate) announce(`+${amount} снежинок`);
+    if (animate) announce(`+${amount} жетонов`);
     return true;
   }
 
-  function flyFlakes(fromEl, toEl, count = 6, img = "renders/snowflake.webp", size = 26) {
+  function flyFlakes(fromEl, toEl, count = 6, img = "art/coin.webp", size = 26) {
     if (!fromEl || !toEl) return Promise.resolve();
     const a = rectIn(fromEl);
     const b = rectIn(toEl);
@@ -557,6 +556,7 @@
 
   function renderStat() {
     const day = D.DAYS[currentDay];
+    screens.stat.dataset.phase = day.prediction ? "home" : "train";
     $("#stat-card").innerHTML = window.AV_CARDS.render(day, cardCtx());
     syncStatButton();
   }
@@ -568,7 +568,7 @@
     const b = $("#stat-share");
     b.dataset.mode = crack ? "crack" : "share";
     $("i", b).hidden = crack;
-    $("span", b).textContent = crack ? "разломить" : "поделиться";
+    $("span", b).textContent = crack ? "открыть предсказание" : "поделиться";
   }
 
   function crackCookie() {
@@ -600,6 +600,7 @@
       openPool: () => openSheet("pool"),
       openPrize: (prize, extra) => openPrize(prize, extra),
       toTasks: () => { goToday(); },
+      toHome: () => { goToday(); },
       toDraw: () => push("draw"),
       toTree: () => push("game"),
       openBoard: () => push("board"),
@@ -616,7 +617,7 @@
     renderHome();
     show("home");
     currentDay = S.today;
-    $("#home-scroll").scrollTop = Math.max(0, $("#home-tasks").offsetTop - 24);
+    $("#home-scroll").scrollTop = J.atHome(S.today) ? 0 : Math.max(0, $("#home-tasks").offsetTop - 24);
   }
 
   function renderDraw() {
@@ -636,7 +637,7 @@
     const done = S.days[taskHelp.day][taskHelp.key] === "claimed";
     $("#task-help-title").textContent = row.title;
     $("#task-help-text").textContent = row.instruction;
-    $("#task-help-reward").innerHTML = `<span>${row.reward}<img class="av-task__flake" src="renders/snowflake.webp" alt="снежинок"></span><span>${done ? "уже начислено" : "начислим автоматически"}</span>`;
+    $("#task-help-reward").innerHTML = `<span>${row.reward}<img class="av-task__flake" src="art/coin.webp" alt="жетонов"></span><span>${done ? "уже начислено" : "начислим автоматически"}</span>`;
     const action = $("#task-help-action");
     action.textContent = taskHelp.key === "share" && !done ? "смотреть" : "понятно";
     action.dataset.card = String(taskHelp.key === "share" && !done);
@@ -739,6 +740,13 @@
       openDay(i, cell);
       return;
     }
+    if (t.dataset.calendar) {
+      S.calendarMonth = t.dataset.calendar;
+      renderCalendar();
+      if (t.closest(".av-entries")) $("#home-scroll").scrollTop = Math.max(0, $(".av-calendar").offsetTop - 20);
+      return;
+    }
+    if (t.dataset.act === "journey-collection") return openSheet("pool");
     if (t.dataset.act === "open-today") return openTodayStat();
     if (t.dataset.go === "game") return push("game");
     if (t.dataset.push === "garland") {
@@ -856,7 +864,7 @@
   /* ── пуш «друг обогнал» – не чаще раза в день ──────────────────────────── */
 
   function showPush() {
-    $("#push-text").textContent = "крути колесо — новогодний подарок ждёт";
+    $("#push-text").textContent = "в автомате появился твой новогодний подарок";
     $("#push").classList.add("is-shown");
   }
 
@@ -891,10 +899,20 @@
     S.vip = false;
     const [kind, arg] = id.split(":");
     switch (kind) {
-      case "home-first": resetTo(0); break;
+      case "train": case "journey-first": case "home-first": resetTo(0); break;
       case "home-seen": resetTo(0); S.days[0].seen = true; renderHome(); break;
       case "home": resetTo(8); break;
-      case "home-late": resetTo(dayIdx("05.01")); break;
+      case "fireside": case "home-late": resetTo(dayIdx("05.01")); break;
+      case "claw-grabbing":
+        resetTo(0); S.balance=60; jump(["home","game"]);
+        window.AV_GAME.click({dataset:{game:"claw-grab"}},gameCtx()); break;
+      case "claw-prize":
+        resetTo(0); S.balance=60; jump(["home","game"]);
+        window.AV_GAME.click({dataset:{game:"claw-grab"}},gameCtx()); window.AV_GAME.pause(); RENDER.game(); break;
+      case "fireside-seen": resetTo(dayIdx("01.01")); S.days[S.today].cracked=true; S.days[S.today].seen=true; renderHome(); break;
+      case "arrival": resetTo(dayIdx("01.01")); break;
+      case "claw-closed": resetTo(dayIdx("01.01")); jump(["home","game"]); break;
+      case "draw-closed": resetTo(dayIdx("01.01")); jump(["home","draw"]); break;
       case "home-end": resetTo(dayIdx("11.01")); break;
       case "task-help": resetTo(8); openTaskHelp(arg === "share" ? "share" : "task", 8); break;
       case "day-today": resetTo(8); currentDay = 8; jump(["home", "day"]); break;
@@ -914,25 +932,25 @@
         currentDay = dayIdx(arg);
         S.empty = kind === "empty";
         S.vip = kind === "vip";
-        if (kind === "cracked") S.days[currentDay].cracked = true;
+        if (D.DAYS[currentDay].prediction) { S.days[currentDay].cracked = kind === "cracked"; S.days[currentDay].seen = kind === "cracked"; }
         jump(["home", "day", "stat"]);
         break;
       case "share": resetTo(8); currentDay = 8; jump(["home", "day", "stat"]); openShare(); break;
-      case "wheel": case "garland": case "popper": case "express": case "elka":
+      case "claw": case "wheel": case "garland": case "popper": case "express": case "elka":
         resetTo(8); S.balance = 90; jump(["home", "game"]); break;
       case "garland-wheel": case "garland-score": case "garland-ranking":
         resetTo(kind==='garland-wheel'?8:0); S.balance=90; window.AV_GAME.variant(kind==='garland-wheel'?'wheel':'score'); jump(["home","game"]);
         if(kind==='garland-ranking')window.AV_GAME.click({dataset:{game:'lab-ranking'}},gameCtx()); break;
-      case "wheel-first": case "garland-first": resetTo(0); S.balance = 30; jump(["home", "game"]); break;
+      case "claw-first": case "wheel-first": case "garland-first": resetTo(0); S.balance = 30; jump(["home", "game"]); break;
       case "garland-play": case "garland-paused":
         resetTo(8); S.balance = 60; S.garland.attempts = 1; jump(["home", "game"]);
         window.AV_GAME.setRun(gameCtx(), { playing: kind === "garland-play", paused: kind === "garland-paused" }); break;
       case "garland-prize": case "garland-perfect": case "garland-miss": case "garland-rare":
         resetTo(0); S.balance = 60; S.garland.attempts = 1; jump(["home", "game"]);
         window.AV_GAME.setRun(gameCtx(), { prizeId: kind === "garland-rare" ? D.POOL.find(p=>p.tier==='epic').id : D.POOL[0].id, finale: kind === "garland-perfect", hits: kind === "garland-perfect" ? 3 : kind === "garland-miss" ? 0 : 2 }); break;
-      case "wheel-poor": case "garland-poor": resetTo(8); S.balance = 20; jump(["home", "game"]); break;
+      case "claw-poor": case "wheel-poor": case "garland-poor": resetTo(8); S.balance = 20; jump(["home", "game"]); break;
       case "garland-done": resetTo(8); S.garland.attempts = 3; jump(["home", "game"]); break;
-      case "wheel-empty": case "garland-empty": resetTo(8); S.taken = D.POOL.map(p=>p.id); S.star = true; jump(["home", "game"]); break;
+      case "claw-empty": case "wheel-empty": case "garland-empty": resetTo(8); S.taken = D.POOL.map(p=>p.id); S.star = true; jump(["home", "game"]); break;
       case "garland-story":
         resetTo(0); S.balance = 60; jump(["home", "game"]);
         window.AV_GAME.setRun(gameCtx(), { prizeId: D.POOL[0].id });

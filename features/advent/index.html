@@ -19,16 +19,17 @@
   <link rel="stylesheet" href="av-cards.css">
   <link rel="stylesheet" href="av-game.css">
 <link rel="stylesheet" href="av-garland.css">
-<link rel="stylesheet" href="av-wheel.css">
+
 <link rel="stylesheet" href="av-home.css">
+<link rel="stylesheet" href="av-journey.css">
 </head>
 <body>
 <div class="stage">
 
   <!-- Стенд: подписи и пульт – только для показа, в продукт не идут -->
   <header class="stage__head">
-    <h1 class="stage__title">новый год</h1>
-    <p class="stage__lead">14&nbsp;декабря – 11&nbsp;января: каждый день карточка о&nbsp;твоём годе, снежинки за&nbsp;вход и&nbsp;задания, колесо подарков и&nbsp;большой розыгрыш</p>
+    <h1 class="stage__title">новогодний экспресс</h1>
+    <p class="stage__lead">14 декабря — 31 декабря: поездка за воспоминаниями, хваталка и розыгрыш. С 1 января — посиделки у камина и предсказания</p>
     <a class="stage__link" href="states.html">все экраны и&nbsp;состояния</a>
   </header>
 
@@ -43,54 +44,37 @@
           </div>
 
           <!-- Снег за всеми экранами: один холст на телефон -->
-          <canvas class="av-sky" id="sky" aria-hidden="true"></canvas>
 
           <!-- ── 1. Адвент: календарь ─────────────────────────────────── -->
           <section class="screen av-screen av-home" id="screen-home" aria-labelledby="home-title">
-            <img class="av-frost" src="../../assets/aktirovka/frost-screen.webp" alt="">
+            <img class="ex-home-scene" id="home-scene" src="art/train-window.webp" alt="">
+  <canvas class="av-sky" id="sky" aria-hidden="true"></canvas>
             <div class="screen__scroll av-home__scroll" id="home-scroll">
               <header class="av-bar">
                 <button class="icon-button icon-button--header av-bar__back pressable" type="button" aria-label="назад" data-act="exit">
                   <i class="icon icon--back" aria-hidden="true"></i>
                 </button>
                 <h1 class="av-bar__title" id="home-title">новый год</h1>
-                <button class="av-balance pressable" type="button" data-go="game" aria-label="снежинки, к колесу">
-                  <img class="av-balance__icon" src="renders/snowflake.webp" alt="">
+                <button class="av-balance pressable" type="button" data-go="game" aria-label="жетоны, к хваталке">
+                  <img class="av-balance__icon" src="art/coin.webp" alt="">
                   <span class="av-balance__value" data-balance>0</span>
                 </button>
               </header>
               <section class="av-today" id="home-today" aria-labelledby="today-title"></section>
-              <nav class="av-entries" aria-label="колесо и розыгрыш">
-                <button class="av-entry pressable" type="button" data-go="game">
-                  <span class="av-entry__art av-wheel-mini" id="home-wheel-preview" aria-hidden="true"></span>
-                  <i class="icon icon--chevron av-entry__arrow" aria-hidden="true"></i>
-                  <span class="av-entry__text">
-                    <span class="av-entry__title ellipsis">колесо</span>
-                    <span class="av-entry__meta ellipsis" id="dock-game"></span>
-                  </span>
-                </button>
-                <button class="av-entry pressable" type="button" data-go="draw">
-                  <img class="av-entry__art" src="renders/ticket.webp" alt="">
-                  <i class="icon icon--chevron av-entry__arrow" aria-hidden="true"></i>
-                  <span class="av-entry__text">
-                    <span class="av-entry__title">розыгрыш</span>
-                    <span class="av-entry__meta ellipsis" id="dock-draw"></span>
-                  </span>
-                </button>
-              </nav>
+              <nav class="av-entries" id="home-entries" aria-label="занятия в поездке"></nav>
+              <section class="av-calendar" aria-labelledby="calendar-title">
+                <header class="av-calendar__head"><h2 id="calendar-title">остановки маршрута</h2><button class="ex-calendar-switch pressable" type="button" id="calendar-switch" hidden>2026</button></header>
+                <div id="calendar"></div>
+              </section>
               <section class="av-home-tasks" id="home-tasks" aria-labelledby="today-tasks-title">
                 <h2 class="av-home-tasks__title" id="today-tasks-title">задания на сегодня</h2>
                 <div id="home-task-list"></div>
-              </section>
-              <section class="av-calendar" aria-labelledby="calendar-title">
-                <header class="av-calendar__head"><h2 id="calendar-title">все дни</h2></header>
-                <div id="calendar"></div>
               </section>
             </div>
 
           </section>
 
-          <!-- ── 2. День: предмет дня, карточка, снежинки ─────────────── -->
+          <!-- ── 2. День: предмет дня, карточка, жетоны ─────────────── -->
           <section class="screen av-screen av-day" id="screen-day" aria-labelledby="day-title" hidden>
             <div class="screen__scroll av-day__scroll" id="day-scroll">
               <header class="av-bar">
@@ -98,8 +82,8 @@
                   <i class="icon icon--back" aria-hidden="true"></i>
                 </button>
                 <p class="av-bar__title" id="day-date"></p>
-                <button class="av-balance pressable" type="button" data-go="game" aria-label="снежинки, к колесу">
-                  <img class="av-balance__icon" src="renders/snowflake.webp" alt="">
+                <button class="av-balance pressable" type="button" data-go="game" aria-label="жетоны, к хваталке">
+                  <img class="av-balance__icon" src="art/coin.webp" alt="">
                   <span class="av-balance__value" data-balance>0</span>
                 </button>
               </header>
@@ -133,9 +117,9 @@
               <button class="icon-button icon-button--header av-bar__back pressable" type="button" aria-label="назад" data-act="back">
                 <i class="icon icon--back" aria-hidden="true"></i>
               </button>
-              <h2 class="av-bar__title" id="game-title">колесо</h2>
-              <span class="av-balance" aria-label="снежинки">
-                <img class="av-balance__icon" src="renders/snowflake.webp" alt="">
+              <h2 class="av-bar__title" id="game-title">хваталка</h2>
+              <span class="av-balance" aria-label="жетоны">
+                <img class="av-balance__icon" src="art/coin.webp" alt="">
                 <span class="av-balance__value" data-balance>0</span>
               </span>
             </header>
@@ -165,7 +149,7 @@
                 </button>
                 <h2 class="av-bar__title" id="draw-title">розыгрыш</h2>
                 <span class="av-balance av-balance--tickets" aria-label="билеты">
-                  <img class="av-balance__icon av-balance__icon--ticket" src="renders/ticket.webp" alt="">
+                  <img class="av-balance__icon av-balance__icon--ticket" src="art/ticket.webp" alt="">
                   <span class="av-balance__value" data-tickets>0</span>
                 </span>
               </header>
@@ -211,7 +195,7 @@
           </div>
 
           <!-- Пуш: друг обогнал – системный баннер iOS, не чаще раза в день -->
-          <button class="ny-push pressable" type="button" id="push" data-push="garland" aria-label="открыть колесо">
+          <button class="ny-push pressable" type="button" id="push" data-push="garland" aria-label="открыть хваталку">
             <img class="ny-push__icon" src="../../assets/system/app-icon.png" alt="">
             <span class="ny-push__body">
               <span class="ny-push__head"><span class="ny-push__title">blink</span><span class="ny-push__time">сейчас</span></span>
@@ -219,7 +203,7 @@
             </span>
           </button>
 
-          <!-- Слой полёта: предмет из календаря в шапку дня, снежинки в баланс, билеты в шар -->
+          <!-- Слой полёта: предмет из календаря в шапку дня, жетоны в баланс, билеты в шар -->
           <div class="av-fly" id="fly" aria-hidden="true"></div>
           <canvas class="av-fx" id="fx" aria-hidden="true"></canvas>
           <p class="visually-hidden" id="announce" aria-live="polite"></p>
@@ -241,7 +225,7 @@
           <button class="panel__button pressable" type="button" data-panel-date="14.12">14.12</button>
           <button class="panel__button pressable" type="button" data-panel-date="22.12">22.12</button>
           <button class="panel__button pressable" type="button" data-panel-date="31.12">31.12</button>
-          <button class="panel__button pressable" type="button" data-panel-date="05.01">05.01</button>
+          <button class="panel__button pressable" type="button" data-panel-date="01.01">01.01</button><button class="panel__button pressable" type="button" data-panel-date="05.01">05.01</button>
         </div>
       </div>
 
@@ -252,10 +236,10 @@
       </div>
 
       <div class="panel__group" role="group" aria-labelledby="panel-tree">
-        <p class="panel__label caps-label" id="panel-tree">колесо</p>
+        <p class="panel__label caps-label" id="panel-tree">хваталка</p>
         <div class="panel__row">
-          <button class="panel__button pressable" type="button" data-panel="flakes">+500 снежинок</button>
-          <button class="panel__button pressable" type="button" data-panel="zero">0 снежинок</button>
+          <button class="panel__button pressable" type="button" data-panel="flakes">+500 жетонов</button>
+          <button class="panel__button pressable" type="button" data-panel="zero">0 жетонов</button>
         </div>
         <div class="panel__row">
 
@@ -287,7 +271,7 @@
 <script src="av-cards.js"></script>
 <script src="av-garland-engine.js"></script>
 <script src="av-game.js"></script>
-<script src="av-wheel.js"></script>
+<script src="av-journey.js"></script>
 <script src="advent.js"></script>
 </body>
 </html>

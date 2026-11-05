@@ -34,7 +34,7 @@
   const GRAPHICS = {
     // заходы: иконка приложения с розовой звездой-счётчиком
     "app-icon": (g, day, ctx) => `<div class="avc-app">
-      <img class="avc-app__icon" src="${ctx.ASSETS}/system/app-icon.png" alt="">
+      <img class="avc-app__icon" src="art/journal.webp" alt="">
       <span class="badge-star avc-app__badge" aria-hidden="true"><i class="icon icon--badge-star"></i><span class="badge-star__value">2.8k</span></span>
     </div>`,
 

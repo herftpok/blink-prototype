@@ -1,16 +1,17 @@
-# Новый год
+# Новогодний экспресс
 
-Текущий сценарий: колесо фортуны за снежинки, розыгрыш за билеты и календарь с карточками года / предсказаниями. См. [NEW-YEAR.md](NEW-YEAR.md).
+14–31 декабря едем за воспоминаниями 2026 года, достаём подарки хваталкой и отправляем билеты в розыгрыш. С 1 января — домашние посиделки у камина с предсказаниями. Новая стилистика — из `НГБЛИНК/`.
 
-На главной каждый день своё превью, отдельные состояния нового и просмотренного факта, задания с текстовыми инструкциями. Колесо показывает до восьми доступных подарков и заменяет выигранные. Розыгрыш — сетка из четырёх карточек со счётчиком билетов. Награды начисляются автоматически, кнопок получения нет. Для проверки действий вне флоу на пульте есть «задание дня выполнено»; контракт события описан в NEW-YEAR.md.
+Текущий сценарий, экономика, границы интеграции и проверка — [NEW-YEAR.md](NEW-YEAR.md).
 
-- [Главная](http://localhost:8765/features/advent/?state=home)
-- [Колесо](http://localhost:8765/features/advent/?state=wheel)
-- [Розыгрыш](http://localhost:8765/features/advent/?state=draw)
-- [Печенье](http://localhost:8765/features/advent/?state=stat%3A01.01)
-- [Гирлянда как декорация](http://localhost:8765/features/advent/?state=garland-decoration)
+- [Начало поездки](https://herftpok.github.io/blink-prototype/features/advent/?state=home-first)
+- [В вагоне](https://herftpok.github.io/blink-prototype/features/advent/?state=home)
+- [Хваталка](https://herftpok.github.io/blink-prototype/features/advent/?state=claw-first)
+- [Розыгрыш](https://herftpok.github.io/blink-prototype/features/advent/?state=draw)
+- [1 января у камина](https://herftpok.github.io/blink-prototype/features/advent/?state=arrival)
+- [Все экраны](https://herftpok.github.io/blink-prototype/features/advent/states.html)
 
-Предыдущие эксперименты с играми сохранены в исходниках, но не подключены к основному сценарию. Старые решения ниже — история прототипа.
+Пульт позволяет пройти границу 31.12 → 01.01, добавить 30 билетов, проверить нехватку жетонов, выдать событие задания и исчерпать коллекцию. Предыдущие эксперименты сохранены ниже как история.
 
 # Новогодний адвент
 

@@ -27,3 +27,14 @@ Constraints: this is an illustration of physical recap cards, not a UI screensho
 Встроенный image_gen, правка исходного печенья. Мастер-файлы: `renders/fortune-cookie-cyan.png`, `fortune-cookie-violet.png`, `fortune-cookie-pink.png`. WebP с теми же именами собирает `tools/build_assets.py → build_advent_cookies()`. Первые варианты с приклеенным бантом не используются.
 
 Промпт каждого варианта: preserve the exact original cookie, texture, camera and lighting; a continuous closed loop of cyan / lavender violet / pink satin ribbon spans the entire width across both lobes, follows the curved surface, reaches both silhouette edges and turns behind the cookie; a small bow is tied onto the band left of center; visible tension and contact shadows; no short strips stopping on the front, floating ends, text or background. Transparent PNG.
+
+
+## 05.11.2026 — анимация предоставленного автомата
+
+Основной стиль берётся из оригиналов `НГБЛИНК/`. Встроенный imagegen использован только для подготовки корпуса и подвижной клешни из `Синий аркадный автомат с захватом приза.png`; новые самостоятельные иллюстрации не генерировались. PNG сохранены неразрушающе в `art/`, WebP создаёт `build_advent_journey()`.
+
+1. `art/machine-empty-master.png` — precise-object-edit. Remove only the entire claw assembly, motor and cable from the supplied blue arcade machine. Reconstruct the empty warm-lit rear chamber, preserving the exact 1024×1536 canvas, cabinet scale, front camera, blue/brass materials, controls, hatch, lighting and framing. No added objects or text.
+2. `art/claw-hand-master.png` — background-extraction, transparent. Extract only the complete original claw, motor cap, spring and three fingers. Remove the cabinet and blue glass, preserve the front view, brass/silver material and supplied 3D style. Center a fully visible clean cutout with transparent margins.
+3. `art/machine-cutout-master.png` — background-extraction, transparent. From the empty machine master remove only the outer studio background and floor; preserve the opaque cabinet and inside chamber, exact canvas, scale, location, controls and feet. Do not crop or reframe. This is the final animated cabinet source.
+
+The full original prompts were passed to the built-in image generation tool with those constraints; no CLI/API fallback was used. Hand transparency and the aligned cabinet were visually inspected at @2x. The provided source images remain intact.

@@ -1409,6 +1409,53 @@ def build_advent_recap() -> None:
 
 
 
+def build_advent_journey() -> None:
+    """Exports supplied НГБЛИНК art without changing originals; edited animation masters are local."""
+    import unicodedata
+    source = ROOT / "НГБЛИНК"
+    out = Path(__file__).resolve().parents[1] / "features/advent/art"
+    out.mkdir(parents=True, exist_ok=True)
+    exports = {
+        "Синий аркадный автомат": ("machine", 900),
+        "Путевой дневник": ("journal", 520),
+        "Зимний вагон с автоматом": ("train-lounge", 1200),
+        "Тёплая композиция": ("cookie", 600),
+        "Воксельная бронзовая": ("coin", 192),
+        "Рождественский носок": ("stocking", 440),
+        "Винтажный кожаный": ("suitcase", 480),
+        "Винтажный билет": ("ticket", 440),
+        "Изображение ChatGPT 22 окт. 2026 г., 23_25_13": ("train-exterior", 1200),
+        "Зимний вагон с шампанским": ("train-cafe", 1200),
+        "Узкая синяя": ("cabinet", 640),
+        "Изображение ChatGPT 22 окт. 2026 г., 23_18_50": ("train-window", 1200),
+        "Воксельная копилка": ("piggy", 480),
+        "Уютная зимняя гостиная": ("living-room", 1200),
+    }
+    for prefix, (name, edge) in exports.items():
+        files = [f for f in source.glob("*.png") if unicodedata.normalize("NFC", f.stem).startswith(prefix)]
+        if not files:
+            continue
+        with Image.open(files[0]) as raw:
+            image = raw.convert("RGBA") if raw.mode == "RGBA" and raw.getextrema()[-1][0] < 255 else raw.convert("RGB")
+            if image.mode == "RGBA":
+                box = image.getchannel("A").point(lambda v: 255 if v > 8 else 0).getbbox()
+                if box:
+                    image = image.crop(box)
+            image.thumbnail((edge, edge), Image.Resampling.LANCZOS)
+            image.save(out / f"{name}.webp", "WEBP", quality=90, method=6)
+    for name in ("machine-empty", "claw-hand"):
+        master = out / ("machine-cutout-master.png" if name == "machine-empty" and (out / "machine-cutout-master.png").exists() else f"{name}-master.png")
+        if master.exists():
+            with Image.open(master) as raw:
+                image = raw.copy()
+                if name == "claw-hand":
+                    box = image.getchannel("A").point(lambda v: 255 if v > 90 else 0).getbbox()
+                    image = image.crop(box)
+                image.thumbnail((900, 1350), Image.Resampling.LANCZOS)
+                image.save(out / f"{name}.webp", "WEBP", quality=92, method=6)
+
+
+
 def main() -> None:
     if OUT.exists():
         shutil.rmtree(OUT)
@@ -1429,6 +1476,7 @@ def main() -> None:
     build_system()
     build_advent_cookies()
     build_advent_recap()
+    build_advent_journey()
     total = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())
     print(f"assets: {sum(1 for p in OUT.rglob('*') if p.is_file())} files, {total / 1024:.0f} KB")
     print(f"icons.css: {ICONS_CSS.stat().st_size / 1024:.0f} KB, {len(icons)} icons")

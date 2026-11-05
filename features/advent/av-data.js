@@ -253,7 +253,8 @@ window.AV_DATA = (() => {
     };
     Object.assign(day.task, { title, description: sentenceText(description), instruction: sentenceText(instruction) });
     day.hero = i === 0 ? "a:system/app-icon.png" : day.obj;
-    if (i >= 18) day.charm = JAN_CHARMS[i - 18];
+    if (i >= 18) { day.charm = JAN_CHARMS[i - 18]; day.obj = "art/cookie.webp"; }
+    if (i === 17) day.obj = "art/suitcase.webp";
   });
 
   /* За 30 снежинок – один подарок сразу. Три раунда в день. */
@@ -293,8 +294,8 @@ window.AV_DATA = (() => {
      приём закрывается 10.01 в 23:59, розыгрыш – 11.01 в 20:00 вживую. В каждом шаре
      один главный приз и 30 поменьше, а утешительный – всем, кто положил билеты */
   const DRAW = {
-    closes: "10 января в 23:59",
-    when: "11 января в 20:00",
+    closes: "31 декабря в 23:59",
+    when: "итоги 1 января",
     prizes: [
       { id: "headphones", title: "беспроводные наушники", img: "r:headphones", total: 4380, mine: 0, small: 30, trend: +6 },
       { id: "console", title: "игровая приставка", img: "r:gamepad", total: 9120, mine: 2, small: 30, trend: +11 },

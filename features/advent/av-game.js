@@ -70,7 +70,7 @@
     view='lobby';
     el.innerHTML=`<div class="ag ag--compare"><nav class="ag-variants" aria-label="новые варианты"><button type="button" data-game="lab-score">игра на очки и подарки</button></nav>${atmosphere()}<div class="ag-heading"><h3>зажги<br>гирлянду</h3><p>останови свет<br>на отмеченной лампочке</p></div>
       <div class="ag-scene ag-scene--preview">${wire(ctx,true)}</div>
-      <div class="ag-bottom"><button class="ag-rewards pressable" type="button" data-game="pool"><img src="renders/ticket.webp" alt="">подарки и правила<i class="icon icon--chevron" aria-hidden="true"></i></button>${cta(ctx)}</div></div>`;
+      <div class="ag-bottom"><button class="ag-rewards pressable" type="button" data-game="pool"><img src="art/ticket.webp" alt="">подарки и правила<i class="icon icon--chevron" aria-hidden="true"></i></button>${cta(ctx)}</div></div>`;
     track(ctx,'garland_open');
   }
   function choose(ctx,random){
@@ -189,7 +189,7 @@
       <p class="ag-result-score">${hits*3} из 9 огоньков зажжены</p>
       <div class="ap-prize-art"><img class="ap-prize-glow" src="${ctx.src(prize.img)}" alt=""><img class="ap-prize-img" src="${ctx.src(prize.img)}" alt="${prize.title}"></div>
       <div class="ap-result__copy">${tierChip(ctx,prize.tier)}<h3 id="result-title">${prize.title}</h3>
-      <button class="ap-ticket pressable" type="button" data-game="draw"><img src="renders/ticket.webp" alt="">+${tickets} ${tickets===1?'билет':'билета'} в розыгрыш<i class="icon icon--chevron" aria-hidden="true"></i></button>
+      <button class="ap-ticket pressable" type="button" data-game="draw"><img src="art/ticket.webp" alt="">+${tickets} ${tickets===1?'билет':'билета'} в розыгрыш<i class="icon icon--chevron" aria-hidden="true"></i></button>
       ${tickets===2?'<p class="ag-bonus">+1 за точность</p>':''}
       ${star?'<p class="ap-star-note">вся коллекция собрана! рамка со звездой тоже твоя</p>':''}</div>
       <div class="ap-bottom"><button class="button button--primary pressable" type="button" data-game="lobby">отлично</button><button class="ap-pool-link pressable" type="button" data-game="share">поделиться подарком<i class="icon icon--share" aria-hidden="true"></i></button></div></div>`;
@@ -330,7 +330,7 @@
           <button class="icon-button avd-step pressable" type="button" data-draw="plus" aria-label="больше" ${drawCount >= S.tickets ? "disabled" : ""}><i class="icon icon--plus" aria-hidden="true"></i></button>
         </div>
         <button class="button button--primary avd-cta pressable" type="button" data-draw="put" ${drawSending ? "disabled" : ""}>участвовать за ${drawCount}${NBSP}${ctx.plural(drawCount, "билет", "билета", "билетов")}</button>`
-        : `<button class="button button--primary avd-cta pressable" type="button" data-draw="earn">крутить колесо</button>`}`;
+        : `<button class="button button--primary avd-cta pressable" type="button" data-draw="earn">к хваталке</button>`}`;
   }
 
   function putTickets(ctx) {
@@ -345,7 +345,7 @@
     S.draw[p.id] = (S.draw[p.id] || 0) + n;
     ctx.renderBalance();
     ctx.S.events.push({ name: "raffle_tickets", prizeId: p.id, count: n });
-    const flight = ctx.flyFlakes(from, target, Math.min(6, n + 1), "renders/ticket.webp", 34);
+    const flight = ctx.flyFlakes(from, target, Math.min(6, n + 1), "art/ticket.webp", 34);
     renderDrawInfo($("#draw"), ctx);
     const finish = () => {
       drawSending = false;
