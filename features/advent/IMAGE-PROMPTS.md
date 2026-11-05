@@ -60,3 +60,33 @@ Use case: precise-object-edit. Asset type: full-screen portrait background for t
 ```
 
 Edit target: `art/machine-empty.webp`, generated source `exec-7842cbe5-3171-464e-a4e8-4e601cf541ac.png`. Оба результата визуально проверены перед включением в композицию.
+
+## 06.11.2026 — стекло и отдельный игровой вагон
+
+Режим: встроенный imagegen, без CLI/API fallback. Оригиналы `НГБЛИНК/` не менялись. Производные мастера сохранены в `art/`, WebP собирает `build_advent_journey()`. Активны **отдельные слои** `arcade-car.webp` и `claw-frame.webp`, у рамы сохранён RGBA без обрезки холста. Непрозрачная версия с купе не используется в интерфейсе.
+
+### Промежуточная стеклянная витрина
+
+`art/claw-glass-master.png` → `art/claw-glass.webp`, source `exec-4c6bd8dc-0d87-4d98-ae14-580dc66ce0d4.png`. Референсы: `art/claw-window.webp` как edit target и `art/train-window.webp` как стиль. Сохранена в архиве; по последующему уточнению фон заменён отдельным игровым вагоном.
+
+```text
+Use case: precise-object-edit and compositing. Asset type: edge-to-edge portrait background for a close-up glass claw machine inside the supplied winter train. Input image 1 is the exact edit target: preserve its camera, tall glass chamber geometry, blue outer enamel frame and brass inner structural ribs, ceiling light, floor and bottom blue lip. Input image 2 supplies the style and train interior. CHANGE all opaque blue rear panels and all side wall panels inside the chamber into clear semitransparent glass, with restrained vertical reflections and believable glass edges. THROUGH the glass, show the cozy vintage train passenger carriage from image 2: indigo plaid seats, brass framed large windows, snowy pines at night, warm rectangular ceiling lights. Train corridor recedes with gentle depth behind the chamber; there is NO second claw machine in the carriage. It must feel we are looking through the real glass machine into the surrounding train, not at a printed backdrop or blue cabinet walls. Keep only narrow metal supports opaque. The warm chamber light is restrained and translucent enough that the train is clearly visible. Glass chamber stays empty for separately animated claw and a surprise gift. No claw, no prizes, no text, no logos, no people, no joystick, no lower cabinet, no legs. Match supplied soft stylized 3D toy render, navy/brass/cream and snow-night palette. Preserve tall portrait 2:3 composition, fill entire canvas, no studio margins.
+```
+
+### Новый игровой вагон
+
+`art/arcade-car-master.png` → `art/arcade-car.webp`, source `exec-93915e68-594b-49cf-9fd6-749b289ecf07.png`, 1024×1536 RGB. Референсы: `art/train-lounge.webp` и `art/train-window.webp` — только стиль и материалы. Это самостоятельный зал с центральным проходом, новыми автоматами и окнами, без купейных сидений и столика.
+
+```text
+Use case: stylized-concept. Asset type: a NEW portrait arcade-car interior background for a New Year train app. Input images are STYLE AND MATERIAL references only, do NOT copy their composition. Create a DIFFERENT carriage, a shared games lounge inside the same cozy vintage winter express. Camera at standing eye height, looking down a central aisle. On BOTH sides of the aisle are several beautifully crafted arcade machines: retro video game cabinets with simple colorful screens, a pinball table, and a small basketball arcade cabinet in the distance. Cabinets navy blue enamel and warm wood, restrained brass trim, round buttons, soft warm lights; no giant central machine hiding the room. Tall train windows BETWEEN the cabinets show snowy pine trees and a violet blue night. Curved carriage ceiling, warm rectangular ceiling lamps, wood floor with reflections, subtle festive string lights near the ceiling. Central glass connecting door at the far end, open airy space, asymmetrical lived-in arrangement of machines. Match the exact supplied soft low-poly stylized 3D toy-render aesthetic, cozy proportions, navy, indigo, brass and warm cream light. Portrait 2:3 framing, full bleed, detailed enough for the background seen through transparent claw-machine glass. NO sleeper compartment, NO facing plaid benches, NO table with food, NO dining setup, NO champagne, NO people, NO text, NO logos, NO floating UI, NO casino slot machines.
+```
+
+### Рама с прозрачными стёклами
+
+`art/claw-frame-master.png` → `art/claw-frame.webp`, source `exec-2edb5de5-1f0a-4888-84eb-54c8edcb2696.png`, 1024×1536 RGBA. Edit target: `art/claw-glass-master.png`. Проверены холст, альфа и совпадение геометрии; средняя alpha внутри двух задних панелей около 84/255 и 92/255. Стекло пропускает фон с мягким светлым отражением, металлическая конструкция остаётся почти непрозрачной.
+
+```text
+Use case: background-extraction. Asset type: transparent foreground frame/glass layer for this exact claw chamber. Edit this image: REMOVE every part of the train visible behind ALL rear and side glass panes and replace only those glass-view areas with TRUE ALPHA TRANSPARENCY. Preserve exact 1024x1536 portrait canvas, framing, blue outer metal, brass inner ribs, opaque ceiling, floor, center vertical brass divider, and bottom lip, pixel alignment and geometry. Keep just a FEW subtle semitransparent narrow glass reflections over the clear alpha panes; most of each pane is almost transparent. The source train, seats, table, window, forest and ceiling behind the glass must be entirely gone. The transparent apertures must let a separate arcade-train background image show through. Do not paint a checkerboard, solid black, blue or white in the panes. No outside margin, no new objects, no claw, no gifts, no typography. Preserve the supplied warm 3D materials and lighting of the machine itself. Only remove the background behind the glass, change nothing structural.
+```
+
+Печенье и две совпадающие половинки повторно используют ранее подготовленные `renders/fortune-cookie.webp` и `renders/fortune-cookie-broken.webp`; новых растровых правок к ним не делали.

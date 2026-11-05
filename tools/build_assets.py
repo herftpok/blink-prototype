@@ -1454,11 +1454,11 @@ def build_advent_journey() -> None:
                 image.thumbnail((900, 1350), Image.Resampling.LANCZOS)
                 image.save(out / f"{name}.webp", "WEBP", quality=92, method=6)
     # Scene layers derived with imagegen from the supplied cabin and cabinet.
-    for name, size in (("winter-panorama", (2172, 724)), ("claw-window", (1024, 1536))):
+    for name, size in (("winter-panorama", (2172, 724)), ("claw-window", (1024, 1536)), ("claw-glass", (1024, 1536)), ("arcade-car", (1024, 1536)), ("claw-frame", (1024, 1536))):
         master = out / f"{name}-master.png"
         if master.exists():
             with Image.open(master) as raw:
-                image = raw.convert("RGB")
+                image = raw.convert("RGBA" if name == "claw-frame" else "RGB")
                 image.thumbnail(size, Image.Resampling.LANCZOS)
                 image.save(out / f"{name}.webp", "WEBP", quality=92, method=6)
 

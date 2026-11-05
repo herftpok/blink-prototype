@@ -58,7 +58,7 @@
                 <button class="icon-button icon-button--header av-bar__back pressable" type="button" aria-label="назад" data-act="exit">
                   <i class="icon icon--back" aria-hidden="true"></i>
                 </button>
-                <h1 class="av-bar__title" id="home-title">новый год</h1>
+                <h1 class="visually-hidden" id="home-title">новый год</h1>
                 <button class="av-balance pressable" type="button" data-go="game" aria-label="жетоны, к хваталке">
                   <img class="av-balance__icon" src="art/coin.webp" alt="">
                   <span class="av-balance__value" data-balance>0</span>
@@ -165,6 +165,14 @@
           </section>
 
           <div class="scrim" id="scrim"></div>
+
+          <div class="sheet av-sheet ex-intro" id="sheet-intro" role="dialog" aria-modal="true" aria-labelledby="intro-title" tabindex="-1">
+            <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div></div>
+            <img class="ex-intro__art" src="art/train-exterior.webp" alt="">
+            <h2 class="sheet__title" id="intro-title">каждый день – новый факт о тебе</h2>
+            <p class="sheet__text">вспоминай свой 2026 по дороге к новому году</p>
+            <button class="button button--primary pressable" type="button" data-act="intro-done">поехали</button>
+          </div>
 
           <!-- Шторка: подарок за гирлянду и золотая звезда -->
           <div class="sheet av-sheet av-prize" id="sheet-prize" role="dialog" aria-modal="true" aria-labelledby="prize-title" tabindex="-1">

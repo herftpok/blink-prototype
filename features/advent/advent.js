@@ -1,6 +1,6 @@
 /*
  * Адвент: календарь, день, карточка статистики, «новогодняя гирлянда» и розыгрыш в одном телефоне + пульт.
- * Данные – av-data.js, карточки статистики – av-cards.js, игра «новогодняя гирлянда» и розыгрыш – av-game.js.
+ * Данные – av-data.js, карточки статистики – av-cards.js, общая выдача и розыгрыш – av-game.js, активная хваталка и сцены – av-journey.js.
  * Переходы: календарь → день – предмет дня летит из клетки в шапку дня (как в видео-референсе),
  * остальные клетки гаснут; день → карточка – снизу на весь экран; гирлянда и розыгрыш – справа.
  */
@@ -15,6 +15,8 @@
   const NBSP = String.fromCharCode(160);
   const EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
   const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const INTRO_KEY = "blink:newyear:2026:intro-seen";
+  const introWasSeen = () => { try { return localStorage.getItem(INTRO_KEY) === "1"; } catch { return false; } };
 
   const app = $("#app");
 
@@ -82,6 +84,7 @@
   /* ── состояние ───────────────────────────────────────────────────────── */
 
   const S = {
+    introSeen: introWasSeen(),
     today: 8,              // индекс «сегодня» в DAYS (22.12)
     balance: 0,
     tickets: 0,
@@ -245,7 +248,7 @@
     const fly = document.createElement("div");
     fly.className = "av-fly__item";
     const idx=D.DAYS.indexOf(day), seen=S.days[idx]?.seen;
-    fly.innerHTML = `<img class="av-fly__obj" src="${J.A(day.prediction ? (seen ? "cookie" : "stocking") : (seen ? "journal" : "suitcase"))}" alt="">`;
+    fly.innerHTML = `<img class="av-fly__obj" src="${J.A(day.prediction ? (seen ? "cookie" : "stocking") : "suitcase")}" alt="">`;
     const inner = fly.firstElementChild;
     inner.style.width = "100%";
     inner.style.height = "100%";
@@ -352,22 +355,29 @@
     renderStat();
     show("stat");
     stack.push("stat");
-    await anim(screens.stat, [{ transform: "translateY(100%)" }, { transform: "translateY(0)" }], { duration: 380 }).then((a) => a.cancel());
+    const prediction = Boolean(D.DAYS[currentDay].prediction);
+    if (prediction && !S.days[currentDay].cracked) {
+      $("#stat-share").closest("footer").classList.add("is-opening");
+      $("#stat-share").closest("footer").inert = true;
+    }
+    await anim(screens.stat, prediction ? [{ opacity: 0 }, { opacity: 1 }] : [{ transform: "translateY(100%)" }, { transform: "translateY(0)" }], { duration: prediction ? 280 : 380 }).then((a) => a.cancel());
     window.AV_CARDS.enter($("#stat-card"));
     screens[from].hidden = true;
     busy = false;
     focusScreen("stat");
+    if (prediction && !S.days[currentDay].cracked) crackCookie();
   }
 
   async function closeStat() {
     if (busy) return;
-    if (name === "game") window.AV_GAME.pause();
+    window.AV_CARDS.cancel?.();
     busy = true;
     stack.pop();
     const back = current();
     RENDER[back]?.({ refresh: true });
     show(back);
-    await anim(screens.stat, [{ transform: "translateY(0)" }, { transform: "translateY(100%)" }], { duration: 320 }).then((a) => a.cancel());
+    const prediction = Boolean(D.DAYS[currentDay].prediction);
+    await anim(screens.stat, prediction ? [{ opacity: 1 }, { opacity: 0 }] : [{ transform: "translateY(0)" }, { transform: "translateY(100%)" }], { duration: prediction ? 240 : 320 }).then((a) => a.cancel());
     screens.stat.hidden = true;
     busy = false;
     focusScreen(back);
@@ -397,7 +407,7 @@
     const day = D.DAYS[S.today], home = J.atHome(S.today), seen = S.days[S.today].seen;
     app.dataset.phase = home ? "home" : "train";
     $("#home-scene").src = J.A(home ? "living-room" : "train-window");
-    $("#home-title").textContent = home ? "мы дома" : "новогодний экспресс";
+    $("#home-title").textContent = "новый год";
     $("#home-today").classList.toggle("is-seen", seen);
     $("#home-today").innerHTML = J.hero({ day, i: S.today, seen, src });
     $("#home-entries").innerHTML = J.entries(S, D, plural);
@@ -430,7 +440,7 @@
   function cellMarkup(day, i) {
     const st = cellState(i), d = S.days[i];
     const label = `${dayName(day)}, ${st === "frozen" ? "ещё закрыто" : day.title}${st === "today" ? ", сегодня" : ""}${st === "open" && !d.seen ? ", не просмотрено" : ""}`;
-    return `<button class="av-cell is-${st} pressable" type="button" data-day="${i}" aria-disabled="${st === "frozen"}" aria-label="${label}"><span class="av-cell__art">${J.art(day,i,d.seen,src)}</span><span class="av-cell__date">${st === "today" ? "сегодня" : day.date}</span>${st === "open" && !d.seen ? '<span class="av-cell__dot" aria-hidden="true"></span>' : ""}</button>`;
+    return `<button class="av-cell is-${st}${d.seen?' is-viewed':''} pressable" type="button" data-day="${i}" aria-disabled="${st === "frozen"}" aria-label="${label}"><span class="av-cell__art">${J.art(day,i,d.seen,src)}</span><span class="av-cell__date">${st === "today" ? "сегодня" : day.date}</span>${d.seen?'<span class="av-cell__viewed" aria-label="просмотрено"><i class="icon icon--check" aria-hidden="true"></i></span>':st === "open" ? '<span class="av-cell__dot" aria-hidden="true"></span>' : ""}</button>`;
   }
 
   function renderBalance() {
@@ -446,7 +456,7 @@
     const isToday = i === S.today;
     $("#day-date").textContent = dayName(day);
     screens.day.dataset.phase = day.prediction ? "home" : "train";
-    $("#day-slot").innerHTML = `<img class="av-day__obj" src="${J.A(day.prediction ? (S.days[i].seen ? "cookie" : "stocking") : (S.days[i].seen ? "journal" : "suitcase"))}" alt="">`;
+    $("#day-slot").innerHTML = `<img class="av-day__obj" src="${J.A(day.prediction ? (S.days[i].seen ? "cookie" : "stocking") : "suitcase")}" alt="">`;
     $("#day-glow").src = objSrc(day);
     const rows = taskRows(day);
     $("#day-body").innerHTML = `
@@ -555,6 +565,7 @@
   }
 
   function renderStat() {
+    window.AV_CARDS.cancel?.();
     const day = D.DAYS[currentDay];
     screens.stat.dataset.phase = day.prediction ? "home" : "train";
     $("#stat-card").innerHTML = window.AV_CARDS.render(day, cardCtx());
@@ -566,6 +577,9 @@
     const day = D.DAYS[currentDay];
     const crack = Boolean(day.prediction && !S.days[currentDay].cracked);
     const b = $("#stat-share");
+    b.disabled = false;
+    b.closest("footer").classList.remove("is-opening");
+    b.closest("footer").inert = false;
     b.dataset.mode = crack ? "crack" : "share";
     $("i", b).hidden = crack;
     $("span", b).textContent = crack ? "открыть предсказание" : "поделиться";
@@ -573,6 +587,11 @@
 
   function crackCookie() {
     const i = currentDay, state = S.days[i];
+    const button = $("#stat-share");
+    if (state.cracked || button.disabled) return;
+    button.disabled = true;
+    button.closest("footer").classList.add("is-opening");
+    button.closest("footer").inert = true;
     window.AV_CARDS.crack($("#stat-card"), () => {
       if (S.days[i] !== state) return;
       state.cracked = true;
@@ -584,7 +603,7 @@
     });
   }
 
-  /* ── 4–5. новогодняя гирлянда и розыгрыш ────────────────────────────────────── */
+  /* ── 4–5. хваталка и розыгрыш ────────────────────────────────────── */
 
   const RENDER = {
     game: () => window.AV_GAME.render($("#game"), gameCtx()),
@@ -633,7 +652,7 @@
 
   /* ── шторки ──────────────────────────────────────────────────────────── */
 
-  const sheets = { prize: $("#sheet-prize"), pool: $("#sheet-pool"), share: $("#sheet-share"), task: $("#sheet-task") };
+  const sheets = { intro: $("#sheet-intro"), prize: $("#sheet-prize"), pool: $("#sheet-pool"), share: $("#sheet-share"), task: $("#sheet-task") };
   let openSheetName = null;
   let sheetReturn = null;
   let taskHelp = { key: "task", day: 0 };
@@ -676,7 +695,12 @@
     Object.values(screens).forEach((s) => { s.inert = false; });
     const was = openSheetName;
     openSheetName = null;
-    if (!silent && sheetReturn && document.contains(sheetReturn)) sheetReturn.focus({ preventScroll: true });
+    if (was === "intro") {
+      S.introSeen = true;
+      try { localStorage.setItem(INTRO_KEY, "1"); } catch { /* In-memory state still prevents repeat onboarding. */ }
+      if (!silent) $("#home-today [data-act='open-today']")?.focus({ preventScroll: true });
+    }
+    if (was !== "intro" && !silent && sheetReturn && document.contains(sheetReturn)) sheetReturn.focus({ preventScroll: true });
     if (was === "prize") window.AV_GAME.afterPrize(gameCtx());
   }
 
@@ -753,6 +777,7 @@
       return;
     }
     if (t.dataset.act === "journey-collection") return openSheet("pool");
+    if (t.dataset.act === "intro-done") return closeSheet();
     if (t.dataset.act === "open-today") return openTodayStat();
     if (t.dataset.go === "game") return push("game");
     if (t.dataset.push === "garland") {
@@ -822,6 +847,7 @@
 
   function resetTo(idx) {
     window.AV_GAME.cancel();
+    window.AV_CARDS.cancel?.();
     preset(idx);
     completeTask("login", idx, { animate: false, refresh: false });
     // любые открытые экраны – назад в календарь
@@ -882,6 +908,7 @@
 
   /** Без анимаций: стопка экранов как после переходов */
   function jump(names) {
+    window.AV_CARDS.cancel?.();
     if (openSheetName) closeSheet(true);
     Object.values(screens).forEach((el) => { el.hidden = true; el.getAnimations().forEach((a) => a.cancel()); });
     stack.length = 0;
@@ -905,7 +932,9 @@
     S.vip = false;
     const [kind, arg] = id.split(":");
     switch (kind) {
-      case "train": case "journey-first": case "home-first": resetTo(0); break;
+      case "intro": resetTo(0); S.introSeen = false; openSheet("intro"); break;
+      case "train": case "journey-first": case "home-first": resetTo(0); if (!S.introSeen) openSheet("intro"); break;
+      case "home-ready": resetTo(0); break;
       case "home-seen": resetTo(0); S.days[0].seen = true; renderHome(); break;
       case "home": resetTo(8); break;
       case "fireside": case "home-late": resetTo(dayIdx("05.01")); break;
@@ -917,6 +946,7 @@
         window.AV_GAME.click({dataset:{game:"claw-grab"}},gameCtx()); window.AV_GAME.pause(); RENDER.game(); break;
       case "fireside-seen": resetTo(dayIdx("01.01")); S.days[S.today].cracked=true; S.days[S.today].seen=true; renderHome(); break;
       case "arrival": resetTo(dayIdx("01.01")); break;
+      case "fortune-opening": resetTo(dayIdx("01.01")); currentDay = S.today; jump(["home", "stat"]); crackCookie(); break;
       case "claw-closed": resetTo(dayIdx("01.01")); jump(["home","game"]); break;
       case "draw-closed": resetTo(dayIdx("01.01")); jump(["home","draw"]); break;
       case "home-end": resetTo(dayIdx("11.01")); break;
@@ -1001,6 +1031,12 @@
   }
   window.addEventListener("resize", fitStage);
   fitStage();
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && current() === "stat" && D.DAYS[currentDay].prediction && !S.days[currentDay].cracked) {
+      renderStat();
+      crackCookie();
+    }
+  });
 
   resetTo(8);
   const asked = new URLSearchParams(location.search).get("state");
