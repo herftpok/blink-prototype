@@ -396,7 +396,7 @@
   function renderHome() {
     const day = D.DAYS[S.today], home = J.atHome(S.today), seen = S.days[S.today].seen;
     app.dataset.phase = home ? "home" : "train";
-    $("#home-scene").src = J.A(home ? "living-room" : S.today === 0 ? "train-exterior" : "train-window");
+    $("#home-scene").src = J.A(home ? "living-room" : "train-window");
     $("#home-title").textContent = home ? "мы дома" : "новогодний экспресс";
     $("#home-today").classList.toggle("is-seen", seen);
     $("#home-today").innerHTML = J.hero({ day, i: S.today, seen, src });
@@ -617,7 +617,13 @@
     renderHome();
     show("home");
     currentDay = S.today;
-    $("#home-scroll").scrollTop = J.atHome(S.today) ? 0 : Math.max(0, $("#home-tasks").offsetTop - 24);
+    if (J.atHome(S.today)) $("#home-scroll").scrollTop = 0;
+    else scrollHomeTo($("#home-tasks"));
+  }
+
+  function scrollHomeTo(element) {
+    const scroll = $("#home-scroll");
+    scroll.scrollTop = Math.max(0, scroll.scrollTop + element.getBoundingClientRect().top - scroll.getBoundingClientRect().top - 24);
   }
 
   function renderDraw() {
@@ -743,7 +749,7 @@
     if (t.dataset.calendar) {
       S.calendarMonth = t.dataset.calendar;
       renderCalendar();
-      if (t.closest(".av-entries")) $("#home-scroll").scrollTop = Math.max(0, $(".av-calendar").offsetTop - 20);
+      if (t.closest(".av-entries")) scrollHomeTo($(".av-calendar"));
       return;
     }
     if (t.dataset.act === "journey-collection") return openSheet("pool");

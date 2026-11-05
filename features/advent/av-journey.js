@@ -12,7 +12,7 @@
     return `<div class="ex-daily__copy"><p class="ex-daily__chapter">${home?'посиделки у камина':`остановка ${String(step).padStart(2,'0')} из 18`}</p><h2 id="today-title">${seen?day.title:home?'новый день — новое предсказание':'каждый день — новый факт о тебе'}</h2>${seen?`<p class="av-today__seen">${icon('check')}${home?'предсказание прочитано':'факт просмотрен'}</p>`:''}</div><button class="ex-daily__art pressable" type="button" data-act="open-today" aria-label="${home?'открыть предсказание':'смотреть воспоминание'}"><img class="ex-daily__base" src="${A(home?'cookie':'journal')}" alt="">${i===0?'':`<img class="ex-daily__topic" src="${src(topic)}" alt="">`}</button><button class="button ${seen?'button--secondary':'button--primary'} av-today__open pressable" type="button" data-act="open-today">${seen?'посмотреть ещё раз':home?'открыть предсказание':'смотреть'}</button>`;
   };
   J.entries = (S,D,plural) => atHome(S.today)
-    ? `<button class="av-entry pressable" type="button" data-act="journey-collection"><img class="av-entry__art" src="${A('piggy')}" alt=""><span class="av-entry__text"><span class="av-entry__title">подарки</span><span class="av-entry__meta">из поездки</span></span>${icon('chevron')}</button><button class="av-entry pressable" type="button" data-calendar="train"><img class="av-entry__art" src="${A('journal')}" alt=""><span class="av-entry__text"><span class="av-entry__title">твой 2026</span><span class="av-entry__meta">воспоминания</span></span>${icon('chevron')}</button>`
+    ? `<button class="av-entry pressable" type="button" data-act="journey-collection"><img class="av-entry__art" src="${A('piggy')}" alt=""><span class="av-entry__text"><span class="av-entry__title">подарки</span><span class="av-entry__meta">из поездки</span></span>${icon('chevron')}</button><button class="av-entry pressable" type="button" data-calendar="train"><img class="av-entry__art" src="${A('journal')}" alt=""><span class="av-entry__text"><span class="av-entry__title">твой 2026</span><span class="av-entry__meta">итоги года</span></span>${icon('chevron')}</button>`
     : `<button class="av-entry pressable" type="button" data-go="game"><img class="av-entry__art ex-machine-mini" src="${A('machine')}" alt=""><span class="av-entry__text"><span class="av-entry__title">хваталка</span><span class="av-entry__meta">${D.ECONOMY.attempt}<img class="av-entry__flake" src="${A('coin')}" alt="жетонов"></span></span>${icon('chevron')}</button><button class="av-entry pressable" type="button" data-go="draw"><img class="av-entry__art" src="${A('ticket')}" alt=""><span class="av-entry__text"><span class="av-entry__title">розыгрыш</span><span class="av-entry__meta">${S.tickets} ${plural(S.tickets,'билет','билета','билетов')}</span></span>${icon('chevron')}</button>`;
 
   // Январское предсказание живёт в другой комнате, без игрового баланса.
@@ -45,7 +45,7 @@
     for(let i=0;i<Math.min(3,free.length);i++)if(!offers[i])offers[i]=reserve.splice(Math.floor(rand()*reserve.length),1)[0];
     offers=offers.filter(Boolean);
   }
-  const positions=n=>n===1?[50]:n===2?[41,59]:[35,50,65];
+  const positions=n=>n===1?[50]:n===2?[35,65]:[24,50,76];
   function feed(){
     const source=[...(ctx.S.wheelRecent||[]),...['vip-30','tail-crystal','beanie','coins-500'].map((id,i)=>({name:['наташка','лёва','соня','саша'][i],prize:ctx.D.POOL.find(p=>p.id===id)}))].slice(0,7);
     return `<section class="ex-feed" aria-label="последние призы"><p>последние призы</p><div>${source.map(({name,prize})=>`<span class="ex-feed__item"><img src="${ctx.src(prize.img)}" alt=""><span><b>${name}</b><small>${prize.title}</small></span></span>`).join('')}</div></section>`;
@@ -57,7 +57,7 @@
     const epoch=performance.now();
     function tick(t){
       if(view!=='ready'||window.AV?.current()!=='game'){frame=0;return;}
-      x=50+15*Math.sin((t-epoch)/850);
+      x=50+26*Math.sin((t-epoch)/850);
       const pos=positions(offers.length);selected=pos.reduce((best,v,i)=>Math.abs(v-x)<Math.abs(pos[best]-x)?i:best,0);
       const hand=root.querySelector('.ex-claw');hand?.style.setProperty('--claw-x',`${x}%`);
       root.querySelectorAll('.ex-machine-prize').forEach((p,i)=>p.classList.toggle('is-target',i===selected));
@@ -74,7 +74,7 @@
     const empty=!offers.length,poor=ctx.S.balance<ctx.D.ECONOMY.attempt;
     selected=Math.min(selected,Math.max(0,offers.length-1));
     if(reduced())x=positions(offers.length)[selected]||50;
-    root.innerHTML=`<div class="ex-arcade">${feed()}<div class="ex-machine-wrap"><div class="ex-machine" role="img" aria-label="аппарат с клешнёй и ${offers.length} подарками"><img class="ex-machine__case" src="${A('machine-empty')}" alt=""><span class="ex-machine__sign">blink express</span>${offers.map((p,i)=>`<span class="ex-machine-prize${i===selected?' is-target':''}" data-prize="${p.id}" style="--prize-x:${positions(offers.length)[i]}%"><img src="${ctx.src(p.img)}" alt="${p.title}"></span>`).join('')}<img class="ex-claw" src="${A('claw-hand')}" alt="" style="--claw-x:${x}%"></div></div><footer class="ex-arcade__footer"><p class="ex-arcade__hint">${empty?'все подарки уже твои':'останови клешню над подарком'}</p><button class="button button--primary" type="button" data-game="claw-grab" ${view==='grabbing'||empty?'disabled':''}>${view==='grabbing'?'достаём…':empty?'все подарки собраны':poor?'получить жетоны':`хватай <span>${ctx.D.ECONOMY.attempt}<img src="${A('coin')}" alt="жетонов"></span>`}</button><button class="ex-text-link" type="button" data-game="pool">все призы и правила ${icon('chevron')}</button></footer></div>`;
+    root.innerHTML=`<div class="ex-arcade">${feed()}<div class="ex-machine-wrap"><div class="ex-machine" role="img" aria-label="аппарат с клешнёй и ${offers.length} подарками"><img class="ex-machine__case" src="${A('claw-window')}" alt="">${offers.map((p,i)=>`<span class="ex-machine-prize${i===selected?' is-target':''}" data-prize="${p.id}" style="--prize-x:${positions(offers.length)[i]}%"><img src="${ctx.src(p.img)}" alt="${p.title}"></span>`).join('')}<img class="ex-claw" src="${A('claw-hand')}" alt="" style="--claw-x:${x}%"></div></div><footer class="ex-arcade__footer"><p class="ex-arcade__hint">${empty?'все подарки уже твои':'останови клешню над подарком'}</p><button class="button button--primary" type="button" data-game="claw-grab" ${view==='grabbing'||empty?'disabled':''}>${view==='grabbing'?'достаём…':empty?'все подарки собраны':poor?'получить жетоны':`хватай <span>${ctx.D.ECONOMY.attempt}<img src="${A('coin')}" alt="жетонов"></span>`}</button><button class="ex-text-link" type="button" data-game="pool">все призы и правила ${icon('chevron')}</button></footer></div>`;
     if(view==='ready')idle();
   }
   function result(){
@@ -91,7 +91,7 @@
     award=out;view='grabbing';cancelAnimationFrame(frame);
     const hand=root.querySelector('.ex-claw'),machine=root.querySelector('.ex-machine');
     hand.style.setProperty('--claw-x',`${positions(offers.length)[selected]}%`);
-    machine.style.setProperty('--grab-drop',`${machine.clientHeight*.12}px`);
+    machine.style.setProperty('--grab-drop',`${machine.clientHeight*.22}px`);
     machine.classList.add('is-grabbing');root.querySelectorAll('.ex-machine-prize')[selected].classList.add('is-caught');
     const button=root.querySelector('[data-game="claw-grab"]');button.disabled=true;button.textContent='достаём…';
     const run=generation;
@@ -119,5 +119,5 @@
     if(!atHome(c.S.today))return draw(el,c);
     el.innerHTML=`<div class="ex-draw-closed"><img src="${A('ticket')}" alt=""><h3>розыгрыш завершён</h3><p>Билеты принимались до 1 января</p><ul>${c.D.DRAW.prizes.map(p=>`<li><span>${p.title}</span><b>${c.S.draw[p.id]||0} ${c.plural(c.S.draw[p.id]||0,'билет','билета','билетов')}</b></li>`).join('')}</ul></div>`;
   };
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)G.pause();else if(root&&ctx&&window.AV?.current()==='game'){if(view==='result')result();else if(view==='ready')idle();}});
+  document.addEventListener('visibilitychange',()=>{document.querySelector('#app').toggleAttribute('data-scene-paused',document.hidden);if(document.hidden)G.pause();else if(root&&ctx&&window.AV?.current()==='game'){if(view==='result')result();else if(view==='ready')idle();}});
 })();

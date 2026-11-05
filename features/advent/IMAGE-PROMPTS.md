@@ -38,3 +38,25 @@ Constraints: this is an illustration of physical recap cards, not a UI screensho
 3. `art/machine-cutout-master.png` — background-extraction, transparent. From the empty machine master remove only the outer studio background and floor; preserve the opaque cabinet and inside chamber, exact canvas, scale, location, controls and feet. Do not crop or reframe. This is the final animated cabinet source.
 
 The full original prompts were passed to the built-in image generation tool with those constraints; no CLI/API fallback was used. Hand transparency and the aligned cabinet were visually inspected at @2x. The provided source images remain intact.
+
+
+## 05.11.2026 — композиция изнутри, вторая итерация
+
+Встроенный imagegen, без CLI/API fallback. Два производных изображения из предоставленной графики; оригиналы не изменены. PNG-мастера сохранены в `art/`, рабочие WebP пересобирает `build_advent_journey()`.
+
+- `art/winter-panorama-master.png` → `art/winter-panorama.webp`: пейзаж движется только за оконной рамой неподвижного купе
+- `art/claw-window-master.png` → `art/claw-window.webp`: полноэкранная витрина, нижняя тумба отсутствует в кадре; клешня и призы отдельные
+
+Финальные запросы:
+
+```text
+Use case: stylized-concept. Asset type: looping winter landscape seen through the window of a New Year train. Input image: style and color reference only, specifically the snowy forest OUTSIDE its window. Create a wide horizontal panorama, 3:1 aspect ratio, a blue violet winter night with snow covered pine forests, rolling distant hills and a pale dusky sky. Match exactly the supplied soft low-poly voxel-like painted 3D style, muted indigo atmosphere and snow texture. Horizon near the middle, a few large snow-laden pines in the foreground, smaller pines in the distance. Left and right ends should join seamlessly for a scrolling loop; similar lighting and horizon height at both edges. This is ONLY the exterior landscape, no train interior, no window frames, no glass, no furniture, no typography, no UI, no logos. Avoid yellow highlights or holiday ornaments. The landscape fills the entire image.
+```
+
+Reference: `art/train-window.webp`, generated source `exec-87aeb000-7b28-4424-a78c-329382bda4a0.png`.
+
+```text
+Use case: precise-object-edit. Asset type: full-screen portrait background for the glass window of this exact blue claw arcade machine. Input image is the edit target and material/style reference. Move the camera very close to the upper glass chamber, frontal and centered. The glass chamber takes almost the entire tall image: roughly 85 percent width and 78 percent height, with narrow blue painted metal side pillars and warm brass inner frame at the edges. Keep the distinctive blue enamel, bronze trim, angular soft 3D render, warm ceiling lighting and blue back panels from the supplied cabinet. Top 10 percent is a simple blue metal fascia, bottom 12 percent a plain blue thin lip for app controls. The floor of the glass chamber is around 82 percent image height, the inner ceiling around 15 percent. The bottom cabinet, legs, delivery slot, joystick, red button and coin slot must all be OUTSIDE the crop, completely invisible. Empty chamber, no claw, no prizes; these will be animated separately in the app. No words, no logos, no UI, no transparency, no external scene, no outer margin. Tall portrait 2:3 framing. The image must fill the whole canvas edge to edge with the machine window.
+```
+
+Edit target: `art/machine-empty.webp`, generated source `exec-7842cbe5-3171-464e-a4e8-4e601cf541ac.png`. Оба результата визуально проверены перед включением в композицию.

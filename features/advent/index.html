@@ -47,9 +47,13 @@
 
           <!-- ── 1. Адвент: календарь ─────────────────────────────────── -->
           <section class="screen av-screen av-home" id="screen-home" aria-labelledby="home-title">
-            <img class="ex-home-scene" id="home-scene" src="art/train-window.webp" alt="">
-  <canvas class="av-sky" id="sky" aria-hidden="true"></canvas>
             <div class="screen__scroll av-home__scroll" id="home-scroll">
+              <div class="ex-cabin">
+                <img class="ex-home-scene" id="home-scene" src="art/train-window.webp" alt="">
+                <div class="ex-cabin__window" aria-hidden="true">
+                  <div class="ex-cabin__landscape"><img src="art/winter-panorama.webp" alt=""><img src="art/winter-panorama.webp" alt=""></div>
+                  <canvas class="av-sky" id="sky"></canvas>
+                </div>
               <header class="av-bar">
                 <button class="icon-button icon-button--header av-bar__back pressable" type="button" aria-label="назад" data-act="exit">
                   <i class="icon icon--back" aria-hidden="true"></i>
@@ -62,6 +66,8 @@
               </header>
               <section class="av-today" id="home-today" aria-labelledby="today-title"></section>
               <nav class="av-entries" id="home-entries" aria-label="занятия в поездке"></nav>
+              </div>
+              <div class="ex-home-content">
               <section class="av-calendar" aria-labelledby="calendar-title">
                 <header class="av-calendar__head"><h2 id="calendar-title">остановки маршрута</h2><button class="ex-calendar-switch pressable" type="button" id="calendar-switch" hidden>2026</button></header>
                 <div id="calendar"></div>
@@ -70,6 +76,7 @@
                 <h2 class="av-home-tasks__title" id="today-tasks-title">задания на сегодня</h2>
                 <div id="home-task-list"></div>
               </section>
+              </div>
             </div>
 
           </section>

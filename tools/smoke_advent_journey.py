@@ -11,7 +11,13 @@ def check_feature(browser,port,errors,check):
     base=f'http://127.0.0.1:{port}/features/advent/'
     page.goto(base+'?state=home-first');page.evaluate('document.fonts.ready')
     js=page.evaluate
-    check('first stop uses the supplied train art and journal',page.locator('#home-scene').get_attribute('src').endswith('train-exterior.webp') and page.locator('.ex-daily__base').get_attribute('src').endswith('journal.webp'))
+    check('first stop uses the supplied train interior and journal',page.locator('#home-scene').get_attribute('src').endswith('train-window.webp') and page.locator('.ex-daily__base').get_attribute('src').endswith('journal.webp'))
+    check('cabin is an interior scene with the journal on its table',page.locator('.ex-cabin').evaluate('e=>e.clientHeight>=document.querySelector("#app").clientHeight*.85') and page.locator('.ex-daily__art').evaluate('e=>{const art=e.getBoundingClientRect(),scene=e.closest(".ex-cabin").getBoundingClientRect();return art.top>scene.top+scene.height*.5&&art.bottom<scene.top+scene.height*.77;}'))
+    moving=page.locator('.ex-cabin__landscape').evaluate('e=>getComputedStyle(e).transform');page.wait_for_timeout(160)
+    check('landscape moves only inside the cabin window',moving!=page.locator('.ex-cabin__landscape').evaluate('e=>getComputedStyle(e).transform') and page.locator('#sky').evaluate('e=>e.closest(".ex-cabin__window")!==null'))
+    page.emulate_media(reduced_motion='reduce')
+    check('reduced motion stops the passing landscape',page.locator('.ex-cabin__landscape').evaluate('e=>getComputedStyle(e).animationName=="none"'))
+    page.emulate_media(reduced_motion='no-preference')
     check('new entry is a claw machine, not a wheel',page.locator('[data-go="game"].av-entry').inner_text().startswith('хваталка') and not page.locator('.nw-wheel,.av-frost,.av-cell__ice').count())
     check('route has 18 December stops with dates below their luggage',page.locator('#calendar [data-day]').count()==18 and page.locator('#calendar .av-cell').evaluate_all('els=>els.every(e=>e.querySelector(".av-cell__date").getBoundingClientRect().top>=e.querySelector(".av-cell__art").getBoundingClientRect().bottom)'))
     check('phone content contains no technical or demo labels',not page.locator('#app').evaluate('e=>/демо|dev.?ready|smoke|prototype|placeholder|служебн/iu.test(e.innerText)'))
@@ -31,6 +37,7 @@ def check_feature(browser,port,errors,check):
     page.locator('[data-go="game"].av-entry').click();page.wait_for_timeout(350)
     check('machine shows three unique unowned gifts and recent wins',page.locator('.ex-machine-prize').count()==3 and js('new Set(AV_GAME.state().offers).size')==3 and page.locator('.ex-feed__item').count()>0)
     pos1=js('AV_GAME.state().x');page.wait_for_timeout(250);pos2=js('AV_GAME.state().x')
+    check('close-up chamber fills the entire phone without the lower cabinet',page.locator('.ex-machine__case').get_attribute('src').endswith('claw-window.webp') and page.locator('.ex-machine').evaluate('e=>{const r=e.getBoundingClientRect(),a=document.querySelector("#app").getBoundingClientRect();return Math.abs(r.width-a.width)<1&&Math.abs(r.height-a.height)<1;}'))
     check('claw moves and keeps waiting without charging',abs(pos2-pos1)>1 and js('AV.S.balance')==60 and js('AV_GAME.state().view')=='ready')
     slots=js('AV_GAME.state().offers');before=js('[AV.S.balance,AV.S.taken.length,AV.S.tickets]')
     page.locator('[data-game="claw-grab"]').click()
@@ -51,7 +58,7 @@ def check_feature(browser,port,errors,check):
     js("AV.showState('claw-poor')")
     check('insufficient balance offers tasks',page.locator('[data-game="claw-grab"]').inner_text()=='ПОЛУЧИТЬ ЖЕТОНЫ')
     page.locator('[data-game="claw-grab"]').click()
-    check('earning tokens returns to visible home tasks',js('AV.current()')=='home' and page.locator('#home-tasks').is_visible())
+    check('earning tokens returns to visible home tasks',js('AV.current()')=='home' and page.locator('#home-tasks').evaluate('e=>{const r=e.getBoundingClientRect();return r.top>=0&&r.top<innerHeight-100;}'))
     page.emulate_media(reduced_motion='reduce')
     js("AV.showState('claw-first');AV.S.balance=AV.D.POOL.length*30")
     collected=[];valid=True
@@ -80,6 +87,7 @@ def check_feature(browser,port,errors,check):
     check('December 31 still has active claw and raffle entrances',js('document.querySelector("#app").dataset.phase')=='train' and page.locator('.av-entry[data-go="game"]').count()==1 and page.locator('.av-entry[data-go="draw"]').count()==1)
     page.locator('[data-panel="next"]').click()
     check('January 1 changes to the fireplace and eleven January dates',js('AV.S.today')==18 and js('document.querySelector("#app").dataset.phase')=='home' and page.locator('#home-scene').get_attribute('src')=='art/living-room.webp' and page.locator('#calendar [data-day]').count()==11)
+    check('room leaves the fireplace visible without a moving train window',not page.locator('.ex-cabin__window').is_visible() and page.locator('.ex-daily__base').evaluate('e=>getComputedStyle(e).visibility=="hidden"'))
     check('January hides active games and token tasks',not page.locator('.av-entry[data-go="game"],.av-entry[data-go="draw"]').count() and not page.locator('#home-tasks').is_visible() and js('AV.S.days[18].login')!='claimed')
     balance=js('AV.S.balance');js('AV.completeTask("login");AV.completeTask("task");AV.completeTask("share")')
     check('January completion events cannot issue gaming currency',js('AV.S.balance')==balance)
@@ -109,10 +117,12 @@ def check_feature(browser,port,errors,check):
             fit=js('document.documentElement.scrollWidth<=innerWidth')
             if js('AV.current()')=='game':
                 fit=fit and page.locator('#game').evaluate('e=>e.scrollHeight<=e.clientHeight+1') and page.locator('#game button.button').evaluate('e=>{const r=e.getBoundingClientRect();return r.bottom<=innerHeight&&r.top>=0;}')
+                if state in ['claw-first','claw-poor','claw-empty']:
+                    fit=fit and page.locator('.ex-machine-prize').evaluate_all('els=>els.every(e=>{const r=e.getBoundingClientRect(),f=document.querySelector(".ex-arcade__footer").getBoundingClientRect();return r.bottom<=f.top+1;})')
             if js('AV.current()')=='draw' and not state.endswith('closed'):
                 fit=fit and page.locator('.avd-cta').evaluate('e=>e.getBoundingClientRect().bottom<=innerHeight')
             if state.startswith('home') or state=='arrival':
-                fit=fit and page.locator('.av-today__open').evaluate('e=>e.getBoundingClientRect().bottom<innerHeight') and page.locator('.av-entry__title').evaluate_all('els=>els.every(e=>e.scrollWidth<=e.clientWidth+1)')
+                fit=fit and page.locator('.av-today__open').evaluate('e=>e.getBoundingClientRect().bottom<innerHeight') and page.locator('.av-entry__title,.av-entry__meta').evaluate_all('els=>els.every(e=>e.scrollWidth<=e.clientWidth+1)') and page.locator('#home-title').evaluate('e=>{const r=e.getBoundingClientRect(),b=e.parentElement.querySelector(".av-balance").getBoundingClientRect();return r.right<=b.left||getComputedStyle(e.parentElement.querySelector(".av-balance")).visibility=="hidden";}')
             check(f'{state} fits {w}x{h}',fit)
     page.set_viewport_size({'width':390,'height':844})
     every=True;illustrations=set()

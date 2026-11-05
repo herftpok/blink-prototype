@@ -4,6 +4,8 @@
 
 Текущий сценарий, экономика, границы интеграции и проверка — [NEW-YEAR.md](NEW-YEAR.md).
 
+Композиция изнутри: с первого дня — купе с проезжающим за окном лесом и дневником на столике. В январе — комната с камином и печеньем на столе. Календарь и задания идут ниже сцены. Хваталка показана крупным планом на весь телефон, нижняя часть аппарата остаётся за кадром. Слои сцены и их происхождение — [IMAGE-PROMPTS.md](IMAGE-PROMPTS.md).
+
 - [Начало поездки](https://herftpok.github.io/blink-prototype/features/advent/?state=home-first)
 - [В вагоне](https://herftpok.github.io/blink-prototype/features/advent/?state=home)
 - [Хваталка](https://herftpok.github.io/blink-prototype/features/advent/?state=claw-first)
