@@ -258,7 +258,7 @@ window.AV_DATA = (() => {
   });
 
   /* За 30 снежинок – один подарок сразу. Три раунда в день. */
-  const ECONOMY = { login: 30, share: 30, attempt: 30, attemptsPerDay: 3 };
+  const ECONOMY = { login: 30, memory: 30, share: 30, attempt: 30, attemptsPerDay: 3 };
 
   /* ── коллекция подарков: у каждого свой пул, 16 штук, без повторов ──
      tier: common 8 · rare 6 · epic 1 · legend 1. Выдаются по одному из оставшихся за каждый раунд */

@@ -126,7 +126,7 @@
         seen: !missed && R() < 0.85,
       };
     });
-    S.days.forEach((state,i) => { if (J.atHome(i)) { state.login="missed"; state.task="missed"; state.share="missed"; state.cracked=state.seen; } });
+    S.days.forEach((state,i) => { state.memory = i < todayIdx ? (state.seen ? "claimed" : "missed") : "todo"; if (J.atHome(i)) { state.memory="missed"; state.login="missed"; state.task="missed"; state.share="missed"; state.cracked=state.seen; } });
     let earned = 0;
     S.days.forEach((d, i) => {
       if (J.atHome(i)) return;
@@ -134,6 +134,7 @@
       if (d.login === "claimed") earned += D.ECONOMY.login;
       if (d.task === "claimed") earned += D.DAYS[i].task.reward * k;
       if (d.share === "claimed") earned += D.ECONOMY.share;
+      if (d.memory === "claimed") earned += D.ECONOMY.memory;
     });
     S.taken = [];
     S.scoreRewards = {};
@@ -180,7 +181,7 @@
 
   function anim(el, frames, opts) {
     if (!el) return Promise.resolve();
-    const a = el.animate(frames, { duration: reduced() ? 1 : 280, easing: EASE, fill: "both", ...opts });
+    const a = el.animate(frames, { duration: 280, easing: EASE, fill: "both", ...opts, ...(reduced() ? { duration: 1, delay: 0 } : {}) });
     return a.finished.then(() => a);
   }
 
@@ -352,6 +353,7 @@
     busy = true;
     const from = current();
     if (!D.DAYS[currentDay].prediction || S.days[currentDay].cracked) S.days[currentDay].seen = true;
+    if (!D.DAYS[currentDay].prediction) completeTask("memory", currentDay, { animate: false, refresh: false });
     renderStat();
     show("stat");
     stack.push("stat");
@@ -380,7 +382,8 @@
     await anim(screens.stat, prediction ? [{ opacity: 1 }, { opacity: 0 }] : [{ transform: "translateY(0)" }, { transform: "translateY(100%)" }], { duration: prediction ? 240 : 320 }).then((a) => a.cancel());
     screens.stat.hidden = true;
     busy = false;
-    focusScreen(back);
+    if (back === "home" && !prediction && document.documentElement.classList.contains("kb")) $("#home-tasks [data-act='task-memory']")?.focus({ preventScroll: true });
+    else focusScreen(back);
   }
 
   function openTodayStat() {
@@ -400,7 +403,7 @@
   /** Сколько заданий дня ещё не выполнено. */
   function waiting(i) {
     const d = S.days[i];
-    return ["login", "task", "share"].filter((k) => d[k] === "todo" || d[k] === "done").length;
+    return ["memory", "task", "share"].filter((k) => d[k] === "todo" || d[k] === "done").length;
   }
 
   function renderHome() {
@@ -408,11 +411,15 @@
     app.dataset.phase = home ? "home" : "train";
     $("#home-scene").src = J.A(home ? "living-room" : "train-window");
     $("#home-title").textContent = "новый год";
+    $("#home-today").hidden = !home;
     $("#home-today").classList.toggle("is-seen", seen);
     $("#home-today").innerHTML = J.hero({ day, i: S.today, seen, src });
+    // The train uses a compact task panel; the room keeps its existing scene controls.
+    if (home) $(".ex-cabin").append($("#home-entries"));
+    else $("#home-tasks").after($("#home-entries"));
     $("#home-entries").innerHTML = J.entries(S, D, plural);
     $("#home-tasks").hidden = home;
-    $("#home-task-list").innerHTML = home ? "" : tasksMarkup(S.today);
+    $("#home-task-list").innerHTML = home ? "" : tasksMarkup(S.today, { home: true });
     renderCalendar();
     renderBalance();
   }
@@ -472,40 +479,41 @@
   function taskRows(day) {
     const k = day.task.boost || 1;
     return [
+      { key: "memory", title: "воспоминание дня", description: "твоя статистика за 2026", reward: D.ECONOMY.memory },
       { key: "login", title: "ежедневный вход", description: "просто открой blink", instruction: "жетоны начисляются за первый вход в blink за день", reward: D.ECONOMY.login },
       { key: "task", title: day.task.title, description: day.task.description, instruction: day.task.instruction, reward: day.task.reward * k },
       { key: "share", title: day.prediction ? "поделись предсказанием" : "поделись карточкой", description: "открой карточку и отправь её в сторис", instruction: day.prediction ? "открой предсказание, разломи печенье и нажми «поделиться». Отправь карточку в сторис." : "открой сегодняшнюю карточку, нажми «поделиться» и отправь её в сторис", reward: D.ECONOMY.share },
     ];
   }
 
-  function tasksMarkup(i) {
+  function tasksMarkup(i, { home = false } = {}) {
     const flake = `<img class="av-task__flake" src="art/coin.webp" alt="жетонов">`;
-    return `<ul class="av-tasks">${taskRows(D.DAYS[i]).map((r) => taskRow(r, S.days[i][r.key], flake, i)).join("")}</ul>`;
+    const rows = taskRows(D.DAYS[i]).filter(r => !home || r.key !== "login");
+    return `<ul class="av-tasks">${rows.map(r => taskRow(r, S.days[i][r.key], flake, i)).join("")}</ul>`;
   }
 
   function taskRow(r, state, flake, i) {
-    const done = state === "claimed";
+    const done = state === "claimed", memory = r.key === "memory", seen = S.days[i].seen;
     const available = i === S.today && state !== "missed";
-    const status = done
-      ? '<span class="av-task__state" role="img" aria-label="выполнено"><i class="icon icon--check" aria-hidden="true"></i></span>'
-      : "";
-    const action = available
-      ? `<button class="av-task__info pressable" type="button" data-task-help="${r.key}" data-task-day="${i}" aria-label="инструкция: ${r.title}">инструкция<i class="icon icon--chevron" aria-hidden="true"></i></button>`
-      : '<span class="av-task__expired">день прошёл</span>';
-    return `<li class="av-task${done ? " is-done" : ""}" data-row="${r.key}">
-      <div class="av-task__header">
-        <span class="av-task__heading"><span class="av-task__text">${r.title}</span>${status}</span>
-        <span class="av-task__reward"><span>${r.reward}</span>${flake}</span>
+    const status = done ? '<span class="av-task__state" role="img" aria-label="выполнено"><i class="icon icon--check" aria-hidden="true"></i></span>' : "";
+    const action = memory && i <= S.today
+      ? `<button class="button ${seen ? "button--secondary" : "button--primary"} av-task__watch pressable" type="button" data-act="task-memory" data-task-day="${i}" aria-label="${seen ? "посмотреть статистику ещё раз" : "смотреть статистику дня"}">${seen ? "ещё раз" : "смотреть"}</button>`
+      : available && !done ? `<button class="av-task__info pressable" type="button" data-task-help="${r.key}" data-task-day="${i}" aria-label="инструкция: ${r.title}">инструкция<i class="icon icon--chevron" aria-hidden="true"></i></button>`
+      : !done ? '<span class="av-task__expired">день прошёл</span>' : "";
+    return `<li class="av-task${memory ? " av-task--memory" : ""}${done ? " is-done" : ""}" data-row="${r.key}">
+      <div class="av-task__copy"><span class="av-task__heading"><span class="av-task__text">${r.title}</span>${status}</span>
+        ${!done || memory ? `<span class="av-task__description">${memory && seen ? "карточка просмотрена" : r.description}</span>` : ""}
       </div>
-      ${done ? "" : `<div class="av-task__body"><span class="av-task__description">${r.description}</span>${action}</div>`}
+      <div class="av-task__side"><span class="av-task__reward"><span>${r.reward}</span>${flake}</span>${action}</div>
     </li>`;
   }
 
   /** Завершение приходит от действия, а не от открытия инструкции. Состояние и баланс меняются атомарно. */
   function completeTask(key, i = S.today, { animate = true, refresh = true } = {}) {
-    if (!["login", "task", "share"].includes(key) || i !== S.today || J.atHome(i)) return false;
+    if (!["login", "memory", "task", "share"].includes(key) || i !== S.today || J.atHome(i)) return false;
     const state = S.days[i];
     if (!state || state[key] === "claimed" || state[key] === "missed") return false;
+    if (key === "memory" && !state.seen) return false;
     const amount = taskRows(D.DAYS[i]).find((r) => r.key === key).reward;
     state[key] = "claimed";
     S.balance += amount;
@@ -519,7 +527,7 @@
       target.classList.add("is-bump");
     });
     if (refresh) {
-      $("#home-task-list").innerHTML = tasksMarkup(S.today);
+      $("#home-task-list").innerHTML = tasksMarkup(S.today, { home: true });
       if (current() === "day") renderDay();
       if (openSheetName === "task") renderTaskHelp();
       const cell = $(`.av-cell[data-day="${i}"]`);
@@ -698,7 +706,7 @@
     if (was === "intro") {
       S.introSeen = true;
       try { localStorage.setItem(INTRO_KEY, "1"); } catch { /* In-memory state still prevents repeat onboarding. */ }
-      if (!silent) $("#home-today [data-act='open-today']")?.focus({ preventScroll: true });
+      if (!silent) $("#home-tasks [data-act='task-memory']")?.focus({ preventScroll: true });
     }
     if (was !== "intro" && !silent && sheetReturn && document.contains(sheetReturn)) sheetReturn.focus({ preventScroll: true });
     if (was === "prize") window.AV_GAME.afterPrize(gameCtx());
@@ -778,6 +786,12 @@
     }
     if (t.dataset.act === "journey-collection") return openSheet("pool");
     if (t.dataset.act === "intro-done") return closeSheet();
+    if (t.dataset.act === "task-memory") {
+      const i = Number(t.dataset.taskDay);
+      if (busy || t.closest(".av-screen") !== screens[current()] || !Number.isInteger(i) || !D.DAYS[i] || i > S.today || J.atHome(i)) return;
+      currentDay = i;
+      return openStat();
+    }
     if (t.dataset.act === "open-today") return openTodayStat();
     if (t.dataset.go === "game") return push("game");
     if (t.dataset.push === "garland") {
@@ -935,7 +949,7 @@
       case "intro": resetTo(0); S.introSeen = false; openSheet("intro"); break;
       case "train": case "journey-first": case "home-first": resetTo(0); if (!S.introSeen) openSheet("intro"); break;
       case "home-ready": resetTo(0); break;
-      case "home-seen": resetTo(0); S.days[0].seen = true; renderHome(); break;
+      case "home-seen": resetTo(0); S.days[0].seen = true; completeTask("memory", 0, { animate: false, refresh: false }); renderHome(); break;
       case "home": resetTo(8); break;
       case "fireside": case "home-late": resetTo(dayIdx("05.01")); break;
       case "claw-grabbing":

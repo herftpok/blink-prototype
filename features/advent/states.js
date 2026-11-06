@@ -39,8 +39,8 @@ export const GROUPS = [
 export const STATES = [
   { id: "intro", group: "calendar", title: "первое знакомство", text: "объяснение только в первый день; после закрытия не повторяется" },
   { id: "home-first", group: "calendar", title: "первый день", text: "14.12: доступен первый день" },
-  { id: "home-ready", group: "calendar", title: "купе после онбординга", text: "открытка на столике открывает воспоминание дня" },
-  { id: "home-seen", group: "calendar", title: "факт просмотрен", text: "отметка просмотра и повторный вход в карточку" },
+  { id: "home-ready", group: "calendar", title: "купе после онбординга", text: "задания под окном; «смотреть» открывает статистику и начисляет жетоны" },
+  { id: "home-seen", group: "calendar", title: "факт просмотрен", text: "задание выполнено; «ещё раз» без новой награды" },
   { id: "home", group: "calendar", title: "конец декабря", text: "22.12: точки – непросмотренные дни, даты под предметами" },
   { id: "arrival", group: "calendar", title: "1 января — дома", text: "гостиная с камином, поездка завершена" },
   { id: "fireside-seen", group: "calendar", title: "предсказание прочитано", text: "повторный просмотр без новой награды" },

@@ -22,6 +22,7 @@
 
 <link rel="stylesheet" href="av-home.css">
 <link rel="stylesheet" href="av-journey.css">
+<link rel="stylesheet" href="av-tasks.css">
 </head>
 <body>
 <div class="stage">
@@ -65,16 +66,16 @@
                 </button>
               </header>
               <section class="av-today" id="home-today" aria-labelledby="today-title"></section>
-              <nav class="av-entries" id="home-entries" aria-label="занятия в поездке"></nav>
               </div>
               <div class="ex-home-content">
-              <section class="av-calendar" aria-labelledby="calendar-title">
-                <header class="av-calendar__head"><h2 id="calendar-title">остановки маршрута</h2><button class="ex-calendar-switch pressable" type="button" id="calendar-switch" hidden>2026</button></header>
-                <div id="calendar"></div>
-              </section>
               <section class="av-home-tasks" id="home-tasks" aria-labelledby="today-tasks-title">
                 <h2 class="av-home-tasks__title" id="today-tasks-title">задания на сегодня</h2>
                 <div id="home-task-list"></div>
+              </section>
+              <nav class="av-entries" id="home-entries" aria-label="занятия в поездке"></nav>
+              <section class="av-calendar" aria-labelledby="calendar-title">
+                <header class="av-calendar__head"><h2 id="calendar-title">остановки маршрута</h2><button class="ex-calendar-switch pressable" type="button" id="calendar-switch" hidden>2026</button></header>
+                <div id="calendar"></div>
               </section>
               </div>
             </div>
@@ -168,9 +169,9 @@
 
           <div class="sheet av-sheet ex-intro" id="sheet-intro" role="dialog" aria-modal="true" aria-labelledby="intro-title" tabindex="-1">
             <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div></div>
-            <img class="ex-intro__art" src="art/train-exterior.webp" alt="">
+            <img class="ex-intro__art" src="art/train-window.webp" alt="">
             <h2 class="sheet__title" id="intro-title">каждый день – новый факт о тебе</h2>
-            <p class="sheet__text">вспоминай свой 2026 по дороге к новому году</p>
+            <p class="sheet__text">смотри статистику в заданиях и получай жетоны для хваталки</p>
             <button class="button button--primary pressable" type="button" data-act="intro-done">поехали</button>
           </div>
 
