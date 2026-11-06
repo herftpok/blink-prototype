@@ -1,5 +1,7 @@
 """Express → fireside transition, atomic claw awards, raffle and daily memories."""
 from pathlib import Path
+from io import BytesIO
+from PIL import Image
 from compare import serve
 from playwright.sync_api import sync_playwright
 
@@ -20,7 +22,7 @@ def check_feature(browser,port,errors,check):
     check('main screen has no title, stop counter, diary or repeated introduction',page.locator('#home-title').evaluate('e=>e.classList.contains("visually-hidden")') and not page.locator('#screen-home .ex-daily__chapter,#screen-home img[src*="journal"]').count() and 'каждый день' not in page.locator('#home-today').inner_text())
     check('scenery has no postcard or hidden window gesture',not page.locator('.ex-postcard,.ex-memory-window').count() and not page.locator('#home-today').is_visible() and page.locator('#home-scene').get_attribute('src').endswith('train-window.webp'))
     check('viewing statistics is the first explicit task',page.locator('#home-tasks [data-row]').first.get_attribute('data-row')=='memory' and page.locator('#home-tasks [data-act="task-memory"]').inner_text()=='СМОТРЕТЬ' and not js('AV.S.days[0].seen'))
-    check('tasks are raised into the first screen and calendar follows prize entries',page.locator('#home-tasks').bounding_box()['y']<844*.5 and page.locator('#home-entries').bounding_box()['y']>page.locator('#home-tasks').bounding_box()['y'] and page.locator('.av-calendar').bounding_box()['y']>page.locator('#home-entries').bounding_box()['y'])
+    check('table and benches remain above the task panel, calendar follows prize entries',page.locator('#home-tasks').evaluate('e=>{const c=document.querySelector(".ex-cabin").getBoundingClientRect(),r=e.getBoundingClientRect();return r.top>=c.top+c.height*.74&&r.top<innerHeight*.72;}') and page.locator('#home-entries').bounding_box()['y']>page.locator('#home-tasks').bounding_box()['y'] and page.locator('.av-calendar').bounding_box()['y']>page.locator('#home-entries').bounding_box()['y'])
     check('interface blends into the train with a non-interactive gradient',page.locator('.ex-home-content').evaluate('e=>getComputedStyle(e,"::before").backgroundImage.includes("linear-gradient")&&getComputedStyle(e,"::before").pointerEvents==="none"'))
     js('AV.completeTask("memory")')
     check('an external event cannot award an unread memory',js('AV.S.days[0].memory')=='todo' and js('AV.S.balance')==30)
@@ -29,6 +31,14 @@ def check_feature(browser,port,errors,check):
     page.emulate_media(reduced_motion='reduce')
     check('reduced motion stops the passing landscape',page.locator('.ex-cabin__landscape').evaluate('e=>getComputedStyle(e).animationName=="none"'))
     page.emulate_media(reduced_motion='no-preference')
+    route=[]
+    for day in range(18):
+        js(f'AV.resetTo({day})')
+        page.wait_for_function('[...document.querySelectorAll(".ex-cabin__landscape img")].every(i=>i.complete&&i.naturalWidth>0)')
+        route.append(page.locator('.ex-cabin__landscape img').first.get_attribute('src'))
+    check('all 18 December dates have a stable view that changes each day',len(set(route))==7 and all(a!=b for a,b in zip(route,route[1:])) and all(route[i]==js(f'AV_JOURNEY.landscape({i})') for i in range(18)))
+    check('six generated panoramas match the original landscape proportions',page.locator('.ex-cabin__landscape img').evaluate_all('els=>els.length==3&&els.every(i=>Math.abs(i.naturalWidth/i.naturalHeight-3)<.02)') and page.locator('.ex-cabin__landscape img').nth(1).evaluate('e=>getComputedStyle(e).transform.startsWith("matrix(-1")'))
+    js("AV.showState('home-ready')")
     check('new entry is a claw machine, not a wheel',page.locator('[data-go="game"].av-entry').inner_text().startswith('хваталка') and not page.locator('.nw-wheel,.av-frost,.av-cell__ice').count())
     check('route has 18 December stops with dates below their luggage',page.locator('#calendar [data-day]').count()==18 and page.locator('#calendar .av-cell').evaluate_all('els=>els.every(e=>e.querySelector(".av-cell__date").getBoundingClientRect().top>=e.querySelector(".av-cell__art").getBoundingClientRect().bottom)'))
     check('phone content contains no technical or demo labels',not page.locator('#app').evaluate('e=>/демо|dev.?ready|smoke|prototype|placeholder|служебн/iu.test(e.innerText)'))
@@ -52,6 +62,10 @@ def check_feature(browser,port,errors,check):
     page.locator('[data-go="game"].av-entry').click();page.wait_for_timeout(350)
     check('ready claw has no prize choices or winners feed',not page.locator('.ex-machine-prize,.ex-feed,.ex-caught-prize').count() and page.locator('[data-game="claw-grab"]').inner_text().startswith('СХВАТИТЬ'))
     check('glass chamber fills the phone and shows a separate arcade carriage',page.locator('.ex-machine__case').get_attribute('src').endswith('claw-frame.webp') and page.locator('.ex-machine__car').get_attribute('src').endswith('arcade-car.webp') and page.locator('.ex-machine').evaluate('e=>{const r=e.getBoundingClientRect(),a=document.querySelector("#app").getBoundingClientRect();return Math.abs(r.width-a.width)<1&&Math.abs(r.height-a.height)<1;}'))
+    check('claw title is visually hidden and both controls sit on the cabinet console',page.locator('#game-title').evaluate('e=>e.classList.contains("visually-hidden")') and page.locator('.ex-machine__console').evaluate('e=>{const p=e.getBoundingClientRect();return [...document.querySelectorAll(".ex-arcade__footer button")].every(b=>{const r=b.getBoundingClientRect();return r.top>=p.top&&r.bottom<=p.bottom&&r.left>=p.left&&r.right<=p.right;});}'))
+    chamber=Image.open(BytesIO(page.locator('.ex-machine').screenshot())).convert('RGB')
+    dark=chamber.getpixel((round(chamber.width*.25),round(chamber.height*.73)))
+    check('the lower chamber is dark and the claw fades into its depth',sum(dark)/3<55 and page.locator('.ex-machine__depth').evaluate('e=>getComputedStyle(e).maskImage.includes("linear-gradient")'))
     page.wait_for_timeout(250)
     check('waiting does not charge or choose a prize',js('AV.S.balance')==90 and js('AV_GAME.state().view')=='ready' and js('AV_GAME.state().award') is None)
     available=js('AV.D.POOL.filter(p=>!AV.S.taken.includes(p.id)).map(p=>p.id)');before=js('[AV.S.balance,AV.S.taken.length,AV.S.tickets]')
@@ -147,6 +161,8 @@ def check_feature(browser,port,errors,check):
             fit=js('document.documentElement.scrollWidth<=innerWidth')
             if js('AV.current()')=='game':
                 fit=fit and page.locator('#game').evaluate('e=>e.scrollHeight<=e.clientHeight+1') and page.locator('#game button.button').evaluate('e=>{const r=e.getBoundingClientRect();return r.bottom<=innerHeight&&r.top>=0;}')
+                if page.locator('.ex-machine__console').count():
+                    fit=fit and page.locator('.ex-machine__console').evaluate('e=>{const p=e.getBoundingClientRect();return [...document.querySelectorAll(".ex-arcade__footer button")].every(b=>{const r=b.getBoundingClientRect();return r.top>=p.top&&r.bottom<=p.bottom;});}')
             if js('AV.current()')=='draw' and not state.endswith('closed'):
                 fit=fit and page.locator('.avd-cta').evaluate('e=>e.getBoundingClientRect().bottom<=innerHeight')
             if state.startswith('home') or state=='arrival':

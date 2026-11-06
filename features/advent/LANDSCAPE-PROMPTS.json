@@ -1,0 +1,52 @@
+{
+  "mode": "built-in imagegen",
+  "date": "2026-11-06",
+  "references": [
+    "art/winter-panorama.webp",
+    "art/train-window.webp"
+  ],
+  "items": [
+    {
+      "name": "mountains",
+      "master": "art/winter-mountains-master.png",
+      "webp": "art/winter-mountains.webp",
+      "source": "exec-986beacb-171c-4e74-928e-df1bf37d2aab.png",
+      "prompt": "Use case: style-transfer. Asset type: a horizontal 3:1 winter panorama for a slowly moving train-window view in a mobile app. Input image 1 is the landscape variation target; image 2 is only the cabin style/color reference. Replace the outdoor environment of image 1 with the scene described below while retaining the exact soft low-poly, slightly voxel-like painted 3D style, snowy material, muted indigo/violet/blue palette and cozy toy proportions. Wide landscape 3:1 composition, horizon around the middle, readable subjects through a small window crop anywhere across the width. Similar horizon, color and foreground height at both left/right edges so a slow repeating horizontal pan has no obvious hard seam. Full bleed scenery only. No train, tracks in the foreground, windows, frames, interior, foreground glass reflections, UI, lettering, logos, people, labels, watermark or collage. Do not copy the forest composition: this must be a clearly different place. Snowy twilight/night with restrained warm accents only where natural.\nScene: Broad snowy alpine peaks with faceted indigo silhouettes, a deep valley and a few small snow-laden firs in the foreground. Pale violet dusk sky, crisp snow ridges. Mountain range is the main subject; no lake or village."
+    },
+    {
+      "name": "lake",
+      "master": "art/winter-lake-master.png",
+      "webp": "art/winter-lake.webp",
+      "source": "exec-5a126b29-7b78-48e9-9960-d7dd4e44ec47.png",
+      "prompt": "Use case: style-transfer. Asset type: a horizontal 3:1 winter panorama for a slowly moving train-window view in a mobile app. Input image 1 is the landscape variation target; image 2 is only the cabin style/color reference. Replace the outdoor environment of image 1 with the scene described below while retaining the exact soft low-poly, slightly voxel-like painted 3D style, snowy material, muted indigo/violet/blue palette and cozy toy proportions. Wide landscape 3:1 composition, horizon around the middle, readable subjects through a small window crop anywhere across the width. Similar horizon, color and foreground height at both left/right edges so a slow repeating horizontal pan has no obvious hard seam. Full bleed scenery only. No train, tracks in the foreground, windows, frames, interior, foreground glass reflections, UI, lettering, logos, people, labels, watermark or collage. Do not copy the forest composition: this must be a clearly different place. Snowy twilight/night with restrained warm accents only where natural.\nScene: A wide frozen alpine lake with textured blue ice and soft snowbanks, distant low hills and a sparse line of dark firs. Quiet violet blue winter evening, delicate silvery moonlit reflection across ice, no big foreground trees blocking the lake."
+    },
+    {
+      "name": "village",
+      "master": "art/winter-village-master.png",
+      "webp": "art/winter-village.webp",
+      "source": "exec-c19c9179-aff4-4aac-9084-fead4d71be87.png",
+      "prompt": "Use case: style-transfer. Asset type: a horizontal 3:1 winter panorama for a slowly moving train-window view in a mobile app. Input image 1 is the landscape variation target; image 2 is only the cabin style/color reference. Replace the outdoor environment of image 1 with the scene described below while retaining the exact soft low-poly, slightly voxel-like painted 3D style, snowy material, muted indigo/violet/blue palette and cozy toy proportions. Wide landscape 3:1 composition, horizon around the middle, readable subjects through a small window crop anywhere across the width. Similar horizon, color and foreground height at both left/right edges so a slow repeating horizontal pan has no obvious hard seam. Full bleed scenery only. No train, tracks in the foreground, windows, frames, interior, foreground glass reflections, UI, lettering, logos, people, labels, watermark or collage. Do not copy the forest composition: this must be a clearly different place. Snowy twilight/night with restrained warm accents only where natural.\nScene: A small cozy snow-covered village of several varied wooden houses and a tiny church-like steep-roofed hall nestled among firs. Warm amber windows and restrained festive string lights. Buildings spaced horizontally at different depths. Blue-violet night; no readable signage or people."
+    },
+    {
+      "name": "river",
+      "master": "art/winter-river-master.png",
+      "webp": "art/winter-river.webp",
+      "source": "exec-5af3228c-b856-461d-8472-ccdb0c6c56a3.png",
+      "prompt": "Use case: style-transfer. Asset type: a horizontal 3:1 winter panorama for a slowly moving train-window view in a mobile app. Input image 1 is the landscape variation target; image 2 is only the cabin style/color reference. Replace the outdoor environment of image 1 with the scene described below while retaining the exact soft low-poly, slightly voxel-like painted 3D style, snowy material, muted indigo/violet/blue palette and cozy toy proportions. Wide landscape 3:1 composition, horizon around the middle, readable subjects through a small window crop anywhere across the width. Similar horizon, color and foreground height at both left/right edges so a slow repeating horizontal pan has no obvious hard seam. Full bleed scenery only. No train, tracks in the foreground, windows, frames, interior, foreground glass reflections, UI, lettering, logos, people, labels, watermark or collage. Do not copy the forest composition: this must be a clearly different place. Snowy twilight/night with restrained warm accents only where natural.\nScene: A sweeping snowy river valley, a winding unfrozen dark blue river reflecting the twilight sky between white banks, rolling low hills and scattered snow-covered trees, sparse reeds. Spacious and calm, no houses or bridge."
+    },
+    {
+      "name": "viaduct",
+      "master": "art/winter-viaduct-master.png",
+      "webp": "art/winter-viaduct.webp",
+      "source": "exec-5a36ba6b-be62-4ad3-a662-60ade127d28c.png",
+      "prompt": "Use case: style-transfer. Asset type: a horizontal 3:1 winter panorama for a slowly moving train-window view in a mobile app. Input image 1 is the landscape variation target; image 2 is only the cabin style/color reference. Replace the outdoor environment of image 1 with the scene described below while retaining the exact soft low-poly, slightly voxel-like painted 3D style, snowy material, muted indigo/violet/blue palette and cozy toy proportions. Wide landscape 3:1 composition, horizon around the middle, readable subjects through a small window crop anywhere across the width. Similar horizon, color and foreground height at both left/right edges so a slow repeating horizontal pan has no obvious hard seam. Full bleed scenery only. No train, tracks in the foreground, windows, frames, interior, foreground glass reflections, UI, lettering, logos, people, labels, watermark or collage. Do not copy the forest composition: this must be a clearly different place. Snowy twilight/night with restrained warm accents only where natural.\nScene: An elegant stone arch viaduct crossing a snowy ravine in the middle distance, seen from the side across the valley. Fir-covered hills behind it, cool violet winter dusk. Bridge belongs to the landscape and does not lead into the camera. No train, no foreground tracks."
+    },
+    {
+      "name": "city",
+      "master": "art/winter-city-master.png",
+      "webp": "art/winter-city.webp",
+      "source": "exec-7361a0e4-9a4a-4597-bcbb-e490de8561b4.png",
+      "prompt": "Use case: style-transfer. Asset type: a horizontal 3:1 winter panorama for a slowly moving train-window view in a mobile app. Input image 1 is the landscape variation target; image 2 is only the cabin style/color reference. Replace the outdoor environment of image 1 with the scene described below while retaining the exact soft low-poly, slightly voxel-like painted 3D style, snowy material, muted indigo/violet/blue palette and cozy toy proportions. Wide landscape 3:1 composition, horizon around the middle, readable subjects through a small window crop anywhere across the width. Similar horizon, color and foreground height at both left/right edges so a slow repeating horizontal pan has no obvious hard seam. Full bleed scenery only. No train, tracks in the foreground, windows, frames, interior, foreground glass reflections, UI, lettering, logos, people, labels, watermark or collage. Do not copy the forest composition: this must be a clearly different place. Snowy twilight/night with restrained warm accents only where natural.\nScene: A small festive northern town at blue hour with a varied row of low brick and timber buildings, snow-covered pitched roofs, amber windows, a distant clock tower and one modest outdoor Christmas tree. Warm street lamps and sparse gold lights, snowbanks across the foreground. No text, people or cars."
+    }
+  ]
+}

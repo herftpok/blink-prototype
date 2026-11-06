@@ -410,6 +410,12 @@
     const day = D.DAYS[S.today], home = J.atHome(S.today), seen = S.days[S.today].seen;
     app.dataset.phase = home ? "home" : "train";
     $("#home-scene").src = J.A(home ? "living-room" : "train-window");
+    if (!home) {
+      const view = J.landscape(S.today), panorama = $(".ex-cabin__landscape");
+      panorama.dataset.landscape = view;
+      panorama.style.setProperty("--journey-landscape-delay", `-${(S.today % 6) * 12}s`);
+      $$("img", panorama).forEach(image => { if (image.getAttribute("src") !== view) image.src = view; });
+    }
     $("#home-title").textContent = "новый год";
     $("#home-today").hidden = !home;
     $("#home-today").classList.toggle("is-seen", seen);
@@ -949,6 +955,12 @@
       case "intro": resetTo(0); S.introSeen = false; openSheet("intro"); break;
       case "train": case "journey-first": case "home-first": resetTo(0); if (!S.introSeen) openSheet("intro"); break;
       case "home-ready": resetTo(0); break;
+      case "landscape": {
+        const i = dayIdx(arg);
+        if (i < 0 || i >= 18) return false;
+        resetTo(i);
+        break;
+      }
       case "home-seen": resetTo(0); S.days[0].seen = true; completeTask("memory", 0, { animate: false, refresh: false }); renderHome(); break;
       case "home": resetTo(8); break;
       case "fireside": case "home-late": resetTo(dayIdx("05.01")); break;

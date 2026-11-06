@@ -1,5 +1,5 @@
 /* The cabin stays scenic. Daily actions form the first usable section below the window. */
-:root {--journey-interface-overlap:42cqh;--journey-interface-fade:112px;}
+:root {--journey-interface-overlap:20cqh;--journey-interface-fade:80px;}
 .av[data-phase="train"] .ex-home-content {margin-top:calc(-1 * var(--journey-interface-overlap));padding-top:0;}
 .ex-home-content {z-index:1;isolation:isolate;}
 .ex-home-content::before {content:"";position:absolute;left:0;right:0;bottom:calc(100% - 1px);height:var(--journey-interface-fade);background:linear-gradient(transparent,var(--journey-navy));pointer-events:none;z-index:-1;}
