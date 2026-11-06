@@ -249,7 +249,7 @@
     const fly = document.createElement("div");
     fly.className = "av-fly__item";
     const idx=D.DAYS.indexOf(day), seen=S.days[idx]?.seen;
-    fly.innerHTML = `<img class="av-fly__obj" src="${J.A(day.prediction ? (seen ? "cookie" : "stocking") : "suitcase")}" alt="">`;
+    fly.innerHTML = day.prediction ? `<img class="av-fly__obj" src="${J.A(seen ? "cookie" : "stocking")}" alt="">` : J.art(day,idx,seen,src);
     const inner = fly.firstElementChild;
     inner.style.width = "100%";
     inner.style.height = "100%";
@@ -469,7 +469,7 @@
     const isToday = i === S.today;
     $("#day-date").textContent = dayName(day);
     screens.day.dataset.phase = day.prediction ? "home" : "train";
-    $("#day-slot").innerHTML = `<img class="av-day__obj" src="${J.A(day.prediction ? (S.days[i].seen ? "cookie" : "stocking") : "suitcase")}" alt="">`;
+    $("#day-slot").innerHTML = day.prediction ? `<img class="av-day__obj" src="${J.A(S.days[i].seen ? "cookie" : "stocking")}" alt="">` : `<div class="av-day__obj">${J.art(day,i,S.days[i].seen,src)}</div>`;
     $("#day-glow").src = objSrc(day);
     const rows = taskRows(day);
     $("#day-body").innerHTML = `
@@ -502,15 +502,16 @@
     const done = state === "claimed", memory = r.key === "memory", seen = S.days[i].seen;
     const available = i === S.today && state !== "missed";
     const status = done ? '<span class="av-task__state" role="img" aria-label="выполнено"><i class="icon icon--check" aria-hidden="true"></i></span>' : "";
-    const action = memory && i <= S.today
-      ? `<button class="button ${seen ? "button--secondary" : "button--primary"} av-task__watch pressable" type="button" data-act="task-memory" data-task-day="${i}" aria-label="${seen ? "посмотреть статистику ещё раз" : "смотреть статистику дня"}">${seen ? "ещё раз" : "смотреть"}</button>`
-      : available && !done ? `<button class="av-task__info pressable" type="button" data-task-help="${r.key}" data-task-day="${i}" aria-label="инструкция: ${r.title}">инструкция<i class="icon icon--chevron" aria-hidden="true"></i></button>`
-      : !done ? '<span class="av-task__expired">день прошёл</span>' : "";
+    const attrs = memory && i <= S.today ? `data-act="task-memory" data-task-day="${i}"`
+      : available ? `data-task-help="${r.key}" data-task-day="${i}"` : '';
+    const label = memory ? `${seen ? 'посмотреть статистику ещё раз' : 'смотреть статистику дня'}, ${r.reward} жетонов${done ? ' уже начислено' : ' за просмотр'}`
+      : `инструкция: ${r.title}, ${r.reward} жетонов${done ? ' уже начислено' : ' за выполнение'}`;
+    const action = attrs ? `<button class="av-task__reward-action pressable" type="button" ${attrs} aria-label="${label}"><span>${r.reward}</span>${flake}<i class="icon icon--chevron" aria-hidden="true"></i></button>`
+      : `<span class="av-task__reward av-task__reward--expired"><span>${r.reward}</span>${flake}</span>`;
+    const description = done ? memory ? 'карточка просмотрена' : 'задание выполнено' : state === 'missed' ? 'день прошёл' : r.description;
     return `<li class="av-task${memory ? " av-task--memory" : ""}${done ? " is-done" : ""}" data-row="${r.key}">
-      <div class="av-task__copy"><span class="av-task__heading"><span class="av-task__text">${r.title}</span>${status}</span>
-        ${!done || memory ? `<span class="av-task__description">${memory && seen ? "карточка просмотрена" : r.description}</span>` : ""}
-      </div>
-      <div class="av-task__side"><span class="av-task__reward"><span>${r.reward}</span>${flake}</span>${action}</div>
+      <div class="av-task__copy"><span class="av-task__heading"><span class="av-task__text">${r.title}</span>${status}</span><span class="av-task__description">${description}</span></div>
+      ${action}
     </li>`;
   }
 
@@ -961,6 +962,10 @@
         resetTo(i);
         break;
       }
+      case "home-tasks-done":
+        resetTo(0); S.days[0].seen = true;
+        ["memory", "task", "share"].forEach(key => completeTask(key, 0, { animate: false, refresh: false }));
+        renderHome(); break;
       case "home-seen": resetTo(0); S.days[0].seen = true; completeTask("memory", 0, { animate: false, refresh: false }); renderHome(); break;
       case "home": resetTo(8); break;
       case "fireside": case "home-late": resetTo(dayIdx("05.01")); break;

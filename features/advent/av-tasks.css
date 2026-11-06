@@ -12,29 +12,34 @@
 .av-home .av-calendar {margin-top:var(--space-24);}
 .av[data-phase="home"] .av-calendar {margin-top:0;}
 .av-tasks {display:grid;gap:var(--space-8);padding:0;margin:0;border:0;background:transparent;overflow:visible;}
-.av-task {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:var(--space-12);min-height:92px;padding:var(--space-12);border:1px solid var(--journey-border);border-radius:var(--radius-20);background:var(--journey-glass);}
+.av-task {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:var(--space-12);min-height:84px;padding:var(--space-12);border:1px solid var(--journey-border);border-radius:var(--radius-20);background:var(--journey-glass);}
 .av-task:last-child {border-bottom:1px solid var(--journey-border);}
 .av-task--memory {background:var(--journey-panel);border-color:var(--journey-brass);}
 .av-task__copy {display:flex;flex-direction:column;gap:var(--space-6);min-width:0;}
 .av-task__heading {display:flex;align-items:center;gap:var(--space-6);min-width:0;}
 .av-task__text {font:var(--type-friend-name);}
 .av-task__description {display:block;font:var(--type-note);color:var(--journey-muted);text-wrap:pretty;}
-.av-task__side {display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-8);}
-.av-task__reward {display:flex;align-items:center;gap:var(--space-4);height:20px;font:var(--type-caption);color:var(--journey-cream);white-space:nowrap;}
-.av-task__flake {width:20px;height:20px;object-fit:contain;}
-.av-task__watch {position:relative;width:auto;min-height:36px;height:36px;padding:0 var(--space-12);font:var(--type-button);}
-.av-task__watch::after {content:"";position:absolute;inset:-4px 0;}
-.av-task__info {position:relative;display:flex;align-items:center;justify-content:center;gap:var(--space-4);height:36px;max-width:none;padding:0 var(--space-10);border-radius:var(--radius-pill);background:var(--color-surface-raised);font:var(--type-map-chip-strong);color:var(--journey-cream);}
-.av-task__info::after {inset:-4px 0;}
-.av-task.is-done {min-height:56px;}
-.av-task.is-done.av-task--memory {min-height:92px;}
-.av-task.is-done .av-task__text {color:var(--journey-cream);}
-.av-task.is-done .av-task__reward {color:var(--journey-muted);}
+.av-task__flake {width:22px;height:22px;object-fit:contain;}
+.av-task__reward-action {display:inline-flex;align-items:center;justify-content:center;gap:var(--space-6);min-width:94px;min-height:44px;padding:0 var(--space-10);border:1px solid var(--journey-border);border-radius:var(--radius-pill);background:var(--color-surface-raised);color:var(--journey-cream);font:var(--type-caption);white-space:nowrap;--press-scale:var(--press-scale-button);}
+.av-task__reward-action>.icon {--icon-size:12px;color:var(--journey-brass);}
+.av-task__reward {display:flex;align-items:center;gap:var(--space-4);font:var(--type-caption);white-space:nowrap;}
+.av-task__reward--expired {color:var(--journey-muted);opacity:.6;}
+.av-task.is-done {min-height:84px;background:transparent;}
+.av-task.is-done .av-task__text {color:var(--journey-muted);}
+.av-task.is-done .av-task__reward-action {background:transparent;color:var(--journey-muted);border-color:transparent;}
+.av-task.is-done .av-task__reward-action>.av-task__flake {opacity:.6;}
 .av-task--memory.is-done {border-color:var(--journey-border);}
+.av-home .av-cell {height:128px;}
+.av-home .av-cell__art {width:104px;height:92px;}
+.av-home .av-cell.is-frozen .ex-day-object {opacity:.48;filter:saturate(.65);}
+.ex-day-object--app .ex-day-object__base {width:76%;height:76%;margin:10% auto 0;border-radius:var(--radius-20);}
+.ex-day-object--fan .ex-day-object__sticker {position:absolute;width:62%;height:74%;top:10%;object-fit:contain;}
+.ex-day-object__sticker:nth-child(1) {left:0;transform:rotate(-16deg);}
+.ex-day-object__sticker:nth-child(2) {left:19%;top:0;z-index:1;}
+.ex-day-object__sticker:nth-child(3) {right:0;transform:rotate(16deg);}
 .ex-intro__art {object-position:center 34%;}
 @media(max-height:740px) {
  .av-home-tasks {margin-top:0;}
  .av-home .av-entries {margin-top:var(--space-12);}
- .av-home-tasks .av-task.is-done {min-height:56px;padding-block:var(--space-12);}
- .av-home-tasks .av-task.is-done.av-task--memory {min-height:92px;}
+ .av-home-tasks .av-task.is-done {min-height:84px;padding-block:var(--space-12);}
 }

@@ -21,7 +21,7 @@ def check_feature(browser,port,errors,check):
     check('onboarding does not return on a later visit',not page.locator('#sheet-intro.is-open').count() and js('AV.S.introSeen'))
     check('main screen has no title, stop counter, diary or repeated introduction',page.locator('#home-title').evaluate('e=>e.classList.contains("visually-hidden")') and not page.locator('#screen-home .ex-daily__chapter,#screen-home img[src*="journal"]').count() and 'каждый день' not in page.locator('#home-today').inner_text())
     check('scenery has no postcard or hidden window gesture',not page.locator('.ex-postcard,.ex-memory-window').count() and not page.locator('#home-today').is_visible() and page.locator('#home-scene').get_attribute('src').endswith('train-window.webp'))
-    check('viewing statistics is the first explicit task',page.locator('#home-tasks [data-row]').first.get_attribute('data-row')=='memory' and page.locator('#home-tasks [data-act="task-memory"]').inner_text()=='СМОТРЕТЬ' and not js('AV.S.days[0].seen'))
+    check('viewing statistics is the first explicit task',page.locator('#home-tasks [data-row]').first.get_attribute('data-row')=='memory' and page.locator('#home-tasks [data-act="task-memory"]').inner_text().strip()=='30' and page.locator('#home-tasks [data-act="task-memory"] img').count()==1 and page.locator('#home-tasks [data-act="task-memory"] .icon--chevron').count()==1 and not js('AV.S.days[0].seen'))
     check('table and benches remain above the task panel, calendar follows prize entries',page.locator('#home-tasks').evaluate('e=>{const c=document.querySelector(".ex-cabin").getBoundingClientRect(),r=e.getBoundingClientRect();return r.top>=c.top+c.height*.74&&r.top<innerHeight*.72;}') and page.locator('#home-entries').bounding_box()['y']>page.locator('#home-tasks').bounding_box()['y'] and page.locator('.av-calendar').bounding_box()['y']>page.locator('#home-entries').bounding_box()['y'])
     check('interface blends into the train with a non-interactive gradient',page.locator('.ex-home-content').evaluate('e=>getComputedStyle(e,"::before").backgroundImage.includes("linear-gradient")&&getComputedStyle(e,"::before").pointerEvents==="none"'))
     js('AV.completeTask("memory")')
@@ -61,10 +61,12 @@ def check_feature(browser,port,errors,check):
     check('short task instructions retain punctuation rule',page.locator('#home-tasks .av-task__description').evaluate_all('els=>els.every(e=>!e.textContent.endsWith("."))'))
     page.locator('[data-go="game"].av-entry').click();page.wait_for_timeout(350)
     check('ready claw has no prize choices or winners feed',not page.locator('.ex-machine-prize,.ex-feed,.ex-caught-prize').count() and page.locator('[data-game="claw-grab"]').inner_text().startswith('СХВАТИТЬ'))
-    check('glass chamber fills the phone and shows a separate arcade carriage',page.locator('.ex-machine__case').get_attribute('src').endswith('claw-frame.webp') and page.locator('.ex-machine__car').get_attribute('src').endswith('arcade-car.webp') and page.locator('.ex-machine').evaluate('e=>{const r=e.getBoundingClientRect(),a=document.querySelector("#app").getBoundingClientRect();return Math.abs(r.width-a.width)<1&&Math.abs(r.height-a.height)<1;}'))
+    check('one coherent rendered cabinet fills the phone',page.locator('.ex-machine__case').get_attribute('src').endswith('claw-volume.webp') and not page.locator('.ex-machine__car,.ex-machine__well').count() and page.locator('.ex-machine').evaluate('e=>{const r=e.getBoundingClientRect(),a=document.querySelector("#app").getBoundingClientRect();return Math.abs(r.width-a.width)<1&&Math.abs(r.height-a.height)<1;}'))
     check('claw title is visually hidden and both controls sit on the cabinet console',page.locator('#game-title').evaluate('e=>e.classList.contains("visually-hidden")') and page.locator('.ex-machine__console').evaluate('e=>{const p=e.getBoundingClientRect();return [...document.querySelectorAll(".ex-arcade__footer button")].every(b=>{const r=b.getBoundingClientRect();return r.top>=p.top&&r.bottom<=p.bottom&&r.left>=p.left&&r.right<=p.right;});}'))
+    page.wait_for_function('[...document.querySelectorAll(".ex-machine img")].every(i=>i.complete&&i.naturalWidth>0)')
+    check('foreground ledge is pixel-aligned to the whole cabinet without stretching',page.locator('.ex-machine__console img').evaluate('e=>{const a=e.getBoundingClientRect(),b=document.querySelector(".ex-machine__case").getBoundingClientRect();return e.getAttribute("src")===document.querySelector(".ex-machine__case").getAttribute("src")&&["x","y","width","height"].every(k=>Math.abs(a[k]-b[k])<1); }'))
     chamber=Image.open(BytesIO(page.locator('.ex-machine').screenshot())).convert('RGB')
-    dark=chamber.getpixel((round(chamber.width*.25),round(chamber.height*.73)))
+    dark=chamber.getpixel((round(chamber.width*.25),round(chamber.height*.65)))
     check('the lower chamber is dark and the claw fades into its depth',sum(dark)/3<55 and page.locator('.ex-machine__depth').evaluate('e=>getComputedStyle(e).maskImage.includes("linear-gradient")'))
     page.wait_for_timeout(250)
     check('waiting does not charge or choose a prize',js('AV.S.balance')==90 and js('AV_GAME.state().view')=='ready' and js('AV_GAME.state().award') is None)
@@ -114,6 +116,7 @@ def check_feature(browser,port,errors,check):
     check('raffle transfer reserves tickets once for the selected prize',js('AV.S.tickets')==27 and js(f'AV.S.draw[{target!r}]')==mine+3 and js('AV.S.events.filter(e=>e.name==="raffle_tickets").length')==1)
     page.wait_for_timeout(1400)
     js('AV.resetTo(17)')
+    check('December stops have large topic illustrations and no repeated suitcase shell',not page.locator('#calendar img[src*="suitcase"],#calendar .ex-day-object__topic').count() and page.locator('#calendar .ex-day-object').evaluate_all('els=>els.every(e=>{const a=e.getBoundingClientRect(),images=[...e.querySelectorAll("img")];return images.every(i=>{const r=i.getBoundingClientRect();return r.width>=a.width*.5&&r.height>=a.height*.7;});})'))
     check('December 31 still has active claw and raffle entrances',js('document.querySelector("#app").dataset.phase')=='train' and page.locator('.av-entry[data-go="game"]').count()==1 and page.locator('.av-entry[data-go="draw"]').count()==1)
     page.locator('[data-panel="next"]').click()
     check('January 1 changes to the fireplace and eleven January dates',js('AV.S.today')==18 and js('document.querySelector("#app").dataset.phase')=='home' and page.locator('#home-scene').get_attribute('src')=='art/living-room.webp' and page.locator('#calendar [data-day]').count()==11)
@@ -150,11 +153,16 @@ def check_feature(browser,port,errors,check):
     check('closed arcade cannot charge even via a stale action',page.locator('.ex-closed').is_visible() and js('[AV.S.balance,AV.S.taken.length,AV.S.tickets]')==b)
     js("AV.showState('draw-closed')");b=js('AV.S.tickets');js('AV_GAME.click({dataset:{draw:"put"}},AV.gameCtx())')
     check('closed raffle exposes history and rejects stale ticket actions',page.locator('.ex-draw-closed').is_visible() and not page.locator('[data-draw="put"]').count() and js('AV.S.tickets')==b)
+    js("AV.showState('home-tasks-done')")
+    check('completed tasks retain navigation with visible checks and no second reward',page.locator('#home-tasks .av-task.is-done').count()==3 and page.locator('#home-tasks .av-task__state').count()==3 and page.locator('#home-tasks .av-task__reward-action').count()==3 and js('AV.S.balance')==120)
+    page.locator('#home-tasks [data-task-help="task"]').click()
+    check('completed reward button opens its instruction and confirms the credited reward',page.locator('#task-help-reward').inner_text().endswith('уже начислено') and js('AV.S.balance')==120)
+    page.locator('#task-help-action').click();page.wait_for_timeout(400)
     for w,h in [(375,667),(390,844),(430,932)]:
         page.set_viewport_size({'width':w,'height':h})
         # The external preview panel can scroll the outer page; phone layout starts at the viewport top.
         js('window.scrollTo(0,0)')
-        for state in ['intro','home-first','home-ready','home-seen','home','arrival','home-late','claw-first','claw-prize','claw-poor','claw-empty','draw','draw-none','claw-closed','draw-closed','stat:01.01','cracked:01.01']:
+        for state in ['intro','home-first','home-ready','home-seen','home-tasks-done','home','arrival','home-late','claw-first','claw-prize','claw-poor','claw-empty','draw','draw-none','claw-closed','draw-closed','stat:01.01','cracked:01.01']:
             js(f'AV.showState({state!r})');page.wait_for_timeout(420 if state=='intro' else 80)
             if state=='intro':
                 page.locator('#sheet-intro').evaluate('e=>Promise.all(e.getAnimations().map(a=>a.finished))')
@@ -162,7 +170,7 @@ def check_feature(browser,port,errors,check):
             if js('AV.current()')=='game':
                 fit=fit and page.locator('#game').evaluate('e=>e.scrollHeight<=e.clientHeight+1') and page.locator('#game button.button').evaluate('e=>{const r=e.getBoundingClientRect();return r.bottom<=innerHeight&&r.top>=0;}')
                 if page.locator('.ex-machine__console').count():
-                    fit=fit and page.locator('.ex-machine__console').evaluate('e=>{const p=e.getBoundingClientRect();return [...document.querySelectorAll(".ex-arcade__footer button")].every(b=>{const r=b.getBoundingClientRect();return r.top>=p.top&&r.bottom<=p.bottom;});}')
+                    fit=fit and page.locator('.ex-machine__console').evaluate('e=>{const p=e.getBoundingClientRect();return [...document.querySelectorAll(".ex-arcade__footer button")].every(b=>{const r=b.getBoundingClientRect();return r.top>=p.top+(p.height*.375)&&r.bottom<=p.bottom;});}')
             if js('AV.current()')=='draw' and not state.endswith('closed'):
                 fit=fit and page.locator('.avd-cta').evaluate('e=>e.getBoundingClientRect().bottom<=innerHeight')
             if state.startswith('home') or state=='arrival':

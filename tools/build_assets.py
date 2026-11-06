@@ -1456,7 +1456,7 @@ def build_advent_journey() -> None:
     # Scene layers derived with imagegen from the supplied cabin and cabinet.
     landscapes = [f"winter-{name}" for name in ("mountains", "lake", "village", "river", "viaduct", "city")]
     scene_layers = [("winter-panorama", (2172, 724))] + [(name, (2172, 724)) for name in landscapes]
-    scene_layers += [(name, (1024, 1536)) for name in ("claw-window", "claw-glass", "arcade-car", "claw-frame")]
+    scene_layers += [(name, (1024, 1536)) for name in ("claw-window", "claw-glass", "arcade-car", "claw-frame", "claw-volume")]
     for name, size in scene_layers:
         master = out / f"{name}-master.png"
         if master.exists():
