@@ -12,9 +12,9 @@ nav button[aria-pressed=true]{color:#17141d;background:#f1edf8;border-radius:22p
 @media(max-width:540px){main{gap:12px;padding:10px}nav{display:flex;justify-content:center}figure:not(.active){display:none}figcaption{display:none}}
 </style></head><body><main><nav aria-label="Вариант прототипа"></nav><section aria-label="Сравнение трёх вариантов маршрута"></section></main>
 <script type="module">
-import {loadCity} from './city-map.js';
+import {loadCity} from './city-map.js?v=orbit1';
 import {makeCar} from './car.js?v=replay-share2';
-const variants=[['main','Основной'],['light','Световой след'],['atlas','Навигатор']];
+const variants=[['main','Основной'],['light','Световой след'],['orbit','Световой след · 180°']];
 const frames=[],ready=new Set();
 let car,active=0;
 window.routeComparison={
@@ -31,7 +31,7 @@ function resize(){
 resize();window.addEventListener('resize',resize);
 variants.forEach(([look,label],i)=>{
  const figure=document.createElement('figure'),caption=document.createElement('figcaption'),phone=document.createElement('div'),frame=document.createElement('iframe');
- caption.textContent=label;phone.className='phone';frame.title=label;frame.src='index.html?v=dayview1&compare=1&look='+look;frames.push(frame);
+ caption.textContent=label;phone.className='phone';frame.title=label;frame.src='index.html?v=orbit1&compare=1&look='+look;frames.push(frame);
  phone.append(frame);figure.append(caption,phone);figure.classList.toggle('active',i===active);document.querySelector('section').append(figure);
  const tab=document.createElement('button');tab.type='button';tab.textContent=label;tab.setAttribute('aria-pressed',i===active);
  tab.onclick=()=>{active=i;document.querySelectorAll('figure').forEach((f,j)=>f.classList.toggle('active',j===i));document.querySelectorAll('nav button').forEach((b,j)=>b.setAttribute('aria-pressed',j===i))};

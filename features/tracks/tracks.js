@@ -1,15 +1,17 @@
-import {routeCalendar} from './calendar.js?v=dayview1';
+import {routeCalendar} from './calendar.js?v=period2';
 import {openRoutes} from './privacy.js?v=calendar1';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
-import {vehiclePresence,drawLightTrail,overviewNavigator} from './concepts.js';
-import {loadCity,drawCity} from './city-map.js';
+import {vehiclePresence,drawLightTrail} from './concepts.js?v=orbit1';
+import {loadCity,drawCity} from './city-map.js?v=orbit1';
 import {makeCar} from './car.js?v=replay-share2';
-import {projectDistrict,prepareReplay,replayPoint,followView,pursuitPoint,driveHeading} from './camera.js?v=replay-share2';
+import {projectDistrict,prepareReplay,replayPoint,followView,orbitView,pursuitPoint,driveHeading} from './camera.js?v=orbit1';
 const $ = id => document.getElementById(id);
 const clock = n => [Math.floor(n/60),Math.floor(n)%60].map(v=>String(v).padStart(2,'0')).join(':');
 const number = n => n.toLocaleString('ru-RU',{maximumFractionDigits:1});
 const query=new URLSearchParams(location.search);
-const look=['light','atlas'].includes(query.get('look'))?query.get('look'):'main';
+const requestedLook=query.get('look');
+const look=requestedLook==='atlas'?'orbit':['light','orbit'].includes(requestedLook)?requestedLook:'main';
+const lightTrail=look!=='main';
 document.documentElement.dataset.look=look;
 const board=query.has('compare') && parent!==window && document.referrer.startsWith(location.origin+'/')?parent.routeComparison:null;
 if(board)document.documentElement.dataset.embedded='';
@@ -66,7 +68,7 @@ async function openDay(autoplay=true){
   const requested=day;pause();
   const next=await (board?board.loadCity(requested.area):loadCity(requested.area));
   if(requested!==day)return;
-  if(city && city!==next)city.tiles.clear();
+  if(city && city!==next){city.tiles.clear();city.groundTiles.clear()}
   city=next;timeline();if(board)board.ready(window);else if(autoplay)start();
 }
 const portrait=asset('../../assets/people/live-1.webp');
@@ -74,13 +76,13 @@ const arrows=asset('../../assets/pin/arrows.png');
 const reverseArrows=asset('../../assets/tails/arrows-reverse.png');
 const flame=asset('../../assets/pin/fire-trail-atlas.webp');
 const brandLogo=asset('../../assets/brand/logo.png');
-const routes=new Map(),gaps=new Map(),navigators=new Map();
+const routes=new Map(),gaps=new Map(),sections=new Map();
 const uiFamily=getComputedStyle(document.body).fontFamily;
 function prepareDay(record){
   const replay=prepareReplay(record);
   routes.set(record,replay);
-  gaps.set(record,[...new Set(replay.runs)].filter(run=>run?.gap));
-  navigators.set(record,overviewNavigator(replay.runs));
+  const runs=[...new Set(replay.runs)].filter(Boolean);
+  gaps.set(record,runs.filter(run=>run.gap));sections.set(record,runs);
 }
 records.forEach(prepareDay);
 let mapView=null,markerData=[];
@@ -216,14 +218,8 @@ function chasePhase(p){
   return reducedMotion.matches ? .5 : .5-.5*Math.cos(p*replayDuration/820*2*Math.PI);
 }
 function cameraAt(day,sample,p,height){
-  const view=followView(day,sample,p,height);
-  if(look!=='atlas')return view;
-  const now=sample(p),ahead=sample(Math.min(1,p+.055));
-  const dx=(ahead.x-now.x)*view.scale,dy=(ahead.y-now.y)*view.scale;
-  const k=Math.min(.65,76/Math.max(1,Math.hypot(dx,dy)));
-  const cx=view.cx+dx*k/view.scale,cy=view.cy+dy*k/view.scale;
-  const scale=view.scale*.86;
-  return {scale,cx,cy,at(q){return {x:300+(q.x-cx)*scale,y:height*.58+(q.y-cy)*scale}}};
+  if(look!=='orbit' || reducedMotion.matches)return followView(day,sample,p,height);
+  return orbitView(day,sample,p,height);
 }
 function draw(canvas,p,story=false){
   const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
@@ -237,18 +233,21 @@ function draw(canvas,p,story=false){
   ctx.save();ctx.beginPath();ctx.rect(0,0,600,unitsY);ctx.clip();
   // Draw OSM geometry at the actual pixel scale of this canvas.
   ctx.save();ctx.translate(origin.x,origin.y);ctx.scale(view.scale,view.scale);
+  if(view.bounds)ctx.transform(view.a,view.b,view.c,view.d,0,0);
   if(city)drawCity(ctx,city,view,unitsY);
-  if(look==='light'){
+  if(lightTrail){
     const reach=370/view.scale;
     const halo=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,reach);
     halo.addColorStop(0,'rgba(149,90,225,.17)');halo.addColorStop(.5,'rgba(29,20,56,.18)');halo.addColorStop(1,'rgba(12,10,29,.55)');
     ctx.fillStyle=halo;
-    ctx.fillRect(view.cx-300/view.scale,view.cy-unitsY*.58/view.scale,600/view.scale,unitsY/view.scale);
+    const rect=view.bounds;
+    if(rect)ctx.fillRect(rect[0],rect[1],rect[2]-rect[0],rect[3]-rect[1]);
+    else ctx.fillRect(view.cx-300/view.scale,view.cy-unitsY*.58/view.scale,600/view.scale,unitsY/view.scale);
   }
   ctx.lineJoin='round';ctx.lineCap='round';
   ctx.strokeStyle=ctx.shadowColor='#cc9eff';ctx.lineWidth=4.3/view.scale;
   ctx.shadowBlur=5;
-  if(look==='light')drawLightTrail(ctx,routePaths(),pos,view.scale,navigators.get(day).runs);
+  if(lightTrail)drawLightTrail(ctx,routePaths(),pos,view.scale,sections.get(day));
   else ctx.stroke(routePaths());
   ctx.restore();
   const mist=ctx.createLinearGradient(0,0,0,unitsY*.45);
@@ -274,10 +273,11 @@ function draw(canvas,p,story=false){
     if(follower){
       const patrol=view.at(follower);
       ctx.save();ctx.beginPath();ctx.rect(0,0,600,unitsY);ctx.clip();
-      paintCar(ctx,patrol.x,patrol.y,follower.heading,p*175,beacon);
+      paintCar(ctx,patrol.x,patrol.y,view.heading?view.heading(follower.heading):follower.heading,p*175,beacon);
       ctx.restore();
     }
   }
+  if(view.heading)pos.heading=view.heading(pos.heading);
   const presence=paintCar?vehiclePresence(pos,p,replayDuration):0;
   let pinX=x,foot=y;
   if(presence>0){
@@ -288,7 +288,6 @@ function draw(canvas,p,story=false){
     if(roof){pinX=mix(x,roof.x,presence);foot=mix(y,roof.y,presence)}
     ctx.restore();
   }
-  if(look==='atlas')navigators.get(day)(ctx,pos,unitsY,p);
   if(story){if(!pos.gap)drawVideoPin(ctx,pinX,foot,pos,phase,numberScale);}
   else {
     pinHost.hidden=pos.gap;liveArrows.hidden=pos.mode==='still';
@@ -474,8 +473,8 @@ for(const sheet of document.querySelectorAll('dialog')){
     if(event.key==='Escape'){event.preventDefault();dismissSheet(sheet);return}
     if(event.key!=='Tab')return;
     const radio=sheet.querySelector('input[type=radio]:checked') || sheet.querySelector('input[type=radio]');
-    const items=[...sheet.querySelectorAll('button:not(:disabled),select,input')].filter(el=>
-      el.offsetWidth && (el.type!=='radio' || el===radio));
+    const items=[...sheet.querySelectorAll('button:not(:disabled),input')].filter(el=>
+      el.offsetWidth && getComputedStyle(el).visibility==='visible' && (el.type!=='radio' || el===radio));
     const first=items[0],last=items.at(-1);
     if(event.shiftKey && (document.activeElement===first || document.activeElement===sheet)){last.focus();event.preventDefault();}
     if(!event.shiftKey && document.activeElement===last){first.focus();event.preventDefault();}
@@ -491,9 +490,8 @@ function openCalendar(mode){
   pause();syncComparison();closePlace();
   const browse=mode==='browse';
   $('privacy-title').textContent=browse?'выбрать день':'заглушить день';
-  privacy.querySelector('.privacy-heading img').hidden=browse;
   const reset=routeCalendar({
-    grid:$('privacy-days'),month:$('cal-month'),year:$('cal-year'),prev:$('cal-prev'),next:$('cal-next')
+    periods:$('cal-periods'),grid:$('privacy-days'),month:$('cal-month'),year:$('cal-year'),prev:$('cal-prev'),next:$('cal-next')
   },browse?viewDates:scenarios,iso=>{
     selectedDate=iso;privacyNext.disabled=!iso;
     privacyNext.textContent=iso?(browse?'показать '+dateLabel(iso):'продолжить'):'выбери день';

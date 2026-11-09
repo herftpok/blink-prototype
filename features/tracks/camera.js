@@ -178,7 +178,7 @@ function entryDistance(curve,followDistance,view,height){
   if(inside(d)){
     const first=curve[0],next=curve.find(point=>point.d>0);
     if(!next)return d;
-    const q=view.at(first),dx=(first.x-next.x)/next.d*view.scale,dy=(first.y-next.y)/next.d*view.scale;
+    const q=view.at(first),ahead=view.at(next),dx=(q.x-ahead.x)/next.d,dy=(q.y-ahead.y)/next.d;
     const toX=dx===0?Infinity:((dx>0?600+margin:-margin)-q.x)/dx;
     const toY=dy===0?Infinity:((dy>0?height+margin:-margin)-q.y)/dy;
     return -Math.max(0,Math.min(toX,toY));
@@ -209,10 +209,34 @@ export function pursuitPoint(day,sample,route,p,leader,view,height,duration,came
   return {...onRoad(curve,d),heading:Math.atan2(front.y-back.y,front.x-back.x)};
 }
 
+const districtScale={island:3.3,garden:2.15,canal:4.4};
 export function followView(day,sample,p,height){
   const target=sample(p),past=sample(Math.max(0,p-.016)),future=sample(Math.min(1,p+.016));
   // Symmetric look-ahead keeps camera motion independent of refresh rate and seeking.
-  const scale={island:3.3,garden:2.15,canal:4.4}[day.area];
+  const scale=districtScale[day.area];
   const cx=(past.x+target.x*3+future.x)/5,cy=(past.y+target.y*3+future.y)/5;
   return {scale,cx,cy,at(q){return {x:300+(q.x-cx)*scale,y:height*.58+(q.y-cy)*scale}}};
+}
+
+// Y in the district data is already foreshortened by the map pitch.
+// Undo that projection, turn on the ground plane, then project at the same pitch.
+export function orbitView(day,sample,p,height){
+  const target=sample(p),scale=districtScale[day.area];
+  const pitch=.57,angle=Math.PI*(p-Math.sin(2*Math.PI*p)*.68/(2*Math.PI));
+  const a=Math.cos(angle),b=pitch*Math.sin(angle),c=-Math.sin(angle)/pitch,d=a;
+  const cx=target.x,cy=target.y,anchorY=height*.58;
+  function at(q){
+    const x=q.x-cx,y=q.y-cy;
+    return {x:300+scale*(a*x+c*y),y:anchorY+scale*(b*x+d*y)};
+  }
+  function ground(x,y){
+    const u=(x-300)/scale,v=(y-anchorY)/scale;
+    return {x:cx+d*u-c*v,y:cy-b*u+a*v};
+  }
+  const corners=[ground(0,0),ground(600,0),ground(0,height),ground(600,height)];
+  return {a,b,c,d,cx,cy,scale,at,angle,
+    bounds:[Math.min(...corners.map(v=>v.x)),Math.min(...corners.map(v=>v.y)),
+      Math.max(...corners.map(v=>v.x)),Math.max(...corners.map(v=>v.y))],
+    heading(t){return Math.atan2(b*Math.cos(t)+d*Math.sin(t),a*Math.cos(t)+c*Math.sin(t))}
+  };
 }

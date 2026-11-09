@@ -37,30 +37,3 @@ export function drawLightTrail(ctx,route,pos,scale,runs){
   for(let i=start;i<points.length && points[i].d<pos.travelled;i++)ctx.lineTo(points[i].x,points[i].y);
   ctx.lineTo(pos.x,pos.y);ctx.stroke();ctx.restore();
 }
-
-// Keep the complete day visible alongside the close-up camera. Gaps remain gaps.
-export function overviewNavigator(runs){
-  const path=new Path2D();let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-  for(const run of new Set(runs)){
-    if(!run||run.gap)continue;
-    run.curve.forEach((v,i)=>{
-      minX=Math.min(minX,v.x);maxX=Math.max(maxX,v.x);minY=Math.min(minY,v.y);maxY=Math.max(maxY,v.y);
-      i?path.lineTo(v.x,v.y):path.moveTo(v.x,v.y);
-    });
-  }
-  const scale=104/Math.max(1,maxX-minX,maxY-minY),cx=(minX+maxX)/2,cy=(minY+maxY)/2;
-  function draw(ctx,pos,height,p){
-    ctx.save();ctx.translate(501,height-210);
-    ctx.fillStyle='rgba(18,20,32,.93)';ctx.beginPath();ctx.arc(0,0,72,0,2*Math.PI);ctx.fill();
-    ctx.lineWidth=3;ctx.strokeStyle='rgba(222,209,248,.34)';ctx.stroke();
-    ctx.strokeStyle='#d2acff';ctx.beginPath();ctx.arc(0,0,72,-Math.PI/2,p*2*Math.PI-Math.PI/2);ctx.stroke();
-    ctx.scale(scale,scale);ctx.translate(-cx,-cy);ctx.lineWidth=3.8/scale;ctx.lineJoin=ctx.lineCap='round';ctx.stroke(path);
-    if(!pos.gap){
-      ctx.fillStyle='#fff';ctx.shadowColor='#d6a4ff';ctx.shadowBlur=8;
-      ctx.beginPath();ctx.arc(pos.x,pos.y,6/scale,0,Math.PI*2);ctx.fill();
-    }
-    ctx.restore();
-  }
-  draw.runs=[...new Set(runs)].filter(Boolean);
-  return draw;
-}
