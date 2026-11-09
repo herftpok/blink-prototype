@@ -12,8 +12,8 @@
 #share {margin-left:auto}
 .date {gap:0;color:white;text-shadow:0 1px 6px #141321}
 #date {min-width:85px;text-align:center;font:750 16px var(--font-ui);font-variant-numeric:tabular-nums}
-.date button {width:44px;height:44px;display:grid;place-items:center}
-.date button::after {content:"";width:10px;height:10px;border-top:3px solid currentColor;border-right:3px solid currentColor;transform:rotate(45deg);border-radius:1px}
+.date :where(#older,#newer) {width:44px;height:44px;display:grid;place-items:center}
+.date :where(#older,#newer)::after {content:"";width:10px;height:10px;border-top:3px solid currentColor;border-right:3px solid currentColor;transform:rotate(45deg);border-radius:1px}
 #older::after {transform:rotate(-135deg)}
 .date button:disabled {opacity:.28;cursor:default}
 h1 {margin:10px 0 1px;font:900 36px/1 var(--font-ui);letter-spacing:-2px}
@@ -116,11 +116,11 @@ html[data-look="atlas"] #clock {border:0;background:none;box-shadow:none;backdro
 .route-heading{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
 .route-heading h1{margin:0}
 #privacy-open{width:38px;height:38px;border-radius:14px}
-#privacy:not([open]){display:none}
-#privacy[open]{padding:0 var(--gutter) calc(var(--safe-bottom) + 8px);background:var(--color-bg);border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;box-shadow:var(--shadow-sheet);max-height:calc(100% - var(--safe-top));overflow:auto}
-#privacy::after{display:none}
+:is(#privacy,#confirm-day):not([open]){display:none}
+:is(#privacy,#confirm-day)[open]{padding:0 var(--gutter) calc(var(--safe-bottom) + 8px);background:var(--color-bg);border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;box-shadow:var(--shadow-sheet);max-height:calc(100% - var(--safe-top));overflow:auto}
+:is(#privacy,#confirm-day)::after{display:none}
 .privacy-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 4px 10px}
-#privacy-title{font:var(--type-sheet-title);letter-spacing:-.025em}
+:is(#privacy-title,#confirm-title){font:var(--type-sheet-title);letter-spacing:-.025em}
 .privacy-heading img{object-fit:contain;transform:rotate(8deg);height:52px;width:52px}
 .calendar-nav{display:flex;align-items:center;gap:8px;margin:0 3px 10px}
 .calendar-select{display:inline-grid;align-items:center;position:relative;margin:0}
@@ -137,12 +137,31 @@ html[data-look="atlas"] #clock {border:0;background:none;box-shadow:none;backdro
 .calendar-day input:checked+span{background:var(--color-text);color:var(--color-text-on-light)}
 .calendar-day input:focus-visible+span{outline:2px solid white;outline-offset:2px}
 .calendar-day.unavailable{color:#606060}
-#privacy-description{margin:15px 4px 16px;font:500 15px/20px var(--font-text);color:var(--color-text-muted)}
+#confirm-copy{margin:15px 4px 16px;font:500 15px/20px var(--font-text);color:var(--color-text-muted)}
 #privacy-next{width:100%}
 #privacy-next:disabled{background:var(--color-surface-raised);color:var(--color-text-muted)}
 #privacy-error:empty{display:none}
-@media(prefers-reduced-motion:reduce){#privacy{transition:none}}
+@media(prefers-reduced-motion:reduce){:is(#privacy,#confirm-day){transition:none}}
 
 .calendar-scrim{opacity:0;transition:opacity var(--duration-screen) ease}
 .calendar-scrim.is-open{opacity:1}
 @media(prefers-reduced-motion:reduce){.calendar-scrim{transition:none}}
+
+#date{min-height:44px;max-width:36vw;width:auto;line-height:1.1;padding:0 2px;color:white;text-shadow:inherit}
+#date:active{opacity:.7}
+#summary{margin:11px 0 0;display:grid;grid-template-columns:25% 33% 42%;align-items:start}
+#summary>div{display:flex;flex-direction:column-reverse;min-width:0}
+#summary dt{font:600 11px/13px var(--font-ui);color:#e0e0e6;margin-top:2px}
+#summary dd{margin:0;font:750 18px/22px var(--font-ui);font-variant-numeric:tabular-nums}
+#privacy-next{margin-top:14px}
+#confirm-day[open]{z-index:315}
+#privacy[open][inert]{visibility:hidden;pointer-events:none}
+#confirm-copy{margin:6px 4px 20px;color:var(--color-text-secondary)}
+#confirm-cancel{margin-top:4px}
+.calendar-day.has-route span::after{content:"";position:absolute;bottom:4px;width:4px;height:4px;background:currentColor;border-radius:50%}
+#empty-day{position:absolute;inset:42% 20px auto;display:grid;justify-items:center;gap:7px;color:white;text-align:center}
+#empty-day strong{font:750 25px var(--font-ui)}
+#empty-day span{font:var(--type-meta);color:var(--color-text-secondary)}
+#screen.no-route{background:radial-gradient(ellipse at 50% 38%,#282d41,#131522 80%)}
+.no-route :is(#map,#places,#traveller,.map-credit,.playback,#summary){display:none}
+#share:disabled{opacity:.38}

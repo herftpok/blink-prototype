@@ -1,4 +1,4 @@
-import {routeCalendar} from './calendar.js';
+import {routeCalendar} from './calendar.js?v=dayview1';
 import {openRoutes} from './privacy.js?v=calendar1';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
 import {vehiclePresence,drawLightTrail,overviewNavigator} from './concepts.js';
@@ -27,6 +27,19 @@ const linkedDay=records.find(record=>record.day===query.get('day'));
 const atSeconds=Number(query.get('at'));
 const openAtFrame=!board && linkedDay && query.has('at') && Number.isFinite(atSeconds);
 let day=board?records.find(r=>r.day==='5 ноября'):(linkedDay||records[0]);
+const byDate=new Map(scenarios.map(s=>[s.date,records.find(record=>record.day===s.day)]));
+const lastDate=scenarios[0].date;
+const firstDate=scenarios.at(-1).date;
+const viewDates=[];
+for(let time=Date.parse(firstDate);time<=Date.parse(lastDate);time+=86400000){
+  const date=new Date(time).toISOString().slice(0,10);
+  viewDates.push({date,hasRoute:byDate.has(date)});
+}
+const dateLabel=iso=>new Date(iso+'T12:00:00Z').toLocaleDateString('ru-RU',{
+  timeZone:'UTC',day:'numeric',month:'long',
+  ...(iso.slice(0,4)!==lastDate.slice(0,4)?{year:'numeric'}:{})
+}).replace(/ г\.$/,'');
+let currentDate=scenarios.find(s=>s.day===day.day).date;
 let progress=openAtFrame?Math.max(0,Math.min(1,atSeconds*1000/replayDuration)):0;
 let playing=false,previous=0,selectedFix=null;
 let saved=[];
@@ -136,8 +149,15 @@ function drawStoryText(ctx,pos,height,unit){
   ctx.textAlign='left';ctx.fillStyle='white';ctx.shadowColor='#121225';ctx.shadowBlur=8;
   ctx.font='900 36px '+uiFamily;ctx.letterSpacing='-2px';
   ctx.fillText('где я был',16,49);
-  ctx.letterSpacing='0px';ctx.font='650 13px '+uiFamily;
-  ctx.fillText($('summary').textContent,16,70,width-32);
+  ctx.letterSpacing='0px';
+  const cols=[0,.25,.58,1],available=width-32;
+  dayStats().forEach(([label,value],i)=>{
+    const x=16+available*cols[i];
+    ctx.fillStyle='white';ctx.font='750 18px '+uiFamily;ctx.fillText(value,x,78);
+    ctx.font='600 11px '+uiFamily;ctx.fillStyle='#e0e0e6';
+    const words=ctx.measureText(label).width>available*(cols[i+1]-cols[i])-3?label.split(' '):[label];
+    words.forEach((line,row)=>ctx.fillText(line,x,94+row*13));
+  });
   ctx.shadowBlur=0;ctx.fillStyle='#14141edd';ctx.font='700 12px '+uiFamily;
   const box=Math.max(ctx.measureText(day.day).width,56)+24;
   ctx.beginPath();ctx.roundRect(16,bottom-53,box,53,15);ctx.fill();
@@ -292,7 +312,7 @@ function draw(canvas,p,story=false){
   ctx.restore();
 }
 function render(){
-  if($('map').width===0 || $('map').height===0)return;
+  if(!day || $('map').width===0 || $('map').height===0)return;
   draw($('map'),progress);
   const s=sample(progress);$('seek').value=Math.round(progress*1000);$('current').textContent=clock(s.time);$('play').dataset.playing=String(playing);$('play').setAttribute('aria-label',playing?'Пауза':'Воспроизвести маршрут');
 }
@@ -309,6 +329,7 @@ function pause(){
   playing=false;cancelAnimationFrame(frameRequest);render();
 }
 function start(){
+  if(!day)return;
   cancelAnimationFrame(frameRequest);
   if(progress>=1)progress=0;
   playing=true;previous=performance.now();render();
@@ -350,10 +371,8 @@ function showPlace(s){
   info.style.top=q.y/mapView.unitsY*100+'%';info.hidden=false;
   $('time-picker').hidden=true;$('clock').setAttribute('aria-expanded','false');
 }
-function stepLabel(n){
-  if(n%100>=11 && n%100<=14)return 'шагов';
-  if(n%10===1)return 'шаг';
-  return n%10>=2 && n%10<=4?'шага':'шагов';
+function dayStats(){
+  return [['шаги',number(day.steps)],['расстояние',number(day.km)+' км'],['максимальная скорость',day.peak+' км/ч']];
 }
 function visiblePlaces(){
   const visible=[...day.stops];
@@ -367,7 +386,10 @@ function visiblePlaces(){
 }
 function timeline(){
   backgrounds.clear();closePlace();
-  $('summary').textContent=number(day.steps)+' '+stepLabel(day.steps)+' · '+number(day.km)+' км · макс. '+day.peak+' км/ч';
+  $('summary').replaceChildren(...dayStats().map(([label,value])=>{
+    const block=document.createElement('div'),term=document.createElement('dt'),amount=document.createElement('dd');
+    term.textContent=label;amount.textContent=value;block.append(term,amount);return block;
+  }));
   $('district').textContent=day.title;
   $('time-range').textContent=day.weekday+' · '+clock(day.fixes[0].t/60)+' — '+clock(day.fixes.at(-1).t/60);
   $('places').replaceChildren();markerData=[];
@@ -386,22 +408,29 @@ function timeline(){
   render();
 }
 function updateDate(){
-  const index=records.indexOf(day);
-  $('date').textContent=day.day;
-  $('older').disabled=index===records.length-1;
-  $('newer').disabled=index===0;
+  $('date').textContent=dateLabel(currentDate);
+  $('date').setAttribute('aria-label','Выбрать дату: '+dateLabel(currentDate));
+  $('older').disabled=currentDate===firstDate;
+  $('newer').disabled=currentDate===lastDate;
 }
-function changeDay(delta){
-  const next=records[records.indexOf(day)+delta];
-  if(!next)return;
-  day=next;
-  selectedFix=null;
-  progress=0;
+function selectDate(date,broadcast=true){
+  for(const sheet of [$('story'),$('zone')])if(sheet.open)sheet.close();
+  pause();currentDate=date;day=byDate.get(date) || null;
+  selectedFix=null;progress=0;closePlace();
   $('time-picker').hidden=true;$('clock').setAttribute('aria-expanded','false');
-  updateDate();if(board)board.changeDay(window,records.indexOf(day));openDay();
+  $('screen').classList.toggle('no-route',!day);
+  $('empty-day').hidden=!!day;$('share').disabled=!day;
+  updateDate();
+  if(broadcast && board)board.changeDay(window,date);
+  if(day)openDay();
+  else {$('summary').replaceChildren();$('places').replaceChildren();markerData=[]}
 }
-$('older').onclick=()=>changeDay(1);
-$('newer').onclick=()=>changeDay(-1);
+function stepDate(offset){
+  const next=new Date(Date.parse(currentDate)+offset*86400000).toISOString().slice(0,10);
+  if(next>=firstDate && next<=lastDate)selectDate(next);
+}
+$('older').onclick=()=>stepDate(-1);
+$('newer').onclick=()=>stepDate(1);
 updateDate();
 let selected='gym';
 function openZone(){
@@ -418,11 +447,14 @@ function pick(){
 $('form').onsubmit=e=>{e.preventDefault();const name=$('name').value.trim();if(!name){$('name').focus();return}const zone={name,icon:selected,area:day.area,x:selectedFix.x,y:selectedFix.y};
 const next=saved.filter(z=>z!==savedAt(selectedFix)).concat(zone);
 try{localStorage.setItem('blink.tracks.zones',JSON.stringify(next));saved=next;localStorage.setItem('blink.tracks.spot',JSON.stringify(zone))}catch{$('visits').textContent='Сохранение недоступно в этом браузере.';return}$('zone').close();timeline()};
-let sheetOpener;
+const openers=new WeakMap();
+const topSheet=()=>[...document.querySelectorAll('dialog[open]')].at(-1);
 function openSheet(sheet){
-  sheetOpener=document.activeElement;
+  openers.set(sheet,document.activeElement);
+  const previousSheet=topSheet();
+  if(previousSheet)previousSheet.inert=true;
   $('screen').inert=true;$('scrim').hidden=false;sheet.show();
-  if(sheet===privacy){
+  if(sheet.classList.contains('sheet')){
     $('scrim').classList.add('calendar-scrim');
     $('scrim').getBoundingClientRect();sheet.getBoundingClientRect();
     $('scrim').classList.add('is-open');sheet.classList.add('is-open');sheet.focus({preventScroll:true});
@@ -430,7 +462,13 @@ function openSheet(sheet){
 }
 for(const sheet of document.querySelectorAll('dialog')){
   sheet.addEventListener('close',()=>{
-    $('screen').inert=false;$('scrim').hidden=true;sheetOpener?.focus();
+    const remaining=topSheet();
+    if(remaining)remaining.inert=false;
+    else{
+      $('screen').inert=false;$('scrim').hidden=true;
+      $('scrim').classList.remove('is-open','calendar-scrim');
+    }
+    openers.get(sheet)?.focus();
   });
   sheet.addEventListener('keydown',event=>{
     if(event.key==='Escape'){event.preventDefault();dismissSheet(sheet);return}
@@ -443,55 +481,64 @@ for(const sheet of document.querySelectorAll('dialog')){
     if(!event.shiftKey && document.activeElement===last){first.focus();event.preventDefault();}
   });
 }
-$('scrim').onclick=()=>dismissSheet(document.querySelector('dialog[open]'));
+$('scrim').onclick=()=>dismissSheet(topSheet());
 document.querySelectorAll('.close').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 const privacy=$('privacy'),privacyNext=$('privacy-next');
-let selectedDay=null,savingDay=false;
-const showCalendar=routeCalendar({
-  grid:$('privacy-days'),month:$('cal-month'),year:$('cal-year'),prev:$('cal-prev'),next:$('cal-next')
-},scenarios,key=>{
-  selectedDay=key;privacyNext.disabled=!key;
-  privacyNext.textContent=key?'заглушить '+key:'выбери день';
-});
-$('privacy-open').onclick=()=>{
+const confirmation=$('confirm-day');
+let calendarMode='privacy',selectedDate=null,savingDay=false;
+function openCalendar(mode){
+  calendarMode=mode;
   pause();syncComparison();closePlace();
-  showCalendar(scenarios.find(s=>s.day===day.day).date);
-  $('privacy-error').textContent='';openSheet(privacy);
-};
+  const browse=mode==='browse';
+  $('privacy-title').textContent=browse?'выбрать день':'заглушить день';
+  privacy.querySelector('.privacy-heading img').hidden=browse;
+  const reset=routeCalendar({
+    grid:$('privacy-days'),month:$('cal-month'),year:$('cal-year'),prev:$('cal-prev'),next:$('cal-next')
+  },browse?viewDates:scenarios,iso=>{
+    selectedDate=iso;privacyNext.disabled=!iso;
+    privacyNext.textContent=iso?(browse?'показать '+dateLabel(iso):'продолжить'):'выбери день';
+  },browse?currentDate:null);
+  const nearest=scenarios.reduce((a,b)=>Math.abs(Date.parse(b.date)-Date.parse(currentDate))<
+    Math.abs(Date.parse(a.date)-Date.parse(currentDate))?b:a);
+  reset(browse?currentDate:nearest.date);openSheet(privacy);
+}
+$('date').onclick=()=>openCalendar('browse');
+$('privacy-open').onclick=()=>openCalendar('privacy');
 async function dismissSheet(sheet){
-  if(!sheet)return;
-  if(sheet!==privacy){sheet.close();return}
+  if(!sheet || savingDay)return;
+  if(!sheet.classList.contains('sheet')){sheet.close();return}
   if(!sheet.classList.contains('is-open'))return;
-  $('scrim').classList.remove('is-open');
+  if(sheet!==confirmation)$('scrim').classList.remove('is-open');
   sheet.classList.remove('is-open');
   await Promise.allSettled(sheet.getAnimations().map(a=>a.finished));
   sheet.close();
 }
-const handle=$('privacy-handle');
-let drag=null;
-handle.onpointerdown=e=>{
-  if(e.button!==0 || !privacy.classList.contains('is-open') || savingDay)return;
-  handle.setPointerCapture(e.pointerId);
-  drag={y:e.clientY,time:e.timeStamp,zoom:privacy.getBoundingClientRect().width/privacy.offsetWidth};
-  privacy.classList.add('is-dragging');
-};
-handle.onpointermove=e=>{
-  if(!drag)return;
-  const offset=Math.max(0,(e.clientY-drag.y)/drag.zoom);
-  privacy.style.transform='translateY('+offset+'px)';
-};
-handle.onpointerup=handle.onpointercancel=e=>{
-  if(!drag)return;
-  const offset=Math.max(0,(e.clientY-drag.y)/drag.zoom);
-  const projected=offset+offset/Math.max(1,e.timeStamp-drag.time)*180;
-  drag=null;privacy.classList.remove('is-dragging');privacy.style.transform='';
-  if(e.type==='pointerup' && projected>privacy.offsetHeight*.4)dismissSheet(privacy);
-};
-privacy.addEventListener('close',()=>{
-  selectedDay=null;drag=null;privacy.style.transform='';privacy.classList.remove('is-open','is-dragging');
-  $('scrim').classList.remove('calendar-scrim','is-open');
-  $('privacy-form').reset();
-});
+for(const sheet of [privacy,confirmation]){
+  const handle=sheet.querySelector('.sheet__handle');
+  let drag=null;
+  handle.onpointerdown=e=>{
+    if(e.button!==0 || !sheet.classList.contains('is-open') || savingDay)return;
+    handle.setPointerCapture(e.pointerId);
+    drag={y:e.clientY,time:e.timeStamp,zoom:sheet.getBoundingClientRect().width/sheet.offsetWidth};
+    sheet.classList.add('is-dragging');
+  };
+  handle.onpointermove=e=>{
+    if(!drag)return;
+    const offset=Math.max(0,(e.clientY-drag.y)/drag.zoom);
+    sheet.style.transform='translateY('+offset+'px)';
+  };
+  handle.onpointerup=handle.onpointercancel=e=>{
+    if(!drag)return;
+    const offset=Math.max(0,(e.clientY-drag.y)/drag.zoom);
+    const projected=offset+offset/Math.max(1,e.timeStamp-drag.time)*180;
+    drag=null;sheet.classList.remove('is-dragging');sheet.style.transform='';
+    if(e.type==='pointerup' && projected>sheet.offsetHeight*.4)dismissSheet(sheet);
+  };
+  sheet.addEventListener('close',()=>{
+    drag=null;sheet.style.transform='';sheet.classList.remove('is-open','is-dragging');
+    if(sheet===privacy){selectedDate=null;$('privacy-form').reset()}
+  });
+}
 function updateRecord(next){
   const record=records.find(r=>r.day===next.day);
   if(JSON.stringify(next)===JSON.stringify(record))return;
@@ -510,18 +557,26 @@ window.addEventListener('pageshow',event=>{if(event.persisted)refreshRecords()})
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshRecords()});
 $('privacy-form').onsubmit=async event=>{
   event.preventDefault();
-  const key=selectedDay;
-  if(!key || savingDay || !privacy.classList.contains('is-open'))return;
-  savingDay=true;privacyNext.disabled=true;privacy.inert=true;
+  if(!selectedDate || !privacy.classList.contains('is-open') || confirmation.open)return;
+  if(calendarMode==='browse'){
+    const date=selectedDate;
+    await dismissSheet(privacy);selectDate(date);
+  }else{
+    $('confirm-title').textContent='заглушить '+dateLabel(selectedDate)+'?';
+    $('privacy-error').textContent='';openSheet(confirmation);
+  }
+};
+$('confirm-cancel').onclick=()=>dismissSheet(confirmation);
+$('confirm-apply').onclick=async()=>{
+  if(savingDay || !confirmation.open || !selectedDate)return;
+  savingDay=true;$('confirm-apply').disabled=true;
   try{
-    const next=await repository.replaceDay(key);
-    updateRecord(next);
-    changes.postMessage('refresh');
-    await dismissSheet(privacy);
+    const next=await repository.replaceDay(byDate.get(selectedDate).day);
+    updateRecord(next);changes.postMessage('refresh');
+    savingDay=false;await dismissSheet(confirmation);await dismissSheet(privacy);
   }catch{
     $('privacy-error').textContent='Не удалось обновить маршрут. Попробуй ещё раз.';
-    privacyNext.disabled=false;
-  }finally{savingDay=false;privacy.inert=false}
+  }finally{savingDay=false;$('confirm-apply').disabled=false}
 };
 let recorder=null,videoFile=null,storyStart=0,previewFrame=0,storySession=0;
 function animateStory(now){
@@ -600,7 +655,7 @@ function syncComparison(){if(board)board.seek(window,progress,playing)}
 if(board){
   window.routeDemo={
     seek(value,run){progress=value;run?start():pause()},
-    day(index){day=records[index];progress=0;selectedFix=null;closePlace();updateDate();openDay()}
+    day(date){selectDate(date,false)}
   };
 }
 await refreshRecords();

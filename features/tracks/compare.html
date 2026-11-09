@@ -21,7 +21,7 @@ window.routeComparison={
   loadCity,car(){return car??=makeCar()},
   ready(source){ready.add(source);if(ready.size===3)for(const frame of frames)frame.contentWindow.routeDemo.seek(0,true)},
   seek(source,p,playing){for(const frame of frames)if(frame.contentWindow!==source)frame.contentWindow.routeDemo?.seek(p,playing)},
-  changeDay(source,index){ready.clear();for(const frame of frames)if(frame.contentWindow!==source)frame.contentWindow.routeDemo?.day(index)}
+  changeDay(source,date){ready.clear();for(const frame of frames)if(frame.contentWindow!==source)frame.contentWindow.routeDemo?.day(date)}
 };
 function resize(){
   const compact=innerWidth<=540;
@@ -31,7 +31,7 @@ function resize(){
 resize();window.addEventListener('resize',resize);
 variants.forEach(([look,label],i)=>{
  const figure=document.createElement('figure'),caption=document.createElement('figcaption'),phone=document.createElement('div'),frame=document.createElement('iframe');
- caption.textContent=label;phone.className='phone';frame.title=label;frame.src='index.html?v=calendar1&compare=1&look='+look;frames.push(frame);
+ caption.textContent=label;phone.className='phone';frame.title=label;frame.src='index.html?v=dayview1&compare=1&look='+look;frames.push(frame);
  phone.append(frame);figure.append(caption,phone);figure.classList.toggle('active',i===active);document.querySelector('section').append(figure);
  const tab=document.createElement('button');tab.type='button';tab.textContent=label;tab.setAttribute('aria-pressed',i===active);
  tab.onclick=()=>{active=i;document.querySelectorAll('figure').forEach((f,j)=>f.classList.toggle('active',j===i));document.querySelectorAll('nav button').forEach((b,j)=>b.setAttribute('aria-pressed',j===i))};

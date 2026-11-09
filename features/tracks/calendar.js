@@ -1,5 +1,5 @@
 // Calendar arithmetic uses civil UTC dates; travelling across time zones cannot move a day.
-export function routeCalendar(elements, entries, selectDay) {
+export function routeCalendar(elements, entries, selectDay, initial=null) {
   const {grid,month,year,prev,next}=elements;
   const byDate=new Map(entries.map(entry=>[entry.date,entry]));
   const months=[...new Set(entries.map(entry=>entry.date.slice(0,7)))].sort();
@@ -27,7 +27,8 @@ export function routeCalendar(elements, entries, selectDay) {
       if(n===1)cell.style.gridColumnStart=String(offset+1);
       if(entry){
         const input=document.createElement('input');
-        input.type='radio';input.name='privacy-date';input.value=entry.day;
+        input.type='radio';input.name='privacy-date';input.value=entry.date;input.checked=entry.date===initial;
+        if(entry.hasRoute)cell.classList.add('has-route');
         input.setAttribute('aria-label',fullDate.format(new Date(date+'T12:00:00Z')));
         const face=document.createElement('span');face.textContent=n;
         cell.append(input,face);
@@ -36,7 +37,7 @@ export function routeCalendar(elements, entries, selectDay) {
       }
       grid.append(cell);
     }
-    selectDay(null);
+    selectDay(grid.querySelector(':checked')?.value || null);
   }
   prev.onclick=()=>show(months[months.indexOf(visible)-1]);
   next.onclick=()=>show(months[months.indexOf(visible)+1]);
