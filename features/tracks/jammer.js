@@ -40,6 +40,7 @@ function makeHalo() {
   return canvas;
 }
 const halo = makeHalo();
+export const stickerReady = sticker.decode().catch(() => {});
 const flare = new Path2D('M0 -1 Q.12 -.14 .88 0 Q.13 .12 0 1 Q-.12 .13 -.88 0 Q-.12 -.13 0 -1Z');
 const flares = [[-203,-82,25],[173,-105,19],[208,64,28],[-131,123,15]];
 

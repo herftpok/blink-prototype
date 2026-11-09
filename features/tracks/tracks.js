@@ -1,4 +1,4 @@
-import {drawJammer} from './jammer.js?v=comic1';
+import {drawJammer,stickerReady} from './jammer.js?v=brand1';
 import {vehiclePresence,drawLightTrail,overviewNavigator} from './concepts.js';
 import {loadCity,drawCity} from './city-map.js';
 import {makeCar} from './car.js?v=replay-share2';
@@ -11,7 +11,13 @@ const look=['light','atlas'].includes(query.get('look'))?query.get('look'):'main
 document.documentElement.dataset.look=look;
 const board=query.has('compare') && parent!==window && document.referrer.startsWith(location.origin+'/')?parent.routeComparison:null;
 if(board)document.documentElement.dataset.embedded='';
-let day=board?records.at(-1):records[0],progress=0,playing=false,previous=0,selectedFix=null;
+const replayDuration=12000;
+const linkedDay=records.find(record=>record.day===query.get('day'));
+const atSeconds=Number(query.get('at'));
+const openAtFrame=!board && linkedDay && query.has('at') && Number.isFinite(atSeconds);
+let day=board?records.at(-1):(linkedDay||records[0]);
+let progress=openAtFrame?Math.max(0,Math.min(1,atSeconds*1000/replayDuration)):0;
+let playing=false,previous=0,selectedFix=null;
 let saved=[];
 try{
   saved=JSON.parse(localStorage.getItem('blink.tracks.zones')||'[]');
@@ -32,18 +38,18 @@ function place(s){
 const backgrounds=new Map();
 const asset = src => {const img=new Image(); img.src=src;img.onload=()=>{backgrounds.clear();render()};return img};
 let city=null;
-async function openDay(){
+async function openDay(autoplay=true){
   const requested=day;pause();
   const next=await (board?board.loadCity(requested.area):loadCity(requested.area));
   if(requested!==day)return;
   if(city && city!==next)city.tiles.clear();
-  city=next;timeline();if(board)board.ready(window);else start();
+  city=next;timeline();if(board)board.ready(window);else if(autoplay)start();
 }
 const portrait=asset('../../assets/people/live-1.webp');
 const arrows=asset('../../assets/pin/arrows.png');
 const reverseArrows=asset('../../assets/tails/arrows-reverse.png');
 const flame=asset('../../assets/pin/fire-trail-atlas.webp');
-const replayDuration=12000;
+const brandLogo=asset('../../assets/brand/logo.png');
 const routes=new Map(records.map(r=>[r,prepareReplay(r)]));
 const gaps=new Map([...routes].map(([d,r])=>[d,[...new Set(r.runs)].filter(run=>run?.gap)]));
 const uiFamily=getComputedStyle(document.body).fontFamily;
@@ -122,8 +128,11 @@ function drawStoryText(ctx,pos,height,unit){
   ctx.strokeStyle='#ffffff35';ctx.lineWidth=1;ctx.stroke();
   ctx.fillStyle='#ddd6e7';ctx.fillText(day.day,28,bottom-33);
   ctx.fillStyle='white';ctx.font='750 21px '+uiFamily;ctx.fillText(clock(pos.time),28,bottom-10);
-  ctx.textAlign='right';ctx.shadowBlur=4;ctx.font='650 11px '+uiFamily;
-  ctx.fillText(day.title,width-16,bottom-5,width-box-48);
+  if(loaded(brandLogo)){
+    const logoWidth=76,logoHeight=logoWidth*brandLogo.naturalHeight/brandLogo.naturalWidth;
+    ctx.shadowBlur=4;
+    ctx.drawImage(brandLogo,width-16-logoWidth,bottom-4-logoHeight,logoWidth,logoHeight);
+  }
   ctx.restore();
 }
 // captureStream records canvas pixels. Mirror the live component's layers here
@@ -414,7 +423,7 @@ for(const sheet of document.querySelectorAll('dialog')){
 }
 $('scrim').onclick=()=>document.querySelector('dialog[open]')?.close();
 document.querySelectorAll('.close').forEach(b=>b.onclick=()=>b.closest('dialog').close());
-let recorder=null,videoFile=null,storyStart=0,previewFrame=0;
+let recorder=null,videoFile=null,storyStart=0,previewFrame=0,storySession=0;
 function animateStory(now){
   if(!$('story').open)return;
   const t=Math.max(0,(now-storyStart)/replayDuration);
@@ -426,7 +435,8 @@ function animateStory(now){
   }
   previewFrame=requestAnimationFrame(animateStory);
 }
-function prepareVideo(){
+async function prepareVideo(){
+  const session=storySession;
   const canvas=$('preview'),action=$('export');
   action.disabled=true;
   if(!window.MediaRecorder || !canvas.captureStream){
@@ -441,6 +451,8 @@ function prepareVideo(){
     $('status').textContent='Не удалось подготовить видео.';
   };
   try{
+    await brandLogo.decode();
+    if(session!==storySession || !$('story').open)return;
     const type=['video/mp4;codecs=avc1.42002A','video/mp4','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
     stream=canvas.captureStream(30);
     const recording=new MediaRecorder(stream,{...(type?{mimeType:type}:{}),videoBitsPerSecond:6500000});
@@ -458,7 +470,7 @@ function prepareVideo(){
     };
     storyStart=performance.now();draw(canvas,0,true);recording.start();
     action.textContent='готовим видео · 12 с';
-  }catch{failed()}
+  }catch{if(session===storySession)failed()}
 }
 $('share').onclick=()=>{
   pause();syncComparison();
@@ -468,6 +480,7 @@ $('share').onclick=()=>{
   storyStart=performance.now();prepareVideo();animateStory(performance.now());
 };
 $('story').onclose=()=>{
+  storySession++;
   cancelAnimationFrame(previewFrame);
   const active=recorder;recorder=null;videoFile=null;
   if(active?.state==='recording')active.stop();
@@ -490,7 +503,8 @@ if(board){
     day(index){day=records[index];progress=0;selectedFix=null;closePlace();updateDate();openDay()}
   };
 }
-openDay();
+openDay(!openAtFrame);
+if(openAtFrame)stickerReady.then(render);
 
 new ResizeObserver(()=>{
   const canvas=$('map');
