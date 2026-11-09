@@ -112,3 +112,23 @@ html[data-look="atlas"] #clock {border:0;background:none;box-shadow:none;backdro
 #story .primary {margin-top:16px;min-height:50px}
 #story .primary:disabled {background:#ece6f3;color:#584d61}
 #story #status {font-size:12px;text-align:center;color:#e6d4f0}
+
+.route-heading{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.route-heading h1{margin:0}
+#privacy-open{width:38px;height:38px;border-radius:14px}
+#privacy{padding:14px 20px 32px;background:linear-gradient(145deg,#302938,#201e25 66%)}
+#privacy h2{padding-right:28px;font:800 25px/1.1 var(--font-ui);letter-spacing:-1px}
+#privacy-description{color:#d5cfdc;font-size:14px;line-height:1.45;margin:10px 0 18px}
+#privacy-days{border:0;padding:0;min-width:0;background:#ffffff09;border-radius:18px}
+#privacy-days legend{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+#privacy-days label{margin:0;padding:11px 14px;min-height:46px;display:grid;grid-template-columns:auto 1fr 20px;align-items:center;gap:9px;cursor:pointer}
+#privacy-days label+label{border-top:1px solid #ffffff13}
+#privacy-days strong{font-size:15px}
+#privacy-days span{font-size:12px;font-weight:500;color:#c6bece}
+#privacy-days input{grid-column:3;grid-row:1;appearance:none;width:18px;height:18px;border:1.5px solid #ffffff42;border-radius:50%;background:transparent;cursor:pointer}
+#privacy-days input:checked{border:5px solid #d7b2ff;background:#302639}
+#privacy-days input:checked~strong{color:#e9cfff}
+#privacy-next{margin-top:18px}
+#privacy-next:disabled{background:#514b58;color:#b6afbc}
+#privacy-back{width:100%;min-height:42px;margin-top:5px;font-weight:650}
+#privacy-error:empty{display:none}

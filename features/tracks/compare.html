@@ -31,7 +31,7 @@ function resize(){
 resize();window.addEventListener('resize',resize);
 variants.forEach(([look,label],i)=>{
  const figure=document.createElement('figure'),caption=document.createElement('figcaption'),phone=document.createElement('div'),frame=document.createElement('iframe');
- caption.textContent=label;phone.className='phone';frame.title=label;frame.src='index.html?v=brand1&compare=1&look='+look;frames.push(frame);
+ caption.textContent=label;phone.className='phone';frame.title=label;frame.src='index.html?v=privacy1&compare=1&look='+look;frames.push(frame);
  phone.append(frame);figure.append(caption,phone);figure.classList.toggle('active',i===active);document.querySelector('section').append(figure);
  const tab=document.createElement('button');tab.type='button';tab.textContent=label;tab.setAttribute('aria-pressed',i===active);
  tab.onclick=()=>{active=i;document.querySelectorAll('figure').forEach((f,j)=>f.classList.toggle('active',j===i));document.querySelectorAll('nav button').forEach((b,j)=>b.setAttribute('aria-pressed',j===i))};

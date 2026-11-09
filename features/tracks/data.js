@@ -67,18 +67,23 @@ function buildDay(config){
     }
     dwell(guide.points.at(-1),guide.wait);
   }
+  const {day,weekday,area,title,zones}=config;
+  return finishDay({day,weekday,area,title,zones,mPerX},fixes,walked,metres);
+}
+function finishDay({day,weekday,area,title,zones,mPerX},fixes,walked,metres){
+  const distance=(a,b)=>mPerX*Math.hypot(a.x-b.x,(a.y-b.y)*frameHeight/frameWidth);
   // Only stationary clusters with a meaningful dwell get an overview marker.
   // A lone fix, including the last fix, never establishes a visit.
   const stops=[];
   for(let i=0;i<fixes.length;){
     if(fixes[i].mode!=='still'){i++;continue}
     let j=i+1;
-    while(j<fixes.length && fixes[j].mode==='still' && distance(fixes[i],fixes[j])<55)j++;
+    while(j<fixes.length && fixes[j].mode==='still' && !fixes[j].gapBefore && distance(fixes[i],fixes[j])<55)j++;
     const first=fixes[i],last=fixes[j-1];
     if(last.t-first.t>=200 && j-i>=4){
       const cluster=fixes.slice(i,j),mean=k=>cluster.reduce((s,p)=>s+p[k],0)/cluster.length;
       const center={x:mean('x'),y:mean('y')};
-      const zone=config.zones.find(z=>distance(z,center)<35);
+      const zone=zones.find(z=>distance(z,center)<35);
       stops.push({...center,id:zone?.id||'unknown',t:first.t,end:last.t,accuracy:Math.round(mean('accuracy'))});
     }
     i=j;
@@ -89,6 +94,5 @@ function buildDay(config){
     fix.replay=elapsed;
   });
   for(const fix of fixes)fix.replay/=elapsed;
-  return {...config,fixes,stops,mPerX,steps:Math.round(walked/.74),km:metres/1000,peak:Math.round(Math.max(...fixes.map(p=>p.speed)))};
+  return {day,weekday,area,title,zones,fixes,stops,mPerX,steps:Math.round(walked/.74),km:metres/1000,peak:Math.round(Math.max(...fixes.map(p=>p.speed)))};
 }
-const records=scenarios.map(buildDay);

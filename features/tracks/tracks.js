@@ -1,3 +1,4 @@
+import {openRoutes} from './privacy.js';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
 import {vehiclePresence,drawLightTrail,overviewNavigator} from './concepts.js';
 import {loadCity,drawCity} from './city-map.js';
@@ -12,6 +13,15 @@ document.documentElement.dataset.look=look;
 const board=query.has('compare') && parent!==window && document.referrer.startsWith(location.origin+'/')?parent.routeComparison:null;
 if(board)document.documentElement.dataset.embedded='';
 const replayDuration=12000;
+let repository,records;
+try{
+  repository=await openRoutes();
+  records=await repository.readAll();
+}catch(error){
+  $('summary').textContent='Не удалось открыть маршруты. Проверь доступ к хранилищу браузера и обнови страницу.';
+  for(const button of document.querySelectorAll('#screen button'))button.disabled=true;
+  throw error;
+}
 const linkedDay=records.find(record=>record.day===query.get('day'));
 const atSeconds=Number(query.get('at'));
 const openAtFrame=!board && linkedDay && query.has('at') && Number.isFinite(atSeconds);
@@ -50,10 +60,15 @@ const arrows=asset('../../assets/pin/arrows.png');
 const reverseArrows=asset('../../assets/tails/arrows-reverse.png');
 const flame=asset('../../assets/pin/fire-trail-atlas.webp');
 const brandLogo=asset('../../assets/brand/logo.png');
-const routes=new Map(records.map(r=>[r,prepareReplay(r)]));
-const gaps=new Map([...routes].map(([d,r])=>[d,[...new Set(r.runs)].filter(run=>run?.gap)]));
+const routes=new Map(),gaps=new Map(),navigators=new Map();
 const uiFamily=getComputedStyle(document.body).fontFamily;
-const navigators=new Map([...routes].map(([d,r])=>[d,overviewNavigator(r.runs)]));
+function prepareDay(record){
+  const replay=prepareReplay(record);
+  routes.set(record,replay);
+  gaps.set(record,[...new Set(replay.runs)].filter(run=>run?.gap));
+  navigators.set(record,overviewNavigator(replay.runs));
+}
+records.forEach(prepareDay);
 let mapView=null,markerData=[];
 const pinHost=$('traveller');
 pinHost.innerHTML=BlinkPin.markup({name:'ты', photo:portrait.src, tag:'span', assets:'../../assets', state:'moving', speed:0, size:52});
@@ -423,6 +438,69 @@ for(const sheet of document.querySelectorAll('dialog')){
 }
 $('scrim').onclick=()=>document.querySelector('dialog[open]')?.close();
 document.querySelectorAll('.close').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+const privacy=$('privacy'),dayList=$('privacy-days'),privacyNext=$('privacy-next');
+const chooseTitle=$('privacy-title').textContent,chooseDescription=$('privacy-description').textContent;
+for(const record of records){
+  const label=document.createElement('label'),input=document.createElement('input');
+  input.type='radio';input.name='privacy-date';input.value=record.day;
+  const date=document.createElement('strong'),weekday=document.createElement('span');
+  date.textContent=record.day;weekday.textContent=record.weekday;
+  label.append(input,date,weekday);dayList.append(label);
+}
+function choosePrivacyDay(clear){
+  if(clear)$('privacy-form').reset();
+  $('privacy-title').textContent=chooseTitle;
+  $('privacy-description').textContent=chooseDescription;
+  dayList.hidden=false;$('privacy-back').hidden=true;
+  privacyNext.textContent='продолжить';
+  privacyNext.disabled=!dayList.querySelector(':checked');
+  $('privacy-error').textContent='';
+}
+$('privacy-open').onclick=()=>{
+  pause();syncComparison();closePlace();choosePrivacyDay(true);openSheet(privacy);
+};
+privacy.addEventListener('close',()=>choosePrivacyDay(true));
+dayList.onchange=()=>{privacyNext.disabled=false};
+$('privacy-back').onclick=()=>{choosePrivacyDay(false);dayList.querySelector(':checked')?.focus()};
+
+function updateRecord(next){
+  const record=records.find(r=>r.day===next.day);
+  if(JSON.stringify(next)===JSON.stringify(record))return;
+  Object.assign(record,next);prepareDay(record);backgrounds.delete(record);
+  if(record!==day)return;
+  if($('story').open)$('story').close();
+  if($('zone').open)$('zone').close();
+  selectedFix=null;closePlace();timeline();
+}
+async function refreshRecords(){
+  (await repository.readAll()).forEach(updateRecord);
+}
+const changes=new BroadcastChannel('blink.tracks.routes');
+changes.onmessage=refreshRecords;
+window.addEventListener('pageshow',event=>{if(event.persisted)refreshRecords()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshRecords()});
+$('privacy-form').onsubmit=async event=>{
+  event.preventDefault();
+  const key=dayList.querySelector(':checked')?.value;
+  if(!key || privacyNext.disabled)return;
+  if(!dayList.hidden){
+    dayList.hidden=true;$('privacy-back').hidden=false;
+    $('privacy-title').textContent='заглушить '+key+'?';
+    $('privacy-description').textContent='Часть точек изменится, часть исчезнет. Вернуть исходный маршрут не получится.';
+    privacyNext.textContent='заглушить день';privacyNext.focus();
+    return;
+  }
+  privacyNext.disabled=true;$('privacy-back').disabled=true;
+  try{
+    const next=await repository.replaceDay(key);
+    updateRecord(next);
+    changes.postMessage('refresh');
+    privacy.close();
+  }catch{
+    $('privacy-error').textContent='Не удалось обновить маршрут. Попробуй ещё раз.';
+    privacyNext.disabled=false;
+  }finally{$('privacy-back').disabled=false}
+};
 let recorder=null,videoFile=null,storyStart=0,previewFrame=0,storySession=0;
 function animateStory(now){
   if(!$('story').open)return;
@@ -503,6 +581,7 @@ if(board){
     day(index){day=records[index];progress=0;selectedFix=null;closePlace();updateDate();openDay()}
   };
 }
+await refreshRecords();
 openDay(!openAtFrame);
 if(openAtFrame)stickerReady.then(render);
 

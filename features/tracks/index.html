@@ -1,6 +1,6 @@
 <!doctype html>
-<html lang="ru"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101014"><link rel="preload" as="image" href="../../assets/brand/logo.png"><title>Где я был · Blink</title><link rel="stylesheet" href="../../styles/tokens.css"><link rel="stylesheet" href="../../styles/base.css"><link rel="stylesheet" href="../../styles/components.css"><link rel="stylesheet" href="tracks.css?v=replay-share2"></head>
-<body><a class="compare-link" href="compare.html?v=brand1">Сравнить три варианта ↗</a><div class="device"><div class="app" id="phone">
+<html lang="ru"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101014"><link rel="preload" as="image" href="../../assets/brand/logo.png"><title>Где я был · Blink</title><link rel="stylesheet" href="../../styles/tokens.css"><link rel="stylesheet" href="../../styles/base.css"><link rel="stylesheet" href="../../styles/components.css"><link rel="stylesheet" href="tracks.css?v=privacy1"></head>
+<body><a class="compare-link" href="compare.html?v=privacy1">Сравнить три варианта ↗</a><div class="device"><div class="app" id="phone">
 <div class="status-bar" aria-hidden="true"><img class="status-bar__time" src="../../assets/system/status-time.png" alt=""><img class="status-bar__island" src="../../assets/system/live-activity.png" alt=""><img class="status-bar__icons" src="../../assets/system/status-icons.png" alt=""></div>
 <main id="screen" aria-label="Карта маршрута">
   <canvas id="map" width="780" height="1688" aria-label="Маршрут за день"></canvas>
@@ -16,7 +16,7 @@
       </nav>
       <button id="share" class="map-tool" aria-label="Поделиться маршрутом"><img src="../../assets/icons/share.png" alt=""></button>
     </div>
-    <h1>где я был</h1>
+    <div class="route-heading"><h1>где я был</h1><button id="privacy-open" class="map-tool" aria-label="Настройки приватности" title="Приватность"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 6v5c0 5.1-3.3 8-8 10-4.7-2-8-4.9-8-10V6l8-3Z" stroke="currentColor" stroke-width="2"/><path d="M9 11.6l2.1 2.2 4-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
     <div id="summary"></div>
   </header>
   <div id="place-info" hidden>
@@ -31,6 +31,17 @@
   </div>
 </main><div class="tracks-backdrop" id="scrim" hidden></div>
 <dialog id="zone"><form id="form"><div class="handle"></div><button class="close" type="button" aria-label="Закрыть">×</button><h2>своё место</h2><p id="visits"></p><label for="name">название</label><input id="name" required maxlength="36" autocomplete="off"><label>иконка на карте</label><div id="icons"></div><button class="primary">сохранить место</button></form></dialog>
+<dialog id="privacy" aria-labelledby="privacy-title">
+  <div class="handle"></div><button class="close" aria-label="Закрыть">×</button>
+  <h2 id="privacy-title">приватность маршрута</h2>
+  <p id="privacy-description">Выбери день, чтобы изменить маршрут. На карте и в видео часть пути будет выглядеть как потеря сигнала.</p>
+  <form id="privacy-form" autocomplete="off">
+    <fieldset id="privacy-days"><legend>Выбрать день</legend></fieldset>
+    <button class="primary" id="privacy-next" disabled>продолжить</button>
+    <button type="button" id="privacy-back" hidden>вернуться к выбору дня</button>
+    <p id="privacy-error" role="alert"></p>
+  </form>
+</dialog>
 <dialog id="story" aria-labelledby="story-title">
   <div class="handle"></div><button class="close" aria-label="Закрыть">×</button>
   <h2 id="story-title">поделиться маршрутом</h2>
@@ -38,4 +49,4 @@
   <canvas id="preview" width="780" height="1688" aria-label="Предпросмотр видео маршрута"></canvas>
   <button id="export" class="primary">сохранить видео</button><p id="status" role="status"></p>
 </dialog>
-<div class="home-indicator"></div></div></div><script src="../../scripts/pin.js"></script><script src="data.js?v=osm-hd2"></script><script type="module" src="tracks.js?v=brand1"></script></body></html>
+<div class="home-indicator"></div></div></div><script src="../../scripts/pin.js"></script><script src="data.js?v=privacy1"></script><script type="module" src="tracks.js?v=privacy1"></script></body></html>
