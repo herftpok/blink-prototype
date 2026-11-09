@@ -1,4 +1,4 @@
-import {drawJammer} from './jammer.js';
+import {drawJammer} from './jammer.js?v=comic1';
 import {vehiclePresence,drawLightTrail,overviewNavigator} from './concepts.js';
 import {loadCity,drawCity} from './city-map.js';
 import {makeCar} from './car.js?v=replay-share2';
@@ -262,7 +262,7 @@ function draw(canvas,p,story=false){
     pinValue.textContent=pos.speed;
     $('seek').setAttribute('aria-valuetext',clock(pos.time)+', '+modeLabel(pos)+', '+pos.speed+' км/ч');
   }
-  drawJammer(ctx,gaps.get(day),p,replayDuration,unitsY,reducedMotion.matches,uiFamily);
+  drawJammer(ctx,gaps.get(day),p,replayDuration,unitsY,reducedMotion.matches);
   if(story)drawStoryText(ctx,pos,unitsY,unit);
   ctx.restore();
 }

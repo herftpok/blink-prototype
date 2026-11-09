@@ -1,24 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-70 -67 140 134">
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="350" viewBox="-280 -175 560 350" role="img" aria-label="Глушилка">
   <defs>
-    <linearGradient id="rail" x2=".28" y2="1" gradientUnits="objectBoundingBox">
-      <stop stop-color="#f4eaff"/><stop offset=".35" stop-color="#cbb5ff"/><stop offset=".75" stop-color="#8f7edb"/><stop offset="1" stop-color="#685cad"/>
+    <linearGradient id="depth" x2="0%" y2="100%">
+      <stop stop-color="#777482"/><stop offset=".45" stop-color="#34313b"/><stop offset="1" stop-color="#0a0910"/>
     </linearGradient>
-    <radialGradient id="lamp" cx=".34" cy=".25" r=".8"><stop stop-color="#fff9b2"/><stop offset=".36" stop-color="#ffdb42"/><stop offset=".73" stop-color="#ff892c"/><stop offset="1" stop-color="#ea434b"/></radialGradient>
-    <path id="mast" d="M-6-20 -25 47H-13L-10 35H10L13 47H25L6-20Z"/>
-    <path id="waves" d="M-24-46Q-39-32-26-17M24-46Q39-32 26-17M-34-55Q-57-33-38-9M34-55Q57-33 38-9"/>
+    <path id="burst" d="m-252 44 67-43-32-35 104 13-9-71 61 42 32-66 38 62 63-84 9 79 77-56-20 62 82-25-39 52 73 15-74 30 23 35-88-9-5 61-65-27-31 58-26-48-90 34 16-52-105 13 37-39z"/>
+    <!-- Hand-lettered Cyrillic capitals, with open counters at phone size. -->
+    <g id="word" fill-rule="evenodd">
+      <path d="M0 58V0H41L39 15H17V58Z"/>
+      <path transform="translate(34)" d="m0 58 16-58h32v58H31V15h-3L17 58Z"/>
+      <path transform="translate(86)" d="M0 0h19l8 21L36 0h18L30 58H11l8-17Z"/>
+      <path transform="translate(140)" d="M0 0h16v43h8V0h16v43h8V0h16v58H0Z"/>
+      <path transform="translate(208)" d="M0 0h16v31L34 0h18v58H36V27L18 58H0Z"/>
+      <path transform="translate(264)" d="m0 58 16-58h32v58H31V15h-3L17 58Z"/>
+      <path transform="translate(316)" d="M0 0h17v22L33 0h21L32 28l21 30H31L17 35v23H0Z"/>
+      <path transform="translate(367)" d="M0 58 20 0h24l11 58H37l-2-11H21l-3 11Zm25-24h9l-3-20Z"/>
+    </g>
+    <path id="mast" d="M-6-32h12l18 57H12l-4-12H-8l-4 12h-12Z"/>
+    <path id="waves" d="M-18-51q-12 11-2 23m-8-31q-19 18-5 37m51-29q12 11 2 23m8-31q19 18 5 37"/>
   </defs>
-  <g stroke-linecap="round" stroke-linejoin="round" transform="rotate(-6)">
-    <use href="#waves" stroke="#faf6ff" stroke-width="13" fill="none"/>
-    <use href="#waves" stroke="#46305a" stroke-width="8" fill="none"/>
-    <use href="#waves" stroke="#d8a5ff" stroke-width="4" fill="none"/>
-    <use href="#mast" stroke="white" stroke-width="12"/>
-    <use href="#mast" stroke="#342641" stroke-width="4" fill="url(#rail)"/>
-    <path d="m-4-13 10 15-17 12 23 13-25 12m19-52L-6 2l17 12-23 13 25 12" fill="none" stroke="#534577" stroke-width="3.3"/>
-    <path d="m-19 42 15-58" fill="none" stroke="#eee9ff" stroke-width="2.5"/>
-    <rect x="-17" y="-26" width="34" height="10" rx="4" stroke="white" stroke-width="9"/>
-    <rect x="-17" y="-26" width="34" height="10" rx="4" fill="#9385b7" stroke="#342641" stroke-width="3"/>
-    <circle cy="-36" r="13" stroke="white" stroke-width="9"/>
-    <circle cy="-36" r="13" fill="url(#lamp)" stroke="#382a40" stroke-width="3"/>
-    <path d="M-7-38q1-5 6-6" fill="none" stroke="#fff9cc" stroke-width="3"/>
+  <use href="#burst" fill="#08070b" stroke="#fff" stroke-width="4" stroke-linejoin="miter"/>
+  <g transform="translate(-32,-53) rotate(-8)" stroke-linejoin="round">
+    <use href="#waves" fill="none" stroke="#07070a" stroke-width="11" stroke-linecap="square"/>
+    <use href="#waves" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="square"/>
+    <use href="#mast" fill="white" stroke="#08070b" stroke-width="4"/>
+    <path d="m0-24 5 13H-4Zm-5 21 11-5-2 9Zm-2 9 14-1-4 5Z" fill="#100f14"/>
+    <path d="m-9-36 7-10 11 5-2 11-12 1z" fill="#b3fffb" stroke="#08070b" stroke-width="3"/>
+  </g>
+  <g transform="rotate(-8) translate(-219,-13) scale(1.085,1.08) skewX(-12)" stroke-linejoin="round">
+    <use href="#word" x="-5" y="14" fill="#050507" stroke="#050507" stroke-width="5"/>
+    <use href="#word" x="-3" y="9" fill="url(#depth)" stroke="#08070b" stroke-width="3"/>
+    <use href="#word" fill="#fff" stroke="#08070b" stroke-width="4" paint-order="stroke fill"/>
   </g>
 </svg>
