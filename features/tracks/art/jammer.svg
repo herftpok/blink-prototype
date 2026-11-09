@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-70 -67 140 134">
+  <defs>
+    <linearGradient id="rail" x2=".28" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#f4eaff"/><stop offset=".35" stop-color="#cbb5ff"/><stop offset=".75" stop-color="#8f7edb"/><stop offset="1" stop-color="#685cad"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx=".34" cy=".25" r=".8"><stop stop-color="#fff9b2"/><stop offset=".36" stop-color="#ffdb42"/><stop offset=".73" stop-color="#ff892c"/><stop offset="1" stop-color="#ea434b"/></radialGradient>
+    <path id="mast" d="M-6-20 -25 47H-13L-10 35H10L13 47H25L6-20Z"/>
+    <path id="waves" d="M-24-46Q-39-32-26-17M24-46Q39-32 26-17M-34-55Q-57-33-38-9M34-55Q57-33 38-9"/>
+  </defs>
+  <g stroke-linecap="round" stroke-linejoin="round" transform="rotate(-6)">
+    <use href="#waves" stroke="#faf6ff" stroke-width="13" fill="none"/>
+    <use href="#waves" stroke="#46305a" stroke-width="8" fill="none"/>
+    <use href="#waves" stroke="#d8a5ff" stroke-width="4" fill="none"/>
+    <use href="#mast" stroke="white" stroke-width="12"/>
+    <use href="#mast" stroke="#342641" stroke-width="4" fill="url(#rail)"/>
+    <path d="m-4-13 10 15-17 12 23 13-25 12m19-52L-6 2l17 12-23 13 25 12" fill="none" stroke="#534577" stroke-width="3.3"/>
+    <path d="m-19 42 15-58" fill="none" stroke="#eee9ff" stroke-width="2.5"/>
+    <rect x="-17" y="-26" width="34" height="10" rx="4" stroke="white" stroke-width="9"/>
+    <rect x="-17" y="-26" width="34" height="10" rx="4" fill="#9385b7" stroke="#342641" stroke-width="3"/>
+    <circle cy="-36" r="13" stroke="white" stroke-width="9"/>
+    <circle cy="-36" r="13" fill="url(#lamp)" stroke="#382a40" stroke-width="3"/>
+    <path d="M-7-38q1-5 6-6" fill="none" stroke="#fff9cc" stroke-width="3"/>
+  </g>
+</svg>

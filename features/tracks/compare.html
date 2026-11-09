@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Где я был · Три варианта</title>
+<link rel="stylesheet" href="../../styles/tokens.css"><style>
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;color:white;background:radial-gradient(ellipse at 50% 24%,#262331 0%,#141318 53%,#0e0e10 100%);font-family:var(--font-ui)}
+main{min-height:100dvh;display:grid;place-content:center;gap:20px;padding:18px}
+section{display:flex;gap:clamp(14px,3vw,48px);align-items:start;justify-content:center}
+figure{margin:0;text-align:center}figcaption{font-weight:750;letter-spacing:-.5px;font-size:17px;margin-bottom:14px}
+.phone{width:var(--w);height:var(--h);position:relative;border-radius:calc(var(--w)*.135);overflow:hidden;box-shadow:0 0 0 5px #27262c,0 0 0 6px #45434c,0 15px 30px #0008;background:#131622}
+iframe{width:390px;height:844px;border:0;transform:scale(var(--scale));transform-origin:top left;position:absolute;top:0;left:0}
+nav{display:none}nav button{color:#aca9b6;background:none;border:0;font:650 13px var(--font-ui);min-height:40px;padding:5px 12px;cursor:pointer}
+nav button[aria-pressed=true]{color:#17141d;background:#f1edf8;border-radius:22px}
+@media(max-width:540px){main{gap:12px;padding:10px}nav{display:flex;justify-content:center}figure:not(.active){display:none}figcaption{display:none}}
+</style></head><body><main><nav aria-label="Вариант прототипа"></nav><section aria-label="Сравнение трёх вариантов маршрута"></section></main>
+<script type="module">
+import {loadCity} from './city-map.js';
+import {makeCar} from './car.js?v=replay-share2';
+const variants=[['main','Основной'],['light','Световой след'],['atlas','Навигатор']];
+const frames=[],ready=new Set();
+let car,active=0;
+window.routeComparison={
+  loadCity,car(){return car??=makeCar()},
+  ready(source){ready.add(source);if(ready.size===3)for(const frame of frames)frame.contentWindow.routeDemo.seek(0,true)},
+  seek(source,p,playing){for(const frame of frames)if(frame.contentWindow!==source)frame.contentWindow.routeDemo?.seek(p,playing)},
+  changeDay(source,index){ready.clear();for(const frame of frames)if(frame.contentWindow!==source)frame.contentWindow.routeDemo?.day(index)}
+};
+function resize(){
+  const compact=innerWidth<=540;
+  const scale=Math.min(1,(innerHeight-(compact?92:95))/844,(innerWidth-(compact?38:84))/(compact?390:1230));
+  const root=document.documentElement.style;root.setProperty('--scale',scale);root.setProperty('--w',390*scale+'px');root.setProperty('--h',844*scale+'px');
+}
+resize();window.addEventListener('resize',resize);
+variants.forEach(([look,label],i)=>{
+ const figure=document.createElement('figure'),caption=document.createElement('figcaption'),phone=document.createElement('div'),frame=document.createElement('iframe');
+ caption.textContent=label;phone.className='phone';frame.title=label;frame.src='index.html?compare=1&look='+look;frames.push(frame);
+ phone.append(frame);figure.append(caption,phone);figure.classList.toggle('active',i===active);document.querySelector('section').append(figure);
+ const tab=document.createElement('button');tab.type='button';tab.textContent=label;tab.setAttribute('aria-pressed',i===active);
+ tab.onclick=()=>{active=i;document.querySelectorAll('figure').forEach((f,j)=>f.classList.toggle('active',j===i));document.querySelectorAll('nav button').forEach((b,j)=>b.setAttribute('aria-pressed',j===i))};
+ document.querySelector('nav').append(tab);
+});
+</script></body></html>

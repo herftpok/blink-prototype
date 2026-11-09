@@ -263,3 +263,22 @@
   width: 24px;
   height: 24px;
 }
+
+.map__saved-zone {
+  position: absolute;
+  left: 74%;
+  top: 67%;
+  transform: translate(-50%, -100%);
+  display: grid;
+  justify-items: center;
+  max-width: 32%;
+  text-decoration: none;
+}
+.map__saved-zone[hidden] { display: none; }
+.map__saved-zone img { width: 46px; height: 46px; object-fit: contain; }
+.map__saved-zone span {
+  background: var(--color-map-button); color: var(--color-text);
+  border-radius: var(--radius-pill); padding: 4px 9px;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.map__actions a { text-decoration: none; }

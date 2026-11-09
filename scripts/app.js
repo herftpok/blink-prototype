@@ -148,7 +148,27 @@
 
   /* ── карта ───────────────────────────────────────────────────────────── */
 
+  function showSavedZone() {
+    const marker = $("#saved-zone");
+    const icons = {
+      home: "assets/overnights/home.webp", gym: "features/tracks/art/gym.png",
+      work: "features/tracks/art/work.png", study: "features/tracks/art/study.png",
+      coffee: "features/advent/renders/coffee.webp", bar: "assets/stickers/beer.webp"
+    };
+    try {
+      const saved = JSON.parse(localStorage.getItem("blink.tracks.spot"));
+      marker.hidden = !saved || !Object.hasOwn(icons, saved.icon) || !saved.name;
+      if (!marker.hidden) {
+        marker.querySelector("img").src = icons[saved.icon];
+        marker.querySelector("span").textContent = saved.name;
+      }
+    } catch { marker.hidden = true; }
+  }
+  window.addEventListener("pageshow", showSavedZone);
+  window.addEventListener("storage", showSavedZone);
+
   function renderMap() {
+    showSavedZone();
     const m = data.map;
     $("#map-city").textContent = m.city;
     $("#map-time").textContent = m.time;
