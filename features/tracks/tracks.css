@@ -116,19 +116,33 @@ html[data-look="atlas"] #clock {border:0;background:none;box-shadow:none;backdro
 .route-heading{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
 .route-heading h1{margin:0}
 #privacy-open{width:38px;height:38px;border-radius:14px}
-#privacy{padding:14px 20px 32px;background:linear-gradient(145deg,#302938,#201e25 66%)}
-#privacy h2{padding-right:28px;font:800 25px/1.1 var(--font-ui);letter-spacing:-1px}
-#privacy-description{color:#d5cfdc;font-size:14px;line-height:1.45;margin:10px 0 18px}
-#privacy-days{border:0;padding:0;min-width:0;background:#ffffff09;border-radius:18px}
-#privacy-days legend{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
-#privacy-days label{margin:0;padding:11px 14px;min-height:46px;display:grid;grid-template-columns:auto 1fr 20px;align-items:center;gap:9px;cursor:pointer}
-#privacy-days label+label{border-top:1px solid #ffffff13}
-#privacy-days strong{font-size:15px}
-#privacy-days span{font-size:12px;font-weight:500;color:#c6bece}
-#privacy-days input{grid-column:3;grid-row:1;appearance:none;width:18px;height:18px;border:1.5px solid #ffffff42;border-radius:50%;background:transparent;cursor:pointer}
-#privacy-days input:checked{border:5px solid #d7b2ff;background:#302639}
-#privacy-days input:checked~strong{color:#e9cfff}
-#privacy-next{margin-top:18px}
-#privacy-next:disabled{background:#514b58;color:#b6afbc}
-#privacy-back{width:100%;min-height:42px;margin-top:5px;font-weight:650}
+#privacy:not([open]){display:none}
+#privacy[open]{padding:0 var(--gutter) calc(var(--safe-bottom) + 8px);background:var(--color-bg);border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;box-shadow:var(--shadow-sheet);max-height:calc(100% - var(--safe-top));overflow:auto}
+#privacy::after{display:none}
+.privacy-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 4px 10px}
+#privacy-title{font:var(--type-sheet-title);letter-spacing:-.025em}
+.privacy-heading img{object-fit:contain;transform:rotate(8deg);height:52px;width:52px}
+.calendar-nav{display:flex;align-items:center;gap:8px;margin:0 3px 10px}
+.calendar-select{display:inline-grid;align-items:center;position:relative;margin:0}
+.calendar-select::after{content:"";position:absolute;right:4px;width:6px;height:6px;transform:translateY(-2px) rotate(45deg);border:solid var(--color-text-muted);border-width:0 1.8px 1.8px 0;pointer-events:none}
+.calendar-select select{color:white;appearance:none;font:650 17px var(--font-ui);background:transparent;border:0;cursor:pointer;border-radius:8px;min-height:44px;padding:0 19px 0 3px;color-scheme:dark}
+.calendar-arrows{display:flex;gap:3px;margin-left:auto}
+.calendar-arrows button{height:44px;width:40px;border-radius:12px;font:500 28px/1 var(--font-text);color:white}
+.calendar-arrows button:disabled{color:#525252}
+.calendar-week,#privacy-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));text-align:center;align-items:center}
+.calendar-week{font:600 12px/24px var(--font-ui);color:var(--color-text-muted)}
+#privacy .calendar-day{position:relative;margin:0;display:grid;place-items:center;height:44px;font:600 17px/1 var(--font-ui);font-variant-numeric:tabular-nums}
+.calendar-day input{position:absolute;inset:0;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.calendar-day span{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;pointer-events:none}
+.calendar-day input:checked+span{background:var(--color-text);color:var(--color-text-on-light)}
+.calendar-day input:focus-visible+span{outline:2px solid white;outline-offset:2px}
+.calendar-day.unavailable{color:#606060}
+#privacy-description{margin:15px 4px 16px;font:500 15px/20px var(--font-text);color:var(--color-text-muted)}
+#privacy-next{width:100%}
+#privacy-next:disabled{background:var(--color-surface-raised);color:var(--color-text-muted)}
 #privacy-error:empty{display:none}
+@media(prefers-reduced-motion:reduce){#privacy{transition:none}}
+
+.calendar-scrim{opacity:0;transition:opacity var(--duration-screen) ease}
+.calendar-scrim.is-open{opacity:1}
+@media(prefers-reduced-motion:reduce){.calendar-scrim{transition:none}}

@@ -1,6 +1,6 @@
 <!doctype html>
-<html lang="ru"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101014"><link rel="preload" as="image" href="../../assets/brand/logo.png"><title>Где я был · Blink</title><link rel="stylesheet" href="../../styles/tokens.css"><link rel="stylesheet" href="../../styles/base.css"><link rel="stylesheet" href="../../styles/components.css"><link rel="stylesheet" href="tracks.css?v=privacy1"></head>
-<body><a class="compare-link" href="compare.html?v=privacy1">Сравнить три варианта ↗</a><div class="device"><div class="app" id="phone">
+<html lang="ru"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101014"><link rel="preload" as="image" href="../../assets/brand/logo.png"><title>Где я был · Blink</title><link rel="stylesheet" href="../../styles/tokens.css"><link rel="stylesheet" href="../../styles/base.css"><link rel="stylesheet" href="../../styles/components.css"><link rel="stylesheet" href="tracks.css?v=calendar1"></head>
+<body><a class="compare-link" href="compare.html?v=calendar1">Сравнить три варианта ↗</a><div class="device"><div class="app" id="phone">
 <div class="status-bar" aria-hidden="true"><img class="status-bar__time" src="../../assets/system/status-time.png" alt=""><img class="status-bar__island" src="../../assets/system/live-activity.png" alt=""><img class="status-bar__icons" src="../../assets/system/status-icons.png" alt=""></div>
 <main id="screen" aria-label="Карта маршрута">
   <canvas id="map" width="780" height="1688" aria-label="Маршрут за день"></canvas>
@@ -31,14 +31,24 @@
   </div>
 </main><div class="tracks-backdrop" id="scrim" hidden></div>
 <dialog id="zone"><form id="form"><div class="handle"></div><button class="close" type="button" aria-label="Закрыть">×</button><h2>своё место</h2><p id="visits"></p><label for="name">название</label><input id="name" required maxlength="36" autocomplete="off"><label>иконка на карте</label><div id="icons"></div><button class="primary">сохранить место</button></form></dialog>
-<dialog id="privacy" aria-labelledby="privacy-title">
-  <div class="handle"></div><button class="close" aria-label="Закрыть">×</button>
-  <h2 id="privacy-title">приватность маршрута</h2>
-  <p id="privacy-description">Выбери день, чтобы изменить маршрут. На карте и в видео часть пути будет выглядеть как потеря сигнала.</p>
+<dialog id="privacy" class="sheet" aria-modal="true" aria-labelledby="privacy-title" aria-describedby="privacy-description" tabindex="-1">
+  <div class="sheet__handle" id="privacy-handle">
+    <div class="sheet__grabber"></div>
+    <div class="privacy-heading"><h2 id="privacy-title">заглушить день</h2><img src="../../assets/stickers/eyes.webp" width="56" height="56" alt=""></div>
+  </div>
   <form id="privacy-form" autocomplete="off">
-    <fieldset id="privacy-days"><legend>Выбрать день</legend></fieldset>
-    <button class="primary" id="privacy-next" disabled>продолжить</button>
-    <button type="button" id="privacy-back" hidden>вернуться к выбору дня</button>
+    <div class="calendar-nav">
+      <label class="calendar-select"><select id="cal-month" aria-label="Месяц"></select></label>
+      <label class="calendar-select"><select id="cal-year" aria-label="Год"></select></label>
+      <div class="calendar-arrows">
+        <button id="cal-prev" type="button" aria-label="Предыдущий месяц с маршрутами">‹</button>
+        <button id="cal-next" type="button" aria-label="Следующий месяц с маршрутами">›</button>
+      </div>
+    </div>
+    <div class="calendar-week" aria-hidden="true"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span></div>
+    <div id="privacy-days" role="radiogroup" aria-label="День маршрута"></div>
+    <p id="privacy-description" class="sheet__text">Часть пути за выбранный день будет выглядеть как потеря сигнала. Вернуть исходный маршрут не получится.</p>
+    <button class="button button--primary pressable" id="privacy-next" disabled>выбери день</button>
     <p id="privacy-error" role="alert"></p>
   </form>
 </dialog>
@@ -49,4 +59,4 @@
   <canvas id="preview" width="780" height="1688" aria-label="Предпросмотр видео маршрута"></canvas>
   <button id="export" class="primary">сохранить видео</button><p id="status" role="status"></p>
 </dialog>
-<div class="home-indicator"></div></div></div><script src="../../scripts/pin.js"></script><script src="data.js?v=privacy1"></script><script type="module" src="tracks.js?v=privacy1"></script></body></html>
+<div class="home-indicator"></div></div></div><script src="../../scripts/pin.js"></script><script src="data.js?v=calendar1"></script><script type="module" src="tracks.js?v=calendar1"></script></body></html>

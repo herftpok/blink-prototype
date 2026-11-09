@@ -3,11 +3,21 @@ export async function openRoutes() {
   const db = await new Promise((resolve,reject)=>{
     const request = indexedDB.open('blink.tracks.routes',1);
     request.onupgradeneeded = ()=>{
-      const store = request.result.createObjectStore('days',{keyPath:'day'});
-      for(const config of scenarios)store.add(buildDay(config));
+      request.result.createObjectStore('days',{keyPath:'day'});
     };
     request.onsuccess = ()=>resolve(request.result);
     request.onerror = ()=>reject(request.error);
+  });
+  // Add new demo dates without rebuilding previously edited routes.
+  await new Promise((resolve,reject)=>{
+    const tx=db.transaction('days','readwrite'),store=tx.objectStore('days');
+    const keys=store.getAllKeys();
+    keys.onsuccess=()=>{
+      const existing=new Set(keys.result);
+      for(const config of scenarios)if(!existing.has(config.day))store.add(buildDay(config));
+    };
+    tx.oncomplete=resolve;
+    tx.onabort=()=>reject(tx.error);
   });
   function readAll(){
     return new Promise((resolve,reject)=>{

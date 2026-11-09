@@ -1,4 +1,5 @@
-import {openRoutes} from './privacy.js';
+import {routeCalendar} from './calendar.js';
+import {openRoutes} from './privacy.js?v=calendar1';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
 import {vehiclePresence,drawLightTrail,overviewNavigator} from './concepts.js';
 import {loadCity,drawCity} from './city-map.js';
@@ -25,7 +26,7 @@ try{
 const linkedDay=records.find(record=>record.day===query.get('day'));
 const atSeconds=Number(query.get('at'));
 const openAtFrame=!board && linkedDay && query.has('at') && Number.isFinite(atSeconds);
-let day=board?records.at(-1):(linkedDay||records[0]);
+let day=board?records.find(r=>r.day==='5 ноября'):(linkedDay||records[0]);
 let progress=openAtFrame?Math.max(0,Math.min(1,atSeconds*1000/replayDuration)):0;
 let playing=false,previous=0,selectedFix=null;
 let saved=[];
@@ -421,48 +422,76 @@ let sheetOpener;
 function openSheet(sheet){
   sheetOpener=document.activeElement;
   $('screen').inert=true;$('scrim').hidden=false;sheet.show();
-  sheet.querySelector('.close').focus();
+  if(sheet===privacy){
+    $('scrim').classList.add('calendar-scrim');
+    $('scrim').getBoundingClientRect();sheet.getBoundingClientRect();
+    $('scrim').classList.add('is-open');sheet.classList.add('is-open');sheet.focus({preventScroll:true});
+  }else sheet.querySelector('.close').focus();
 }
 for(const sheet of document.querySelectorAll('dialog')){
   sheet.addEventListener('close',()=>{
     $('screen').inert=false;$('scrim').hidden=true;sheetOpener?.focus();
   });
   sheet.addEventListener('keydown',event=>{
-    if(event.key==='Escape')sheet.close();
+    if(event.key==='Escape'){event.preventDefault();dismissSheet(sheet);return}
     if(event.key!=='Tab')return;
-    const items=[...sheet.querySelectorAll('button:not(:disabled),input')].filter(el=>el.offsetWidth);
+    const radio=sheet.querySelector('input[type=radio]:checked') || sheet.querySelector('input[type=radio]');
+    const items=[...sheet.querySelectorAll('button:not(:disabled),select,input')].filter(el=>
+      el.offsetWidth && (el.type!=='radio' || el===radio));
     const first=items[0],last=items.at(-1);
-    if(event.shiftKey && document.activeElement===first){last.focus();event.preventDefault();}
+    if(event.shiftKey && (document.activeElement===first || document.activeElement===sheet)){last.focus();event.preventDefault();}
     if(!event.shiftKey && document.activeElement===last){first.focus();event.preventDefault();}
   });
 }
-$('scrim').onclick=()=>document.querySelector('dialog[open]')?.close();
+$('scrim').onclick=()=>dismissSheet(document.querySelector('dialog[open]'));
 document.querySelectorAll('.close').forEach(b=>b.onclick=()=>b.closest('dialog').close());
-const privacy=$('privacy'),dayList=$('privacy-days'),privacyNext=$('privacy-next');
-const chooseTitle=$('privacy-title').textContent,chooseDescription=$('privacy-description').textContent;
-for(const record of records){
-  const label=document.createElement('label'),input=document.createElement('input');
-  input.type='radio';input.name='privacy-date';input.value=record.day;
-  const date=document.createElement('strong'),weekday=document.createElement('span');
-  date.textContent=record.day;weekday.textContent=record.weekday;
-  label.append(input,date,weekday);dayList.append(label);
-}
-function choosePrivacyDay(clear){
-  if(clear)$('privacy-form').reset();
-  $('privacy-title').textContent=chooseTitle;
-  $('privacy-description').textContent=chooseDescription;
-  dayList.hidden=false;$('privacy-back').hidden=true;
-  privacyNext.textContent='продолжить';
-  privacyNext.disabled=!dayList.querySelector(':checked');
-  $('privacy-error').textContent='';
-}
+const privacy=$('privacy'),privacyNext=$('privacy-next');
+let selectedDay=null,savingDay=false;
+const showCalendar=routeCalendar({
+  grid:$('privacy-days'),month:$('cal-month'),year:$('cal-year'),prev:$('cal-prev'),next:$('cal-next')
+},scenarios,key=>{
+  selectedDay=key;privacyNext.disabled=!key;
+  privacyNext.textContent=key?'заглушить '+key:'выбери день';
+});
 $('privacy-open').onclick=()=>{
-  pause();syncComparison();closePlace();choosePrivacyDay(true);openSheet(privacy);
+  pause();syncComparison();closePlace();
+  showCalendar(scenarios.find(s=>s.day===day.day).date);
+  $('privacy-error').textContent='';openSheet(privacy);
 };
-privacy.addEventListener('close',()=>choosePrivacyDay(true));
-dayList.onchange=()=>{privacyNext.disabled=false};
-$('privacy-back').onclick=()=>{choosePrivacyDay(false);dayList.querySelector(':checked')?.focus()};
-
+async function dismissSheet(sheet){
+  if(!sheet)return;
+  if(sheet!==privacy){sheet.close();return}
+  if(!sheet.classList.contains('is-open'))return;
+  $('scrim').classList.remove('is-open');
+  sheet.classList.remove('is-open');
+  await Promise.allSettled(sheet.getAnimations().map(a=>a.finished));
+  sheet.close();
+}
+const handle=$('privacy-handle');
+let drag=null;
+handle.onpointerdown=e=>{
+  if(e.button!==0 || !privacy.classList.contains('is-open') || savingDay)return;
+  handle.setPointerCapture(e.pointerId);
+  drag={y:e.clientY,time:e.timeStamp,zoom:privacy.getBoundingClientRect().width/privacy.offsetWidth};
+  privacy.classList.add('is-dragging');
+};
+handle.onpointermove=e=>{
+  if(!drag)return;
+  const offset=Math.max(0,(e.clientY-drag.y)/drag.zoom);
+  privacy.style.transform='translateY('+offset+'px)';
+};
+handle.onpointerup=handle.onpointercancel=e=>{
+  if(!drag)return;
+  const offset=Math.max(0,(e.clientY-drag.y)/drag.zoom);
+  const projected=offset+offset/Math.max(1,e.timeStamp-drag.time)*180;
+  drag=null;privacy.classList.remove('is-dragging');privacy.style.transform='';
+  if(e.type==='pointerup' && projected>privacy.offsetHeight*.4)dismissSheet(privacy);
+};
+privacy.addEventListener('close',()=>{
+  selectedDay=null;drag=null;privacy.style.transform='';privacy.classList.remove('is-open','is-dragging');
+  $('scrim').classList.remove('calendar-scrim','is-open');
+  $('privacy-form').reset();
+});
 function updateRecord(next){
   const record=records.find(r=>r.day===next.day);
   if(JSON.stringify(next)===JSON.stringify(record))return;
@@ -481,25 +510,18 @@ window.addEventListener('pageshow',event=>{if(event.persisted)refreshRecords()})
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshRecords()});
 $('privacy-form').onsubmit=async event=>{
   event.preventDefault();
-  const key=dayList.querySelector(':checked')?.value;
-  if(!key || privacyNext.disabled)return;
-  if(!dayList.hidden){
-    dayList.hidden=true;$('privacy-back').hidden=false;
-    $('privacy-title').textContent='заглушить '+key+'?';
-    $('privacy-description').textContent='Часть точек изменится, часть исчезнет. Вернуть исходный маршрут не получится.';
-    privacyNext.textContent='заглушить день';privacyNext.focus();
-    return;
-  }
-  privacyNext.disabled=true;$('privacy-back').disabled=true;
+  const key=selectedDay;
+  if(!key || savingDay || !privacy.classList.contains('is-open'))return;
+  savingDay=true;privacyNext.disabled=true;privacy.inert=true;
   try{
     const next=await repository.replaceDay(key);
     updateRecord(next);
     changes.postMessage('refresh');
-    privacy.close();
+    await dismissSheet(privacy);
   }catch{
     $('privacy-error').textContent='Не удалось обновить маршрут. Попробуй ещё раз.';
     privacyNext.disabled=false;
-  }finally{$('privacy-back').disabled=false}
+  }finally{savingDay=false;privacy.inert=false}
 };
 let recorder=null,videoFile=null,storyStart=0,previewFrame=0,storySession=0;
 function animateStory(now){
