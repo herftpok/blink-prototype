@@ -441,7 +441,7 @@ function prepareVideo(){
     $('status').textContent='Не удалось подготовить видео.';
   };
   try{
-    const type=['video/mp4','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+    const type=['video/mp4;codecs=avc1.42002A','video/mp4','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
     stream=canvas.captureStream(30);
     const recording=new MediaRecorder(stream,{...(type?{mimeType:type}:{}),videoBitsPerSecond:6500000});
     const parts=[];recorder=recording;
