@@ -126,7 +126,7 @@
         seen: !missed && R() < 0.85,
       };
     });
-    S.days.forEach((state,i) => { state.memory = i < todayIdx ? (state.seen ? "claimed" : "missed") : "todo"; if (J.atHome(i)) { state.memory="missed"; state.login="missed"; state.task="missed"; state.share="missed"; state.cracked=state.seen; } });
+    S.days.forEach((state,i) => { state.memory = i < todayIdx ? (state.seen ? "claimed" : "missed") : "todo"; if (J.atHome(i)) { state.memory="missed"; state.login="missed"; state.task="missed"; state.share="missed"; state.cracked=state.seen; } state.partners = {}; });
     let earned = 0;
     S.days.forEach((d, i) => {
       if (J.atHome(i)) return;
@@ -459,6 +459,7 @@
   function renderBalance() {
     $$("[data-balance]").forEach((el) => { el.textContent = fmt(S.balance); });
     $$("[data-tickets]").forEach((el) => { el.textContent = fmt(S.tickets); });
+    $$(".av-wallet [data-go]").forEach(el => el.setAttribute("aria-label", el.dataset.go === "draw" ? `${fmt(S.tickets)} ${plural(S.tickets, "билет", "билета", "билетов")}, в розыгрыш` : `${fmt(S.balance)} жетонов, к хваталке`));
   }
 
   /* ── 2. день ─────────────────────────────────────────────────────────── */
@@ -478,7 +479,7 @@
         <p class="av-day__lead">${day.lead}</p>
       </div>
       <button class="button button--primary av-day__cta pressable" type="button" data-act="open-stat">${day.prediction ? "открыть предсказание" : "смотреть"}</button>
-      ${day.prediction ? "" : `<h3 class="av-day__section caps-label"><span>${isToday ? "жетоны дня" : "жетоны этого дня"}</span><span>${rows.reduce((t, r) => t + r.reward, 0)}</span></h3>${tasksMarkup(i)}`}`;
+      ${day.prediction ? "" : `<h3 class="av-day__section caps-label"><span>${isToday ? "жетоны дня" : "жетоны этого дня"}</span><span>${rows.reduce((t, r) => t + r.reward, D.PARTNERS[i % D.PARTNERS.length].reward)}</span></h3>${tasksMarkup(i)}`}`;
     renderBalance();
   }
 
@@ -495,24 +496,62 @@
   function tasksMarkup(i, { home = false } = {}) {
     const flake = `<img class="av-task__flake" src="art/coin.webp" alt="жетонов">`;
     const rows = taskRows(D.DAYS[i]).filter(r => !home || r.key !== "login");
-    return `<ul class="av-tasks">${rows.map(r => taskRow(r, S.days[i][r.key], flake, i)).join("")}</ul>`;
+    const dailyPartner = !J.atHome(i) ? D.PARTNERS[i % D.PARTNERS.length] : null;
+    return `<ul class="av-tasks">${rows.map(r => taskRow(r, S.days[i][r.key], flake, i)).join("")}${dailyPartner ? partnerRow(dailyPartner, i, flake) : ""}</ul>`;
   }
 
   function taskRow(r, state, flake, i) {
     const done = state === "claimed", memory = r.key === "memory", seen = S.days[i].seen;
     const available = i === S.today && state !== "missed";
     const status = done ? '<span class="av-task__state" role="img" aria-label="выполнено"><i class="icon icon--check" aria-hidden="true"></i></span>' : "";
-    const attrs = memory && i <= S.today ? `data-act="task-memory" data-task-day="${i}"`
+    const attrs = r.partner && available ? `data-partner-help="${r.partner.id}" data-task-day="${i}"` : memory && i <= S.today ? `data-act="task-memory" data-task-day="${i}"`
       : available ? `data-task-help="${r.key}" data-task-day="${i}"` : '';
     const label = memory ? `${seen ? 'посмотреть статистику ещё раз' : 'смотреть статистику дня'}, ${r.reward} жетонов${done ? ' уже начислено' : ' за просмотр'}`
       : `инструкция: ${r.title}, ${r.reward} жетонов${done ? ' уже начислено' : ' за выполнение'}`;
     const action = attrs ? `<button class="av-task__reward-action pressable" type="button" ${attrs} aria-label="${label}"><span>${r.reward}</span>${flake}<i class="icon icon--chevron" aria-hidden="true"></i></button>`
       : `<span class="av-task__reward av-task__reward--expired"><span>${r.reward}</span>${flake}</span>`;
     const description = done ? memory ? 'карточка просмотрена' : 'задание выполнено' : state === 'missed' ? 'день прошёл' : r.description;
-    return `<li class="av-task${memory ? " av-task--memory" : ""}${done ? " is-done" : ""}" data-row="${r.key}">
-      <div class="av-task__copy"><span class="av-task__heading"><span class="av-task__text">${r.title}</span>${status}</span><span class="av-task__description">${description}</span></div>
+    return `<li class="av-task${memory ? " av-task--memory" : ""}${r.partner ? " av-task--partner" : ""}${done ? " is-done" : ""}" data-row="${r.key}">
+      ${r.partner ? `<img class="av-task__partner-logo" src="${r.partner.logo}" alt="${r.partner.name}">` : ""}<div class="av-task__copy"><span class="av-task__heading"><span class="av-task__text">${r.title}</span>${status}</span><span class="av-task__description">${description}</span></div>
       ${action}
     </li>`;
+  }
+
+  function partnerState(partner, i) {
+    return S.days[i].partners?.[partner.id] || (i < S.today || J.atHome(i) ? "missed" : "todo");
+  }
+
+  function partnerRow(partner, i, coin = '<img class="av-task__flake" src="art/coin.webp" alt="жетонов">') {
+    return taskRow({ ...partner, key: `partner-${partner.id}`, partner }, partnerState(partner, i), coin, i);
+  }
+
+  function renderPartners() {
+    $("#partner-task-list").innerHTML = `<ul class="av-tasks">${D.PARTNERS.map(partner => partnerRow(partner, S.today)).join("")}</ul>`;
+    const allDone = D.PARTNERS.every(p => partnerState(p, S.today) === "claimed");
+    $(".av-partners__lead").textContent = allDone ? "все награды за сегодня уже у тебя" : "ещё 30 жетонов за каждое задание";
+  }
+
+  function openPartners() {
+    if (busy || J.atHome(S.today)) return;
+    renderPartners();
+    openSheet("partners");
+  }
+
+  // A verified application/partner callback grants the reward; reading instructions never does.
+  function completePartner(id, i) {
+    const partner = D.PARTNERS.find(p => p.id === id);
+    if (!partner || i !== S.today || J.atHome(i) || partnerState(partner, i) !== "todo") return false;
+    S.days[i].partners[id] = "claimed";
+    S.balance += partner.reward;
+    S.events.push({ name: "newyear_partner_complete", partner: id, day: D.DAYS[i].date, amount: partner.reward });
+    renderBalance();
+    $("#home-task-list").innerHTML = tasksMarkup(S.today, { home: true });
+    if (current() === "day") renderDay();
+    if (current() === "game") RENDER.game();
+    if (openSheetName === "partners") renderPartners();
+    if (openSheetName === "task" && taskHelp.partner === id) renderTaskHelp();
+    announce(`+${partner.reward} жетонов`);
+    return true;
   }
 
   /** Завершение приходит от действия, а не от открытия инструкции. Состояние и баланс меняются атомарно. */
@@ -527,7 +566,7 @@
     S.events.push({ name: "newyear_task_complete", day: D.DAYS[i].date, key, amount });
     renderBalance();
     const fromEl = $(`[data-row="${key}"]`, screens[current()]);
-    const target = $(".av-balance", screens[current()]);
+    const target = $("[data-balance]", screens[current()])?.closest(".av-balance");
     if (animate && fromEl && target && (current() !== "day" || currentDay === i)) flyFlakes(fromEl, target, 6).then(() => {
       target.classList.remove("is-bump");
       void target.offsetWidth;
@@ -634,6 +673,7 @@
       openPool: () => openSheet("pool"),
       openPrize: (prize, extra) => openPrize(prize, extra),
       toTasks: () => { goToday(); },
+      openPartners,
       toHome: () => { goToday(); },
       toDraw: () => push("draw"),
       toTree: () => push("game"),
@@ -667,19 +707,25 @@
 
   /* ── шторки ──────────────────────────────────────────────────────────── */
 
-  const sheets = { intro: $("#sheet-intro"), prize: $("#sheet-prize"), pool: $("#sheet-pool"), share: $("#sheet-share"), task: $("#sheet-task") };
+  const sheets = { intro: $("#sheet-intro"), prize: $("#sheet-prize"), pool: $("#sheet-pool"), share: $("#sheet-share"), task: $("#sheet-task"), partners: $("#sheet-partners") };
   let openSheetName = null;
   let sheetReturn = null;
   let taskHelp = { key: "task", day: 0 };
+  let partnerHelpReturn = false;
 
   function renderTaskHelp() {
-    const row = taskRows(D.DAYS[taskHelp.day]).find((r) => r.key === taskHelp.key);
-    const done = S.days[taskHelp.day][taskHelp.key] === "claimed";
+    const partner = taskHelp.partner && D.PARTNERS.find(p => p.id === taskHelp.partner);
+    const row = partner || taskRows(D.DAYS[taskHelp.day]).find((r) => r.key === taskHelp.key);
+    const done = partner ? partnerState(partner, taskHelp.day) === "claimed" : S.days[taskHelp.day][taskHelp.key] === "claimed";
+    const brand = $("#task-help-brand");
+    brand.hidden = !partner;
+    brand.innerHTML = partner ? `<img src="${partner.logo}" alt=""><span>${partner.name}</span>` : "";
     $("#task-help-title").textContent = row.title;
     $("#task-help-text").textContent = row.instruction;
     $("#task-help-reward").innerHTML = `<span>${row.reward}<img class="av-task__flake" src="art/coin.webp" alt="жетонов"></span><span>${done ? "уже начислено" : "начислим автоматически"}</span>`;
     const action = $("#task-help-action");
-    action.textContent = taskHelp.key === "share" && !done ? "смотреть" : "понятно";
+    action.textContent = partner ? done ? current() === "game" ? "к хваталке" : "понятно" : partner.action : taskHelp.key === "share" && !done ? "смотреть" : "понятно";
+    action.dataset.partner = partner && !done ? partner.id : "";
     action.dataset.card = String(taskHelp.key === "share" && !done);
   }
 
@@ -690,10 +736,20 @@
     openSheet("task");
   }
 
+  function openPartnerHelp(id, i) {
+    if (busy || !Number.isInteger(i) || i !== S.today || J.atHome(i) || !D.PARTNERS.some(p => p.id === id)) return;
+    const fromList = openSheetName === "partners";
+    taskHelp = { key: "partner", partner: id, day: i };
+    renderTaskHelp();
+    openSheet("task");
+    partnerHelpReturn = fromList;
+  }
+
   function openSheet(name) {
     if (openSheetName) closeSheet(true);
     openSheetName = name;
     sheetReturn = document.activeElement;
+    if (name === "partners") renderPartners();
     if (name === "pool") window.AV_GAME.renderPool($("#pool-body"), gameCtx());
     $("#scrim").classList.add("is-open");
     sheets[name].classList.add("is-open");
@@ -715,8 +771,17 @@
       try { localStorage.setItem(INTRO_KEY, "1"); } catch { /* In-memory state still prevents repeat onboarding. */ }
       if (!silent) $("#home-tasks [data-act='task-memory']")?.focus({ preventScroll: true });
     }
-    if (was !== "intro" && !silent && sheetReturn && document.contains(sheetReturn)) sheetReturn.focus({ preventScroll: true });
+    if (was !== "intro" && !silent) {
+      const fallback = taskHelp.partner ? $(`[data-partner-help="${taskHelp.partner}"], [data-game="claw-grab"]`, screens[current()]) : null;
+      const returnIsVisible = sheetReturn && document.contains(sheetReturn) && !sheetReturn.closest(".sheet:not(.is-open), .av-screen[hidden]");
+      const restore = returnIsVisible ? sheetReturn : fallback;
+      restore?.focus({ preventScroll: true });
+    }
     if (was === "prize") window.AV_GAME.afterPrize(gameCtx());
+    if (was === "task" && partnerHelpReturn) {
+      partnerHelpReturn = false;
+      if (!silent && !J.atHome(S.today)) openSheet("partners");
+    }
   }
 
   function openPrize(prize, extra) {
@@ -808,8 +873,18 @@
       return push("game");
     }
     if (t.dataset.go === "draw") return push("draw");
+    if (t.dataset.act === "partner-home") { closeSheet(true); return goToday(); }
+    if (t.dataset.partnerHelp) return openPartnerHelp(t.dataset.partnerHelp, Number(t.dataset.taskDay));
     if (t.dataset.taskHelp) return openTaskHelp(t.dataset.taskHelp, Number(t.dataset.taskDay));
     if (t.id === "task-help-action") {
+      if (t.dataset.partner) {
+        const partner = D.PARTNERS.find(p => p.id === t.dataset.partner);
+        if (!partner || taskHelp.day !== S.today || J.atHome(S.today)) return;
+        S.events.push({ name: "newyear_partner_open", partner: partner.id, day: D.DAYS[S.today].date });
+        window.open(partner.url, "_blank", "noopener,noreferrer");
+        return;
+      }
+      if (taskHelp.partner && current() === "game" && S.balance >= D.ECONOMY.attempt) partnerHelpReturn = false;
       const watch = t.dataset.card === "true";
       closeSheet();
       if (watch) { currentDay = taskHelp.day; return openStat(); }
@@ -839,6 +914,10 @@
 
   window.addEventListener("advent:task-completed", (e) => {
     if (Number.isInteger(e.detail?.day)) completeTask(e.detail.key, e.detail.day);
+  });
+
+  window.addEventListener("advent:partner-completed", e => {
+    if (Number.isInteger(e.detail?.day)) completePartner(e.detail.id, e.detail.day);
   });
 
   document.addEventListener("keydown", (e) => {
@@ -889,6 +968,7 @@
   panel.addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
+    if (b.dataset.partnerConfirm) return window.dispatchEvent(new CustomEvent("advent:partner-completed", { detail: { id: b.dataset.partnerConfirm, day: S.today } }));
     if (b.dataset.panelDate) return resetTo(D.DAYS.findIndex((d) => d.date === b.dataset.panelDate));
     if (b.dataset.toggle) {
       S[b.dataset.toggle] = !S[b.dataset.toggle];
@@ -1008,6 +1088,12 @@
       case "garland-wheel": case "garland-score": case "garland-ranking":
         resetTo(kind==='garland-wheel'?8:0); S.balance=90; window.AV_GAME.variant(kind==='garland-wheel'?'wheel':'score'); jump(["home","game"]);
         if(kind==='garland-ranking')window.AV_GAME.click({dataset:{game:'lab-ranking'}},gameCtx()); break;
+      case "home-partner-done": resetTo(0); completePartner("music", 0); break;
+      case "partner-tasks": resetTo(0); S.balance = 0; jump(["home", "game"]); openPartners(); break;
+      case "partner-task": resetTo(0); S.balance = 0; jump(["home", "game"]); openPartners(); openPartnerHelp(arg || "music", 0); break;
+      case "partner-done": resetTo(0); S.balance = 0; jump(["home", "game"]); openPartners(); openPartnerHelp("music", 0); completePartner("music", 0); break;
+      case "partner-all-done": resetTo(0); D.PARTNERS.forEach(p => completePartner(p.id, 0)); S.balance = 0; jump(["home", "game"]); openPartners(); break;
+      case "claw-zero": resetTo(0); S.balance = 0; jump(["home", "game"]); break;
       case "claw-first": case "wheel-first": case "garland-first": resetTo(0); S.balance = 30; jump(["home", "game"]); break;
       case "garland-play": case "garland-paused":
         resetTo(8); S.balance = 60; S.garland.attempts = 1; jump(["home", "game"]);

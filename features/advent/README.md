@@ -128,3 +128,5 @@
 Сравнение, экономика и ограничения — [ALTERNATIVES.md](ALTERNATIVES.md). Новые правила — `av-lab-engine.js`, интерфейс — `av-lab.js` и `av-lab.css`. Галерея содержит 79 состояний.
 
 Проверки новых вариантов: `node prototype/tools/test_advent_lab.cjs` и `python3 prototype/tools/smoke_advent_lab.py`.
+
+Партнёрские задания, состояния выполнения, баланс билетов и контракт начисления — [PARTNERS.md](PARTNERS.md).

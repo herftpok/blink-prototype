@@ -43,3 +43,12 @@
  .av-home .av-entries {margin-top:var(--space-12);}
  .av-home-tasks .av-task.is-done {min-height:84px;padding-block:var(--space-12);}
 }
+/* Partner marks sit beside the daily topic; rewards retain the same action size. */
+.av-task--partner {grid-template-columns:var(--space-32) minmax(0,1fr) auto;gap:var(--space-10);}
+.av-task__partner-logo {width:var(--space-32);height:var(--space-32);object-fit:contain;border-radius:var(--space-8);}
+.av-task-help__brand {display:flex;align-items:center;gap:var(--space-12);margin-top:var(--space-20);font:var(--type-friend-name);}
+.av-task-help__brand[hidden] {display:none;}
+.av-task-help__brand img {width:var(--space-32);height:var(--space-32);object-fit:contain;border-radius:var(--space-8);}
+.av-partners {background:var(--journey-navy);border-top:1px solid var(--journey-border);max-height:calc(100cqh - var(--safe-top) - var(--space-16));overflow-y:auto;overscroll-behavior:contain;}
+.av-partners__lead {font:var(--type-note);color:var(--journey-muted);margin:var(--space-8) 0 var(--space-20);}
+.av-partners__home {width:100%;min-height:var(--button-height);margin-top:var(--space-12);}

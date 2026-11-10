@@ -1409,9 +1409,30 @@ def build_advent_recap() -> None:
 
 
 
+def build_advent_partners() -> None:
+    """Original partner artwork; no recolouring or hand-drawn brand marks.
+    Sources: Yandex Music support / Ozon Brandlab / existing VK settings glyph.
+    Source copies live with the feature so exports are reproducible in release checkouts.
+    """
+    import shutil
+    out = Path(__file__).resolve().parents[1] / "features/advent/art"
+    originals = out / "partner-sources"
+    for name in ("music", "vk"):
+        with Image.open(originals / f"{name}.png") as raw:
+            image = raw.convert("RGBA")
+            image.thumbnail((192, 192), Image.Resampling.LANCZOS)
+            save_webp(image, out / f"partner-{name}.webp", quality=96)
+    # Ozon's official RGB board: white logo on blue, original clear space intact.
+    import re
+    svg = (originals / "ozon.svg").read_text()
+    svg = re.sub(r'<svg[^>]+>', '<svg width="192" height="84.4" viewBox="1357.4 286 1080 474.7" fill="none" xmlns="http://www.w3.org/2000/svg">', svg, count=1)
+    (out / "partner-ozon.svg").write_text(svg)
+
+
 def build_advent_journey() -> None:
     """Exports supplied НГБЛИНК art without changing originals; edited animation masters are local."""
     import unicodedata
+    build_advent_partners()
     source = ROOT / "НГБЛИНК"
     out = Path(__file__).resolve().parents[1] / "features/advent/art"
     out.mkdir(parents=True, exist_ok=True)

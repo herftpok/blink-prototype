@@ -304,5 +304,12 @@ window.AV_DATA = (() => {
     ],
   };
 
-  return { PEOPLE, BLOCKS, DAYS, ECONOMY, TIERS, POOL, STAR, DRAW, starCollectors: 214 };
+  // Brand sources and partner callback contract are documented in PARTNERS.md.
+  const PARTNERS = [
+    { id: "music", name: "Яндекс Музыка", logo: "art/partner-music.webp", title: "музыка в дорогу", description: "открой Яндекс Музыку", instruction: "перейди в Яндекс Музыку и выбери, что послушать в дороге", action: "открыть музыку", url: "https://music.yandex.ru/", reward: 30 },
+    { id: "ozon", name: "Ozon", logo: "art/partner-ozon.svg", title: "за подарками", description: "загляни за подарками в Ozon", instruction: "открой Ozon и загляни в подборки подарков к Новому году", action: "открыть Ozon", url: "https://www.ozon.ru/", reward: 30 },
+    { id: "vk", name: "VK", logo: "art/partner-vk.webp", title: "на связи", description: "загляни во ВКонтакте", instruction: "перейди во ВКонтакте и найди, чем поделиться с друзьями к празднику", action: "открыть VK", url: "https://vk.ru/", reward: 30 },
+  ];
+
+  return { PARTNERS, PEOPLE, BLOCKS, DAYS, ECONOMY, TIERS, POOL, STAR, DRAW, starCollectors: 214 };
 })();

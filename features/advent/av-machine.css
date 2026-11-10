@@ -10,3 +10,9 @@
 .ex-arcade__footer .ex-text-link {min-height:44px;}
 @keyframes ex-cable {0%,10% {transform:translateX(-50%) scaleY(0);}42%,54% {transform:translateX(-50%) scaleY(1);}82%,100% {transform:translateX(-50%) scaleY(0);}}
 @media(prefers-reduced-motion:reduce) {.ex-machine.is-grabbing .ex-machine__cable {animation:none;}}
+/* Both balances are separate touch targets in one compact wallet. */
+.av-wallet {display:flex;align-items:center;justify-content:flex-end;gap:var(--space-6);justify-self:end;min-width:0;}
+.av-wallet .av-balance {min-height:var(--control-44);height:var(--control-44);gap:var(--space-4);padding-inline:var(--space-8);}
+.av-wallet .av-balance__value {font:var(--type-counter);}
+.av[data-phase="home"] #screen-home .av-wallet .av-balance--tickets {visibility:visible;pointer-events:auto;}
+.ex-arcade__footer .button>.icon {--icon-size:var(--space-16);margin-left:var(--space-8);}

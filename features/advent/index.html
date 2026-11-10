@@ -61,10 +61,10 @@
                   <i class="icon icon--back" aria-hidden="true"></i>
                 </button>
                 <h1 class="visually-hidden" id="home-title">новый год</h1>
-                <button class="av-balance pressable" type="button" data-go="game" aria-label="жетоны, к хваталке">
+                <div class="av-wallet" aria-label="баланс"><button class="av-balance av-balance--tickets pressable" type="button" data-go="draw" aria-label="билеты, в розыгрыш"><img class="av-balance__icon av-balance__icon--ticket" src="art/ticket.webp" alt=""><span class="av-balance__value" data-tickets>0</span></button><button class="av-balance pressable" type="button" data-go="game" aria-label="жетоны, к хваталке">
                   <img class="av-balance__icon" src="art/coin.webp" alt="">
                   <span class="av-balance__value" data-balance>0</span>
-                </button>
+                </button></div>
               </header>
               <section class="av-today" id="home-today" aria-labelledby="today-title"></section>
               </div>
@@ -91,10 +91,10 @@
                   <i class="icon icon--back" aria-hidden="true"></i>
                 </button>
                 <p class="av-bar__title" id="day-date"></p>
-                <button class="av-balance pressable" type="button" data-go="game" aria-label="жетоны, к хваталке">
+                <div class="av-wallet" aria-label="баланс"><button class="av-balance av-balance--tickets pressable" type="button" data-go="draw" aria-label="билеты, в розыгрыш"><img class="av-balance__icon av-balance__icon--ticket" src="art/ticket.webp" alt=""><span class="av-balance__value" data-tickets>0</span></button><button class="av-balance pressable" type="button" data-go="game" aria-label="жетоны, к хваталке">
                   <img class="av-balance__icon" src="art/coin.webp" alt="">
                   <span class="av-balance__value" data-balance>0</span>
-                </button>
+                </button></div>
               </header>
               <div class="av-day__hero" id="day-hero">
                 <img class="av-day__glow" id="day-glow" src="" alt="">
@@ -127,10 +127,10 @@
                 <i class="icon icon--back" aria-hidden="true"></i>
               </button>
               <h2 class="visually-hidden" id="game-title">хваталка</h2>
-              <span class="av-balance" aria-label="жетоны">
+              <div class="av-wallet" aria-label="баланс"><button class="av-balance av-balance--tickets pressable" type="button" data-go="draw" aria-label="билеты, в розыгрыш"><img class="av-balance__icon av-balance__icon--ticket" src="art/ticket.webp" alt=""><span class="av-balance__value" data-tickets>0</span></button><span class="av-balance" aria-label="жетоны">
                 <img class="av-balance__icon" src="art/coin.webp" alt="">
                 <span class="av-balance__value" data-balance>0</span>
-              </span>
+              </span></div>
             </header>
             <div class="av-game" id="game"></div>
           </section>
@@ -195,9 +195,17 @@
             <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div>
               <h2 class="sheet__title" id="task-help-title"></h2>
             </div>
+            <div class="av-task-help__brand" id="task-help-brand" hidden></div>
             <p class="av-task-help__text" id="task-help-text"></p>
             <p class="av-task-help__reward" id="task-help-reward"></p>
             <button class="button button--primary av-task-help__action pressable" type="button" id="task-help-action"></button>
+          </div>
+
+          <div class="sheet av-sheet av-partners" id="sheet-partners" role="dialog" aria-modal="true" aria-labelledby="partners-title" tabindex="-1">
+            <div class="sheet__handle"><div class="sheet__grabber" aria-hidden="true"></div><h2 class="sheet__title" id="partners-title">задания партнёров</h2></div>
+            <p class="av-partners__lead">ещё 30 жетонов за каждое задание</p>
+            <div class="av-partners__list" id="partner-task-list"></div>
+            <button class="ex-text-link av-partners__home pressable" type="button" data-act="partner-home">задания на сегодня <i class="icon icon--chevron" aria-hidden="true"></i></button>
           </div>
 
           <!-- Шторка: поделиться карточкой -->
@@ -271,6 +279,9 @@
       <div class="panel__group" role="group" aria-labelledby="panel-tasks">
         <p class="panel__label caps-label" id="panel-tasks">события заданий</p>
         <button class="panel__button pressable" type="button" data-panel="task-done">задание дня выполнено</button>
+        <button class="panel__button pressable" type="button" data-partner-confirm="music">задание Яндекс Музыки выполнено</button>
+        <button class="panel__button pressable" type="button" data-partner-confirm="ozon">задание Ozon выполнено</button>
+        <button class="panel__button pressable" type="button" data-partner-confirm="vk">задание VK выполнено</button>
       </div>
       <div class="panel__group" role="group" aria-labelledby="panel-draw">
         <p class="panel__label caps-label" id="panel-draw">розыгрыш</p>
