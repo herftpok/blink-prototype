@@ -1,0 +1,74 @@
+/* Геометрия каталога по schools_search @3x. Шапка использует слои onboarding. */
+.search, .end, #school { position: absolute; inset: 0; }
+.search { --skip-fade: min(44px, 7cqh); display: flex; flex-direction: column; background: var(--color-bg); }
+.hero {
+  flex: none; position: relative; text-align: center;
+  padding: calc(var(--safe-top) + 74px) 16px 22px;
+  background: url('../../assets/onboarding-school/glow.webp') center top / 100% auto no-repeat;
+}
+.mascot { position: absolute; left: 9.8%; top: max(6px, calc(var(--safe-top) - 19px)); width: 21.4%; max-width: 84px; }
+.wordmark { width: 89px; margin: 0 auto 9px; }
+.hero h1 { font: var(--type-market-section); letter-spacing: -.025em; }
+.controls { position: relative; padding: 0 16px 12px; border-bottom: 1px solid var(--color-header-button-border); }
+.field {
+  display: flex; gap: 8px; align-items: center; height: 46px; padding: 0 12px;
+  border: 2px solid var(--color-field); background: var(--color-surface-raised); border-radius: var(--radius-14);
+}
+.field:focus-within { border-color: var(--color-text-muted); }
+.field img, .clear img { width: 20px; height: 20px; object-fit: contain; opacity: .55; }
+.field input { min-width: 0; flex: 1; height: 100%; padding-right: 32px; font: var(--type-search); caret-color: var(--color-online); }
+.field input::placeholder { color: var(--color-text-muted); opacity: 1; }
+.clear { position: absolute; right: 17px; top: 1px; width: 44px; height: 44px; display: grid; place-items: center; }
+.filters { display: flex; gap: 8px; margin-top: 20px; }
+.filters button {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px;
+  border: 1px solid var(--color-outline); border-radius: var(--radius-pill); font: var(--type-gift-note);
+}
+.filters button::before { content: ''; position: absolute; inset: -5px 0; }
+.filters button[aria-pressed=true] { background: var(--color-text); color: var(--color-bg); border-color: var(--color-text); }
+.filters button[aria-pressed=true]::after { content: ''; width: 12px; height: 12px; background: currentColor; mask: url('../../assets/icons/close.png') center / contain no-repeat; }
+.results { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 8px 0; scroll-padding-bottom: var(--skip-fade); }
+.results ul { list-style: none; }
+.results ul:not(:empty) { padding-bottom: var(--skip-fade); }
+.row { display: flex; text-align: left; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 16px; }
+.row:active, .filters button:active { transform: scale(.98); }
+.row:focus-visible { outline-offset: -3px; }
+.row img { width: 44px; height: 44px; flex: none; }
+.row__text { min-width: 0; display: grid; gap: 2px; }
+.row__name { font: var(--type-school-name); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.row__meta, .empty p { font: var(--type-distance); color: var(--color-text-muted); }
+.empty, .end { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+.empty { min-height: 100%; }
+.empty img { width: 40px; }
+.search footer { position: relative; padding: 6px 16px max(12px, var(--safe-bottom)); background: var(--color-bg); }
+.search footer::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 100%;
+  height: var(--skip-fade);
+  background: linear-gradient(to bottom, transparent, var(--color-bg));
+  pointer-events: none;
+}
+.search footer button { width: 100%; }
+#school iframe { display: block; width: 100%; height: 100%; border: 0; }
+.end { gap: 10px; padding: 24px; text-align: center; background: url('../../assets/onboarding-school/glow.webp') center top / 100% auto no-repeat; }
+.end img { width: 88px; margin-bottom: 10px; }
+.end h1 { font: var(--type-onboarding-title); }
+.end p { color: var(--color-text-muted); font: var(--type-label); }
+.end button { margin-top: 20px; }
+@media (min-width: 481px) {
+  .device { padding-block: 12px; }
+  .app { height: min(844px, calc(100dvh - 24px)); }
+}
+@container (max-height: 540px) {
+  .hero { padding-block: var(--safe-top) 8px; }
+  .hero .mascot, .hero .wordmark { display: none; }
+  .search footer button { height: 44px; }
+}
+
+.web-nav { position: absolute; z-index: 3; top: max(56px, env(safe-area-inset-top)); left: 16px; right: 16px; display: flex; justify-content: space-between; pointer-events: none; }
+.web-nav button { pointer-events: auto; position: relative; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: var(--color-search-fill); backdrop-filter: blur(10px); }
+.web-nav button::after { position: absolute; content: ''; inset: -6px; }
+.web-nav img { width: 16px; height: 16px; object-fit: contain; }
+.web-error { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 16px; padding: 20px; text-align: center; background: var(--color-bg); }
+#web-content { position: absolute; inset: 0; }

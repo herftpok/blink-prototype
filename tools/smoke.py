@@ -1226,6 +1226,8 @@ def main() -> int:
             overflow = page.evaluate("document.documentElement.scrollWidth > innerWidth")
             check("375×667: нет горизонтального скролла", not overflow)
 
+            from smoke_onboarding_school import check_feature as check_onboarding_school
+            check_onboarding_school(browser, port, errors, check)
             check_geo_share(browser, port, errors)
             check_geo_share_locate(browser, port, errors)
             check_overnights(browser, port, errors)

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <title>Где учишься? · Blink</title>
+  <link rel="stylesheet" href="font.css">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="search.css">
+  <script src="catalog.js" defer></script>
+  <script src="search.js" defer></script>
+</head>
+<body>
+  <div class="device"><main class="app" id="app">
+    <div class="status-bar" aria-hidden="true">
+      <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+      <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+      <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+    </div>
+    <section id="search" class="search" aria-labelledby="title">
+      <header class="hero">
+        <img class="mascot" src="../../assets/onboarding-school/mascot.webp" alt="">
+        <img class="wordmark" src="../../assets/onboarding-school/wordmark.png" alt="Blink">
+        <h1 id="title" tabindex="-1">где учишься?</h1>
+      </header>
+      <div class="controls">
+        <label class="field">
+          <img src="../../assets/icons/search.png" alt="">
+          <input id="query" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="поиск" aria-label="Поиск учебного заведения">
+        </label>
+        <button type="button" class="clear" id="clear" aria-label="Очистить поиск" hidden><img src="../../assets/icons/close.png" alt=""></button>
+        <div class="filters" role="group" aria-label="Тип учебного заведения">
+          <button type="button" aria-pressed="false">школа</button>
+          <button type="button" aria-pressed="false">колледж</button>
+          <button type="button" aria-pressed="false">универ</button>
+        </div>
+      </div>
+      <div class="results" id="results">
+        <ul id="rows"></ul>
+        <div class="empty" id="empty" hidden>
+          <img src="../../assets/onboarding-school/empty.webp" alt="">
+          <p>ничего не найдено</p>
+        </div>
+      </div>
+      <p class="visually-hidden" id="count" role="status"></p>
+      <footer><button type="button" class="button button--secondary button--large" id="skip">пропустить</button></footer>
+    </section>
+    <section id="school" aria-label="Страница учебного заведения" hidden>
+      <div id="web-content"></div>
+      <div class="web-error" id="web-error" hidden>
+        <p role="status">не удалось открыть учебное заведение</p>
+        <button type="button" class="button button--secondary" id="retry">попробовать ещё раз</button>
+      </div>
+      <nav class="web-nav" aria-label="Навигация вебвью">
+        <button type="button" id="web-back" aria-label="Назад"><img src="../../assets/icons/back.png" alt=""></button>
+        <button type="button" id="web-close" aria-label="Закрыть"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
+      </nav>
+    </section>
+    <section id="end" class="end" aria-labelledby="end-title" hidden>
+      <img src="../../assets/onboarding-school/mascot.webp" alt="">
+      <h1 id="end-title" tabindex="-1"></h1>
+      <p>возврат в онбординг</p>
+      <button type="button" class="button button--secondary" id="replay">повторить сценарий</button>
+    </section>
+    <div class="home-indicator" aria-hidden="true"></div>
+  </main></div>
+</body>
+</html>

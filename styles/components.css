@@ -1209,3 +1209,9 @@
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
 }
+
+/* CTA онбординга: выше основной и с надписью крупнее („НАЙТИ ДРУЗЕЙ“, turn on.png); скругление – как у основной, r20 */
+.button--large {
+  height: var(--button-height-large);
+  font: var(--type-button-large);
+}

@@ -1,0 +1,47 @@
+html, body, #root { min-height: 100%; height: 100%; overflow: hidden; }
+#root { padding: 0; }
+#root .phone-frame { width: 100%; height: 100%; border: 0; border-radius: 0; box-shadow: none; }
+#root .phone-frame::before { display: none; }
+.school-footer { flex-direction: column; align-items: stretch; text-align: center; gap: 8px; background: linear-gradient(to bottom, transparent, var(--color-bg) 18px); }
+.school-footer button { min-height: 60px; flex: auto; }
+.school-inner > header { padding-top: 100px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* Гостевой экран, холст 390 × 844 pt. */
+[data-membership="guest"] {
+  --guest-bottom: max(46px, calc(env(safe-area-inset-bottom) + 12px));
+}
+[data-membership="guest"] .school-footer {
+  gap: var(--space-12);
+  padding: 14px var(--gutter) var(--guest-bottom);
+  background: linear-gradient(to bottom, transparent, var(--color-bg) 30px);
+}
+[data-membership="guest"] .school-footer button {
+  height: var(--button-height);
+  min-height: var(--button-height);
+  flex: none;
+  border-radius: var(--radius-20);
+  font: var(--type-button);
+  letter-spacing: var(--tracking-button);
+}
+.school-footer .school-other {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+[data-membership="guest"] .school-spacer {
+  height: calc(2 * var(--button-height) + 26px + var(--guest-bottom));
+}
+.school-chat-preview {
+  position: relative;
+  width: calc(100% - 2 * var(--gutter));
+  margin: 28px var(--gutter) 4px;
+  padding: 0 24px;
+  gap: 20px;
+  border-radius: 28px;
+}
+.school-chat-copy { display: grid; flex: 1; min-width: 0; gap: 5px; font: var(--type-friend-name); font-weight: 700; letter-spacing: -.025em; }
+.school-chat-message, .school-chat-caption { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.school-chat-caption { color: var(--color-text-muted); }
+.school-chat-chevron { flex: none; width: 15px; height: 20px; object-fit: contain; }

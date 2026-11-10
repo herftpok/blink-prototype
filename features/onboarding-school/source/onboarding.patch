@@ -1,0 +1,429 @@
+--- a/src/QuestionsApp.jsx
++++ b/src/QuestionsApp.jsx
+@@ -1,4 +1,4 @@
+-import { useMemo, useState } from 'react'
++import { useEffect, useMemo, useState } from 'react'
+ import UniversityScreen from './components/UniversityScreen.jsx'
+ import WallScreen from './components/WallScreen.jsx'
+ import WallPicker from './components/WallPicker.jsx'
+@@ -11,15 +11,15 @@
+ 
+ // Лента: отвеченные вопросы, вопросы тебе и твои вопросы. Стартуем на «студентах»,
+ // чтобы был виден розовый счётчик непрочитанных на вкладке «вопросы».
+-export default function QuestionsApp({ initialView = 'university', initialTab = 'students', initialAsk = false, initialAnswer = null, initialDelete = null, initialEmpty = false }) {
+-  const [view, setView] = useState(initialView)
+-  const [tab, setTab] = useState(initialTab)
++export default function QuestionsApp({ school, joined, initialRequests, onRequestChange, onJoin, onContinue, onClose }) {
++  const [view, setView] = useState('university')
++  const [tab, setTab] = useState('students')
+   const [wallBuildingId, setWallBuildingId] = useState(null)
+   const [unread, setUnread] = useState(wallUnread)
+-  const [askOpen, setAskOpen] = useState(initialAsk)
+-  const [replyId, setReplyId] = useState(initialAnswer)
+-  const [deleteId, setDeleteId] = useState(initialDelete) // вопрос, который удаляют
+-  const feed = useQuestions({ active: tab === 'questions', empty: initialEmpty })
++  const [askOpen, setAskOpen] = useState(false)
++  const [replyId, setReplyId] = useState(null)
++  const [deleteId, setDeleteId] = useState(null) // вопрос, который удаляют
++  const feed = useQuestions({ active: joined && tab === 'questions' })
+ 
+   // Люди: ты и студенты школы. Фото — по позиции в общем списке, как на хабе.
+   const fullList = useMemo(() => [me, ...students], [])
+@@ -30,17 +30,54 @@
+   const answer = (qid, text) => { feed.answer(qid, text); setReplyId(null) }
+   const remove = () => { feed.remove(deleteId); setDeleteId(null) }
+ 
+-  const wallBuilding = wallBuildingId ? buildings.find((b) => b.id === wallBuildingId) ?? buildings[0] : buildings[0]
+   const markRead = (id) => setUnread((u) => (u[id] ? { ...u, [id]: 0 } : u))
+   const pickWall = (id) => { setWallBuildingId(id); markRead(id); setView('wall') }
+   const replying = replyId ? feed.byId(replyId) : null
+ 
++  const visibleQuestions = joined ? feed.visible : feed.visible.filter(q => q.answer && !q.mine && q.to !== 'me')
++  const demoBuildings = school.type === 'универ' ? buildings : buildings.map((building, i) => ({
++    ...building, faculty: 'корпус ' + (i + 1), short: 'корпусе ' + (i + 1), address: school.city
++  }))
++  const wallBuilding = wallBuildingId ? demoBuildings.find((b) => b.id === wallBuildingId) ?? demoBuildings[0] : demoBuildings[0]
++  const previewBuilding = demoBuildings.find(b => wallPostsByBuilding[b.id]?.length)
++  const previewPost = previewBuilding && wallPostsByBuilding[previewBuilding.id][0]
++  const wallParent = joined ? 'wallPicker' : 'university'
++  const institution = { ...university, fullName: school.name, shortName: school.name, city: school.city }
++  const back = () => {
++    if (askOpen) setAskOpen(false)
++    else if (replyId !== null) setReplyId(null)
++    else if (deleteId !== null) setDeleteId(null)
++    else if (view === 'wall') {
++      const handled = !window.dispatchEvent(new Event('school-comments-back', { cancelable: true }))
++      if (!handled) setView(wallParent)
++    } else if (view === 'wallPicker') setView('university')
++    else onClose()
++  }
++  useEffect(() => {
++    const onKey = event => {
++      if (event.key === 'Escape') { event.preventDefault(); back() }
++    }
++    window.addEventListener('school-back', back)
++    window.addEventListener('keydown', onKey)
++    return () => {
++      window.removeEventListener('school-back', back)
++      window.removeEventListener('keydown', onKey)
++    }
++  })
++
+   return (
+     <div className="phone-frame">
+       <UniversityScreen
+-        university={university}
++        university={institution}
++        school={school}
++        initialRequests={initialRequests}
++        onRequestChange={onRequestChange}
++        joined={joined}
++        previewMessage={joined ? null : previewPost?.text}
++        onChooseAnother={onClose}
++        onPrimary={joined ? onContinue : onJoin}
+         building={null}
+-        buildings={buildings}
++        buildings={demoBuildings}
+         students={students}
+         me={me}
+         feature={{
+@@ -48,27 +85,26 @@
+           label: 'вопросы',
+           tab,
+           onTab: setTab,
+-          count: feed.visible.length,
+-          hot: feed.unreadCount,
++          count: visibleQuestions.length,
++          hot: joined ? feed.unreadCount : 0,
+           content: (
+             <QuestionsTab
+-              questions={feed.visible}
++              questions={visibleQuestions}
+               person={person}
+               faceOf={faceOf}
+               onReply={setReplyId} onDelete={setDeleteId}
+-              onAsk={() => setAskOpen(true)}
++              onAsk={joined ? () => setAskOpen(true) : null}
+             />
+           )
+         }}
+-        onClose={() => alert('закрыть экран университета')}
+-        onOpenWall={() => setView('wallPicker')}
++        onOpenWall={() => !joined && previewBuilding ? pickWall(previewBuilding.id) : setView('wallPicker')}
+       />
+ 
+       {(view === 'wallPicker' || view === 'wall') && (
+-        <WallPicker buildings={buildings} onPick={pickWall} onBack={() => setView('university')} />
++        <WallPicker schoolType={school.type} buildings={demoBuildings} onPick={pickWall} onBack={() => setView('university')} />
+       )}
+       {view === 'wall' && (
+-        <WallScreen university={university} building={wallBuilding} posts={wallPostsByBuilding[wallBuilding.id] ?? []} canPost={me.at === wallBuilding.id} onBack={() => setView('wallPicker')} />
++        <WallScreen university={institution} building={wallBuilding} posts={wallPostsByBuilding[wallBuilding.id] ?? []} canPost={me.at === wallBuilding.id} onBack={() => setView(wallParent)} />
+       )}
+ 
+       <AnswerSheet q={replying} open={!!replying} onSubmit={answer} onClose={() => setReplyId(null)} />
+--- a/src/components/CommentsScreen.jsx
++++ b/src/components/CommentsScreen.jsx
+@@ -45,15 +45,10 @@
+ 
+   return (
+     <div
+-      className={`screen ${s.screen} ${closing ? s.closing : ''}`}
++      className={`screen school-inner ${s.screen} ${closing ? s.closing : ''}`}
+       onAnimationEnd={() => closing && onBack()}
+     >
+       <header className={s.header}>
+-        <button className={s.headerBtn} onClick={close} aria-label="Назад">
+-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+-            <path d="M15 6l-6 6 6 6" />
+-          </svg>
+-        </button>
+         <div className={s.headerTitle}>
+           {comments.length} {plural(comments.length, ['комментарий', 'комментария', 'комментариев'])}
+         </div>
+--- a/src/components/QuestionsTab.jsx
++++ b/src/components/QuestionsTab.jsx
+@@ -10,10 +10,10 @@
+ 
+   return (
+     <div className={s.tab}>
+-      <button className={s.ask} type="button" onClick={onAsk}>
++      {onAsk && <button className={s.ask} type="button" onClick={onAsk}>
+         <Sticker name="eyes" size={30} />
+         задать вопрос
+-      </button>
++      </button>}
+ 
+       {list.length === 0 && (
+         <div className={s.empty}>
+--- a/src/components/UniversityScreen.jsx
++++ b/src/components/UniversityScreen.jsx
+@@ -6,8 +6,6 @@
+ import s from './UniversityScreen.module.css'
+ import auroraUrl from '../assets/aurora.svg'
+ import schoolIconUrl from '../assets/school-icon.png'
+-import addUrl from '../assets/add.svg'
+-import shareUrl from '../assets/share.svg'
+ import grad0 from '../assets/gradients/g0.png'
+ import grad1 from '../assets/gradients/g1.png'
+ import grad2 from '../assets/gradients/g2.png'
+@@ -22,6 +20,12 @@
+   const i = buildings.findIndex((b) => b.id === building.id)
+   const idx = ((i % GRADIENTS.length) + GRADIENTS.length) % GRADIENTS.length
+   return { gradient: GRADIENTS[idx] }
++}
++
++const guestActions = {
++  'школа': ['вступить в школу', 'я учусь в другой школе'],
++  'колледж': ['вступить в колледж', 'я учусь в другом колледже'],
++  'универ': ['вступить в универ', 'я учусь в другом универе']
+ }
+ 
+ export default function UniversityScreen({
+@@ -38,10 +42,12 @@
+   feature = null, // { id, label, count, hot, tab, onTab, content } — одна вкладка фичи
+   features = null, // { tab, onTab, items: [{ id, label, count, hot, content }] } — несколько
+   onOpenSettings = null,
+-  onClose,
++  school, joined, initialRequests, onRequestChange, previewMessage, onPrimary, onChooseAnother,
+   onOpenWall
+ }) {
+-  const [studentList, setStudentList] = useState(students)
++  const [studentList, setStudentList] = useState(() => students.map(student =>
++    initialRequests.includes(student.id) ? { ...student, state: 'pending' } : student
++  ))
+   const [infoOpen, setInfoOpen] = useState(false)
+   const [showMe, setShowMe] = useState(true)
+ 
+@@ -66,7 +72,7 @@
+ 
+   const visible = useMemo(() => {
+     let list = building ? fullList.filter((st) => st.at === building.id) : fullList
+-    if (!showMe) list = list.filter((st) => st.state !== 'me')
++    if (!joined || !showMe) list = list.filter((st) => st.state !== 'me')
+     return [...list].sort((a, b) => {
+       if (a.id === presidentId) return -1
+       if (b.id === presidentId) return 1
+@@ -74,18 +80,21 @@
+       if (b.state === 'me') return 1
+       return Number(Boolean(b.at)) - Number(Boolean(a.at))
+     })
+-  }, [fullList, building, showMe, presidentId])
+-
+-  const setState = (id, state) =>
+-    setStudentList((list) => list.map((s) => (s.id === id ? { ...s, state } : s)))
++  }, [fullList, building, showMe, presidentId, joined])
++
++  const setState = (id, state) => {
++    setStudentList(list => list.map(student => student.id === id ? { ...student, state } : student))
++    onRequestChange(id, state === 'pending')
++  }
++  const hasRequest = studentList.some(student => student.state === 'pending')
+ 
+   const subtitle = building ? building.address : university.city
+   const sectionCount = visible.length
+-  const sectionTitle = building ? 'сейчас тут' : 'студенты'
++  const sectionTitle = building ? 'сейчас тут' : school.type === 'школа' ? 'ученики' : 'студенты'
+   const theme = themeFor(building, buildings)
+ 
+   return (
+-    <div className="screen">
++    <div className="screen" data-membership={joined ? 'member' : 'guest'}>
+       {onOpenSettings && (
+         <button className={s.settingsBtn} onClick={onOpenSettings} aria-label="Настройки школы">
+           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+@@ -94,12 +103,6 @@
+           </svg>
+         </button>
+       )}
+-      <button className={s.closeBtn} onClick={onClose} aria-label="Закрыть">
+-        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+-          <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+-        </svg>
+-      </button>
+-
+       <div className="scroll">
+         <div className={s.scrollInner}>
+           {customTheme ? (
+@@ -119,7 +122,7 @@
+           )}
+ 
+           <section className={s.hero}>
+-            <span className={s.visits}>{building?.youArePresent ? 'ты сейчас здесь' : 'ты был тут 242 раза'}</span>
++            <span className={s.visits}>{school.type}</span>
+             <img src={schoolIconUrl} alt="" className={s.logoImg} aria-hidden />
+ 
+             <h1 className={s.title}>{displayName || university.fullName}</h1>
+@@ -127,7 +130,7 @@
+             {election && <ElectionEntry phase={election.phase} onClick={election.onOpen} />}
+           </section>
+ 
+-          <WallEntry building={building} onClick={onOpenWall} />
++          <WallEntry building={building} onClick={onOpenWall} schoolType={school.type} previewMessage={previewMessage} />
+ 
+           {pinned && (
+             <div className={s.pinned}>
+@@ -189,18 +192,19 @@
+             )}
+           </section>
+ 
+-          <div className={s.bottomSpacer} />
++          <div className={`${s.bottomSpacer} school-spacer`} />
+         </div>
+       </div>
+ 
+-      <div className={s.bottomBar}>
+-        <button className={s.inviteBtn} type="button">
+-          <img src={addUrl} alt="" className={s.btnIcon} />
+-          позвать друзей
++      <div className={`${s.bottomBar} school-footer`}>
++        <button className={`${s.inviteBtn} ${joined && !hasRequest ? 'school-other' : ''}`} type="button" onClick={onPrimary}>
++          {joined ? 'продолжить' : guestActions[school.type][0]}
+         </button>
+-        <button className={s.shareBtn} type="button" aria-label="Поделиться">
+-          <img src={shareUrl} alt="" className={s.btnIcon} />
+-        </button>
++        {!joined && (
++          <button className={`${s.inviteBtn} school-other`} type="button" onClick={onChooseAnother}>
++            {guestActions[school.type][1]}
++          </button>
++        )}
+       </div>
+ 
+       <InfoSheet
+--- a/src/components/WallEntry.jsx
++++ b/src/components/WallEntry.jsx
+@@ -1,4 +1,5 @@
+ import s from './WallEntry.module.css'
++import chevronUrl from '../assets/chevron.png'
+ import bubbleUrl from '../assets/chat-bubble-3d.png'
+ 
+ // Родительный падеж названия корпуса: «стена экономического факультета»
+@@ -22,13 +23,21 @@
+ }
+ 
+ // Вход в чаты универа: белая карточка, пузырь слева, заголовок в две строки.
+-export default function WallEntry({ building, onClick }) {
+-  const title = building ? `стена ${toGenitive(building.faculty)}` : 'посмотри, о чём говорят студенты'
++export default function WallEntry({ building, onClick, schoolType, previewMessage }) {
++  const title = building ? `стена ${toGenitive(building.faculty)}` : schoolType === 'школа' ? 'посмотри, о чём говорят ученики' : 'посмотри, о чём говорят студенты'
+ 
+   return (
+-    <button className={s.card} type="button" onClick={onClick}>
++    <button className={`${s.card} ${previewMessage ? 'school-chat-preview' : ''}`} type="button" onClick={onClick}>
+       <img src={bubbleUrl} alt="" className={s.icon} aria-hidden />
+-      <span className={s.title}>{title}</span>
++      {previewMessage ? (
++        <>
++          <span className="school-chat-copy">
++            <span className="school-chat-message">{previewMessage}</span>
++            <span className="school-chat-caption">сообщения из чатика</span>
++          </span>
++          <img className="school-chat-chevron" src={chevronUrl} alt="" />
++        </>
++      ) : <span className={s.title}>{title}</span>}
+     </button>
+   )
+ }
+--- a/src/components/WallPicker.jsx
++++ b/src/components/WallPicker.jsx
+@@ -3,24 +3,19 @@
+ import avatarUrl from '../assets/avatar.svg'
+ 
+ // Список чатов универа: аватар корпуса, название и число участников.
+-export default function WallPicker({ buildings, onPick, onBack }) {
++export default function WallPicker({ schoolType, buildings, onPick, onBack }) {
+   const [closing, setClosing] = useState(false)
+   const close = () => setClosing(true)
+ 
+   return (
+     <div
+-      className={`screen ${s.screen} ${closing ? s.closing : ''}`}
++      className={`screen school-inner ${s.screen} ${closing ? s.closing : ''}`}
+       onAnimationEnd={(e) => {
+         if (e.target === e.currentTarget && closing) onBack()
+       }}
+     >
+       <header className={s.header}>
+-        <h1 className={s.headerTitle}>чаты универа</h1>
+-        <button className={s.headerBtn} onClick={close} aria-label="Закрыть">
+-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+-            <path d="M6 6l12 12M18 6L6 18" />
+-          </svg>
+-        </button>
++        <h1 className={s.headerTitle}>{schoolType === 'школа' ? 'чаты школы' : schoolType === 'колледж' ? 'чаты колледжа' : 'чаты универа'}</h1>
+       </header>
+ 
+       <div className="scroll">
+--- a/src/components/WallScreen.jsx
++++ b/src/components/WallScreen.jsx
+@@ -33,6 +33,13 @@
+   const close = () => setClosing(true)
+   const scrollRef = useRef(null)
+   const inputRef = useRef(null)
++
++  useEffect(() => {
++    if (openPostId == null) return
++    const back = event => { event.preventDefault(); setOpenPostId(null) }
++    window.addEventListener('school-comments-back', back)
++    return () => window.removeEventListener('school-comments-back', back)
++  }, [openPostId])
+ 
+   const openPost = openPostId != null ? list.find((p) => p.id === openPostId) : null
+ 
+@@ -126,17 +133,12 @@
+ 
+   return (
+     <div
+-      className={`screen ${s.screen} ${closing ? s.closing : ''}`}
++      className={`screen school-inner ${s.screen} ${closing ? s.closing : ''}`}
+       onAnimationEnd={(e) => {
+         if (e.target === e.currentTarget && closing) onBack()
+       }}
+     >
+       <header className={s.header}>
+-        <button className={s.headerBtn} onClick={close} aria-label="Назад">
+-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+-            <path d="M15 6l-6 6 6 6" />
+-          </svg>
+-        </button>
+ 
+         <div className={s.headerCenter}>
+           <div className={s.headerText}>
+--- a/src/components/UniversityScreen.module.css
++++ b/src/components/UniversityScreen.module.css
+@@ -47,6 +47,7 @@
+ }
+ 
+ .scrollInner {
++  isolation: isolate;
+   position: relative;
+   padding-top: 56px;
+ }
+@@ -59,7 +60,7 @@
+   /* низ градиента приходится на середину кнопки входа в чаты */
+   height: 389px;
+   pointer-events: none;
+-  z-index: 0;
++  z-index: -1;
+   transform: scaleY(-1);
+   filter: saturate(1.1);
+ }
+@@ -77,7 +78,7 @@
+   left: 0;
+   right: 0;
+   pointer-events: none;
+-  z-index: 0;
++  z-index: -1;
+   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 72%);
+   mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 72%);
+ }
+@@ -368,7 +369,7 @@
+   width: 674.5px;
+   height: 389px;
+   pointer-events: none;
+-  z-index: 0;
++  z-index: -1;
+   background:
+     radial-gradient(110% 76% at 22% 0%, var(--c1) 0%, transparent 60%),
+     radial-gradient(100% 70% at 82% 10%, var(--c2) 0%, transparent 58%),
