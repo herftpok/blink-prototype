@@ -38,7 +38,7 @@ export function createVisitRail(seekTo,clock){
     if(span<=0)return x1;
     const t=clamp((p-start)/span,0,1);
     // Long journeys cruise in the middle; short transfers flow from ease-in to ease-out.
-    const ramp=Math.min(.5,.09/span);
+    const ramp=Math.min(.5,.014/span); // At most 168 ms of the 12-second replay.
     let distance=t-ramp/2;
     if(t<ramp)distance=ramp*rampArea(t/ramp);
     else if(t>1-ramp)distance=1-ramp-ramp*rampArea((1-t)/ramp);
@@ -74,7 +74,7 @@ export function createVisitRail(seekTo,clock){
     return a[to]+(b[to]-a[to])*(value-a[from])/(b[from]-a[from]);
   }
   function setVisits(list){
-    cancelMotion();visits=list;active=null;drag=null;context.hidden=true;lens.classList.remove('settled','releasing');
+    cancelMotion();visits=list;active=null;drag=null;context.hidden=true;lens.classList.remove('settled');
     track.replaceChildren();
     for(const visit of visits){
       const button=document.createElement('button'),img=new Image();
@@ -96,11 +96,9 @@ export function createVisitRail(seekTo,clock){
     slider.value=Math.round(p*10000);
     const visit=visits.find(v=>p>=v.from && p<=v.to);
     if(visit!==active){
-      const leaving=!!active && !visit;
       rail.style.setProperty('--rail-direction',backwards?-1:1);
       active?.button.removeAttribute('aria-current');
       active=visit;context.hidden=!visit;
-      lens.classList.toggle('releasing',leaving);
       lens.classList.toggle('settled',!!visit);
       if(visit){
         visit.button.setAttribute('aria-current','location');
@@ -118,12 +116,12 @@ export function createVisitRail(seekTo,clock){
     if(reducedMotion.matches || Math.abs(progress-target)<.0001){seekTo(target);return}
     // Interpolate in strip pixels so motion stays even between closely spaced visits.
     const from=offset,to=interpolate(target,'p','x'),start=performance.now();
-    const duration=coastDuration || clamp(340+Math.abs(to-from)*.8,360,580);
+    const duration=coastDuration || clamp(135+Math.abs(to-from)*.2,145,195);
     animationTarget=target;
     function step(now){
       const t=clamp((now-start)/duration,0,1);
       if(t>=1){frame=0;animationTarget=null;seekTo(target);return}
-      const eased=coastDuration?1-(1-t)**3:t*t*t*(10+t*(-15+6*t));
+      const eased=1-(1-t)**3;
       seekOffset(from+(to-from)*eased);
       frame=requestAnimationFrame(step);
     }
@@ -170,8 +168,8 @@ export function createVisitRail(seekTo,clock){
       const tapX=gesture.scroll+(e.clientX-gesture.left)*gesture.scale-inset;
       glideTo(gesture.visit?.p ?? interpolate(tapX,'x','p'));
     }else if(!reducedMotion.matches && e.timeStamp-gesture.lastTime<85){
-      const travel=clamp(gesture.velocity*130,-width*.55,width*.55);
-      if(Math.abs(travel)>5)glideTo(interpolate(offset+travel,'x','p'),clamp(Math.abs(travel)*2.5,170,350));
+      const travel=clamp(gesture.velocity*100,-width*.55,width*.55);
+      if(Math.abs(travel)>5)glideTo(interpolate(offset+travel,'x','p'),clamp(Math.abs(travel)*1.5,110,205));
     }
   };
   rail.onlostpointercapture=rail.onpointercancel=release;

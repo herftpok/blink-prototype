@@ -146,7 +146,7 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
   background:repeating-linear-gradient(112deg,transparent 0 6px,#eee4ff70 6px 8px,transparent 8px 11px);border-radius:2px}
 .rail-stop{position:absolute;top:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;
   display:grid;place-items:center;background:#484454;box-shadow:inset 0 0 0 1px #ffffff30;cursor:pointer}
-.rail-stop img{width:31px;height:31px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 2px #0005);transition:transform .24s var(--ease-emphasized)}
+.rail-stop img{width:31px;height:31px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 2px #0005);transition:transform .12s var(--ease-emphasized)}
 .rail-stop[aria-current]{background:#776783}
 .rail-lens{position:absolute;left:0;top:50%;width:48px;height:48px;transform:translate(-50%,-50%);
   pointer-events:none}
@@ -166,7 +166,6 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 .place.at-visit img{transform:translateX(-34px)}
 .place.at-visit .tag,.place.at-visit .place-dot{visibility:hidden}
 
-.rail-stop[aria-current] img{transform:scale(1.12)}
 .rail-stop:is(.pressed,:focus-visible) img{transform:scale(1.32)}
 @media(hover:hover) and (pointer:fine){
   .rail-stop:hover img{transform:scale(1.32)}
@@ -204,42 +203,14 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 @media(max-width:480px){.review-layout .app{height:calc(100dvh - var(--review-height))}}
 @media(max-width:350px){#layout-review button{padding:0 10px;font-size:12px}}
 
-/* Animate the outline separately from the translated reading head: the centre
-   stays on the landmark during the entire visit, even on direction changes. */
-.rail-lens::before{transition:background-color .24s,border-color .24s,box-shadow .24s}
+/* Snap as one rigid circle and landmark; only their shared position rebounds. */
+.rail-lens::before{transition:background-color .10s,border-color .10s,box-shadow .10s}
 .rail-lens.settled::before{background-color:#d9baff0c;border-color:#f6ecff;box-shadow:0 0 0 2px #18142455,0 0 7px #d4acff40}
 @media(prefers-reduced-motion:no-preference){
-  .rail-lens.settled,.rail-stop[aria-current]{animation:rail-rebound .72s ease-in-out}
-  .rail-lens.settled::before{animation:lens-catch .72s ease-in-out}
-  .rail-lens.releasing::before{animation:lens-release .64s ease-in-out}
-  .rail-stop[aria-current] img{animation:landmark-pop .68s ease-in-out}
+  .rail-lens.settled,.rail-stop[aria-current]{animation:rail-rebound .16s ease-out}
 }
-@keyframes lens-catch{
-  0%,100%{transform:scale(1)}
-  16%{transform:scale(1.19,.87)}
-  38%{transform:scale(.90,1.09)}
-  59%{transform:scale(1.07,.95)}
-  80%{transform:scale(.98,1.02)}
-}
-@keyframes lens-release{
-  0%,100%{transform:scale(1)}
-  20%{transform:scale(.94,1.07)}
-  42%{transform:scale(1.16,.91)}
-  63%{transform:scale(.96,1.04)}
-  82%{transform:scale(1.025,.985)}
-}
-@keyframes landmark-pop{
-  0%,100%{scale:1}
-  16%{scale:.91}
-  38%{scale:1.24}
-  60%{scale:.96}
-  79%{scale:1.05}
-}
-
 @keyframes rail-rebound{
   0%,100%{translate:0}
-  20%{translate:calc(5px * var(--rail-direction)) 0}
-  43%{translate:calc(-3.5px * var(--rail-direction)) 0}
-  64%{translate:calc(2px * var(--rail-direction)) 0}
-  83%{translate:calc(-.7px * var(--rail-direction)) 0}
+  32%{translate:calc(2.5px * var(--rail-direction)) 0}
+  68%{translate:calc(-.7px * var(--rail-direction)) 0}
 }
