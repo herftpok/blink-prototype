@@ -1,10 +1,15 @@
 <!doctype html>
-<html lang="ru"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101014"><link rel="preload" as="image" href="../../assets/brand/logo.png"><title>Где я был · Blink</title><link rel="stylesheet" href="../onboarding-school/font.css"><link rel="stylesheet" href="../../styles/tokens.css"><link rel="stylesheet" href="../../styles/base.css"><link rel="stylesheet" href="../../styles/components.css"><link rel="stylesheet" href="tracks.css?v=ink15"></head>
+<html lang="ru"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101014"><link rel="preload" as="image" href="../../assets/brand/logo.png"><title>Где я был · Blink</title><link rel="stylesheet" href="../onboarding-school/font.css"><link rel="stylesheet" href="../../styles/tokens.css"><link rel="stylesheet" href="../../styles/base.css"><link rel="stylesheet" href="../../styles/components.css"><link rel="stylesheet" href="tracks.css?v=stats3"></head>
 <body><nav id="layout-review" aria-label="Размещение действий" hidden>
   <button type="button" data-layout="heading">Под заголовком</button>
   <button type="button" data-layout="rail">У шкалы</button>
   <button type="button" data-layout="menu">В меню</button>
-</nav><div class="device"><div class="app" id="phone">
+</nav>
+<aside id="stats-review" aria-label="Варианты итогов дня">
+  <div class="stats-choice"><button type="button" data-stats="columns" aria-pressed="true">Колонки</button><dl class="day-stats" data-stats="columns" aria-hidden="true"></dl></div>
+  <div class="stats-choice"><button type="button" data-stats="distance" aria-pressed="false">Акцент на пути</button><dl class="day-stats" data-stats="distance" aria-hidden="true"></dl></div>
+  <div class="stats-choice"><button type="button" data-stats="rows" aria-pressed="false">Список</button><dl class="day-stats" data-stats="rows" aria-hidden="true"></dl></div>
+</aside><div class="device"><div class="app" id="phone">
 <div class="status-bar" aria-hidden="true"><img class="status-bar__time" src="../../assets/system/status-time.png" alt=""><img class="status-bar__island" src="../../assets/system/live-activity.png" alt=""><img class="status-bar__icons" src="../../assets/system/status-icons.png" alt=""></div>
 <main id="screen" aria-label="Карта маршрута">
   <canvas id="map" width="780" height="1688" aria-label="Маршрут за день"></canvas>
@@ -13,7 +18,7 @@
   </div>
   <header class="map-header">
     <div class="route-heading"><h1>где я был</h1><a id="route-close" href="../../index.html#/map" aria-label="Закрыть маршрут"><img src="../../assets/icons/close.png" alt=""></a></div>
-    <dl id="summary" aria-label="Итоги дня"></dl>
+    <dl class="day-stats" id="summary" aria-label="Итоги дня"></dl>
     <div id="heading-actions"></div>
   </header>
   <div id="empty-day" hidden><strong>нет маршрута</strong><span>За этот день нет геоточек.</span></div>
@@ -79,4 +84,4 @@
   <canvas id="preview" width="780" height="1688" aria-label="Предпросмотр видео маршрута"></canvas>
   <button id="export" class="primary">сохранить видео</button><p id="status" role="status"></p>
 </dialog>
-<div class="home-indicator"></div></div></div><script src="../../scripts/pin.js"></script><script src="zone-art.js?v=office1"></script><script src="data.js?v=office1"></script><script type="module" src="tracks.js?v=hours1"></script></body></html>
+<div class="home-indicator"></div></div></div><script src="../../scripts/pin.js"></script><script src="zone-art.js?v=office1"></script><script src="data.js?v=office1"></script><script type="module" src="tracks.js?v=stats3"></script></body></html>
