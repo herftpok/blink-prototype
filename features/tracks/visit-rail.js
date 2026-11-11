@@ -12,11 +12,13 @@ export function createVisitRail(seekTo,clock){
   const el=id=>document.getElementById(id);
   const rail=el('visit-rail'),track=el('visit-track'),slider=el('seek');
   const previous=el('prev-visit'),next=el('next-visit'),context=el('visit-context');
-  const cursor=rail.querySelector('.rail-cursor');
   const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
-  const inset=34;
+  // The diagonal pattern repeats about every 12 px along the horizontal axis.
+  const endTicks=44;
+  const edgeIconRadius=25;
+  const inset=endTicks+edgeIconRadius;
   let visits=[],anchors=[],progress=0,drag=null,active=null,offset=0;
-  let width=0,scroll=0,frame=0,animationTarget=null;
+  let width=0,scroll=0,minScroll=0,maxScroll=0,frame=0,animationTarget=null;
   function cancelMotion(){
     cancelAnimationFrame(frame);frame=0;animationTarget=null;
   }
@@ -48,41 +50,55 @@ export function createVisitRail(seekTo,clock){
     if(!anchors.length)return;
     offset=visits.length?headPosition(progress):progress*anchors.at(-1).x;
     const head=offset+inset;
-    scroll=head-width/2;
+    scroll=clamp(head-width/2,minScroll,maxScroll);
     track.style.transform='translate3d('+(-scroll)+'px,0,0)';
-    let strongest=0;
     for(const [i,visit] of visits.entries()){
       const distance=Math.abs(anchors[i+1].x-offset);
       const proximity=clamp(1-distance/visit.focusRadius,0,1);
       const focus=proximity*proximity*(3-2*proximity);
-      strongest=Math.max(strongest,focus);
       // The circle, rim and artwork are lifted together, with a common baseline.
       if(visit.focus!==focus){
         visit.button.style.setProperty('--focus',focus);
         visit.focus=focus;
       }
     }
-    cursor.style.left=(head-scroll)+'px';
-    cursor.style.opacity=1-strongest;
-
   }
   function layout(){
     width=rail.clientWidth;
-    track.style.setProperty('--end-hatching',width/2+'px');
     const length=Math.max(420,width-2*inset);
     anchors=[{p:0,x:0}];
     for(const v of visits){
       const last=anchors.at(-1);
       const x=last.x+Math.max(last.p===0?12:62,(v.p-last.p)*length);
-      anchors.push({p:v.p,x});v.button.style.left=(x+inset)+'px';
+      anchors.push({p:v.p,x});
+    }
+    // Keep room for the other visible stops on short, tightly clustered itineraries.
+    if(visits.length>=2){
+      const first=anchors[1],last=anchors.at(-1);
+      const span=last.x-first.x,required=width-2*inset;
+      if(span<required){
+        for(let i=2;i<anchors.length;i++){
+          anchors[i].x=first.x+(anchors[i].x-first.x)*required/span;
+        }
+      }
     }
     const last=anchors.at(-1),end=last.x+Math.max(12,(1-last.p)*length);
     anchors.push({p:1,x:end});track.style.width=(end+2*inset)+'px';
     for(const [i,visit] of visits.entries()){
       const x=anchors[i+1].x;
+      visit.button.style.left=(x+inset)+'px';
       const left=i?x-anchors[i].x:Infinity;
       const right=i+1<visits.length?anchors[i+2].x-x:Infinity;
       visit.focusRadius=Math.min(64,.85*Math.min(left,right));
+    }
+    if(visits.length>=2){
+      minScroll=anchors[1].x;
+      maxScroll=Math.max(minScroll,anchors[visits.length].x+2*inset-width);
+    }else{
+      // With one or zero landmarks the observed day itself defines the bounds.
+      const first=visits[0];
+      minScroll=headPosition(0)+inset-endTicks-(first?.from===0?edgeIconRadius:0);
+      maxScroll=Math.max(minScroll,headPosition(1)+inset+endTicks+(first?.to===1?edgeIconRadius:0)-width);
     }
     position();
   }
