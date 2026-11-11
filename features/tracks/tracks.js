@@ -1,5 +1,5 @@
 import {routeActionLayout} from './route-actions.js';
-import {createVisitRail,durationText} from './visit-rail.js?v=ticks4';
+import {createVisitRail,durationText} from './visit-rail.js?v=caption1';
 import {routeCalendar} from './calendar.js?v=period2';
 import {openRoutes} from './privacy.js?v=calendar1';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
@@ -85,7 +85,7 @@ records.forEach(prepareDay);
 const mapHeader=document.querySelector('.map-header'),playback=document.querySelector('.playback');
 let mapView=null,markerData=[];
 const pinHost=$('traveller');
-pinHost.innerHTML=BlinkPin.markup({name:'ты', photo:portrait.src, tag:'span', assets:'../../assets', state:'moving', speed:0, size:52});
+pinHost.insertAdjacentHTML('afterbegin',BlinkPin.markup({name:'ты', photo:portrait.src, tag:'span', assets:'../../assets', state:'moving', speed:0, size:52}));
 const pinValue=pinHost.querySelector('.pin__time-value');
 const motion=pinHost.querySelector('.pin__motion');
 const liveArrows=pinHost.querySelector('.pin__badge--arrows');
@@ -153,7 +153,7 @@ function drawStoryPlace(ctx,spot,stop,unit,atVisit){
   }
   ctx.restore();
 }
-function drawStoryText(ctx,pos,height,unit){
+function drawStoryText(ctx,pos,height,unit,pinX,foot){
   ctx.save();ctx.scale(unit,unit);
   const bottom=height/unit-28,width=600/unit;
   ctx.textAlign='left';ctx.fillStyle='white';ctx.shadowColor='#121225';ctx.shadowBlur=8;
@@ -170,9 +170,13 @@ function drawStoryText(ctx,pos,height,unit){
   });
   const visit=visits.find(v=>pos.time*60>=v.t && pos.time*60<=v.end);
   if(visit){
-    ctx.fillStyle='white';ctx.font='750 18px '+uiFamily;
-    ctx.fillText(visit.name+' · '+visit.duration,16,bottom-85,width-32);
-    ctx.font='600 12px '+uiFamily;ctx.fillText(visit.hours,16,bottom-66);
+    ctx.save();ctx.translate(pinX/unit,foot/unit+10);ctx.textAlign='center';ctx.lineJoin='round';
+    ctx.shadowColor='#10101c';ctx.shadowBlur=5;ctx.strokeStyle='#151322';ctx.lineWidth=2.5;
+    ctx.font='800 20px '+uiFamily;
+    ctx.strokeText(visit.name,0,19,width-40);ctx.fillStyle='white';ctx.fillText(visit.name,0,19,width-40);
+    ctx.font='650 13px '+uiFamily;
+    ctx.strokeText(visit.detail,0,38,width-32);ctx.fillStyle='#f0e9fc';ctx.fillText(visit.detail,0,38,width-32);
+    ctx.restore();
   }
   ctx.shadowBlur=0;ctx.fillStyle='#14141edd';ctx.font='700 12px '+uiFamily;
   const box=Math.max(ctx.measureText(day.day).width,56)+24;
@@ -324,7 +328,7 @@ function draw(canvas,p,story=false){
     pinValue.textContent=pos.speed;
   }
   drawJammer(ctx,gaps.get(day),p,replayDuration,unitsY,reducedMotion.matches);
-  if(story)drawStoryText(ctx,pos,unitsY,unit);
+  if(story)drawStoryText(ctx,pos,unitsY,unit,pinX,foot);
   ctx.restore();
 }
 function render(){

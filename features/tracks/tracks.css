@@ -154,14 +154,15 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 .rail-stop img{width:29px;height:29px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 2px #0004)}
 #seek{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;margin:0}
 #visit-rail:focus-within{outline:2px solid #dcc6ff;outline-offset:2px}
-.rail-time{margin:0 0 9px 51px;display:flex;align-items:center;justify-content:center;gap:5px;height:38px;text-shadow:0 2px 6px #10101c}
+.rail-time{margin:0 0 8px 51px;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;height:44px;text-align:center;text-shadow:0 2px 6px #10101c}
 #current{font:750 20px/1 var(--font-ui);font-variant-numeric:tabular-nums;color:white}
-.rail-time button{width:42px;height:38px;border-radius:12px;font:600 25px var(--font-text);color:white;text-shadow:inherit}
+.rail-time button{width:44px;height:44px;border-radius:12px;font:600 25px var(--font-text);color:white;text-shadow:inherit}
 .rail-time button:disabled{opacity:.3}
-#visit-context{width:fit-content;max-width:95%;margin:0 auto 2px;padding:7px 14px;display:grid;justify-items:center;gap:2px;
-  border-radius:16px;background:#171522d9;color:white;backdrop-filter:blur(8px)}
-#visit-label{font:750 16px/20px var(--font-ui);text-align:center;overflow-wrap:anywhere}
-#visit-hours{color:#ded7e6;font:550 12px var(--font-ui);font-variant-numeric:tabular-nums}
+#visit-context{position:absolute;top:10px;left:0;transform:translateX(-50%);width:max-content;max-width:min(78vw,285px);
+  display:grid;justify-items:center;gap:2px;color:white;text-align:center;text-shadow:0 1px 3px #10101c,0 1px 8px #10101c;
+  paint-order:stroke fill;-webkit-text-stroke:2.5px #151322;pointer-events:none}
+#visit-label{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 20px/24px var(--font-ui);letter-spacing:-.025em}
+#visit-hours{font:650 13px/17px var(--font-ui);color:#f0e9fc;font-variant-numeric:tabular-nums;white-space:nowrap}
 .place .tag strong{max-width:150px}
 
 .place.at-visit img{transform:translateX(-34px)}

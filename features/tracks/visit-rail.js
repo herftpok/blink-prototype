@@ -144,8 +144,8 @@ export function createVisitRail(seekTo,clock){
       active=visit;context.hidden=!visit;
       if(visit){
         visit.button.setAttribute('aria-current','location');
-        el('visit-label').textContent=visit.name+' · '+visit.duration;
-        el('visit-hours').textContent=visit.hours;
+        el('visit-label').textContent=visit.name;
+        el('visit-hours').textContent=visit.detail;
       }
     }
     previous.disabled=!visits.some(v=>v.p<(visit?.from ?? p)-.00001);
