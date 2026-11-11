@@ -1,23 +1,19 @@
 <!doctype html>
-<html lang="ru"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101014"><link rel="preload" as="image" href="../../assets/brand/logo.png"><title>Где я был · Blink</title><link rel="stylesheet" href="../../styles/tokens.css"><link rel="stylesheet" href="../../styles/base.css"><link rel="stylesheet" href="../../styles/components.css"><link rel="stylesheet" href="tracks.css?v=rail2"></head>
-<body><div class="device"><div class="app" id="phone">
+<html lang="ru"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101014"><link rel="preload" as="image" href="../../assets/brand/logo.png"><title>Где я был · Blink</title><link rel="stylesheet" href="../../styles/tokens.css"><link rel="stylesheet" href="../../styles/base.css"><link rel="stylesheet" href="../../styles/components.css"><link rel="stylesheet" href="tracks.css?v=actions1"></head>
+<body><nav id="layout-review" aria-label="Размещение действий" hidden>
+  <button type="button" data-layout="heading">Под заголовком</button>
+  <button type="button" data-layout="rail">У шкалы</button>
+  <button type="button" data-layout="menu">В меню</button>
+</nav><div class="device"><div class="app" id="phone">
 <div class="status-bar" aria-hidden="true"><img class="status-bar__time" src="../../assets/system/status-time.png" alt=""><img class="status-bar__island" src="../../assets/system/live-activity.png" alt=""><img class="status-bar__icons" src="../../assets/system/status-icons.png" alt=""></div>
 <main id="screen" aria-label="Карта маршрута">
   <canvas id="map" width="780" height="1688" aria-label="Маршрут за день"></canvas>
   <div class="map-credit"><span id="district"></span><details class="map-source"><summary aria-label="Источники карты">ⓘ</summary><small>© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · OpenFreeMap</small></details></div>
   <div id="places"></div><div id="traveller"></div>
   <header class="map-header">
-    <div class="map-nav">
-      <a class="map-tool" href="../../index.html#/map" aria-label="На карту Blink"><img src="../../assets/icons/back.png" alt=""></a>
-      <nav class="date" aria-label="Выбор дня">
-        <button id="older" aria-label="Предыдущий день"></button>
-        <button id="date" type="button" aria-haspopup="dialog" aria-controls="privacy"></button>
-        <button id="newer" aria-label="Следующий день"></button>
-      </nav>
-      <button id="share" class="map-tool" aria-label="Поделиться маршрутом"><img src="../../assets/icons/share.png" alt=""></button>
-    </div>
-    <div class="route-heading"><h1>где я был</h1><button id="privacy-open" class="map-tool" aria-label="Настройки приватности" title="Приватность"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 6v5c0 5.1-3.3 8-8 10-4.7-2-8-4.9-8-10V6l8-3Z" stroke="currentColor" stroke-width="2"/><path d="M9 11.6l2.1 2.2 4-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    <div class="route-heading"><h1>где я был</h1><a id="route-close" href="../../index.html#/map" aria-label="Закрыть маршрут"><img src="../../assets/icons/close.png" alt=""></a></div>
     <dl id="summary" aria-label="Итоги дня"></dl>
+    <div id="heading-actions"></div>
   </header>
   <div id="empty-day" hidden><strong>нет маршрута</strong><span>За этот день нет геоточек.</span></div>
   <div id="place-info" hidden>
@@ -32,6 +28,16 @@
       <div id="visit-rail" aria-label="Шкала маршрута">
         <div id="visit-track"></div><div class="rail-lens" aria-hidden="true"></div>
         <input id="seek" type="range" min="0" max="10000" aria-label="Положение на маршруте">
+      </div>
+    </div>
+  </div>
+  <div class="route-footer">
+    <button id="date" type="button" aria-haspopup="dialog" aria-controls="privacy"><img src="../../assets/icons/calendar.png" alt=""><span></span></button>
+    <div id="footer-actions">
+      <button id="more-actions" type="button" aria-label="Действия с маршрутом" aria-haspopup="menu" aria-controls="route-actions" aria-expanded="false"><span aria-hidden="true">•••</span></button>
+      <div id="route-actions">
+        <button id="share" type="button" aria-label="Поделиться маршрутом"><img src="../../assets/icons/share.png" alt=""><span>Поделиться</span></button>
+        <button id="privacy-open" type="button" aria-label="Настройки приватности"><img src="../../assets/icons/privacy.png" alt=""><span>Приватность</span></button>
       </div>
     </div>
   </div>
@@ -73,4 +79,4 @@
   <canvas id="preview" width="780" height="1688" aria-label="Предпросмотр видео маршрута"></canvas>
   <button id="export" class="primary">сохранить видео</button><p id="status" role="status"></p>
 </dialog>
-<div class="home-indicator"></div></div></div><script src="../../scripts/pin.js"></script><script src="data.js?v=rail2"></script><script type="module" src="tracks.js?v=rail2"></script></body></html>
+<div class="home-indicator"></div></div></div><script src="../../scripts/pin.js"></script><script src="data.js?v=rail2"></script><script type="module" src="tracks.js?v=actions1"></script></body></html>

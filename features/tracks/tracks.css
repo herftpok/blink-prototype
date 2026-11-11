@@ -4,18 +4,7 @@
 #screen,#map,#places {position:absolute;inset:0;width:100%;height:100%}
 #places,#traveller,.map-header {pointer-events:none}
 .map-header {position:absolute;inset:var(--safe-top) 16px auto;color:white;text-shadow:0 2px 10px #121225}
-.map-nav {display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
-.map-tool,#play,#place-info,.tag {background:rgba(20,20,30,.86);color:white;border:1px solid #ffffff35;backdrop-filter:blur(12px);box-shadow:0 3px 10px #06081533}
-.map-tool,.date {display:flex;align-items:center;justify-content:center;height:42px;border-radius:16px;pointer-events:auto}
-.map-tool {width:42px}
-.map-tool img {width:23px;height:23px;object-fit:contain}
-#share {margin-left:auto}
-.date {gap:0;color:white;text-shadow:0 1px 6px #141321}
-#date {min-width:85px;text-align:center;font:750 16px var(--font-ui);font-variant-numeric:tabular-nums}
-.date :where(#older,#newer) {width:44px;height:44px;display:grid;place-items:center}
-.date :where(#older,#newer)::after {content:"";width:10px;height:10px;border-top:3px solid currentColor;border-right:3px solid currentColor;transform:rotate(45deg);border-radius:1px}
-#older::after {transform:rotate(-135deg)}
-.date button:disabled {opacity:.28;cursor:default}
+#play,#place-info,.tag {background:rgba(20,20,30,.86);color:white;border:1px solid #ffffff35;backdrop-filter:blur(12px);box-shadow:0 3px 10px #06081533}
 h1 {margin:10px 0 1px;font:900 36px/1 var(--font-ui);letter-spacing:-2px}
 #summary {font-size:13px;font-weight:650}
 .place {position:absolute;width:48px;height:46px;transform:translate(-50%,-100%);pointer-events:auto;display:grid;justify-items:center;align-content:end}
@@ -96,9 +85,8 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 #story .primary:disabled {background:#ece6f3;color:#584d61}
 #story #status {font-size:12px;text-align:center;color:#e6d4f0}
 
-.route-heading{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.route-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .route-heading h1{margin:0}
-#privacy-open{width:38px;height:38px;border-radius:14px}
 :is(#privacy,#confirm-day):not([open]){display:none}
 :is(#privacy,#confirm-day)[open]{padding:0 var(--gutter) calc(var(--safe-bottom) + 8px);background:var(--color-bg);border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;box-shadow:var(--shadow-sheet);max-height:calc(100% - var(--safe-top));overflow:auto}
 :is(#privacy,#confirm-day)::after{display:none}
@@ -136,8 +124,6 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 .calendar-scrim.is-open{opacity:1}
 @media(prefers-reduced-motion:reduce){.calendar-scrim{transition:none}}
 
-#date{min-height:44px;max-width:36vw;width:auto;line-height:1.1;padding:0 2px;color:white;text-shadow:inherit}
-#date:active{opacity:.7}
 #summary{margin:11px 0 0;display:grid;grid-template-columns:25% 33% 42%;align-items:start}
 #summary>div{display:flex;flex-direction:column-reverse;min-width:0}
 #summary dt{font:600 11px/13px var(--font-ui);color:#e0e0e6;margin-top:2px}
@@ -156,7 +142,7 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 #share:disabled{opacity:.38}
 
 /* The cursor follows the track to its edges, keeping the full rail in view. */
-.playback{left:12px;right:12px;bottom:calc(max(24px,var(--safe-bottom)) + 17px);display:block;pointer-events:none}
+.playback{left:12px;right:12px;bottom:calc(max(24px,var(--safe-bottom)) + 64px);display:block;pointer-events:none}
 .playback button,.playback #visit-rail{pointer-events:auto}
 .rail-controls{display:flex;align-items:center;gap:7px}
 #play{flex:0 0 44px;width:44px;height:44px;border:0;background:#e2cdff}
@@ -194,3 +180,31 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
   .rail-stop:hover img{transform:scale(1.32)}
 }
 @media(prefers-reduced-motion:reduce){.rail-stop img{transition:none}}
+
+/* Route actions share a reachable row with the calendar in the compact layouts. */
+#route-close{width:44px;height:44px;display:grid;place-items:center;pointer-events:auto;margin-right:-5px}
+#route-close img{width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 4px #111a)}
+.route-footer{position:absolute;left:14px;right:14px;bottom:calc(max(24px,var(--safe-bottom)) + 10px);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
+.route-footer button,#route-actions button{pointer-events:auto}
+#date,#more-actions,#route-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 12px;background:#191724df;color:white;border:1px solid #ffffff2a;border-radius:16px;font:650 13px var(--font-ui);backdrop-filter:blur(12px);cursor:pointer}
+#date{white-space:nowrap;font-variant-numeric:tabular-nums}
+#date img,#route-actions img{width:18px;height:18px;object-fit:contain}
+#footer-actions{position:relative;pointer-events:auto}
+#more-actions{width:44px;padding:0;border-radius:50%}
+#more-actions span{letter-spacing:2px;font:800 13px var(--font-ui);line-height:1}
+#route-actions{display:flex;gap:6px}
+#heading-actions:has(#route-actions){margin-top:12px}
+[data-actions="rail"] #route-actions button{width:44px;padding:0;border-radius:50%}
+[data-actions="rail"] #route-actions span{display:none}
+[data-actions="menu"] #route-actions{position:absolute;right:0;bottom:calc(100% + 8px);width:190px;display:grid;gap:0;overflow:hidden;border:1px solid #ffffff29;border-radius:18px;background:#222126f5;backdrop-filter:blur(16px);box-shadow:0 8px 22px #10101855}
+[data-actions="menu"] #route-actions button{justify-content:flex-start;padding:0 14px;gap:11px;border:0;background:transparent;border-radius:0;backdrop-filter:none}
+[data-actions="menu"] #route-actions button+button{border-top:1px solid #ffffff17}
+[data-actions="menu"] #route-actions button:is(:hover,:focus-visible){background:#ffffff16}
+#more-actions[aria-expanded="true"]{background:#443b50}
+#layout-review{display:flex;gap:3px;align-items:center;justify-content:center;padding:8px;background:#101013;color:white}
+#layout-review button{border-radius:12px;padding:0 14px;min-height:36px;font:650 13px var(--font-ui);color:#c6c2ca}
+#layout-review button[aria-pressed="true"]{background:#efecf3;color:#19151e}
+.review-layout{--review-height:52px}
+.review-layout .device{height:calc(100dvh - var(--review-height))}
+@media(max-width:480px){.review-layout .app{height:calc(100dvh - var(--review-height))}}
+@media(max-width:350px){#layout-review button{padding:0 10px;font-size:12px}}

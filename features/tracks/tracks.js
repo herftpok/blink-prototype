@@ -1,3 +1,4 @@
+import {routeActionLayout} from './route-actions.js';
 import {createVisitRail,durationText} from './visit-rail.js?v=rail2';
 import {routeCalendar} from './calendar.js?v=period2';
 import {openRoutes} from './privacy.js?v=calendar1';
@@ -104,9 +105,11 @@ let paintCar;
 try { paintCar=makeCar(); }
 catch(error) { console.warn('3D автомобиля недоступно',error); }
 function fitPhone(){
-  const zoom=innerWidth<=480?1:Math.min(1,(innerHeight-36)/844);
+  const reviewHeight=$('layout-review').hidden?0:$('layout-review').offsetHeight;
+  const zoom=innerWidth<=480?1:Math.min(1,(innerHeight-36-reviewHeight)/844);
   document.documentElement.style.setProperty('--phone-zoom',zoom);
 }
+const actionLayout=routeActionLayout(query);
 fitPhone();
 window.addEventListener('resize',fitPhone);
 const icons=Object.fromEntries(Object.values(zoneArt).map(([,src])=>[src,asset(src)]));
@@ -421,10 +424,8 @@ function timeline(){
   render();
 }
 function updateDate(){
-  $('date').textContent=dateLabel(currentDate);
+  $('date').querySelector('span').textContent=dateLabel(currentDate);
   $('date').setAttribute('aria-label','Выбрать дату: '+dateLabel(currentDate));
-  $('older').disabled=currentDate===firstDate;
-  $('newer').disabled=currentDate===lastDate;
 }
 function selectDate(date){
   for(const sheet of [$('story'),$('zone')])if(sheet.open)sheet.close();
@@ -436,12 +437,6 @@ function selectDate(date){
   if(day){timeline();openDay()}
   else {$('summary').replaceChildren();$('places').replaceChildren();markerData=[];visits=[];visitRail.setVisits([])}
 }
-function stepDate(offset){
-  const next=new Date(Date.parse(currentDate)+offset*86400000).toISOString().slice(0,10);
-  if(next>=firstDate && next<=lastDate)selectDate(next);
-}
-$('older').onclick=()=>stepDate(-1);
-$('newer').onclick=()=>stepDate(1);
 updateDate();
 let selected='gym';
 function openZone(){
@@ -461,6 +456,7 @@ try{localStorage.setItem('blink.tracks.zones',JSON.stringify(next));saved=next;l
 const openers=new WeakMap();
 const topSheet=()=>[...document.querySelectorAll('dialog[open]')].at(-1);
 function openSheet(sheet){
+  actionLayout.closeMenu();
   openers.set(sheet,document.activeElement);
   const previousSheet=topSheet();
   if(previousSheet)previousSheet.inert=true;
