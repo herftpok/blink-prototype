@@ -52,9 +52,13 @@ export function createVisitRail(seekTo,clock,replayDuration){
     const head=offset+inset;
     scroll=clamp(head-width/2,minScroll,maxScroll);
     track.style.transform='translate3d('+(-scroll)+'px,0,0)';
-    for(const [i,visit] of visits.entries()){
-      const distance=Math.abs(anchors[i+1].x-offset);
-      const proximity=clamp(1-distance/visit.focusRadius,0,1);
+    for(const visit of visits){
+      let proximity=1;
+      if(progress<visit.from){
+        proximity=visit.approach?clamp(1-(visit.from-progress)/visit.approach,0,1):0;
+      }else if(progress>visit.to){
+        proximity=visit.release?clamp(1-(progress-visit.to)/visit.release,0,1):0;
+      }
       const focus=proximity*proximity*(3-2*proximity);
       // The circle, rim and artwork are lifted together, with a common baseline.
       if(visit.focus!==focus){
@@ -89,7 +93,7 @@ export function createVisitRail(seekTo,clock,replayDuration){
       visit.button.style.left=(x+inset)+'px';
       const left=i?x-anchors[i].x:Infinity;
       const right=i+1<visits.length?anchors[i+2].x-x:Infinity;
-      visit.focusRadius=Math.min(64,.85*Math.min(left,right));
+      visit.snapRadius=.5*Math.min(64,.85*Math.min(left,right));
     }
     if(visits.length>=2){
       minScroll=anchors[1].x;
@@ -120,7 +124,12 @@ export function createVisitRail(seekTo,clock,replayDuration){
   function setVisits(list){
     cancelMotion();visits=list;active=null;drag=null;context.hidden=true;
     track.replaceChildren();
-    for(const visit of visits){
+    for(const [i,visit] of visits.entries()){
+      // Use replay time for emphasis. Even short transfers have a neutral middle.
+      const inbound=visit.from-(visits[i-1]?.to ?? 0);
+      const outbound=(visits[i+1]?.from ?? 1)-visit.to;
+      visit.approach=Math.min(260/replayDuration,Math.max(0,inbound)*.4);
+      visit.release=Math.min(180/replayDuration,Math.max(0,outbound)*.4);
       const button=document.createElement('button'),img=new Image();
       button.type='button';button.className='rail-stop';
       button.setAttribute('aria-label',visit.name+', '+visit.detail);
@@ -205,7 +214,7 @@ export function createVisitRail(seekTo,clock,replayDuration){
       const speed=e.timeStamp-gesture.lastTime<85?gesture.velocity:0;
       const travel=clamp(speed*120,-width*.55,width*.55);
       const landing=clamp(offset+travel,0,anchors.at(-1).x);
-      const i=visits.findIndex((v,i)=>Math.abs(anchors[i+1].x-landing)<v.focusRadius*.50);
+      const i=visits.findIndex((v,i)=>Math.abs(anchors[i+1].x-landing)<v.snapRadius);
       if(i>=0)glideTo(visits[i].p,250);
       else if(Math.abs(travel)>5)glideTo(progressAt(landing),clamp(Math.abs(travel)*2,125,300));
     }

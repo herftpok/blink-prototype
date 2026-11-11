@@ -1,6 +1,6 @@
 import {captureStats,paintStats} from './stats-art.js?v=blink6';
 import {routeActionLayout} from './route-actions.js';
-import {createVisitRail,durationText} from './visit-rail.js?v=hours1';
+import {createVisitRail,durationText} from './visit-rail.js?v=arrival1';
 import {routeCalendar} from './calendar.js?v=period2';
 import {openRoutes} from './privacy.js?v=calendar1';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
