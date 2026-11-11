@@ -130,27 +130,13 @@ function sample(p){
   return pos;
 }
 function drawStoryPlace(ctx,spot,stop,unit,atVisit){
-  const [name,src]=place(stop);
+  const [,src]=place(stop);
   ctx.save();ctx.translate(spot.x,spot.y);ctx.scale(unit,unit);
-  if(atVisit){
-    if(loaded(icons[src]))ctx.drawImage(icons[src],-55.5,-50,43,43);
-    ctx.restore();return;
+  if(!atVisit){
+    ctx.fillStyle='#cc9eff';
+    ctx.beginPath();ctx.arc(0,0,src?4.5:6,0,2*Math.PI);ctx.fill();
   }
-  ctx.fillStyle='#cc9eff';
-  ctx.beginPath();ctx.arc(0,0,src?4.5:6,0,2*Math.PI);ctx.fill();
-  if(src){
-    if(loaded(icons[src]))ctx.drawImage(icons[src],-21.5,-50,43,43);
-    ctx.font='700 12px '+uiFamily;
-    let label=stop.duration?name+' · '+stop.duration:name;
-    const fullLabel=label;
-    while(label.length>1 && ctx.measureText(label+(label===fullLabel?'':'…')).width>94)label=label.slice(0,-1);
-    if(label!==fullLabel)label+='…';
-    const width=ctx.measureText(label).width+16;
-    const left=stop.x<20?-24-width*.13:stop.x>80?24-width*.88:-width/2;
-    ctx.fillStyle='#14141edd';ctx.beginPath();ctx.roundRect(left,6,width,22,10);ctx.fill();
-    ctx.strokeStyle='#ffffff35';ctx.lineWidth=1;ctx.stroke();
-    ctx.fillStyle='white';ctx.textAlign='center';ctx.fillText(label,left+width/2,21);
-  }
+  if(loaded(icons[src]))ctx.drawImage(icons[src],atVisit?-55.5:-21.5,-50,43,43);
   ctx.restore();
 }
 function drawStoryText(ctx,pos,height,unit,pinX,foot){
@@ -419,13 +405,10 @@ function timeline(){
   visiblePlaces().forEach(s=>{
     const [name,src]=place(s),marker=document.createElement('button');
     marker.className='place';marker.style.left=s.x+'%';marker.style.top=s.y+'%';
-    marker.classList.toggle('near-left',s.x<20);marker.classList.toggle('near-right',s.x>80);
-    marker.innerHTML='<span class="place-dot"></span><span class="tag"><strong></strong></span>';
+    marker.innerHTML='<span class="place-dot"></span>';
     if(src){const img=new Image();img.src=src;img.alt='';marker.prepend(img)}
     else marker.classList.add('uncertain');
-    marker.querySelector('strong').textContent=s.duration?name+' · '+s.duration:name;
-    if(!src)marker.querySelector('.tag').remove();
-    marker.setAttribute('aria-label',name+', '+clock(s.t/60));
+    marker.setAttribute('aria-label',name+', '+(s.detail || clock(s.t/60)));
     markerData.push({stop:s,marker});marker.onclick=()=>showPlace(s);$('places').append(marker);
   });
   render();
