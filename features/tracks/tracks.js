@@ -1,5 +1,5 @@
 import {routeActionLayout} from './route-actions.js';
-import {createVisitRail,durationText} from './visit-rail.js?v=clock1';
+import {createVisitRail,durationText} from './visit-rail.js?v=sticker15';
 import {routeCalendar} from './calendar.js?v=period2';
 import {openRoutes} from './privacy.js?v=calendar1';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
@@ -11,7 +11,9 @@ const $ = id => document.getElementById(id);
 const clock = n => [Math.floor(n/60),Math.floor(n)%60].map(v=>String(v).padStart(2,'0')).join(':');
 const number = n => n.toLocaleString('ru-RU',{maximumFractionDigits:1});
 const query=new URLSearchParams(location.search);
-const replayDuration=12000;
+const replaySeconds=15;
+const replayDuration=replaySeconds*1000;
+$('story-meta').textContent='Видео · '+replaySeconds+' секунд';
 let repository,records;
 try{
   repository=await openRoutes();
@@ -75,6 +77,21 @@ const flame=asset('../../assets/pin/fire-trail-atlas.webp');
 const brandLogo=asset('../../assets/brand/logo.png');
 const routes=new Map(),gaps=new Map(),sections=new Map();
 const uiFamily=getComputedStyle(document.body).fontFamily;
+function captionStyle(id){
+  const style=getComputedStyle($(id));
+  return {font:style.fontWeight+' '+style.fontSize+' '+style.fontFamily,
+    spacing:style.letterSpacing==='normal'?'0px':style.letterSpacing,color:style.color};
+}
+const visitTitleStyle=captionStyle('visit-label'),visitTimeStyle=captionStyle('visit-hours');
+function stickerLine(ctx,text,style,y,outline,maxWidth){
+  ctx.font=style.font;ctx.letterSpacing=style.spacing;
+  if(ctx.measureText(text).width>maxWidth){
+    while(text.length && ctx.measureText(text+'…').width>maxWidth)text=text.slice(0,-1);
+    text+='…';
+  }
+  ctx.lineWidth=outline*2;ctx.strokeText(text,0,y);
+  ctx.fillStyle=style.color;ctx.fillText(text,0,y);
+}
 function prepareDay(record){
   const replay=prepareReplay(record);
   routes.set(record,replay);
@@ -118,7 +135,7 @@ const mix=(a,b,t)=>a+(b-a)*t;
 const stopIcon='art/stop.webp';
 icons[stopIcon]=asset(stopIcon);
 let visits=[];
-const visitRail=createVisitRail(p=>{closePlace();progress=p;pause(true)},clock);
+const visitRail=createVisitRail(p=>{closePlace();progress=p;pause(true)},clock,replayDuration);
 function sample(p){
   const route=routes.get(day),pos=replayPoint(route,p);
   if(pos.mode==='drive'){
@@ -156,12 +173,11 @@ function drawStoryText(ctx,pos,height,unit,pinX,foot){
   });
   const visit=visits.find(v=>pos.time*60>=v.t && pos.time*60<=v.end);
   if(visit){
-    ctx.save();ctx.translate(pinX/unit,foot/unit+10);ctx.textAlign='center';ctx.lineJoin='round';
-    ctx.shadowColor='#10101c';ctx.shadowBlur=5;ctx.strokeStyle='#151322';ctx.lineWidth=2.5;
-    ctx.font='800 20px '+uiFamily;
-    ctx.strokeText(visit.name,0,19,width-40);ctx.fillStyle='white';ctx.fillText(visit.name,0,19,width-40);
-    ctx.font='650 13px '+uiFamily;
-    ctx.strokeText(visit.detail,0,38,width-32);ctx.fillStyle='#f0e9fc';ctx.fillText(visit.detail,0,38,width-32);
+    ctx.save();ctx.translate(pinX/unit,foot/unit+13);ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowBlur=0;ctx.lineJoin='round';ctx.strokeStyle='white';
+    const limit=Math.min(width*.78,285);
+    stickerLine(ctx,visit.name,visitTitleStyle,7.5,4.5,limit-10);
+    stickerLine(ctx,visit.detail,visitTimeStyle,31,2,limit);
     ctx.restore();
   }
   ctx.shadowBlur=0;ctx.fillStyle='#14141edd';ctx.font='700 12px '+uiFamily;
@@ -602,7 +618,7 @@ async function prepareVideo(){
     $('status').textContent='Не удалось подготовить видео.';
   };
   try{
-    await brandLogo.decode();
+    await Promise.all([brandLogo.decode(),document.fonts.load(visitTitleStyle.font,'остановка')]);
     if(session!==storySession || !$('story').open)return;
     const type=['video/mp4;codecs=avc1.42002A','video/mp4','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
     stream=canvas.captureStream(30);
@@ -620,7 +636,7 @@ async function prepareVideo(){
       action.textContent=navigator.canShare?.({files:[videoFile]})?'поделиться видео':'сохранить видео';
     };
     storyStart=performance.now();draw(canvas,0,true);recording.start();
-    action.textContent='готовим видео · 12 с';
+    action.textContent='готовим видео · '+replaySeconds+' с';
   }catch{if(session===storySession)failed()}
 }
 $('share').onclick=()=>{

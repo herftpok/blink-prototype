@@ -8,7 +8,7 @@ export function durationText(seconds){
 }
 
 // Replay time and landmark positions share a piecewise linear scale.
-export function createVisitRail(seekTo,clock){
+export function createVisitRail(seekTo,clock,replayDuration){
   const el=id=>document.getElementById(id);
   const rail=el('visit-rail'),track=el('visit-track'),slider=el('seek');
   const context=el('visit-context');
@@ -40,7 +40,7 @@ export function createVisitRail(seekTo,clock){
     if(span<=0)return x1;
     const t=clamp((p-start)/span,0,1);
     // Long journeys cruise in the middle; short transfers flow from ease-in to ease-out.
-    const ramp=Math.min(.5,.014/span); // At most 168 ms of the 12-second replay.
+    const ramp=Math.min(.5,168/(replayDuration*span)); // At most 168 ms to settle on a visit.
     let distance=t-ramp/2;
     if(t<ramp)distance=ramp*rampArea(t/ramp);
     else if(t>1-ramp)distance=1-ramp-ramp*rampArea((1-t)/ramp);
