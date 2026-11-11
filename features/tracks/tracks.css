@@ -149,7 +149,8 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 .rail-stop img{width:31px;height:31px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 2px #0005);transition:transform .24s var(--ease-emphasized)}
 .rail-stop[aria-current]{background:#776783}
 .rail-lens{position:absolute;left:0;top:50%;width:48px;height:48px;transform:translate(-50%,-50%);
-  border:2px solid #ece0ff;border-radius:50%;box-shadow:0 0 0 2px #18142455,inset 0 0 12px #dabdff22;pointer-events:none}
+  pointer-events:none}
+.rail-lens::before{content:"";position:absolute;inset:0;border:2px solid #ece0ff;border-radius:50%;box-shadow:0 0 0 2px #18142455,inset 0 0 12px #dabdff22}
 #seek{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;margin:0}
 #visit-rail:focus-within{outline:2px solid #dcc6ff;outline-offset:2px}
 .rail-time{margin-left:51px;display:flex;align-items:center;justify-content:center;gap:5px;height:38px;text-shadow:0 2px 6px #10101c}
@@ -174,9 +175,9 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 
 /* Route actions share a reachable row with the calendar in the compact layouts. */
 #route-close{width:46px;height:46px;flex:none;display:grid;place-items:center;pointer-events:auto;
-  border-radius:var(--radius-12);background:var(--color-glass-button-map,rgba(0,0,0,.4));
+  border-radius:var(--radius-20);background:var(--color-glass-button-map,rgba(0,0,0,.4));
   -webkit-backdrop-filter:blur(var(--blur-glass));backdrop-filter:blur(var(--blur-glass))}
-@supports(corner-shape:squircle){#route-close{corner-shape:squircle}}
+@supports(corner-shape:superellipse(1.35)){#route-close{corner-shape:superellipse(1.35)}}
 #route-close img{width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 4px #111a)}
 .route-footer{position:absolute;left:14px;right:14px;bottom:max(24px,var(--safe-bottom));display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
 .route-footer button,#route-actions button{pointer-events:auto}
@@ -203,6 +204,42 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 @media(max-width:480px){.review-layout .app{height:calc(100dvh - var(--review-height))}}
 @media(max-width:350px){#layout-review button{padding:0 10px;font-size:12px}}
 
-.rail-lens{transition:background-color .45s ease,border-color .45s ease,box-shadow .45s ease}
-.rail-lens.settled{background-color:#d9baff0c;border-color:#f6ecff;box-shadow:0 0 0 2px #18142455,0 0 7px #d4acff40}
-@media(prefers-reduced-motion:reduce){.rail-lens{transition:none}}
+/* Animate the outline separately from the translated reading head: the centre
+   stays on the landmark during the entire visit, even on direction changes. */
+.rail-lens::before{transition:background-color .24s,border-color .24s,box-shadow .24s}
+.rail-lens.settled::before{background-color:#d9baff0c;border-color:#f6ecff;box-shadow:0 0 0 2px #18142455,0 0 7px #d4acff40}
+@media(prefers-reduced-motion:no-preference){
+  .rail-lens.settled,.rail-stop[aria-current]{animation:rail-rebound .72s ease-in-out}
+  .rail-lens.settled::before{animation:lens-catch .72s ease-in-out}
+  .rail-lens.releasing::before{animation:lens-release .64s ease-in-out}
+  .rail-stop[aria-current] img{animation:landmark-pop .68s ease-in-out}
+}
+@keyframes lens-catch{
+  0%,100%{transform:scale(1)}
+  16%{transform:scale(1.19,.87)}
+  38%{transform:scale(.90,1.09)}
+  59%{transform:scale(1.07,.95)}
+  80%{transform:scale(.98,1.02)}
+}
+@keyframes lens-release{
+  0%,100%{transform:scale(1)}
+  20%{transform:scale(.94,1.07)}
+  42%{transform:scale(1.16,.91)}
+  63%{transform:scale(.96,1.04)}
+  82%{transform:scale(1.025,.985)}
+}
+@keyframes landmark-pop{
+  0%,100%{scale:1}
+  16%{scale:.91}
+  38%{scale:1.24}
+  60%{scale:.96}
+  79%{scale:1.05}
+}
+
+@keyframes rail-rebound{
+  0%,100%{translate:0}
+  20%{translate:calc(5px * var(--rail-direction)) 0}
+  43%{translate:calc(-3.5px * var(--rail-direction)) 0}
+  64%{translate:calc(2px * var(--rail-direction)) 0}
+  83%{translate:calc(-.7px * var(--rail-direction)) 0}
+}

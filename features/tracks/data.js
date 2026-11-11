@@ -1,15 +1,4 @@
 // A local fixture of timestamped samples. Coordinates refer to the demo map tile.
-const zoneArt = {
-  home: ['дом', '../../assets/overnights/home.webp'],
-  study: ['учёба', 'art/school.png'],
-  airport: ['аэропорт', '../../assets/overnights/airplane.webp'],
-  overnight: ['ночёвка', '../../assets/overnights/nighthouse.webp'],
-  metro: ['метро', 'art/metro.png'],
-  work: ['работа', 'art/work.png'],
-  gym: ['спортзал', 'art/gym.png'],
-  bar: ['бар', '../../assets/stickers/beer.webp'],
-  coffee: ['кафе', '../advent/renders/coffee.webp']
-};
 // Deterministic demo sensor readings. Guides define only the underlying journey;
 // observed fixes have independent timestamps, accuracy and correlated drift.
 const frameWidth=512,frameHeight=1108;

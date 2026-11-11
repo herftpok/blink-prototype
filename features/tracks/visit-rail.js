@@ -14,7 +14,7 @@ export function createVisitRail(seekTo,clock){
   const previous=el('prev-visit'),next=el('next-visit'),context=el('visit-context');
   const lens=rail.querySelector('.rail-lens');
   const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
-  const inset=26;
+  const inset=34;
   let visits=[],anchors=[],progress=0,drag=null,active=null,offset=0;
   let width=0,scroll=0,frame=0,animationTarget=null;
   function cancelMotion(){
@@ -74,7 +74,7 @@ export function createVisitRail(seekTo,clock){
     return a[to]+(b[to]-a[to])*(value-a[from])/(b[from]-a[from]);
   }
   function setVisits(list){
-    cancelMotion();visits=list;active=null;drag=null;context.hidden=true;lens.classList.remove('settled');
+    cancelMotion();visits=list;active=null;drag=null;context.hidden=true;lens.classList.remove('settled','releasing');
     track.replaceChildren();
     for(const visit of visits){
       const button=document.createElement('button'),img=new Image();
@@ -91,12 +91,17 @@ export function createVisitRail(seekTo,clock){
   }
   function update(p,time){
     if(!anchors.length)return;
+    const backwards=p<progress;
     progress=p;position();
     slider.value=Math.round(p*10000);
     const visit=visits.find(v=>p>=v.from && p<=v.to);
     if(visit!==active){
+      const leaving=!!active && !visit;
+      rail.style.setProperty('--rail-direction',backwards?-1:1);
       active?.button.removeAttribute('aria-current');
-      active=visit;context.hidden=!visit;lens.classList.toggle('settled',!!visit);
+      active=visit;context.hidden=!visit;
+      lens.classList.toggle('releasing',leaving);
+      lens.classList.toggle('settled',!!visit);
       if(visit){
         visit.button.setAttribute('aria-current','location');
         el('visit-label').textContent=visit.name+' · '+visit.duration;

@@ -1,5 +1,5 @@
 import {routeActionLayout} from './route-actions.js';
-import {createVisitRail,durationText} from './visit-rail.js?v=glide2';
+import {createVisitRail,durationText} from './visit-rail.js?v=bounce3';
 import {routeCalendar} from './calendar.js?v=period2';
 import {openRoutes} from './privacy.js?v=calendar1';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
@@ -129,9 +129,13 @@ function sample(p){
   pos.heading=Math.atan2(after.y-before.y,after.x-before.x);
   return pos;
 }
-function drawStoryPlace(ctx,spot,stop,unit){
+function drawStoryPlace(ctx,spot,stop,unit,atVisit){
   const [name,src]=place(stop);
   ctx.save();ctx.translate(spot.x,spot.y);ctx.scale(unit,unit);
+  if(atVisit){
+    if(loaded(icons[src]))ctx.drawImage(icons[src],-55.5,-50,43,43);
+    ctx.restore();return;
+  }
   ctx.fillStyle='#cc9eff';
   ctx.beginPath();ctx.arc(0,0,src?4.5:6,0,2*Math.PI);ctx.fill();
   if(src){
@@ -269,8 +273,8 @@ function draw(canvas,p,story=false){
     const outside=spot.y<topLabel+48*unit || spot.y>bottomLabel-30*unit || spot.x<0 || spot.x>600;
     const atVisit=stop.p!=null && p>=stop.from && p<=stop.to;
     if(story){
-      if(outside || atVisit)continue;
-      drawStoryPlace(ctx,spot,stop,unit);
+      if(outside)continue;
+      drawStoryPlace(ctx,spot,stop,unit,atVisit);
     }else{
       marker.style.left=spot.x/6+'%';marker.style.top=spot.y/unitsY*100+'%';
       marker.hidden=outside;

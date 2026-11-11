@@ -150,18 +150,11 @@
 
   function showSavedZone() {
     const marker = $("#saved-zone");
-    const icons = {
-      home: "assets/overnights/home.webp", gym: "features/tracks/art/gym.png",
-      work: "features/tracks/art/work.png", study: "features/tracks/art/school.png",
-      metro: "features/tracks/art/metro.png", airport: "assets/overnights/airplane.webp",
-      overnight: "assets/overnights/nighthouse.webp",
-      coffee: "features/advent/renders/coffee.webp", bar: "assets/stickers/beer.webp"
-    };
     try {
       const saved = JSON.parse(localStorage.getItem("blink.tracks.spot"));
-      marker.hidden = !saved || !Object.hasOwn(icons, saved.icon) || !saved.name;
+      marker.hidden = !saved || !Object.hasOwn(zoneArt, saved.icon) || !saved.name;
       if (!marker.hidden) {
-        marker.querySelector("img").src = icons[saved.icon];
+        marker.querySelector("img").src = zoneArt[saved.icon][1];
         marker.querySelector("span").textContent = saved.name;
       }
     } catch { marker.hidden = true; }
