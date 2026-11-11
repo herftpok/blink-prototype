@@ -20,10 +20,24 @@ export function createVisitRail(seekTo,clock){
   function cancelMotion(){
     cancelAnimationFrame(frame);frame=0;animationTarget=null;
   }
+  // Only the reading head settles on a landmark. The underlying time and drag
+  // offset keep advancing, including through the entire stationary interval.
+  function headProgress(p){
+    for(const visit of visits){
+      if(p<visit.approach)return p;
+      if(p>visit.release)continue;
+      if(p>=visit.from && p<=visit.to)return visit.p;
+      const t=p<visit.from ? (p-visit.approach)/(visit.from-visit.approach)
+                           : (visit.release-p)/(visit.release-visit.to);
+      const pull=t*t*(3-2*t);
+      return p+(visit.p-p)*pull;
+    }
+    return p;
+  }
   function position(){
     if(!anchors.length)return;
     offset=interpolate(progress,'p','x');
-    const head=offset+inset;
+    const head=interpolate(headProgress(progress),'p','x')+inset;
     scroll=clamp(head-width/2,0,Math.max(0,anchors.at(-1).x+2*inset-width));
     track.style.transform='translate3d('+(-scroll)+'px,0,0)';
     lens.style.transform='translate3d('+(head-scroll)+'px,-50%,0) translateX(-50%)';
@@ -52,7 +66,14 @@ export function createVisitRail(seekTo,clock){
   function setVisits(list){
     cancelMotion();visits=list;active=null;drag=null;context.hidden=true;
     track.replaceChildren();
-    for(const visit of visits){
+    // Use up to 350 ms of the 12-second replay on each side. Neighbouring
+    // transitions meet at most halfway through the travel between visits.
+    const reach=.35/12;
+    for(const [i,visit] of visits.entries()){
+      const before=i ? (visits[i-1].to+visit.from)/2 : 0;
+      const after=i+1<visits.length ? (visit.to+visits[i+1].from)/2 : 1;
+      visit.approach=Math.max(before,visit.from-reach);
+      visit.release=Math.min(after,visit.to+reach);
       const button=document.createElement('button'),img=new Image();
       button.type='button';button.className='rail-stop';
       button.setAttribute('aria-label',visit.name+', '+visit.detail);
@@ -79,8 +100,8 @@ export function createVisitRail(seekTo,clock){
         el('visit-hours').textContent=visit.hours;
       }
     }
-    previous.disabled=!visits.some(v=>v.p<p-.00001);
-    next.disabled=!visits.some(v=>v.p>p+.00001);
+    previous.disabled=!visits.some(v=>v.p<(visit?.from ?? p)-.00001);
+    next.disabled=!visits.some(v=>v.p>(visit?.to ?? p)+.00001);
     slider.setAttribute('aria-valuetext',clock(time)+(visit?', '+visit.name+', '+visit.duration:''));
   }
   function seekOffset(x){seekTo(interpolate(clamp(x,0,anchors.at(-1).x),'x','p'))}
@@ -99,7 +120,7 @@ export function createVisitRail(seekTo,clock){
     frame=requestAnimationFrame(step);
   }
   function pageVisit(direction){
-    const origin=animationTarget ?? progress;
+    const origin=animationTarget ?? (direction>0?active?.to:active?.from) ?? progress;
     const visit=direction>0 ? visits.find(v=>v.p>origin+.00001)
                             : visits.filter(v=>v.p<origin-.00001).at(-1);
     if(visit)glideTo(visit.p,260);
