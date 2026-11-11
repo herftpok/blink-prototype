@@ -35,7 +35,8 @@ export function prepareReplay(day){
     const source=points.slice(start,end+1);
     const anchors=simplify(source,mode==='drive'?6:8);
     const curve=roundCorners(anchors);
-    const run={start:points[start].replay,end:points[end].replay,curve,mode,gap};
+    const featured=mode==='still' && !gap && day.stops.some(s=>s.end>=source[0].t && s.t<=source.at(-1).t && (s.id!=='unknown' || s.end-s.t>600));
+    const run={featured,start:points[start].replay,end:points[end].replay,curve,mode,gap};
     // Map each reading back to the time its position is reached under the new
     // acceleration. Keep actual clock times and speed readings on the route.
     if(!gap && mode!=='still'){
@@ -79,9 +80,13 @@ function balanceReplay(points,runs){
   if(!moving.length)return;
   const weight=run=>Math.sqrt(Math.max(1,run.curve.at(-1).d));
   const totalWeight=moving.reduce((sum,run)=>sum+weight(run),0);
-  const pauseShare=run=>run.gap ? .04 : run.mode==='still' ? .016 : 0;
+  function pauseShare(run){
+    if(run.gap)return .04;
+    if(run.featured)return .085;
+    return run.mode==='still' ? .016 : 0;
+  }
   const pauses=sections.reduce((sum,run)=>sum+pauseShare(run),0);
-  const pauseBudget=Math.min(.12,pauses);
+  const pauseBudget=Math.min(sections.some(run=>run.featured) ? .38 : .12,pauses);
   let cursor=0,index=1;
   for(const run of sections){
     const originalStart=run.start,originalSpan=run.end-run.start;

@@ -1,20 +1,15 @@
+import {createVisitRail,durationText} from './visit-rail.js';
 import {routeCalendar} from './calendar.js?v=period2';
 import {openRoutes} from './privacy.js?v=calendar1';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
 import {vehiclePresence,drawLightTrail} from './concepts.js?v=orbit1';
 import {loadCity,drawCity} from './city-map.js?v=orbit1';
 import {makeCar} from './car.js?v=replay-share2';
-import {projectDistrict,prepareReplay,replayPoint,followView,orbitView,pursuitPoint,driveHeading} from './camera.js?v=orbit1';
+import {projectDistrict,prepareReplay,replayPoint,followView,orbitView,pursuitPoint,driveHeading} from './camera.js?v=visits1';
 const $ = id => document.getElementById(id);
 const clock = n => [Math.floor(n/60),Math.floor(n)%60].map(v=>String(v).padStart(2,'0')).join(':');
 const number = n => n.toLocaleString('ru-RU',{maximumFractionDigits:1});
 const query=new URLSearchParams(location.search);
-const requestedLook=query.get('look');
-const look=requestedLook==='atlas'?'orbit':['light','orbit'].includes(requestedLook)?requestedLook:'main';
-const lightTrail=look!=='main';
-document.documentElement.dataset.look=look;
-const board=query.has('compare') && parent!==window && document.referrer.startsWith(location.origin+'/')?parent.routeComparison:null;
-if(board)document.documentElement.dataset.embedded='';
 const replayDuration=12000;
 let repository,records;
 try{
@@ -27,8 +22,8 @@ try{
 }
 const linkedDay=records.find(record=>record.day===query.get('day'));
 const atSeconds=Number(query.get('at'));
-const openAtFrame=!board && linkedDay && query.has('at') && Number.isFinite(atSeconds);
-let day=board?records.find(r=>r.day==='5 ноября'):(linkedDay||records[0]);
+const openAtFrame=linkedDay && query.has('at') && Number.isFinite(atSeconds);
+let day=linkedDay||records[0];
 const byDate=new Map(scenarios.map(s=>[s.date,records.find(record=>record.day===s.day)]));
 const lastDate=scenarios[0].date;
 const firstDate=scenarios.at(-1).date;
@@ -56,6 +51,7 @@ try{
 const nearby=(a,b)=>Math.hypot(a.x-b.x,(a.y-b.y)*frameHeight/frameWidth)*day.mPerX<30;
 const savedAt=s=>saved.find(z=>z.area===day.area && nearby(z,s));
 function place(s){
+  if(s.icon && s.duration)return [s.name,s.icon];
   const z=savedAt(s);
   if(z && Object.hasOwn(zoneArt,z.icon))return [z.name,zoneArt[z.icon][1]];
   const builtin=day.zones.find(z=>nearby(s,z));
@@ -66,10 +62,10 @@ const asset = src => {const img=new Image(); img.src=src;img.onload=()=>{backgro
 let city=null;
 async function openDay(autoplay=true){
   const requested=day;pause();
-  const next=await (board?board.loadCity(requested.area):loadCity(requested.area));
+  const next=await loadCity(requested.area);
   if(requested!==day)return;
   if(city && city!==next){city.tiles.clear();city.groundTiles.clear()}
-  city=next;timeline();if(board)board.ready(window);else if(autoplay)start();
+  city=next;timeline();if(autoplay)start();
 }
 const portrait=asset('../../assets/people/live-1.webp');
 const arrows=asset('../../assets/pin/arrows.png');
@@ -85,6 +81,7 @@ function prepareDay(record){
   gaps.set(record,runs.filter(run=>run.gap));sections.set(record,runs);
 }
 records.forEach(prepareDay);
+const mapHeader=document.querySelector('.map-header'),playback=document.querySelector('.playback');
 let mapView=null,markerData=[];
 const pinHost=$('traveller');
 pinHost.innerHTML=BlinkPin.markup({name:'ты', photo:portrait.src, tag:'span', assets:'../../assets', state:'moving', speed:0, size:52});
@@ -104,7 +101,7 @@ function effectPhase(time){
     arrow:Math.floor(time/360)%2?reverseArrows:arrows};
 }
 let paintCar;
-try { paintCar=board?board.car():makeCar(); }
+try { paintCar=makeCar(); }
 catch(error) { console.warn('3D автомобиля недоступно',error); }
 function fitPhone(){
   const zoom=innerWidth<=480?1:Math.min(1,(innerHeight-36)/844);
@@ -115,7 +112,10 @@ window.addEventListener('resize',fitPhone);
 const icons=Object.fromEntries(Object.values(zoneArt).map(([,src])=>[src,asset(src)]));
 const loaded=img=>img?.complete && img.naturalWidth;
 const mix=(a,b,t)=>a+(b-a)*t;
-const modeLabel=pos=>pos.gap?'нет сигнала':({drive:'на машине',walk:'пешком',still:'на месте'}[pos.mode]);
+const stopIcon='art/stop.webp';
+icons[stopIcon]=asset(stopIcon);
+let visits=[];
+const visitRail=createVisitRail(p=>{closePlace();progress=p;pause()},clock);
 function sample(p){
   const route=routes.get(day),pos=replayPoint(route,p);
   if(pos.mode==='drive'){
@@ -134,9 +134,10 @@ function drawStoryPlace(ctx,spot,stop,unit){
   if(src){
     if(loaded(icons[src]))ctx.drawImage(icons[src],-21.5,-50,43,43);
     ctx.font='700 12px '+uiFamily;
-    let label=name;
-    while(label.length>1 && ctx.measureText(label+(label===name?'':'…')).width>94)label=label.slice(0,-1);
-    if(label!==name)label+='…';
+    let label=stop.duration?name+' · '+stop.duration:name;
+    const fullLabel=label;
+    while(label.length>1 && ctx.measureText(label+(label===fullLabel?'':'…')).width>94)label=label.slice(0,-1);
+    if(label!==fullLabel)label+='…';
     const width=ctx.measureText(label).width+16;
     const left=stop.x<20?-24-width*.13:stop.x>80?24-width*.88:-width/2;
     ctx.fillStyle='#14141edd';ctx.beginPath();ctx.roundRect(left,6,width,22,10);ctx.fill();
@@ -160,6 +161,12 @@ function drawStoryText(ctx,pos,height,unit){
     const words=ctx.measureText(label).width>available*(cols[i+1]-cols[i])-3?label.split(' '):[label];
     words.forEach((line,row)=>ctx.fillText(line,x,94+row*13));
   });
+  const visit=visits.find(v=>pos.time*60>=v.t && pos.time*60<=v.end);
+  if(visit){
+    ctx.fillStyle='white';ctx.font='750 18px '+uiFamily;
+    ctx.fillText(visit.name+' · '+visit.duration,16,bottom-85,width-32);
+    ctx.font='600 12px '+uiFamily;ctx.fillText(visit.hours,16,bottom-66);
+  }
   ctx.shadowBlur=0;ctx.fillStyle='#14141edd';ctx.font='700 12px '+uiFamily;
   const box=Math.max(ctx.measureText(day.day).width,56)+24;
   ctx.beginPath();ctx.roundRect(16,bottom-53,box,53,15);ctx.fill();
@@ -218,7 +225,7 @@ function chasePhase(p){
   return reducedMotion.matches ? .5 : .5-.5*Math.cos(p*replayDuration/820*2*Math.PI);
 }
 function cameraAt(day,sample,p,height){
-  if(look!=='orbit' || reducedMotion.matches)return followView(day,sample,p,height);
+  if(reducedMotion.matches)return followView(day,sample,p,height);
   return orbitView(day,sample,p,height);
 }
 function draw(canvas,p,story=false){
@@ -235,7 +242,7 @@ function draw(canvas,p,story=false){
   ctx.save();ctx.translate(origin.x,origin.y);ctx.scale(view.scale,view.scale);
   if(view.bounds)ctx.transform(view.a,view.b,view.c,view.d,0,0);
   if(city)drawCity(ctx,city,view,unitsY);
-  if(lightTrail){
+  {
     const reach=370/view.scale;
     const halo=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,reach);
     halo.addColorStop(0,'rgba(149,90,225,.17)');halo.addColorStop(.5,'rgba(29,20,56,.18)');halo.addColorStop(1,'rgba(12,10,29,.55)');
@@ -247,20 +254,24 @@ function draw(canvas,p,story=false){
   ctx.lineJoin='round';ctx.lineCap='round';
   ctx.strokeStyle=ctx.shadowColor='#cc9eff';ctx.lineWidth=4.3/view.scale;
   ctx.shadowBlur=5;
-  if(lightTrail)drawLightTrail(ctx,routePaths(),pos,view.scale,sections.get(day));
-  else ctx.stroke(routePaths());
+  drawLightTrail(ctx,routePaths(),pos,view.scale,sections.get(day));
   ctx.restore();
   const mist=ctx.createLinearGradient(0,0,0,unitsY*.45);
   mist.addColorStop(0,'rgba(14,24,44,.42)');mist.addColorStop(1,'rgba(22,35,58,0)');
   ctx.fillStyle=mist;ctx.fillRect(0,0,600,unitsY*.45);ctx.restore();
+  const topLabel=(story?113:mapHeader.offsetTop+mapHeader.offsetHeight)*unit;
+  const bottomLabel=story?unitsY-116*unit:playback.offsetTop*unit;
   for(const {stop,marker} of markerData){
     const spot=view.at(projectDistrict(day,stop));
+    const outside=spot.y<topLabel+48*unit || spot.y>bottomLabel-30*unit || spot.x<0 || spot.x>600;
+    const atVisit=stop.p!=null && p>=stop.from && p<=stop.to;
     if(story){
-      if(spot.y<20 || spot.y>unitsY-28 || spot.x<0 || spot.x>600)continue;
+      if(outside || atVisit)continue;
       drawStoryPlace(ctx,spot,stop,unit);
     }else{
       marker.style.left=spot.x/6+'%';marker.style.top=spot.y/unitsY*100+'%';
-      marker.hidden=spot.x<0||spot.x>600||spot.y<0||spot.y>unitsY;
+      marker.hidden=outside;
+      marker.classList.toggle('at-visit',atVisit);
     }
   }
   if(!story)mapView={view,unitsY};
@@ -304,7 +315,6 @@ function draw(canvas,p,story=false){
     if(liveArrows.src!==phase.arrow.src)liveArrows.src=phase.arrow.src;
     pinValue.style.setProperty('--speed-scale',numberScale);
     pinValue.textContent=pos.speed;
-    $('seek').setAttribute('aria-valuetext',clock(pos.time)+', '+modeLabel(pos)+', '+pos.speed+' км/ч');
   }
   drawJammer(ctx,gaps.get(day),p,replayDuration,unitsY,reducedMotion.matches);
   if(story)drawStoryText(ctx,pos,unitsY,unit);
@@ -313,7 +323,7 @@ function draw(canvas,p,story=false){
 function render(){
   if(!day || $('map').width===0 || $('map').height===0)return;
   draw($('map'),progress);
-  const s=sample(progress);$('seek').value=Math.round(progress*1000);$('current').textContent=clock(s.time);$('play').dataset.playing=String(playing);$('play').setAttribute('aria-label',playing?'Пауза':'Воспроизвести маршрут');
+  const s=sample(progress);visitRail.update(progress,s.time);$('current').textContent=clock(s.time);$('play').dataset.playing=String(playing);$('play').setAttribute('aria-label',playing?'Пауза':'Воспроизвести маршрут');
 }
 let frameRequest=0;
 function tick(now){
@@ -334,8 +344,7 @@ function start(){
   playing=true;previous=performance.now();render();
   frameRequest=requestAnimationFrame(tick);
 }
-$('play').onclick=()=>{closePlace();if(playing)pause();else start();syncComparison()};
-$('seek').oninput=e=>{closePlace();progress=Number(e.target.value)/1000;pause();syncComparison()};
+$('play').onclick=()=>{closePlace();if(playing)pause();else start()};
 const info=$('place-info');
 function closePlace(){info.hidden=true;}
 $('dismiss-info').onclick=closePlace;
@@ -349,15 +358,10 @@ $('map').onclick=e=>{
   if(point.d>22)return closePlace();
   showPlace(point.p);
 };
-$('clock').onclick=()=>{
-  $('time-picker').hidden=!$('time-picker').hidden;
-  $('clock').setAttribute('aria-expanded',String(!$('time-picker').hidden));
-  closePlace();
-};
 function showPlace(s){
   selectedFix=s;
   const nearest=day.fixes.reduce((a,b)=>Math.abs(a.t-s.t)<Math.abs(b.t-s.t)?a:b);
-  progress=routes.get(day).points[day.fixes.indexOf(nearest)].replay;pause();syncComparison();
+  progress=s.p ?? routes.get(day).points[day.fixes.indexOf(nearest)].replay;pause();
   $('place-name').textContent=place(s)[0];
   $('visit').textContent=clock(s.t/60)+(s.end?' — '+clock(s.end/60):'');
   $('trip').textContent='точность около '+s.accuracy+' м';
@@ -368,13 +372,12 @@ function showPlace(s){
   info.style.left='clamp(110px,'+q.x/6+'%,calc(100% - 110px))';
   info.classList.toggle('above',q.y/mapView.unitsY>.65);
   info.style.top=q.y/mapView.unitsY*100+'%';info.hidden=false;
-  $('time-picker').hidden=true;$('clock').setAttribute('aria-expanded','false');
 }
 function dayStats(){
   return [['шаги',number(day.steps)],['расстояние',number(day.km)+' км'],['максимальная скорость',day.peak+' км/ч']];
 }
 function visiblePlaces(){
-  const visible=[...day.stops];
+  const visible=[...visits,...day.stops.filter(stop=>!visits.some(v=>v.t===stop.t))];
   for(const zone of saved.filter(z=>z.area===day.area)){
     if(!visible.some(s=>nearby(zone,s))){
       const fix=day.fixes.find(p=>nearby(zone,p));
@@ -390,7 +393,16 @@ function timeline(){
     term.textContent=label;amount.textContent=value;block.append(term,amount);return block;
   }));
   $('district').textContent=day.title;
-  $('time-range').textContent=day.weekday+' · '+clock(day.fixes[0].t/60)+' — '+clock(day.fixes.at(-1).t/60);
+  const points=routes.get(day).points;
+  visits=stationaryVisits(day.fixes,day.mPerX).flatMap(stop=>{
+    const [zoneName,zoneIcon]=place(stop),seconds=stop.end-stop.t;
+    if(!zoneIcon && seconds<=600)return [];
+    const from=points[stop.first].replay,to=points[stop.last].replay;
+    const name=zoneIcon?zoneName:'остановка',duration=durationText(seconds);
+    const hours=clock(stop.t/60)+' — '+clock(stop.end/60);
+    return [{...stop,from,to,p:(from+to)/2,name,icon:zoneIcon||stopIcon,duration,hours,detail:hours+' · '+duration}];
+  });
+  visitRail.setVisits(visits);
   $('places').replaceChildren();markerData=[];
   visiblePlaces().forEach(s=>{
     const [name,src]=place(s),marker=document.createElement('button');
@@ -399,7 +411,7 @@ function timeline(){
     marker.innerHTML='<span class="place-dot"></span><span class="tag"><strong></strong></span>';
     if(src){const img=new Image();img.src=src;img.alt='';marker.prepend(img)}
     else marker.classList.add('uncertain');
-    marker.querySelector('strong').textContent=name;
+    marker.querySelector('strong').textContent=s.duration?name+' · '+s.duration:name;
     if(!src)marker.querySelector('.tag').remove();
     marker.setAttribute('aria-label',name+', '+clock(s.t/60));
     markerData.push({stop:s,marker});marker.onclick=()=>showPlace(s);$('places').append(marker);
@@ -412,17 +424,15 @@ function updateDate(){
   $('older').disabled=currentDate===firstDate;
   $('newer').disabled=currentDate===lastDate;
 }
-function selectDate(date,broadcast=true){
+function selectDate(date){
   for(const sheet of [$('story'),$('zone')])if(sheet.open)sheet.close();
   pause();currentDate=date;day=byDate.get(date) || null;
   selectedFix=null;progress=0;closePlace();
-  $('time-picker').hidden=true;$('clock').setAttribute('aria-expanded','false');
   $('screen').classList.toggle('no-route',!day);
   $('empty-day').hidden=!!day;$('share').disabled=!day;
   updateDate();
-  if(broadcast && board)board.changeDay(window,date);
-  if(day)openDay();
-  else {$('summary').replaceChildren();$('places').replaceChildren();markerData=[]}
+  if(day){timeline();openDay()}
+  else {$('summary').replaceChildren();$('places').replaceChildren();markerData=[];visits=[];visitRail.setVisits([])}
 }
 function stepDate(offset){
   const next=new Date(Date.parse(currentDate)+offset*86400000).toISOString().slice(0,10);
@@ -487,7 +497,7 @@ const confirmation=$('confirm-day');
 let calendarMode='privacy',selectedDate=null,savingDay=false;
 function openCalendar(mode){
   calendarMode=mode;
-  pause();syncComparison();closePlace();
+  pause();closePlace();
   const browse=mode==='browse';
   $('privacy-title').textContent=browse?'выбрать день':'заглушить день';
   const reset=routeCalendar({
@@ -626,7 +636,7 @@ async function prepareVideo(){
   }catch{if(session===storySession)failed()}
 }
 $('share').onclick=()=>{
-  pause();syncComparison();
+  pause();
   const canvas=$('preview'),screen=$('screen');
   canvas.width=780;canvas.height=2*Math.round(390*screen.clientHeight/screen.clientWidth);
   videoFile=null;$('status').textContent='';openSheet($('story'));
@@ -649,13 +659,6 @@ $('export').onclick=async()=>{
   try{await navigator.share({files:[videoFile],title:'Мой маршрут в Blink'})}
   catch(error){if(error.name!=='AbortError')download()}
 };
-function syncComparison(){if(board)board.seek(window,progress,playing)}
-if(board){
-  window.routeDemo={
-    seek(value,run){progress=value;run?start():pause()},
-    day(date){selectDate(date,false)}
-  };
-}
 await refreshRecords();
 openDay(!openAtFrame);
 if(openAtFrame)stickerReady.then(render);

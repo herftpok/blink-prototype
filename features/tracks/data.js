@@ -37,6 +37,16 @@ for(const [date,example] of [
     weekday:timestamp.toLocaleDateString('ru-RU',{weekday:'long',timeZone:'UTC'}),
     seed:Number(date.replaceAll('-',''))});
 }
+// A mixed day for the visit timeline. Older stored days keep their own observations.
+scenarios.unshift({...scenarios[1],date:'2026-11-11',day:'11 ноября',weekday:'среда',seed:111126,
+  start:7*3600+40*60,initialDwell:44*60,
+  zones:[{id:'home',x:18,y:77},{id:'study',x:54,y:64.8},{id:'work',x:64,y:28.1}],
+  guides:[
+    {...scenarios[1].guides[0],wait:3*3600+18*60},
+    {points:[[54,64.8],[64,62.3],[70,61],[66,57.5],[55,48],[49,42.7]],pace:37,wait:42*60},
+    {points:[[49,42.7],[42,37.4],[36,32.4],[42,29.3],[49,27.9],[64,28.1]],pace:4.6,wait:4*3600+25*60},
+    {...scenarios[1].guides[2],wait:90}
+  ]});
 function generator(seed){
   return ()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
 }
@@ -55,7 +65,7 @@ function buildDay(config){
       measure(...point,0,'still',6+rand()*21);
     }
   }
-  dwell(config.guides[0].points[0],config.zones.length?275:32);
+  dwell(config.guides[0].points[0],config.initialDwell ?? (config.zones.length?275:32));
   for(const guide of config.guides){
     const line=guide.points.map(([x,y])=>({x,y})),lengths=[0];
     for(let i=1;i<line.length;i++)lengths.push(lengths.at(-1)+distance(line[i-1],line[i]));
@@ -81,24 +91,29 @@ function buildDay(config){
   const {day,weekday,area,title,zones}=config;
   return finishDay({day,weekday,area,title,zones,mPerX},fixes,walked,metres);
 }
-function finishDay({day,weekday,area,title,zones,mPerX},fixes,walked,metres){
+// Collect observed stationary intervals; an interruption in fixes ends a visit.
+function stationaryVisits(fixes,mPerX){
   const distance=(a,b)=>mPerX*Math.hypot(a.x-b.x,(a.y-b.y)*frameHeight/frameWidth);
-  // Only stationary clusters with a meaningful dwell get an overview marker.
-  // A lone fix, including the last fix, never establishes a visit.
-  const stops=[];
+  const visits=[];
   for(let i=0;i<fixes.length;){
     if(fixes[i].mode!=='still'){i++;continue}
     let j=i+1;
     while(j<fixes.length && fixes[j].mode==='still' && !fixes[j].gapBefore && distance(fixes[i],fixes[j])<55)j++;
-    const first=fixes[i],last=fixes[j-1];
-    if(last.t-first.t>=200 && j-i>=4){
-      const cluster=fixes.slice(i,j),mean=k=>cluster.reduce((s,p)=>s+p[k],0)/cluster.length;
-      const center={x:mean('x'),y:mean('y')};
-      const zone=zones.find(z=>distance(z,center)<35);
-      stops.push({...center,id:zone?.id||'unknown',t:first.t,end:last.t,accuracy:Math.round(mean('accuracy'))});
+    if(j-i>=2){
+      const cluster=fixes.slice(i,j),mean=k=>cluster.reduce((sum,p)=>sum+p[k],0)/cluster.length;
+      visits.push({x:mean('x'),y:mean('y'),accuracy:Math.round(mean('accuracy')),t:fixes[i].t,end:fixes[j-1].t,first:i,last:j-1});
     }
     i=j;
   }
+  return visits;
+}
+function finishDay({day,weekday,area,title,zones,mPerX},fixes,walked,metres){
+  const stops=stationaryVisits(fixes,mPerX)
+    .filter(s=>s.end-s.t>=200 && s.last-s.first>=3)
+    .map(({first,last,...s})=>{
+      const zone=zones.find(z=>mPerX*Math.hypot(z.x-s.x,(z.y-s.y)*frameHeight/frameWidth)<35);
+      return {...s,id:zone?.id||'unknown'};
+    });
   let elapsed=0;
   fixes.forEach((fix,i)=>{
     if(i)elapsed+=(fix.t-fixes[i-1].t)*(fix.mode==='still'?.12:1);
