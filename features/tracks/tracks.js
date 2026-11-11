@@ -1,4 +1,4 @@
-import {statsFace} from './stats-art.js';
+import {captureStats,paintStats} from './stats-art.js?v=blink6';
 import {routeActionLayout} from './route-actions.js';
 import {createVisitRail,durationText} from './visit-rail.js?v=hours1';
 import {routeCalendar} from './calendar.js?v=period2';
@@ -12,6 +12,8 @@ const $ = id => document.getElementById(id);
 const clock = n => [Math.floor(n/60),Math.floor(n)%60].map(v=>String(v).padStart(2,'0')).join(':');
 const number = n => n.toLocaleString('ru-RU',{maximumFractionDigits:1});
 const query=new URLSearchParams(location.search);
+const stepPlural=new Intl.PluralRules('ru');
+const stepLabels={one:'шаг',few:'шага',many:'шагов',other:'шага'};
 const statsButtons=[...document.querySelectorAll('#stats-review button')];
 function selectStats(layout){
   $('summary').dataset.stats=layout;
@@ -20,9 +22,10 @@ function selectStats(layout){
     button.setAttribute('aria-pressed',String(active));
     if(active)button.scrollIntoView({block:'nearest',inline:'nearest'});
   }
-  statsFace($('summary'));
+  styleStats($('summary'));
 }
-selectStats(statsButtons.find(button=>button.dataset.stats===query.get('stats'))?.dataset.stats || 'columns');
+const requestedStats=({ticket:'chips',gauge:'profile'})[query.get('stats')] || query.get('stats');
+selectStats(statsButtons.find(button=>button.dataset.stats===requestedStats)?.dataset.stats || 'columns');
 for(const button of statsButtons){
   button.onclick=()=>{
     if($('story').open)$('story').close();
@@ -32,8 +35,6 @@ for(const button of statsButtons){
     history.replaceState(history.state,'',url);
   };
 }
-const statsObserver=new ResizeObserver(entries=>entries.forEach(entry=>statsFace(entry.target)));
-for(const list of document.querySelectorAll('.day-stats'))statsObserver.observe(list);
 const replaySeconds=15;
 const replayDuration=replaySeconds*1000;
 $('story-meta').textContent='Видео · '+replaySeconds+' секунд';
@@ -107,14 +108,27 @@ function captionStyle(id){
     strokeWidth:parseFloat(style.webkitTextStrokeWidth)||0,strokeColor:style.webkitTextStrokeColor};
 }
 const visitTitleStyle=captionStyle('visit-label'),visitTimeStyle=captionStyle('visit-hours');
-function captionLine(ctx,text,style,y,maxWidth){
+function captionLine(ctx,text,style,y){
   ctx.font=style.font;ctx.letterSpacing=style.spacing;
-  if(ctx.measureText(text).width>maxWidth){
-    while(text.length && ctx.measureText(text+'…').width>maxWidth)text=text.slice(0,-1);
-    text+='…';
-  }
   if(style.strokeWidth){ctx.lineWidth=style.strokeWidth;ctx.strokeStyle=style.strokeColor;ctx.strokeText(text,0,y)}
   ctx.fillStyle=style.color;ctx.fillText(text,0,y);
+}
+function titleLines(ctx,text,limit){
+  ctx.font=visitTitleStyle.font;ctx.letterSpacing=visitTitleStyle.spacing;
+  const lines=[];
+  let line='';
+  for(const word of text.split(/\s+/u)){
+    const next=line?line+' '+word:word;
+    if(ctx.measureText(next).width<=limit){line=next;continue}
+    if(line)lines.push(line);
+    line='';
+    for(const letter of word){
+      if(line && ctx.measureText(line+letter).width>limit){lines.push(line);line=''}
+      line+=letter;
+    }
+  }
+  if(line)lines.push(line);
+  return lines;
 }
 function prepareDay(record){
   const replay=prepareReplay(record);
@@ -187,25 +201,20 @@ function drawStoryText(ctx,pos,height,unit,pinX,foot){
   ctx.font='900 36px '+uiFamily;ctx.letterSpacing='-2px';
   ctx.fillText('где я был',16,49);
   ctx.letterSpacing='0px';
-  ctx.save();
-  if(storyStats.face){
-    ctx.shadowBlur=0;
-    ctx.drawImage(storyStats.face,16,60,storyStats.face.width/2,storyStats.face.height/2);
-  }
-  ctx.textBaseline='middle';
-  for(const word of storyStats.words){
-    ctx.font=word.font;ctx.fillStyle=word.color;ctx.letterSpacing=word.spacing;
-    ctx.fillText(word.text,16+word.x,60+word.y);
-  }
-  ctx.restore();
+  paintStats(ctx,storyStats,16,60);
   const visit=visits.find(v=>pos.time*60>=v.t && pos.time*60<=v.end);
   if(visit){
-    ctx.save();ctx.translate(pinX/unit,foot/unit+13);ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.save();
+    const lines=titleLines(ctx,visit.name,Math.min(285,width-24));
+    const titleWidth=Math.max(0,...lines.map(line=>ctx.measureText(line).width))+3;
+    ctx.font=visitTimeStyle.font;ctx.letterSpacing=visitTimeStyle.spacing;
+    const inset=12+Math.max(titleWidth,ctx.measureText(visit.hours).width)/2;
+    ctx.translate(Math.max(inset,Math.min(width-inset,pinX/unit)),foot/unit+13);
+    ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.shadowBlur=0;ctx.lineJoin='round';
-    const limit=Math.min(width*.78,285);
-    captionLine(ctx,visit.name,visitTitleStyle,10,limit-4);
+    lines.forEach((line,i)=>captionLine(ctx,line,visitTitleStyle,10+i*20));
     ctx.shadowColor='#10101c';ctx.shadowOffsetY=1;ctx.shadowBlur=3;
-    captionLine(ctx,visit.hours,visitTimeStyle,33,limit);
+    captionLine(ctx,visit.hours,visitTimeStyle,13+20*lines.length);
     ctx.restore();
   }
   ctx.shadowBlur=0;ctx.fillStyle='#14141edd';ctx.font='700 12px '+uiFamily;
@@ -344,6 +353,7 @@ function draw(canvas,p,story=false){
   else {
     pinHost.hidden=pos.gap;liveArrows.hidden=pos.mode==='still';
     pinHost.style.left=pinX/6+'%';
+    pinHost.style.setProperty('--pin-x',pinX/unit+'px');
     pinHost.style.top=(foot/unitsY*100)+'%';
     pinHost.style.setProperty('--heading',pos.heading+'rad');
     motion.hidden=pos.speed<=20 || !loaded(flame);
@@ -429,15 +439,35 @@ function visiblePlaces(){
   }
   return visible;
 }
+function styleStats(list){
+  const layout=list.dataset.stats;
+  for(const [index,block] of [...list.children].entries()){
+    const value=block.querySelector('dd');
+    if(!value)continue;
+    block.classList.toggle('map-chip',layout==='chips');
+    value.classList.toggle('sticker-number',layout==='profile' && index===1);
+    if(index===0){
+      const steps=Number(value.textContent.replace(/\s/g,''));
+      const plural=stepPlural.select(steps);
+      block.querySelector('dt').textContent=layout==='chips'?stepLabels[plural]:'шаги';
+    }
+    const src=layout==='chips' && index===0?'../../assets/icons/steps.png':
+      layout==='profile' && index===1?'../../assets/plans/map-marker.webp':null;
+    let art=block.querySelector('img');
+    if(src){
+      if(!art){art=document.createElement('img');art.alt='';block.append(art)}
+      art.src=src;
+    }else art?.remove();
+  }
+}
 function updateStats(){
   const blocks=(day?dayStats():[]).map(([label,value])=>{
     const block=document.createElement('div'),term=document.createElement('dt'),amount=document.createElement('dd');
     term.textContent=label;amount.textContent=value;block.append(term,amount);return block;
   });
   for(const list of document.querySelectorAll('.day-stats')){
-    list.dataset.peak=String(day?.peak??0);
     list.replaceChildren(...blocks.map(block=>block.cloneNode(true)));
-    statsFace(list);
+    styleStats(list);
   }
 }
 function timeline(){
@@ -674,28 +704,9 @@ async function prepareVideo(){
     action.textContent='готовим видео · '+replaySeconds+' с';
   }catch{if(session===storySession)failed()}
 }
-// Read the laid-out text once per export so the video uses the selected arrangement,
-// including line breaks at the current handset width.
-function measureStoryStats(){
-  const summary=$('summary'),bounds=summary.getBoundingClientRect();
-  const zoom=bounds.width/summary.offsetWidth;
-  const words=[];
-  for(const field of summary.querySelectorAll('dt,dd')){
-    const style=getComputedStyle(field),range=document.createRange();
-    for(const match of field.textContent.matchAll(/[^ ]+/g)){
-      range.setStart(field.firstChild,match.index);
-      range.setEnd(field.firstChild,match.index+match[0].length);
-      const rect=range.getBoundingClientRect();
-      words.push({text:match[0],x:(rect.left-bounds.left)/zoom,y:(rect.top+rect.height/2-bounds.top)/zoom,
-        font:style.fontWeight+' '+style.fontSize+' '+style.fontFamily,color:style.color,
-        spacing:style.letterSpacing==='normal'?'0px':style.letterSpacing});
-    }
-  }
-  return {words,face:statsFace(summary)};
-}
-let storyStats={words:[],face:null};
+let storyStats;
 $('share').onclick=()=>{
-  storyStats=measureStoryStats();
+  storyStats=captureStats($('summary'));
   pause();
   const canvas=$('preview'),screen=$('screen');
   canvas.width=780;canvas.height=2*Math.round(390*screen.clientHeight/screen.clientWidth);
