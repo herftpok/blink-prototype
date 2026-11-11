@@ -154,10 +154,8 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 .rail-stop img{width:29px;height:29px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 2px #0004)}
 #seek{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;margin:0}
 #visit-rail:focus-within{outline:2px solid #dcc6ff;outline-offset:2px}
-.rail-time{margin:0 0 8px 51px;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;height:44px;text-align:center;text-shadow:0 2px 6px #10101c}
-#current{font:750 20px/1 var(--font-ui);font-variant-numeric:tabular-nums;color:white}
-.rail-time button{width:44px;height:44px;border-radius:12px;font:600 25px var(--font-text);color:white;text-shadow:inherit}
-.rail-time button:disabled{opacity:.3}
+#current{display:grid;place-items:center;height:44px;margin-bottom:8px;font:750 20px/1 var(--font-ui);
+  font-variant-numeric:tabular-nums;color:white;text-shadow:0 2px 6px #10101c}
 #visit-context{position:absolute;top:10px;left:0;transform:translateX(-50%);width:max-content;max-width:min(78vw,285px);
   display:grid;justify-items:center;gap:2px;color:white;text-align:center;text-shadow:0 1px 3px #10101c,0 1px 8px #10101c;
   paint-order:stroke fill;-webkit-text-stroke:2.5px #151322;pointer-events:none}

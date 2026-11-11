@@ -11,16 +11,16 @@ export function durationText(seconds){
 export function createVisitRail(seekTo,clock){
   const el=id=>document.getElementById(id);
   const rail=el('visit-rail'),track=el('visit-track'),slider=el('seek');
-  const previous=el('prev-visit'),next=el('next-visit'),context=el('visit-context');
+  const context=el('visit-context');
   const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
   // The diagonal pattern repeats about every 12 px along the horizontal axis.
   const endTicks=44;
   const edgeIconRadius=25;
   const inset=endTicks+edgeIconRadius;
   let visits=[],anchors=[],progress=0,drag=null,active=null,offset=0;
-  let width=0,scroll=0,minScroll=0,maxScroll=0,frame=0,animationTarget=null;
+  let width=0,scroll=0,minScroll=0,maxScroll=0,frame=0;
   function cancelMotion(){
-    cancelAnimationFrame(frame);frame=0;animationTarget=null;
+    cancelAnimationFrame(frame);frame=0;
   }
   // Travel between two dwell positions with smooth velocity ramps. Integrating
   // smoothstep gives zero velocity and acceleration where the ring comes to rest.
@@ -148,8 +148,6 @@ export function createVisitRail(seekTo,clock){
         el('visit-hours').textContent=visit.detail;
       }
     }
-    previous.disabled=!visits.some(v=>v.p<(visit?.from ?? p)-.00001);
-    next.disabled=!visits.some(v=>v.p>(visit?.to ?? p)+.00001);
     slider.setAttribute('aria-valuetext',clock(time)+(visit?', '+visit.name+', '+visit.duration:''));
   }
   function seekOffset(x){seekTo(progressAt(x))}
@@ -160,10 +158,9 @@ export function createVisitRail(seekTo,clock){
     const from=offset,to=headPosition(target),start=performance.now();
     if(Math.abs(to-from)<.1){seekTo(target);return}
     const duration=coastDuration || clamp(280+Math.abs(to-from)*.7,300,490);
-    animationTarget=target;
     function step(now){
       const t=clamp((now-start)/duration,0,1);
-      if(t>=1){frame=0;animationTarget=null;seekTo(target);return}
+      if(t>=1){frame=0;seekTo(target);return}
       // Quick traverse with a short, gentle settle at the next icon.
       const eased=coastDuration?1-(1-t)**3:t*t*(3-2*t);
       seekOffset(from+(to-from)*eased);
@@ -171,13 +168,6 @@ export function createVisitRail(seekTo,clock){
     }
     frame=requestAnimationFrame(step);
   }
-  function pageVisit(direction){
-    const origin=animationTarget ?? (direction>0?active?.to:active?.from) ?? progress;
-    const visit=direction>0 ? visits.find(v=>v.p>origin+.00001)
-                            : visits.filter(v=>v.p<origin-.00001).at(-1);
-    if(visit)glideTo(visit.p);
-  }
-  previous.onclick=()=>pageVisit(-1);next.onclick=()=>pageVisit(1);
   slider.oninput=()=>{cancelMotion();seekTo(Number(slider.value)/10000)};
   rail.onpointerdown=e=>{
     if(e.button!==0 || !e.isPrimary || !anchors.length)return;
