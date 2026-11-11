@@ -145,7 +145,7 @@ export function createVisitRail(seekTo,clock,replayDuration){
       if(visit){
         visit.button.setAttribute('aria-current','location');
         el('visit-label').textContent=visit.name;
-        el('visit-hours').textContent=visit.detail;
+        el('visit-hours').textContent=visit.hours;
       }
     }
     slider.setAttribute('aria-valuetext',clock(time)+(visit?', '+visit.name+', '+visit.duration:''));

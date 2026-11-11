@@ -1,5 +1,5 @@
 import {routeActionLayout} from './route-actions.js';
-import {createVisitRail,durationText} from './visit-rail.js?v=sticker15';
+import {createVisitRail,durationText} from './visit-rail.js?v=hours1';
 import {routeCalendar} from './calendar.js?v=period2';
 import {openRoutes} from './privacy.js?v=calendar1';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
@@ -179,7 +179,7 @@ function drawStoryText(ctx,pos,height,unit,pinX,foot){
     const limit=Math.min(width*.78,285);
     captionLine(ctx,visit.name,visitTitleStyle,10,limit-4);
     ctx.shadowColor='#10101c';ctx.shadowOffsetY=1;ctx.shadowBlur=3;
-    captionLine(ctx,visit.detail,visitTimeStyle,33,limit);
+    captionLine(ctx,visit.hours,visitTimeStyle,33,limit);
     ctx.restore();
   }
   ctx.shadowBlur=0;ctx.fillStyle='#14141edd';ctx.font='700 12px '+uiFamily;
