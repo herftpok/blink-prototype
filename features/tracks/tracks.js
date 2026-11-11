@@ -1,5 +1,5 @@
 import {routeActionLayout} from './route-actions.js';
-import {createVisitRail,durationText} from './visit-rail.js?v=magnet1';
+import {createVisitRail,durationText} from './visit-rail.js?v=glide2';
 import {routeCalendar} from './calendar.js?v=period2';
 import {openRoutes} from './privacy.js?v=calendar1';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
@@ -397,7 +397,6 @@ function timeline(){
     const block=document.createElement('div'),term=document.createElement('dt'),amount=document.createElement('dd');
     term.textContent=label;amount.textContent=value;block.append(term,amount);return block;
   }));
-  $('district').textContent=day.title;
   const points=routes.get(day).points;
   visits=stationaryVisits(day.fixes,day.mPerX).flatMap(stop=>{
     const [zoneName,zoneIcon]=place(stop),seconds=stop.end-stop.t;

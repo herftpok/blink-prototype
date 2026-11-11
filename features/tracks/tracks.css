@@ -58,17 +58,9 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 #icons button {padding:4px;}
 
 
-.map-credit{position:absolute;bottom:max(27px,var(--safe-bottom));right:12px;text-align:right;color:white;pointer-events:none;text-shadow:0 1px 4px #000}
-.map-credit span{display:block;font-size:11px;font-weight:650}.map-credit small{color:#c7cbd1;font-size:8px}
 .uncertain .place-dot{width:12px;height:12px;background:#cc9eff;border:0}
 .uncertain .tag{padding:3px 6px}.uncertain .tag strong{font-size:10px}
 
-.map-credit{display:flex;align-items:center;gap:4px}
-.map-source{pointer-events:auto;position:relative}
-.map-source summary{list-style:none;cursor:pointer;padding:5px;font-size:14px}
-.map-source summary::-webkit-details-marker{display:none}
-.map-source small{position:absolute;right:0;bottom:100%;padding:8px 12px;border-radius:10px;background:#171b28;white-space:nowrap}
-.map-source a{color:inherit}
 
 /* Grow upward so the three-digit readout never covers its unit. */
 #traveller .pin__time--speed {gap:3px;}
@@ -138,11 +130,11 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 #empty-day strong{font:750 25px var(--font-ui)}
 #empty-day span{font:var(--type-meta);color:var(--color-text-secondary)}
 #screen.no-route{background:radial-gradient(ellipse at 50% 38%,#282d41,#131522 80%)}
-.no-route :is(#map,#places,#traveller,.map-credit,.playback,#summary){display:none}
+.no-route :is(#map,#places,#traveller,.playback,#summary){display:none}
 #share:disabled{opacity:.38}
 
 /* The cursor follows the track to its edges, keeping the full rail in view. */
-.playback{left:12px;right:12px;bottom:calc(max(24px,var(--safe-bottom)) + 64px);display:block;pointer-events:none}
+.playback{left:12px;right:12px;bottom:calc(max(24px,var(--safe-bottom)) + 54px);display:block;pointer-events:none}
 .playback button,.playback #visit-rail{pointer-events:auto}
 .rail-controls{display:flex;align-items:center;gap:7px}
 #play{flex:0 0 44px;width:44px;height:44px;border:0;background:#e2cdff}
@@ -168,7 +160,6 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
   border-radius:16px;background:#171522d9;color:white;backdrop-filter:blur(8px)}
 #visit-label{font:750 16px/20px var(--font-ui);text-align:center;overflow-wrap:anywhere}
 #visit-hours{color:#ded7e6;font:550 12px var(--font-ui);font-variant-numeric:tabular-nums}
-.map-credit{bottom:max(4px,calc(var(--safe-bottom) - 12px))}
 .place .tag strong{max-width:150px}
 
 .place.at-visit img{transform:translateX(-34px)}
@@ -182,9 +173,12 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 @media(prefers-reduced-motion:reduce){.rail-stop img{transition:none}}
 
 /* Route actions share a reachable row with the calendar in the compact layouts. */
-#route-close{width:44px;height:44px;display:grid;place-items:center;pointer-events:auto;margin-right:-5px}
+#route-close{width:46px;height:46px;flex:none;display:grid;place-items:center;pointer-events:auto;
+  border-radius:var(--radius-12);background:var(--color-glass-button-map,rgba(0,0,0,.4));
+  -webkit-backdrop-filter:blur(var(--blur-glass));backdrop-filter:blur(var(--blur-glass))}
+@supports(corner-shape:squircle){#route-close{corner-shape:squircle}}
 #route-close img{width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 4px #111a)}
-.route-footer{position:absolute;left:14px;right:14px;bottom:calc(max(24px,var(--safe-bottom)) + 10px);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
+.route-footer{position:absolute;left:14px;right:14px;bottom:max(24px,var(--safe-bottom));display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
 .route-footer button,#route-actions button{pointer-events:auto}
 #date,#more-actions,#route-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 12px;background:#191724df;color:white;border:1px solid #ffffff2a;border-radius:16px;font:650 13px var(--font-ui);backdrop-filter:blur(12px);cursor:pointer}
 #date{white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -208,3 +202,7 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 .review-layout .device{height:calc(100dvh - var(--review-height))}
 @media(max-width:480px){.review-layout .app{height:calc(100dvh - var(--review-height))}}
 @media(max-width:350px){#layout-review button{padding:0 10px;font-size:12px}}
+
+.rail-lens{transition:background-color .45s ease,border-color .45s ease,box-shadow .45s ease}
+.rail-lens.settled{background-color:#d9baff0c;border-color:#f6ecff;box-shadow:0 0 0 2px #18142455,0 0 7px #d4acff40}
+@media(prefers-reduced-motion:reduce){.rail-lens{transition:none}}

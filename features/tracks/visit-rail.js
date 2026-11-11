@@ -20,24 +20,34 @@ export function createVisitRail(seekTo,clock){
   function cancelMotion(){
     cancelAnimationFrame(frame);frame=0;animationTarget=null;
   }
-  // Only the reading head settles on a landmark. The underlying time and drag
-  // offset keep advancing, including through the entire stationary interval.
-  function headProgress(p){
-    for(const visit of visits){
-      if(p<visit.approach)return p;
-      if(p>visit.release)continue;
-      if(p>=visit.from && p<=visit.to)return visit.p;
-      const t=p<visit.from ? (p-visit.approach)/(visit.from-visit.approach)
-                           : (visit.release-p)/(visit.release-visit.to);
-      const pull=t*t*(3-2*t);
-      return p+(visit.p-p)*pull;
+  // Travel between two dwell positions with smooth velocity ramps. Integrating
+  // smoothstep gives zero velocity and acceleration where the ring comes to rest.
+  function rampArea(t){return t*t*t*(1-.5*t)}
+  function headPosition(p){
+    let startTime=0,startX=0;
+    for(const [i,v] of visits.entries()){
+      const x=anchors[i+1].x;
+      if(p<v.from)return travelPosition(p,startTime,v.from,startX,x);
+      if(p<=v.to)return x;
+      startTime=v.to;startX=x;
     }
-    return p;
+    return travelPosition(p,startTime,1,startX,anchors.at(-1).x);
+  }
+  function travelPosition(p,start,end,x0,x1){
+    const span=end-start;
+    if(span<=0)return x1;
+    const t=clamp((p-start)/span,0,1);
+    // Long journeys cruise in the middle; short transfers flow from ease-in to ease-out.
+    const ramp=Math.min(.5,.09/span);
+    let distance=t-ramp/2;
+    if(t<ramp)distance=ramp*rampArea(t/ramp);
+    else if(t>1-ramp)distance=1-ramp-ramp*rampArea((1-t)/ramp);
+    return x0+(x1-x0)*distance/(1-ramp);
   }
   function position(){
     if(!anchors.length)return;
     offset=interpolate(progress,'p','x');
-    const head=interpolate(headProgress(progress),'p','x')+inset;
+    const head=(visits.length?headPosition(progress):offset)+inset;
     scroll=clamp(head-width/2,0,Math.max(0,anchors.at(-1).x+2*inset-width));
     track.style.transform='translate3d('+(-scroll)+'px,0,0)';
     lens.style.transform='translate3d('+(head-scroll)+'px,-50%,0) translateX(-50%)';
@@ -64,22 +74,15 @@ export function createVisitRail(seekTo,clock){
     return a[to]+(b[to]-a[to])*(value-a[from])/(b[from]-a[from]);
   }
   function setVisits(list){
-    cancelMotion();visits=list;active=null;drag=null;context.hidden=true;
+    cancelMotion();visits=list;active=null;drag=null;context.hidden=true;lens.classList.remove('settled');
     track.replaceChildren();
-    // Use up to 350 ms of the 12-second replay on each side. Neighbouring
-    // transitions meet at most halfway through the travel between visits.
-    const reach=.35/12;
-    for(const [i,visit] of visits.entries()){
-      const before=i ? (visits[i-1].to+visit.from)/2 : 0;
-      const after=i+1<visits.length ? (visit.to+visits[i+1].from)/2 : 1;
-      visit.approach=Math.max(before,visit.from-reach);
-      visit.release=Math.min(after,visit.to+reach);
+    for(const visit of visits){
       const button=document.createElement('button'),img=new Image();
       button.type='button';button.className='rail-stop';
       button.setAttribute('aria-label',visit.name+', '+visit.detail);
       button.title=visit.name+' · '+visit.detail;
       img.src=visit.icon;img.alt='';button.append(img);track.append(button);
-      button.onclick=e=>{if(e.detail===0)glideTo(visit.p,240)};
+      button.onclick=e=>{if(e.detail===0)glideTo(visit.p)};
       // Keep offscreen landmarks reachable without letting focus scroll the clipped rail.
       button.onfocus=()=>{if(button.matches(':focus-visible')){cancelMotion();seekTo(visit.p)}};
       visit.button=button;
@@ -93,7 +96,7 @@ export function createVisitRail(seekTo,clock){
     const visit=visits.find(v=>p>=v.from && p<=v.to);
     if(visit!==active){
       active?.button.removeAttribute('aria-current');
-      active=visit;context.hidden=!visit;
+      active=visit;context.hidden=!visit;lens.classList.toggle('settled',!!visit);
       if(visit){
         visit.button.setAttribute('aria-current','location');
         el('visit-label').textContent=visit.name+' · '+visit.duration;
@@ -105,16 +108,18 @@ export function createVisitRail(seekTo,clock){
     slider.setAttribute('aria-valuetext',clock(time)+(visit?', '+visit.name+', '+visit.duration:''));
   }
   function seekOffset(x){seekTo(interpolate(clamp(x,0,anchors.at(-1).x),'x','p'))}
-  function glideTo(target,duration){
+  function glideTo(target,coastDuration=0){
     cancelMotion();
     if(reducedMotion.matches || Math.abs(progress-target)<.0001){seekTo(target);return}
     // Interpolate in strip pixels so motion stays even between closely spaced visits.
     const from=offset,to=interpolate(target,'p','x'),start=performance.now();
+    const duration=coastDuration || clamp(340+Math.abs(to-from)*.8,360,580);
     animationTarget=target;
     function step(now){
       const t=clamp((now-start)/duration,0,1);
       if(t>=1){frame=0;animationTarget=null;seekTo(target);return}
-      seekOffset(from+(to-from)*(1-(1-t)**3));
+      const eased=coastDuration?1-(1-t)**3:t*t*t*(10+t*(-15+6*t));
+      seekOffset(from+(to-from)*eased);
       frame=requestAnimationFrame(step);
     }
     frame=requestAnimationFrame(step);
@@ -123,7 +128,7 @@ export function createVisitRail(seekTo,clock){
     const origin=animationTarget ?? (direction>0?active?.to:active?.from) ?? progress;
     const visit=direction>0 ? visits.find(v=>v.p>origin+.00001)
                             : visits.filter(v=>v.p<origin-.00001).at(-1);
-    if(visit)glideTo(visit.p,260);
+    if(visit)glideTo(visit.p);
   }
   previous.onclick=()=>pageVisit(-1);next.onclick=()=>pageVisit(1);
   slider.oninput=()=>{cancelMotion();seekTo(Number(slider.value)/10000)};
@@ -158,7 +163,7 @@ export function createVisitRail(seekTo,clock){
     const gesture=drag;release();
     if(!gesture.moved){
       const tapX=gesture.scroll+(e.clientX-gesture.left)*gesture.scale-inset;
-      glideTo(gesture.visit?.p ?? interpolate(tapX,'x','p'),210);
+      glideTo(gesture.visit?.p ?? interpolate(tapX,'x','p'));
     }else if(!reducedMotion.matches && e.timeStamp-gesture.lastTime<85){
       const travel=clamp(gesture.velocity*130,-width*.55,width*.55);
       if(Math.abs(travel)>5)glideTo(interpolate(offset+travel,'x','p'),clamp(Math.abs(travel)*2.5,170,350));
