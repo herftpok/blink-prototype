@@ -1,4 +1,4 @@
-import {createVisitRail,durationText} from './visit-rail.js';
+import {createVisitRail,durationText} from './visit-rail.js?v=rail2';
 import {routeCalendar} from './calendar.js?v=period2';
 import {openRoutes} from './privacy.js?v=calendar1';
 import {drawJammer,stickerReady} from './jammer.js?v=brand1';
@@ -115,7 +115,7 @@ const mix=(a,b,t)=>a+(b-a)*t;
 const stopIcon='art/stop.webp';
 icons[stopIcon]=asset(stopIcon);
 let visits=[];
-const visitRail=createVisitRail(p=>{closePlace();progress=p;pause()},clock);
+const visitRail=createVisitRail(p=>{closePlace();progress=p;pause(true)},clock);
 function sample(p){
   const route=routes.get(day),pos=replayPoint(route,p);
   if(pos.mode==='drive'){
@@ -334,10 +334,12 @@ function tick(now){
   render();
   if(playing)frameRequest=requestAnimationFrame(tick);
 }
-function pause(){
+function pause(fromRail=false){
+  if(!fromRail)visitRail.cancelMotion();
   playing=false;cancelAnimationFrame(frameRequest);render();
 }
 function start(){
+  visitRail.cancelMotion();
   if(!day)return;
   cancelAnimationFrame(frameRequest);
   if(progress>=1)progress=0;

@@ -1,7 +1,10 @@
 // A local fixture of timestamped samples. Coordinates refer to the demo map tile.
 const zoneArt = {
   home: ['дом', '../../assets/overnights/home.webp'],
-  study: ['учёба', 'art/study.png'],
+  study: ['учёба', 'art/school.png'],
+  airport: ['аэропорт', '../../assets/overnights/airplane.webp'],
+  overnight: ['ночёвка', '../../assets/overnights/nighthouse.webp'],
+  metro: ['метро', 'art/metro.png'],
   work: ['работа', 'art/work.png'],
   gym: ['спортзал', 'art/gym.png'],
   bar: ['бар', '../../assets/stickers/beer.webp'],
@@ -47,6 +50,14 @@ scenarios.unshift({...scenarios[1],date:'2026-11-11',day:'11 ноября',weekd
     {points:[[49,42.7],[42,37.4],[36,32.4],[42,29.3],[49,27.9],[64,28.1]],pace:4.6,wait:4*3600+25*60},
     {...scenarios[1].guides[2],wait:90}
   ]});
+// A separate demo day keeps existing, possibly edited routes intact.
+const travelExample=scenarios[0];
+scenarios.splice(1,0,{...travelExample,date:'2026-11-10',day:'10 ноября',weekday:'вторник',seed:101126,
+  start:0,initialDwell:6*3600+45*60,
+  zones:[{id:'overnight',x:18,y:77},{id:'metro',x:54,y:64.8},
+    {id:'study',x:49,y:42.7},{id:'airport',x:74,y:34}],
+  guides:travelExample.guides.map((guide,i)=>({...guide,wait:[4*60,5*3600,80,52*60][i]}))
+});
 function generator(seed){
   return ()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
 }

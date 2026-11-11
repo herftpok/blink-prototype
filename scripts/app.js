@@ -152,7 +152,9 @@
     const marker = $("#saved-zone");
     const icons = {
       home: "assets/overnights/home.webp", gym: "features/tracks/art/gym.png",
-      work: "features/tracks/art/work.png", study: "features/tracks/art/study.png",
+      work: "features/tracks/art/work.png", study: "features/tracks/art/school.png",
+      metro: "features/tracks/art/metro.png", airport: "assets/overnights/airplane.webp",
+      overnight: "assets/overnights/nighthouse.webp",
       coffee: "features/advent/renders/coffee.webp", bar: "assets/stickers/beer.webp"
     };
     try {
