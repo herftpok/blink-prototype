@@ -1,3 +1,4 @@
+import {statsFace} from './stats-art.js';
 import {routeActionLayout} from './route-actions.js';
 import {createVisitRail,durationText} from './visit-rail.js?v=hours1';
 import {routeCalendar} from './calendar.js?v=period2';
@@ -14,7 +15,12 @@ const query=new URLSearchParams(location.search);
 const statsButtons=[...document.querySelectorAll('#stats-review button')];
 function selectStats(layout){
   $('summary').dataset.stats=layout;
-  for(const button of statsButtons)button.setAttribute('aria-pressed',String(button.dataset.stats===layout));
+  for(const button of statsButtons){
+    const active=button.dataset.stats===layout;
+    button.setAttribute('aria-pressed',String(active));
+    if(active)button.scrollIntoView({block:'nearest',inline:'nearest'});
+  }
+  statsFace($('summary'));
 }
 selectStats(statsButtons.find(button=>button.dataset.stats===query.get('stats'))?.dataset.stats || 'columns');
 for(const button of statsButtons){
@@ -26,6 +32,8 @@ for(const button of statsButtons){
     history.replaceState(history.state,'',url);
   };
 }
+const statsObserver=new ResizeObserver(entries=>entries.forEach(entry=>statsFace(entry.target)));
+for(const list of document.querySelectorAll('.day-stats'))statsObserver.observe(list);
 const replaySeconds=15;
 const replayDuration=replaySeconds*1000;
 $('story-meta').textContent='Видео · '+replaySeconds+' секунд';
@@ -180,8 +188,12 @@ function drawStoryText(ctx,pos,height,unit,pinX,foot){
   ctx.fillText('где я был',16,49);
   ctx.letterSpacing='0px';
   ctx.save();
+  if(storyStats.face){
+    ctx.shadowBlur=0;
+    ctx.drawImage(storyStats.face,16,60,storyStats.face.width/2,storyStats.face.height/2);
+  }
   ctx.textBaseline='middle';
-  for(const word of storyStats){
+  for(const word of storyStats.words){
     ctx.font=word.font;ctx.fillStyle=word.color;ctx.letterSpacing=word.spacing;
     ctx.fillText(word.text,16+word.x,60+word.y);
   }
@@ -423,7 +435,9 @@ function updateStats(){
     term.textContent=label;amount.textContent=value;block.append(term,amount);return block;
   });
   for(const list of document.querySelectorAll('.day-stats')){
+    list.dataset.peak=String(day?.peak??0);
     list.replaceChildren(...blocks.map(block=>block.cloneNode(true)));
+    statsFace(list);
   }
 }
 function timeline(){
@@ -677,9 +691,9 @@ function measureStoryStats(){
         spacing:style.letterSpacing==='normal'?'0px':style.letterSpacing});
     }
   }
-  return words;
+  return {words,face:statsFace(summary)};
 }
-let storyStats=[];
+let storyStats={words:[],face:null};
 $('share').onclick=()=>{
   storyStats=measureStoryStats();
   pause();

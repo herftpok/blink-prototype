@@ -227,3 +227,31 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 @media(max-width:480px){
   .app,.review-layout .app{height:calc(100dvh - 54px - var(--review-height,0px))}
 }
+
+/* Ticket body and tear-off stub share one print surface. */
+.day-stats:is([data-stats="ticket"],[data-stats="gauge"]){
+  background-size:100% 100%;background-repeat:no-repeat;text-shadow:none;align-items:center
+}
+.day-stats[data-stats="ticket"]{grid-template-columns:58% 42%;grid-template-rows:auto auto;row-gap:4px;padding:10px 0;color:#261834}
+.day-stats[data-stats="ticket"] dt{color:#544362}
+.day-stats[data-stats="ticket"]>div:nth-child(2){grid-area:1/1;padding:0 14px}
+.day-stats[data-stats="ticket"]>div:nth-child(2) dd{font-size:26px;line-height:28px;font-weight:800;letter-spacing:-1px}
+.day-stats[data-stats="ticket"]>div:first-child{grid-area:2/1;flex-direction:row;justify-content:flex-start;align-items:baseline;gap:5px;padding:0 14px}
+.day-stats[data-stats="ticket"]>div:first-child dd{font-size:14px;line-height:18px}
+.day-stats[data-stats="ticket"]>div:last-child{grid-area:1/2/3/3;align-self:start;padding:0 8px 14px 13px}
+.day-stats[data-stats="ticket"]>div:last-child dd{font-size:18px;line-height:21px;white-space:nowrap}
+.day-stats[data-stats="gauge"]{grid-template-columns:47% 53%;min-height:101px;padding:7px 0}
+.day-stats[data-stats="gauge"]>div:last-child{grid-area:1/1/3/2;text-align:center;padding:46px 4px 0}
+.day-stats[data-stats="gauge"]>div:last-child dd{font-size:20px;line-height:22px;color:#acffda;font-weight:800}
+.day-stats[data-stats="gauge"]>div:last-child dt{font-size:10px;line-height:12px}
+.day-stats[data-stats="gauge"]>div:not(:last-child){grid-column:2;padding:2px 14px}
+.day-stats[data-stats="gauge"]>div:not(:last-child) dd{font-size:17px;line-height:20px}
+.day-stats:is([data-stats="gauge"],[data-stats="ticket"]):empty{display:none}
+@media(min-width:1040px){
+  #stats-review{justify-content:stretch;max-height:calc(100dvh - 28px);overflow-y:auto;overscroll-behavior:contain}
+}
+@media(max-width:1039px){
+  #stats-review{justify-content:safe center;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
+  #stats-review::-webkit-scrollbar{display:none}
+  .stats-choice{flex:none}
+}
