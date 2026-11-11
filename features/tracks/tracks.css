@@ -151,10 +151,12 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 #current{display:grid;place-items:center;height:44px;margin-bottom:8px;font:750 20px/1 var(--font-ui);
   font-variant-numeric:tabular-nums;color:white;text-shadow:0 2px 6px #10101c}
 #visit-context{position:absolute;top:13px;left:0;transform:translateX(-50%);width:max-content;max-width:min(78vw,285px);
-  display:grid;justify-items:center;gap:8px;color:var(--color-text-on-map);text-align:center;pointer-events:none}
-#visit-label{max-width:100%;padding:5px;margin:-5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font:var(--type-pin-title);letter-spacing:var(--tracking-pin-title);text-shadow:var(--outline-pin-title)}
-#visit-hours{font:var(--type-map-chip-strong);font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:var(--outline-number-2)}
+  display:grid;justify-items:center;gap:4px;color:var(--color-text-on-map);text-align:center;pointer-events:none}
+#visit-label{max-width:100%;padding:2px;margin:-2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font:var(--type-pin-title);font-size:16px;line-height:20px;letter-spacing:var(--tracking-pin-title);
+  -webkit-text-stroke:2.8px white;paint-order:stroke fill}
+#visit-hours{font:800 14px/18px var(--font-ui);color:white;font-variant-numeric:tabular-nums;
+  white-space:nowrap;text-shadow:0 1px 3px #10101c}
 
 .place.at-visit img{transform:translateX(-34px)}
 .place.at-visit .place-dot{visibility:hidden}

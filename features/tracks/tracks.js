@@ -80,16 +80,17 @@ const uiFamily=getComputedStyle(document.body).fontFamily;
 function captionStyle(id){
   const style=getComputedStyle($(id));
   return {font:style.fontWeight+' '+style.fontSize+' '+style.fontFamily,
-    spacing:style.letterSpacing==='normal'?'0px':style.letterSpacing,color:style.color};
+    spacing:style.letterSpacing==='normal'?'0px':style.letterSpacing,color:style.color,
+    strokeWidth:parseFloat(style.webkitTextStrokeWidth)||0,strokeColor:style.webkitTextStrokeColor};
 }
 const visitTitleStyle=captionStyle('visit-label'),visitTimeStyle=captionStyle('visit-hours');
-function stickerLine(ctx,text,style,y,outline,maxWidth){
+function captionLine(ctx,text,style,y,maxWidth){
   ctx.font=style.font;ctx.letterSpacing=style.spacing;
   if(ctx.measureText(text).width>maxWidth){
     while(text.length && ctx.measureText(text+'…').width>maxWidth)text=text.slice(0,-1);
     text+='…';
   }
-  ctx.lineWidth=outline*2;ctx.strokeText(text,0,y);
+  if(style.strokeWidth){ctx.lineWidth=style.strokeWidth;ctx.strokeStyle=style.strokeColor;ctx.strokeText(text,0,y)}
   ctx.fillStyle=style.color;ctx.fillText(text,0,y);
 }
 function prepareDay(record){
@@ -174,10 +175,11 @@ function drawStoryText(ctx,pos,height,unit,pinX,foot){
   const visit=visits.find(v=>pos.time*60>=v.t && pos.time*60<=v.end);
   if(visit){
     ctx.save();ctx.translate(pinX/unit,foot/unit+13);ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.shadowBlur=0;ctx.lineJoin='round';ctx.strokeStyle='white';
+    ctx.shadowBlur=0;ctx.lineJoin='round';
     const limit=Math.min(width*.78,285);
-    stickerLine(ctx,visit.name,visitTitleStyle,7.5,4.5,limit-10);
-    stickerLine(ctx,visit.detail,visitTimeStyle,31,2,limit);
+    captionLine(ctx,visit.name,visitTitleStyle,10,limit-4);
+    ctx.shadowColor='#10101c';ctx.shadowOffsetY=1;ctx.shadowBlur=3;
+    captionLine(ctx,visit.detail,visitTimeStyle,33,limit);
     ctx.restore();
   }
   ctx.shadowBlur=0;ctx.fillStyle='#14141edd';ctx.font='700 12px '+uiFamily;
@@ -618,7 +620,7 @@ async function prepareVideo(){
     $('status').textContent='Не удалось подготовить видео.';
   };
   try{
-    await Promise.all([brandLogo.decode(),document.fonts.load(visitTitleStyle.font,'остановка')]);
+    await Promise.all([brandLogo.decode(),document.fonts.load(visitTitleStyle.font,'остановка'),document.fonts.load(visitTimeStyle.font,'11:52')]);
     if(session!==storySession || !$('story').open)return;
     const type=['video/mp4;codecs=avc1.42002A','video/mp4','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
     stream=canvas.captureStream(30);
