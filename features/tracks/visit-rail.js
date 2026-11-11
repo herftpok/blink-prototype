@@ -12,7 +12,7 @@ export function createVisitRail(seekTo,clock){
   const el=id=>document.getElementById(id);
   const rail=el('visit-rail'),track=el('visit-track'),slider=el('seek');
   const previous=el('prev-visit'),next=el('next-visit'),context=el('visit-context');
-  const lens=rail.querySelector('.rail-lens');
+  const cursor=rail.querySelector('.rail-cursor');
   const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
   const inset=34;
   let visits=[],anchors=[],progress=0,drag=null,active=null,offset=0;
@@ -46,14 +46,29 @@ export function createVisitRail(seekTo,clock){
   }
   function position(){
     if(!anchors.length)return;
-    offset=interpolate(progress,'p','x');
-    const head=(visits.length?headPosition(progress):offset)+inset;
-    scroll=clamp(head-width/2,0,Math.max(0,anchors.at(-1).x+2*inset-width));
+    offset=visits.length?headPosition(progress):progress*anchors.at(-1).x;
+    const head=offset+inset;
+    scroll=head-width/2;
     track.style.transform='translate3d('+(-scroll)+'px,0,0)';
-    lens.style.transform='translate3d('+(head-scroll)+'px,-50%,0) translateX(-50%)';
+    let strongest=0;
+    for(const [i,visit] of visits.entries()){
+      const distance=Math.abs(anchors[i+1].x-offset);
+      const proximity=clamp(1-distance/visit.focusRadius,0,1);
+      const focus=proximity*proximity*(3-2*proximity);
+      strongest=Math.max(strongest,focus);
+      // The circle, rim and artwork are lifted together, with a common baseline.
+      if(visit.focus!==focus){
+        visit.button.style.setProperty('--focus',focus);
+        visit.focus=focus;
+      }
+    }
+    cursor.style.left=(head-scroll)+'px';
+    cursor.style.opacity=1-strongest;
+
   }
   function layout(){
     width=rail.clientWidth;
+    track.style.setProperty('--end-hatching',width/2+'px');
     const length=Math.max(420,width-2*inset);
     anchors=[{p:0,x:0}];
     for(const v of visits){
@@ -63,25 +78,39 @@ export function createVisitRail(seekTo,clock){
     }
     const last=anchors.at(-1),end=last.x+Math.max(12,(1-last.p)*length);
     anchors.push({p:1,x:end});track.style.width=(end+2*inset)+'px';
+    for(const [i,visit] of visits.entries()){
+      const x=anchors[i+1].x;
+      const left=i?x-anchors[i].x:Infinity;
+      const right=i+1<visits.length?anchors[i+2].x-x:Infinity;
+      visit.focusRadius=Math.min(64,.85*Math.min(left,right));
+    }
     position();
   }
   new ResizeObserver(layout).observe(rail);
-  function interpolate(value,from,to){
-    const i=anchors.findIndex(a=>a[from]>=value);
-    if(i<0)return anchors.at(-1)[to];
-    if(!i)return anchors[0][to];
-    const a=anchors[i-1],b=anchors[i];
-    return a[to]+(b[to]-a[to])*(value-a[from])/(b[from]-a[from]);
+  function progressAt(x){
+    const end=anchors.at(-1).x;
+    if(x<=0)return 0;
+    if(x>=end)return 1;
+    if(!visits.length)return x/end;
+    // Invert the same travel curve used by playback. A 40-pixel drag moves
+    // the visible strip by 40 pixels even when it starts close to a visit.
+    let low=0,high=1;
+    for(let i=0;i<18;i++){
+      const mid=(low+high)/2;
+      if(headPosition(mid)<x)low=mid;else high=mid;
+    }
+    return (low+high)/2;
   }
   function setVisits(list){
-    cancelMotion();visits=list;active=null;drag=null;context.hidden=true;lens.classList.remove('settled');
+    cancelMotion();visits=list;active=null;drag=null;context.hidden=true;
     track.replaceChildren();
     for(const visit of visits){
       const button=document.createElement('button'),img=new Image();
       button.type='button';button.className='rail-stop';
       button.setAttribute('aria-label',visit.name+', '+visit.detail);
       button.title=visit.name+' · '+visit.detail;
-      img.src=visit.icon;img.alt='';button.append(img);track.append(button);
+      const disc=document.createElement('span');disc.className='stop-disc';
+      img.src=visit.icon;img.alt='';disc.append(img);button.append(disc);track.append(button);
       button.onclick=e=>{if(e.detail===0)glideTo(visit.p)};
       // Keep offscreen landmarks reachable without letting focus scroll the clipped rail.
       button.onfocus=()=>{if(button.matches(':focus-visible')){cancelMotion();seekTo(visit.p)}};
@@ -91,15 +120,12 @@ export function createVisitRail(seekTo,clock){
   }
   function update(p,time){
     if(!anchors.length)return;
-    const backwards=p<progress;
     progress=p;position();
     slider.value=Math.round(p*10000);
     const visit=visits.find(v=>p>=v.from && p<=v.to);
     if(visit!==active){
-      rail.style.setProperty('--rail-direction',backwards?-1:1);
       active?.button.removeAttribute('aria-current');
       active=visit;context.hidden=!visit;
-      lens.classList.toggle('settled',!!visit);
       if(visit){
         visit.button.setAttribute('aria-current','location');
         el('visit-label').textContent=visit.name+' · '+visit.duration;
@@ -110,18 +136,20 @@ export function createVisitRail(seekTo,clock){
     next.disabled=!visits.some(v=>v.p>(visit?.to ?? p)+.00001);
     slider.setAttribute('aria-valuetext',clock(time)+(visit?', '+visit.name+', '+visit.duration:''));
   }
-  function seekOffset(x){seekTo(interpolate(clamp(x,0,anchors.at(-1).x),'x','p'))}
+  function seekOffset(x){seekTo(progressAt(x))}
   function glideTo(target,coastDuration=0){
     cancelMotion();
     if(reducedMotion.matches || Math.abs(progress-target)<.0001){seekTo(target);return}
     // Interpolate in strip pixels so motion stays even between closely spaced visits.
-    const from=offset,to=interpolate(target,'p','x'),start=performance.now();
-    const duration=coastDuration || clamp(135+Math.abs(to-from)*.2,145,195);
+    const from=offset,to=headPosition(target),start=performance.now();
+    if(Math.abs(to-from)<.1){seekTo(target);return}
+    const duration=coastDuration || clamp(280+Math.abs(to-from)*.7,300,490);
     animationTarget=target;
     function step(now){
       const t=clamp((now-start)/duration,0,1);
       if(t>=1){frame=0;animationTarget=null;seekTo(target);return}
-      const eased=1-(1-t)**3;
+      // Quick traverse with a short, gentle settle at the next icon.
+      const eased=coastDuration?1-(1-t)**3:t*t*(3-2*t);
       seekOffset(from+(to-from)*eased);
       frame=requestAnimationFrame(step);
     }
@@ -166,10 +194,14 @@ export function createVisitRail(seekTo,clock){
     const gesture=drag;release();
     if(!gesture.moved){
       const tapX=gesture.scroll+(e.clientX-gesture.left)*gesture.scale-inset;
-      glideTo(gesture.visit?.p ?? interpolate(tapX,'x','p'));
-    }else if(!reducedMotion.matches && e.timeStamp-gesture.lastTime<85){
-      const travel=clamp(gesture.velocity*100,-width*.55,width*.55);
-      if(Math.abs(travel)>5)glideTo(interpolate(offset+travel,'x','p'),clamp(Math.abs(travel)*1.5,110,205));
+      glideTo(gesture.visit?.p ?? progressAt(tapX));
+    }else if(!reducedMotion.matches){
+      const speed=e.timeStamp-gesture.lastTime<85?gesture.velocity:0;
+      const travel=clamp(speed*120,-width*.55,width*.55);
+      const landing=clamp(offset+travel,0,anchors.at(-1).x);
+      const i=visits.findIndex((v,i)=>Math.abs(anchors[i+1].x-landing)<v.focusRadius*.50);
+      if(i>=0)glideTo(visits[i].p,250);
+      else if(Math.abs(travel)>5)glideTo(progressAt(landing),clamp(Math.abs(travel)*2,125,300));
     }
   };
   rail.onlostpointercapture=rail.onpointercancel=release;

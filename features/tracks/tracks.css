@@ -133,27 +133,29 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 .no-route :is(#map,#places,#traveller,.playback,#summary){display:none}
 #share:disabled{opacity:.38}
 
-/* The cursor follows the track to its edges, keeping the full rail in view. */
+/* The strip moves past a fixed focal point; edge hatching fills the capsule. */
 .playback{left:12px;right:12px;bottom:calc(max(24px,var(--safe-bottom)) + 54px);display:block;pointer-events:none}
 .playback button,.playback #visit-rail{pointer-events:auto}
 .rail-controls{display:flex;align-items:center;gap:7px}
 #play{flex:0 0 44px;width:44px;height:44px;border:0;background:#e2cdff}
-#visit-rail{position:relative;flex:1;height:54px;min-width:0;border-radius:28px;overflow:clip;background:#191724dc;
+#visit-rail{position:relative;flex:1;height:54px;min-width:0;border-radius:28px;overflow:visible;background:#191724dc;
   border:1px solid #ffffff39;backdrop-filter:blur(12px);touch-action:none;user-select:none;cursor:grab}
 #visit-rail:active{cursor:grabbing}
-#visit-track{position:absolute;left:0;top:0;height:100%;will-change:transform}
-#visit-track::before{content:"";position:absolute;left:0;right:0;top:19px;height:14px;
+.rail-window{pointer-events:none;position:absolute;inset:-18px 0 0;overflow:clip;border-radius:0 0 28px 28px}
+#visit-track{position:absolute;left:0;bottom:0;height:52px;will-change:transform}
+#visit-track::before{content:"";position:absolute;left:calc(-1 * var(--end-hatching));right:calc(-1 * var(--end-hatching));top:19px;height:14px;
   background:repeating-linear-gradient(112deg,transparent 0 6px,#eee4ff70 6px 8px,transparent 8px 11px);border-radius:2px}
-.rail-stop{position:absolute;top:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;
-  display:grid;place-items:center;background:#484454;box-shadow:inset 0 0 0 1px #ffffff30;cursor:pointer}
-.rail-stop img{width:31px;height:31px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 2px #0005);transition:transform .12s var(--ease-emphasized)}
-.rail-stop[aria-current]{background:#776783}
-.rail-lens{position:absolute;left:0;top:50%;width:48px;height:48px;transform:translate(-50%,-50%);
-  pointer-events:none}
-.rail-lens::before{content:"";position:absolute;inset:0;border:2px solid #ece0ff;border-radius:50%;box-shadow:0 0 0 2px #18142455,inset 0 0 12px #dabdff22}
+.rail-stop{--focus:0;--enlarge:var(--focus);position:absolute;top:50%;transform:translate(-50%,-50%);width:44px;height:44px;padding:0;border:0;
+  display:grid;place-items:center;background:transparent;cursor:pointer}
+.stop-disc{position:relative;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;
+  background:linear-gradient(165deg,#696272,#484353 82%);box-shadow:inset 0 0 0 1px #ffffff24;
+  transform-origin:50% 100%;transform:translateY(calc(-2px * var(--focus))) scale(calc(1 + .56 * var(--enlarge)))}
+.stop-disc::after{content:"";position:absolute;inset:0;border-radius:inherit;border:1.7px solid #f4eaff;opacity:var(--focus);pointer-events:none}
+.rail-stop img{width:29px;height:29px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 2px #0004)}
+.rail-cursor{position:absolute;top:18px;width:2px;height:16px;background:#e5d6f8;border-radius:2px;transform:translateX(-50%) skewX(-20deg);pointer-events:none}
 #seek{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;margin:0}
 #visit-rail:focus-within{outline:2px solid #dcc6ff;outline-offset:2px}
-.rail-time{margin-left:51px;display:flex;align-items:center;justify-content:center;gap:5px;height:38px;text-shadow:0 2px 6px #10101c}
+.rail-time{margin:0 0 9px 51px;display:flex;align-items:center;justify-content:center;gap:5px;height:38px;text-shadow:0 2px 6px #10101c}
 #current{font:750 20px/1 var(--font-ui);font-variant-numeric:tabular-nums;color:white}
 .rail-time button{width:42px;height:38px;border-radius:12px;font:600 25px var(--font-text);color:white;text-shadow:inherit}
 .rail-time button:disabled{opacity:.3}
@@ -166,11 +168,11 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 .place.at-visit img{transform:translateX(-34px)}
 .place.at-visit .tag,.place.at-visit .place-dot{visibility:hidden}
 
-.rail-stop:is(.pressed,:focus-visible) img{transform:scale(1.32)}
-@media(hover:hover) and (pointer:fine){
-  .rail-stop:hover img{transform:scale(1.32)}
+.rail-stop:is(.pressed,:focus-visible){--enlarge:max(var(--focus),.6)}
+@media(hover:hover) and (pointer:fine){.rail-stop:hover{--enlarge:max(var(--focus),.6)}}
+@media(prefers-reduced-motion:reduce){
+  .stop-disc{transform:none}
 }
-@media(prefers-reduced-motion:reduce){.rail-stop img{transition:none}}
 
 /* Route actions share a reachable row with the calendar in the compact layouts. */
 #route-close{width:46px;height:46px;flex:none;display:grid;place-items:center;pointer-events:auto;
@@ -202,15 +204,3 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 .review-layout .device{height:calc(100dvh - var(--review-height))}
 @media(max-width:480px){.review-layout .app{height:calc(100dvh - var(--review-height))}}
 @media(max-width:350px){#layout-review button{padding:0 10px;font-size:12px}}
-
-/* Snap as one rigid circle and landmark; only their shared position rebounds. */
-.rail-lens::before{transition:background-color .10s,border-color .10s,box-shadow .10s}
-.rail-lens.settled::before{background-color:#d9baff0c;border-color:#f6ecff;box-shadow:0 0 0 2px #18142455,0 0 7px #d4acff40}
-@media(prefers-reduced-motion:no-preference){
-  .rail-lens.settled,.rail-stop[aria-current]{animation:rail-rebound .16s ease-out}
-}
-@keyframes rail-rebound{
-  0%,100%{translate:0}
-  32%{translate:calc(2.5px * var(--rail-direction)) 0}
-  68%{translate:calc(-.7px * var(--rail-direction)) 0}
-}
