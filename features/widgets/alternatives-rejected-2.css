@@ -1,0 +1,86 @@
+/* Макеты 346 × 161 и 161 × 161 по сетке widgets/home-screen.png.
+   Локальные токены и новые композиции описаны в ALTERNATIVES.md. */
+.va-page {
+  --va-widget-width: 346px;
+  --va-widget-height: 161px;
+  --va-small-width: 161px;
+  --va-portrait-width: 72px;
+  --va-portrait-height: 88px;
+  --va-hero-number: 58px;
+  --va-qr-size: 145px;
+  --wg-radius: var(--radius-ios-widget);
+  background: var(--color-bg);
+}
+.va-board { max-width: 900px; margin: auto; padding: var(--space-24); }
+.va-header { margin-bottom: var(--space-24); }
+.va-header h1 { font: var(--type-screen-title); letter-spacing: -0.04em; }
+.va-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); flex-wrap: wrap; margin-top: var(--space-16); }
+.va-sizes { display: flex; gap: var(--space-6); }
+.va-sizes .panel__button { min-height: calc(var(--space-24) + var(--space-20)); }
+.va-saved { color: var(--color-text-secondary); font: var(--type-map-chip); text-underline-offset: var(--space-4); }
+.va-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-24); }
+.va-concept { min-width: 0; }
+.va-concept h2 { font: var(--type-row-title); margin-bottom: var(--space-12); }
+.va-surface { padding: var(--space-20) var(--space-16); border-radius: var(--radius-sheet); background: url('../../assets/widgets/wallpaper.webp') center 34% / cover; }
+.va-widget-slot { position: relative; width: 100%; max-width: var(--va-widget-width); height: var(--va-widget-height); margin: auto; }
+.va-page[data-size="small"] .va-widget-slot { width: var(--va-small-width); }
+.va-description { margin-top: var(--space-12); font: var(--type-distance); color: var(--color-text-secondary); }
+.va-demo { min-height: var(--space-32); margin-top: var(--space-4); font: var(--type-map-chip); color: var(--color-text-muted); text-decoration: underline; text-underline-offset: var(--space-4); text-align: left; }
+.va-demo[aria-pressed="true"] { color: var(--color-pink); }
+.va-footer { margin-top: var(--space-24); font: var(--type-map-chip); color: var(--color-text-muted); }
+.va-widget h3 { font: var(--type-stat-label); letter-spacing: -0.03em; }
+.va-friendship { background: var(--color-bg) url('../../assets/profile/theme-glow.webp') center / cover; color: var(--color-text); }
+.va-friendship__names { position: absolute; top: var(--space-16); left: var(--space-16); }
+.va-friendship__portraits { position: absolute; right: var(--space-20); top: var(--space-32); width: calc(var(--va-portrait-width) * 1.6); height: calc(var(--va-portrait-height) + var(--space-16)); }
+.va-friendship__portraits img { position: absolute; width: var(--va-portrait-width); height: var(--va-portrait-height); object-fit: cover; border: var(--space-2) solid var(--color-text); border-radius: var(--radius-20); transform: rotate(var(--portrait-turn)); }
+.va-friendship__portraits img:first-child { left: 0; top: 0; }
+.va-friendship__portraits img:last-child { right: 0; bottom: 0; }
+.va-friendship__number { --sticker-size: var(--va-hero-number); position: absolute; left: var(--space-16); top: 58px; color: var(--color-text); text-shadow: var(--outline-number-black-3); transform: rotate(-5deg); }
+.va-friendship__label { position: absolute; left: var(--space-20); bottom: var(--space-14); font: var(--type-widget-meta); }
+.va-shortcuts { background: var(--color-text); color: var(--color-text-on-light); }
+.va-shortcuts__title { position: absolute; top: var(--space-16); left: var(--space-16); }
+.va-shortcuts__all { position: absolute; top: var(--space-6); right: var(--space-12); min-height: calc(var(--space-24) + var(--space-20)); display: flex; align-items: center; gap: var(--space-2); font: var(--type-widget-meta); color: inherit; text-decoration: none; }
+.va-shortcuts__all .icon { --icon-size: 16px; }
+.va-shortcuts__grid { position: absolute; left: var(--space-12); right: var(--space-12); top: 61px; bottom: var(--space-12); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-6); }
+.va-person { min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-6); color: inherit; text-decoration: none; font: var(--type-button-compact); }
+.va-person > img, .va-person__placeholder { width: 52px; height: 52px; border-radius: var(--radius-18); object-fit: cover; }
+.va-person > span:last-child { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.va-person__placeholder { display: grid; place-items: center; background: var(--color-map-land); }
+.va-person__placeholder .icon { --icon-size: 24px; }
+.va-shortcuts :focus-visible, .va-card :focus-visible { outline-color: var(--color-text-on-light); }
+.va-card { background: var(--color-pink); color: var(--color-text-on-light); }
+.va-widget .va-card__title { position: absolute; left: var(--space-16); top: var(--space-14); font: var(--type-section-title); }
+.va-card__avatar { position: absolute; top: 77px; left: var(--space-16); width: 42px; height: 42px; object-fit: cover; border-radius: var(--radius-14); }
+.va-card__handle { position: absolute; left: var(--space-16); bottom: var(--space-16); font: var(--type-widget-meta); }
+.va-card__qr { position: absolute; top: var(--space-8); right: var(--space-8); width: var(--va-qr-size); height: var(--va-qr-size); padding: var(--space-16); background: var(--color-text); border-radius: var(--radius-16); }
+.va-card__qr img { width: 100%; height: 100%; image-rendering: pixelated; }
+.va-privacy { background: var(--color-bg); color: var(--color-text); }
+.va-privacy__title { position: absolute; top: var(--space-16); left: var(--space-16); }
+.va-privacy__status { position: absolute; left: var(--space-16); top: 49px; max-width: 170px; font: var(--type-widget-meta); color: var(--color-text-secondary); }
+.va-privacy__art { position: absolute; right: var(--space-14); top: var(--space-32); width: 102px; height: 102px; object-fit: contain; filter: var(--outline-sticker); }
+.va-privacy__toggle { --press-scale: var(--press-scale-wide); position: absolute; bottom: var(--space-12); left: var(--space-16); min-height: calc(var(--space-24) + var(--space-20)); padding: var(--space-8) var(--space-16); border-radius: var(--radius-pill); font: var(--type-button-compact); background: var(--color-selected); color: var(--color-text-on-light); }
+.va-privacy--hidden .va-privacy__toggle { background: var(--color-text); }
+.va-small .va-friendship__names { top: var(--space-12); left: var(--space-12); font: var(--type-widget-meta); }
+.va-small .va-friendship__portraits { top: var(--space-32); left: 47px; right: auto; width: 68px; height: 45px; }
+.va-small .va-friendship__portraits img { width: 38px; height: 42px; border-radius: var(--radius-12); }
+.va-small .va-friendship__number { --sticker-size: 44px; top: 82px; left: 50%; transform: translateX(-50%) rotate(-5deg); }
+.va-small .va-friendship__label { left: 0; right: 0; bottom: var(--space-12); text-align: center; font: var(--type-button-compact); }
+.va-small .va-shortcuts__title, .va-small .va-shortcuts__all { display: none; }
+.va-small .va-shortcuts__grid { inset: var(--space-8); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.va-small .va-person { gap: var(--space-4); }
+.va-small .va-person > img, .va-small .va-person__placeholder { width: 42px; height: 42px; border-radius: var(--radius-14); }
+.va-small .va-card__title, .va-small .va-card__avatar { display: none; }
+.va-small .va-card__qr { width: 132px; height: 132px; top: var(--space-4); right: 14.5px; padding: var(--space-16); border-radius: var(--radius-14); }
+.va-small .va-card__handle { left: 0; right: 0; bottom: var(--space-8); text-align: center; font: var(--type-button-compact); }
+.va-small .va-privacy__title { left: var(--space-12); top: var(--space-12); font: var(--type-pin-title); }
+.va-small .va-privacy__status { display: none; }
+.va-small .va-privacy__art { top: var(--space-32); right: 48.5px; width: 64px; height: 64px; }
+.va-small .va-privacy__toggle { bottom: var(--space-10); left: var(--space-10); right: var(--space-10); padding: var(--space-6); }
+@media (max-width: 760px) {
+  .va-board { max-width: 410px; padding: var(--space-20) var(--space-12); }
+  .va-header h1 { font: var(--type-sheet-title); }
+  .va-grid { grid-template-columns: minmax(0, 1fr); }
+  .va-surface { padding: var(--space-20) var(--space-10); }
+  .va-nav { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) { .va-page *, .va-page *::before, .va-page *::after { animation: none !important; transition: none !important; } }

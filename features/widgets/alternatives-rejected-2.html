@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – другие сценарии виджетов</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="widgets.css">
+  <link rel="stylesheet" href="alternatives-rejected-2.css">
+</head>
+<body class="va-page" data-size="medium">
+<main class="va-board">
+  <header class="va-header">
+    <h1>новые виджеты</h1>
+    <nav class="va-nav" aria-label="размер и версии">
+      <div class="va-sizes" role="group" aria-label="размер виджета">
+        <button class="panel__button pressable" type="button" data-size="medium" aria-pressed="true">средние</button>
+        <button class="panel__button pressable" type="button" data-size="small" aria-pressed="false">маленькие</button>
+      </div>
+      <a class="va-saved" href="stickers-v1.html?state=start">стикеры · сохранённая версия</a>
+    </nav>
+  </header>
+  <div class="va-grid">
+    <section class="va-concept" aria-labelledby="friendship-title">
+      <h2 id="friendship-title">дни дружбы</h2>
+      <div class="va-surface"><div class="va-widget-slot" id="friendship"></div></div>
+      <p class="va-description">Ваш маленький юбилей. С первого дня в друзьях.</p>
+      <button class="va-demo" type="button" data-action="new-friend" aria-pressed="false">показать первый день</button>
+    </section>
+    <section class="va-concept" aria-labelledby="shortcuts-title">
+      <h2 id="shortcuts-title">мои люди</h2>
+      <div class="va-surface"><div class="va-widget-slot" id="shortcuts"></div></div>
+      <p class="va-description">Четыре своих человека. Тап по фото открывает чат.</p>
+      <button class="va-demo" type="button" data-action="one-friend" aria-pressed="false">показать с одним другом</button>
+    </section>
+    <section class="va-concept" aria-labelledby="card-title">
+      <h2 id="card-title">добавь меня</h2>
+      <div class="va-surface"><div class="va-widget-slot" id="card"></div></div>
+      <p class="va-description">Показать свой QR при знакомстве, прямо с рабочего стола.</p>
+    </section>
+    <section class="va-concept" aria-labelledby="privacy-title">
+      <h2 id="privacy-title">невидимка</h2>
+      <div class="va-surface"><div class="va-widget-slot" id="privacy"></div></div>
+      <p class="va-description">Скрыть свою геопозицию и снова стать видимым.</p>
+    </section>
+  </div>
+  <footer class="va-footer">Интерактивные макеты. Данные и настройки для показа.</footer>
+</main>
+<script src="alternatives-rejected-2.js"></script>
+</body>
+</html>

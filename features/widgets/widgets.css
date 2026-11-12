@@ -1,0 +1,483 @@
+/* Виджеты Blink на рабочем столе iOS. Раскладка рабочего стола снята с widgets/home-screen.png
+   (экран 410×888 px → 390×844 pt, 1.0513 px на pt): поля 22, маленький виджет 161, между колонками 24,
+   верх первого ряда 83, между рядами 22.4. Рабочий стол – превью, в продукт идут только виджеты. */
+
+/* ── стенд ── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: 100dvh;
+  padding: var(--space-16) var(--space-24);
+}
+
+.stage__head {
+  text-align: center;
+}
+
+.stage__title {
+  font: var(--type-section-title);
+}
+
+.stage__lead {
+  margin-top: var(--space-4);
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.stage__body {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--space-32);
+  zoom: var(--stage-zoom, 1);          /* телефоны целиком в окне: widgets.js → fit() */
+}
+
+.stage__phone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.stage__caption {
+  font: var(--type-distance);
+  color: var(--color-text-muted);
+}
+
+.stage__link {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.stage .device {
+  min-height: 0;
+  padding: 0;
+}
+
+/* пульт: что с лёвой и „лёва кидает какашку“ – одной строкой над телефонами */
+.panel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-12) var(--space-24);
+}
+
+.panel__group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.panel__label {
+  margin-right: var(--space-6);
+}
+
+.panel__button {
+  --press-scale: var(--press-scale-wide);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: var(--space-6) var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-12);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-map-chip);
+}
+
+.panel__button[aria-checked="true"],
+.panel__button[aria-pressed="true"] {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel__button:hover {
+    border-color: var(--color-text-dim);
+    color: var(--color-text);
+  }
+}
+
+/* На телефоне – только продукт: первый рабочий стол */
+@media (max-width: 480px) {
+  .stage {
+    display: block;
+    padding: 0;
+  }
+
+  /* обёртка не по центру, а во всю ширину: иначе .app (width: 100 %) схлопывается в ноль */
+  .stage__body,
+  .stage__phone {
+    display: block;
+  }
+
+  .stage__head,
+  .panel,
+  .stage__caption,
+  .stage__phone + .stage__phone {
+    display: none;
+  }
+}
+
+/* ── рабочий стол ── */
+
+.home {
+  --wg-margin: 5.641cqw;          /* 22 при 390 */
+  --wg-col-gap: 6.154cqw;         /* 24 */
+  --wg-row-gap: 5.744cqw;         /* 22.4 */
+  --wg-small: 41.282cqw;          /* 161 */
+  --wg-radius: var(--radius-ios-widget);
+  background: var(--color-bg) url("../../assets/widgets/wallpaper.webp") center / cover no-repeat;
+}
+
+.home__page {
+  position: absolute;
+  inset: 83px 0 0;
+}
+
+.home__slot {
+  position: absolute;
+  left: calc(var(--wg-margin) + (var(--col) - 1) * (var(--wg-small) + var(--wg-col-gap)));
+  top: calc((var(--row) - 1) * (var(--wg-small) + var(--wg-row-gap)));
+  width: var(--wg-small);
+  height: var(--wg-small);
+}
+
+.home__slot--wide {
+  width: calc(var(--wg-small) * 2 + var(--wg-col-gap));
+}
+
+.home__slot--large {
+  width: calc(var(--wg-small) * 2 + var(--wg-col-gap));
+  height: calc(var(--wg-small) * 2 + var(--wg-row-gap));
+}
+
+/* четыре иконки в месте маленького виджета: 72 pt (крупные иконки iOS, без подписей) */
+.home__icon {
+  --press-scale: var(--press-scale-small);
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.home__icon img {
+  width: 100%;
+  height: 100%;
+}
+
+/* Dynamic Island – без live activity, как на скриншоте рабочего стола (x 134…256, y 12…47) */
+.home__island {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  width: 122px;
+  height: 35px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+  transform: translateX(-50%);
+}
+
+/* „поиск“ iOS: стеклянная пилюля над доком (y 681…709 при 390): на 14 выше дока, док – 28.54cqw в высоту */
+.home__search {
+  position: absolute;
+  left: 50%;
+  bottom: calc(9px + 28.54cqw + 14px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--color-ios-search);
+  box-shadow: inset 0 0 0 1px var(--color-ios-search-border);
+  color: var(--color-ios-search-text);
+  font: var(--type-ios-search);
+  transform: translateX(-50%);
+}
+
+.home__search .icon {
+  --icon-size: 12px;
+}
+
+/* док со скриншота как есть: 9.5…380 × 725…835 pt */
+.home__dock {
+  position: absolute;
+  left: 2.436cqw;
+  bottom: 9px;
+  width: 95.128cqw;
+}
+
+/* ── виджет ── */
+
+.widget {
+  --ref-w: 161;                   /* размер виджета при экране 390: точки на карте – в его pt */
+  --ref-h: 161;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--wg-radius);
+  isolation: isolate;
+}
+
+.widget--medium {
+  --ref-w: 346;
+}
+
+.widget--large {
+  --ref-w: 346;
+  --ref-h: 344;
+}
+
+/* карта – подложка карты в масштабе приложения: 390 × 844 pt, кадр сдвигается под человека */
+.wg-map {
+  background: var(--color-map-land) url("../../assets/map/map-hd.webp") var(--map-x) var(--map-y) / 390px 844px no-repeat;
+}
+
+/* точка в pt виджета при экране 390 → доля виджета: на 375 и 430 пин остаётся на своём месте в кадре */
+.wg-spot {
+  position: absolute;
+  left: calc(var(--x) / var(--ref-w) * 100%);
+  top: calc(var(--y) / var(--ref-h) * 100%);
+  pointer-events: none;
+}
+
+/* нажатие на карту – друг на карте в приложении (экрана в задаче нет: только отклик) */
+.wg-open {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+/* кольцо фокуса на светлой карте – чёрное, как у плашек карты */
+.wg-map :focus-visible {
+  outline-color: var(--color-text-on-map);
+}
+
+/* виджет целиком отвечает на нажатие, как в iOS: чуть сжимается */
+.widget {
+  transition: transform var(--duration-press) ease;
+}
+
+.widget:has(> .wg-open:active) {
+  transform: scale(var(--press-scale-wide));
+}
+
+/* круглая кнопка карты (чёрный круг, белая иконка), в углу – концентрично углу виджета: 24 − 16 = 8 */
+.wg-round {
+  --press-scale: var(--press-scale-small);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-map-button);
+  color: var(--color-text);
+}
+
+.wg-round .icon {
+  --icon-size: 18px;
+}
+
+.wg-corner {
+  position: absolute;
+}
+
+.wg-corner--bl {
+  left: 8px;
+  bottom: 8px;
+}
+
+.wg-corner--br {
+  right: 8px;
+  bottom: 8px;
+}
+
+.wg-row {
+  position: absolute;
+  display: flex;
+  gap: 6px;
+}
+
+.wg-row--bl {
+  left: 8px;
+  bottom: 8px;
+}
+
+/* какашка – 3D-стикер с белой обводкой, наклеен */
+.wg-poop {
+  --press-scale: var(--press-scale-small);
+  position: absolute;
+}
+
+.wg-poop__img {
+  width: 100%;
+  height: 100%;
+  filter: var(--outline-sticker) var(--shadow-sticker-on-map);
+}
+
+.wg-poop--corner {
+  top: 6px;
+  right: 6px;
+  width: 34px;
+  height: 34px;
+  transform: rotate(10deg);
+}
+
+/* имя над пином в маленьком виджете – не дальше какашки в углу: длинное обрезается многоточием.
+   Поля 4.5 – место для белой обводки внутри обрезки, поэтому строка опущена на те же 4.5 */
+.widget--small .pin__title {
+  max-width: 87px;
+  overflow: hidden;
+  padding: 4.5px;
+  bottom: calc(100% + var(--pin-title-bottom) - 4.5px);
+  text-overflow: ellipsis;
+}
+
+.wg-poop--big {
+  right: 8px;
+  bottom: 6px;
+  width: 64px;
+  height: 64px;
+  transform: rotate(10deg);
+}
+
+/* шапка, как у карты: имя (роль города) и строка под ним */
+.wg-head {
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  color: var(--color-text-on-map);
+}
+
+.wg-head__name {
+  max-width: 160px;               /* до пина: длинное имя – многоточием */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--type-widget-name);
+  letter-spacing: -0.02em;
+}
+
+.wg-head__city {
+  font: var(--type-widget-city);
+  letter-spacing: -0.04em;
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+.wg-head__meta {
+  margin-top: 2px;
+  font: var(--type-widget-meta);
+}
+
+/* путь между тобой и другом: розовые точки, как у дорожки эльфа */
+.wg-path {
+  position: absolute;
+  left: var(--x);
+  top: calc(var(--y) - 2px);
+  width: var(--len);
+  height: 4px;
+  background: radial-gradient(circle, var(--color-pink) 0 1.8px, transparent 2.3px) 0 50% / 9px 4px repeat-x;
+  transform-origin: 0 50%;
+  transform: rotate(var(--turn));
+}
+
+.wg-path__chip {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  transform: translate(-50%, -50%);
+}
+
+/* ── какашка летит и прилетает ── */
+
+/* летит из кнопки к пину по дуге (widgets.js → throwPoop) */
+.wg-fly {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  z-index: 5;
+  width: 38px;
+  height: 38px;
+  max-width: none;
+  filter: var(--outline-sticker);
+  pointer-events: none;
+}
+
+/* Во время отправки стикер заменяет весь пин в той же точке карты. */
+.wg-map--sent .wg-spot > .pin { visibility: hidden; }
+.wg-burst {
+  position: absolute;
+  left: calc(-1 * var(--widget-throw-burst) / 2);
+  top: calc(-1 * (var(--widget-throw-burst) / 2 + var(--space-24)));
+  width: var(--widget-throw-burst);
+  height: var(--widget-throw-burst);
+  pointer-events: none;
+}
+.wg-returning { transform-origin: 50% 50%; }
+.wg-burst .wg-stuck {
+  width: 100%; height: 100%; max-width: none;
+  filter: var(--outline-sticker) var(--shadow-sticker-on-map);
+  transform: rotate(-6deg);
+  pointer-events: none;
+}
+.wg-burst__name {
+  position: absolute; bottom: calc(100% + var(--space-2));
+  left: 50%; transform: translateX(-50%);
+  font: var(--type-pin-title);
+  letter-spacing: var(--tracking-pin-title);
+  color: var(--color-text-on-light);
+  text-shadow: var(--outline-pin-title);
+  white-space: nowrap;
+}
+.widget--medium .wg-burst__name { display: none; }
+
+/* Входящий бросок в обычном виджете местоположения.
+   Стикер в верхнем углу; карта и пин остаются видимыми. */
+.wg-incoming {
+  position: absolute; top: var(--space-6); right: var(--space-6);
+  width: var(--widget-throw-sticker); height: var(--widget-throw-sticker);
+  filter: var(--outline-sticker) var(--shadow-sticker-on-map);
+  transform: rotate(-12deg); pointer-events: none;
+}
+.wg-reply {
+  --press-scale: var(--press-scale-wide);
+  position: absolute; bottom: var(--space-8); left: var(--space-8); right: var(--space-8);
+  display: flex; align-items: center; justify-content: center;
+  height: var(--space-32); border-radius: var(--radius-16);
+  background: var(--color-map-button); color: var(--color-text);
+  font: var(--type-button-compact);
+}
+.wg-event {
+  position: absolute; left: var(--space-8); right: var(--space-8);
+  bottom: calc(var(--space-32) + var(--space-12));
+  font: var(--type-map-chip-strong); text-align: center;
+  color: var(--color-text-on-map); pointer-events: none;
+}
+.widget--medium .wg-reply { left: auto; width: var(--widget-throw-reply-width); }
+.widget--medium .wg-event { top: calc(var(--space-32) * 2 + var(--space-4)); left: var(--space-14); right: auto; bottom: auto; text-align: left; }
+.widget--medium .wg-incoming { width: calc(var(--space-24) * 2); height: calc(var(--space-24) * 2); }
+
+/* Число приклеено к краю стикера, а не плавает отдельно на карте. */
+.wg-throw-count {
+  position: absolute;
+  right: calc(-1 * var(--space-8));
+  bottom: 0;
+  color: var(--color-text);
+  text-shadow: var(--outline-number-black-3);
+  transform: rotate(var(--count-turn, -6deg));
+  transform-origin: 50% 70%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wg-throw-count { transform: none; }
+}

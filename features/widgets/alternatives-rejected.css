@@ -1,0 +1,80 @@
+/* Стенд сравнения. Средний виджет 346 × 161 из widgets/home-screen.png.
+   Координаты внутри его кадра заданы в долях той же сетки, см. ALTERNATIVES.md. */
+.va-page {
+  --va-widget-width: 346px;
+  --va-widget-height: 161px;
+  --va-photo-width: 72px;
+  --va-photo-height: 84px;
+  --wg-radius: var(--radius-ios-widget);
+  background: var(--color-bg);
+}
+.va-board {
+  max-width: calc(3 * (var(--va-widget-width) + 2 * var(--space-16)) + 2 * var(--space-24) + 2 * var(--space-24));
+  margin: auto;
+  padding: var(--space-32) var(--space-24);
+}
+.va-header { margin-bottom: var(--space-32); }
+.va-header h1 { font: var(--type-screen-title); letter-spacing: -0.04em; }
+.va-header > p { margin-top: var(--space-8); font: var(--type-distance); color: var(--color-text-secondary); }
+.va-nav { display: flex; flex-wrap: wrap; gap: var(--space-8); margin-top: var(--space-20); }
+.va-nav a { text-decoration: none; min-height: calc(var(--space-24) + var(--space-20)); }
+.va-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-24); }
+.va-concept { min-width: 0; }
+.va-concept h2 { font: var(--type-section-title); }
+.va-description { min-height: calc(3 * var(--space-20)); margin: var(--space-8) 0 var(--space-20); font: var(--type-distance); color: var(--color-text-secondary); }
+.va-surface { padding: var(--space-24) var(--space-16); border-radius: var(--radius-sheet); background: url('../../assets/widgets/wallpaper.webp') center 34% / cover; }
+.va-widget-slot { position: relative; width: 100%; height: var(--va-widget-height); }
+.va-try { font: var(--type-distance); margin-top: var(--space-16); }
+.va-demo, .va-note { margin-top: var(--space-12); font: var(--type-map-chip); color: var(--color-text-muted); }
+.va-demo { min-height: var(--space-32); text-decoration: underline; text-underline-offset: var(--space-4); text-align: left; }
+.va-demo[aria-pressed="true"] { color: var(--color-pink); }
+.va-footer { margin-top: var(--space-32); max-width: 75ch; font: var(--type-map-chip); color: var(--color-text-muted); }
+.va-widget { color: var(--color-text-on-map); }
+.va-widget .wg-head { right: 90px; }
+.va-widget .wg-head__name { font: var(--type-banner-title); max-width: none; }
+.va-control {
+  --press-scale: var(--press-scale-small);
+  position: absolute; top: var(--space-8); right: var(--space-8);
+  min-height: calc(var(--space-24) + var(--space-20)); min-width: 64px;
+  padding: var(--space-8) var(--space-12); border-radius: var(--radius-pill);
+  color: var(--color-text); background: var(--color-map-button); font: var(--type-button-compact);
+}
+.va-person { position: absolute; left: calc(var(--person-x) / 346 * 100%); top: 51px; width: 64px; height: 84px; margin-left: -32px; color: inherit; text-decoration: none; }
+.va-person .pin { left: 50%; top: 64px; pointer-events: none; }
+.va-person:active .pin { transform: translate(-50%, -100%) scale(calc(var(--pin-scale) * var(--press-scale))); }
+.va-person:focus-visible { outline: none; }
+.va-person:focus-visible .pin__frame { outline: var(--space-2) solid var(--color-text-on-map); outline-offset: var(--space-4); }
+.va-distance { position: absolute; top: 72px; left: 50%; transform: translateX(-50%); white-space: nowrap; font: var(--type-pin-title); text-shadow: var(--outline-pin-title); }
+.va-empty { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: var(--space-6); padding: var(--space-20); }
+.va-empty strong { font: var(--type-banner-title); }
+.va-empty span { font: var(--type-widget-meta); }
+.va-nearby--empty .va-empty { top: var(--space-32); }
+.va-recap { background: var(--color-bg); color: var(--color-text); }
+.va-recap .va-control { background: var(--color-chip-fill); }
+.va-recap__title { position: absolute; top: var(--space-16); left: var(--space-16); font: var(--type-banner-title); }
+.va-recap__hours { position: absolute; top: 55px; left: var(--space-16); font: var(--type-season-title); letter-spacing: -0.04em; }
+.va-recap__hours small { display: block; margin-top: var(--space-2); font: var(--type-widget-meta); letter-spacing: 0; color: var(--color-text-secondary); }
+.va-recap__meetings { position: absolute; bottom: var(--space-14); left: var(--space-16); font: var(--type-widget-meta); color: var(--color-pink); }
+.va-recap__photos { position: absolute; right: var(--space-16); bottom: var(--space-14); width: calc(var(--va-photo-width) * 1.5); height: calc(var(--va-photo-height) + var(--space-8)); }
+.va-recap__photo { position: absolute; width: var(--va-photo-width); height: var(--va-photo-height); object-fit: cover; border: var(--space-2) solid var(--color-text); border-radius: var(--radius-16); transform: rotate(var(--photo-turn)); }
+.va-recap__photo:first-child { left: 0; top: 0; }
+.va-recap__photo:last-child { right: 0; bottom: 0; }
+.va-recap--empty .va-empty { top: var(--space-32); }
+.va-place__info { position: absolute; left: var(--space-16); top: 65px; width: 65%; }
+.va-place__name { font: var(--type-widget-name); letter-spacing: -0.03em; }
+.va-place__meta { font: var(--type-widget-meta); margin-top: var(--space-6); }
+.va-place__marker { position: absolute; right: var(--space-20); top: 70px; display: grid; place-items: center; width: 52px; height: 52px; border-radius: var(--radius-pill); background: var(--color-map-button); color: var(--color-text); }
+.va-place__marker .icon { --icon-size: 24px; }
+.va-place__map { position: absolute; bottom: 0; left: var(--space-16); min-height: calc(var(--space-24) + var(--space-20)); display: inline-flex; align-items: center; gap: var(--space-4); font: var(--type-button-compact); text-decoration: none; color: inherit; }
+.va-place__map .icon { --icon-size: 16px; }
+@media (max-width: 1160px) { .va-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .va-board { padding: var(--space-24) var(--space-12); max-width: calc(var(--va-widget-width) + 2 * var(--space-24)); }
+  .va-header h1 { font: var(--type-sheet-title); }
+  .va-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-32); }
+  .va-description { min-height: 0; }
+  .va-surface { padding: var(--space-20) var(--space-10); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .va-page *, .va-page *::before, .va-page *::after { animation: none !important; transition: none !important; }
+}

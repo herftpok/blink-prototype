@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – другие сценарии виджетов</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="widgets.css">
+  <link rel="stylesheet" href="alternatives.css">
+</head>
+<body class="va-page">
+<main class="va-board">
+  <header class="va-header">
+    <h1>новые механики</h1>
+    <a class="va-saved" href="stickers-v1.html?state=start">стикеры · сохранённая версия</a>
+  </header>
+  <div class="va-grid">
+    <section class="va-concept" aria-labelledby="explore-title">
+      <h2 id="explore-title">открой город</h2>
+      <div class="va-surface"><div class="va-widget-slot" id="explore"></div></div>
+      <p class="va-description">Ходишь по городу — открываешь клетки на своей карте.</p>
+      <div class="va-demo-row"><button class="va-demo" type="button" data-action="visit">показать: дошёл до клетки</button><button class="va-demo" type="button" data-action="explore-reset">сначала</button></div>
+    </section>
+    <section class="va-concept" aria-labelledby="game-title">
+      <h2 id="game-title">три в ряд с лёвой</h2>
+      <div class="va-surface"><div class="va-widget-slot" id="game"></div></div>
+      <p class="va-description">Крестики-нолики вашими аватарками. Нажми на свободную клетку.</p>
+      <div class="va-demo-row"><button class="va-demo" type="button" data-action="friend-turn" disabled>показать: ход лёвы</button><button class="va-demo" type="button" data-action="game-reset">новая партия</button></div>
+    </section>
+    <section class="va-concept" aria-labelledby="wardrobe-title">
+      <h2 id="wardrobe-title">гардероб пина</h2>
+      <div class="va-surface"><div class="va-widget-slot" id="wardrobe"></div></div>
+      <p class="va-description">Надень другой хвост из своей коллекции. Тап по предмету — и он на твоём пине.</p>
+    </section>
+  </div>
+  <footer class="va-footer">Интерактивные макеты. Кнопки под ними имитируют события для показа.</footer>
+</main>
+<script src="../../scripts/pin.js"></script>
+<script src="alternatives.js"></script>
+</body>
+</html>

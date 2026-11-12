@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – другие сценарии виджетов</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="widgets.css">
+  <link rel="stylesheet" href="alternatives-rejected.css">
+</head>
+<body class="va-page">
+<main class="va-board">
+  <header class="va-header">
+    <h1>другие сценарии виджетов</h1>
+    <p>найти компанию, вспомнить неделю, выбрать место</p>
+    <nav class="va-nav" aria-label="версии виджетов">
+      <a class="panel__button pressable" href="stickers-v1.html?state=start">стикеры · сохранённая версия</a>
+      <a class="panel__button pressable" href="index.html">все виджеты</a>
+    </nav>
+  </header>
+
+  <div class="va-grid">
+    <section class="va-concept" aria-labelledby="nearby-title">
+      <h2 id="nearby-title">кто рядом</h2>
+      <p class="va-description">Видно, к кому можно присоединиться, без просмотра всей карты.</p>
+      <div class="va-surface"><div class="va-widget-slot" id="nearby"></div></div>
+      <p class="va-try">Нажми на радиус: 1 или 3 км.</p>
+      <button class="va-demo pressable" type="button" data-action="empty" aria-pressed="false">показать: рядом никого</button>
+    </section>
+
+    <section class="va-concept" aria-labelledby="recap-title">
+      <h2 id="recap-title">ваша неделя</h2>
+      <p class="va-description">Сколько времени провели вместе. Маленький итог дружбы на рабочем столе.</p>
+      <div class="va-surface"><div class="va-widget-slot" id="recap"></div></div>
+      <p class="va-try">Переключи неделю на месяц.</p>
+      <button class="va-demo pressable" type="button" data-action="no-meetings" aria-pressed="false">показать: встреч ещё не было</button>
+    </section>
+
+    <section class="va-concept" aria-labelledby="place-title">
+      <h2 id="place-title">куда сходить</h2>
+      <p class="va-description">Одна идея для прогулки рядом с тобой. Не подходит — смотри следующую.</p>
+      <div class="va-surface"><div class="va-widget-slot" id="place"></div></div>
+      <p class="va-try">Нажми «другое», чтобы сменить место.</p>
+      <p class="va-note">Для этого варианта нужен каталог мест.</p>
+    </section>
+  </div>
+  <footer class="va-footer">Данные на стенде — демонстрационные. Размер каждого виджета соответствует среднему виджету iOS.</footer>
+</main>
+<script src="../../scripts/pin.js"></script>
+<script src="alternatives-rejected.js"></script>
+</body>
+</html>

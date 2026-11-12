@@ -23,6 +23,10 @@
  *     battery: 12,                          // плашка заряда под пином (есть только глиф 12 % – Map/Battery.png)
  *     approximate: true,                    // гео перестало приходить: место примерное – бейдж вместо домика и стрелок
  *     badge: "assets/pin/overnight.png",    // свой бейдж 24 слева внизу вместо домика и стрелок (ночлеги)
+ *     frame: "gold",                        // платная рамка: класс pin--frame-gold и слои pin__skin
+ *                                           // позади кадра и поверх аватарки – их рисует фича
+ *     background: "carpet",                 // платный фон: класс pin--bg-carpet и слой pin__bg
+ *                                           // в кадре под живой аватаркой (у flat-фото его не видно)
  *     tag: "button",                        // "span" – декоративный пин вне карты
  *     className: "pin--static",             // модификаторы
  *     attrs: 'data-go="#/chat/natashka"',   // атрибуты кнопки
@@ -58,7 +62,14 @@
     const size = SIZES.includes(o.size) ? o.size : 52;
     const tag = o.tag || "button";
     const moving = o.state === "moving";
-    const classes = ["pin", size !== 52 && `pin--${size}`, o.online && "pin--online", o.className]
+    const classes = [
+      "pin",
+      size !== 52 && `pin--${size}`,
+      o.online && "pin--online",
+      o.frame && `pin--frame-${o.frame}`,
+      o.background && `pin--bg-${o.background}`,
+      o.className,
+    ]
       .filter(Boolean)
       .join(" ");
 
@@ -69,7 +80,7 @@
     else if (!moving && o.minutes != null) [value, unit] = [o.minutes, "мин"];
 
     const trail = moving
-      ? `<span class="pin__motion"><img class="pin__trail" src="${assets}/pin/trail.webp" alt=""></span>`
+      ? `<span class="pin__motion"${Number(o.speed) > 20 ? "" : " hidden"}><img class="pin__trail" src="${assets}/pin/trail.webp" alt=""></span>`
       : "";
     const badge = o.badge
       ? `<img class="pin__badge" src="${escapeHtml(o.badge)}" alt="">`
@@ -78,7 +89,7 @@
       : o.state === "home"
         ? `<img class="pin__badge" src="${assets}/pin/home.png" alt="">`
         : moving
-          ? `<img class="pin__badge pin__badge--arrows" src="${assets}/pin/arrows.png" alt="">`
+          ? `<img class="pin__badge pin__badge--arrows" src="${assets}/tails/arrows-moving.webp" alt="">`
           : "";
     const time =
       value != null
@@ -93,10 +104,13 @@
     return `
       <${tag} class="${classes}" ${a11y} ${o.attrs || ""}>
         ${trail}
+        ${o.frame ? '<span class="pin__skin pin__skin--back"></span>' : ""}
         <span class="pin__frame"></span>
+        ${o.background ? '<span class="pin__bg"></span>' : ""}
         ${o.photo
           ? `<img class="pin__photo${o.flat ? " pin__photo--flat" : ""}" src="${escapeHtml(o.photo)}" alt="">`
           : `<span class="pin__initial">${escapeHtml(String(o.name || "?")[0])}</span>`}
+        ${o.frame ? '<span class="pin__skin pin__skin--front"></span>' : ""}
         ${badge}
         ${time}
         ${title}

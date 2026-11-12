@@ -280,3 +280,20 @@
   --type-ios-notification-body: 400 15px/20px var(--font-text);
   --type-ios-notification-time: 400 13px/18px var(--font-text);
 }
+
+  /* ── iOS: рабочий стол и виджеты (features/widgets) ─────────────────────
+     Рабочий стол – превью, как статус-бар: значения сняты с widgets/home-screen.png.
+     Виджет – продукт: внутри только Blink (карта, пины, чёрные кнопки карты, 3D-стикеры) */
+  --widget-throw-sticker: 34px;
+  --widget-throw-burst: 80px;
+  --widget-throw-reply-width: 144px;
+  --radius-ios-widget: 24px;                   /* угол виджета на рабочем столе */
+  --color-ios-search: rgba(255, 255, 255, 0.16);         /* „поиск“ над доком: стекло */
+  --color-ios-search-border: rgba(255, 255, 255, 0.28);
+  --color-ios-search-text: rgba(255, 255, 255, 0.86);
+  --type-ios-search: 600 13px/16px var(--font-text);
+  --type-widget-name: 700 22px/26px var(--font-ui);      /* имя друга в шапке виджета: роль города на карте, кегль под виджет */
+  --type-widget-city: 700 28px/32px var(--font-ui);      /* „москва“ в большом виджете */
+  --type-widget-meta: 600 13px/16px var(--font-ui);      /* „2.3 км от тебя“, время и погода: роль строки погоды */
+  --shadow-sticker-on-map: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.18));   /* 3D-стикер-кнопка на светлой карте */
+  --shadow-sticker-hit: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25));     /* прилетевший стикер – ближе к стеклу */
