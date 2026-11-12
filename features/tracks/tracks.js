@@ -498,7 +498,9 @@ function timeline(){
 }
 function updateDate(){
   $('date').querySelector('span').textContent=dateLabel(currentDate);
-  $('date').setAttribute('aria-label','Выбрать дату: '+dateLabel(currentDate));
+  $('date').setAttribute('aria-label','выбрать дату: '+dateLabel(currentDate));
+  $('prev-day').disabled=currentDate===firstDate;
+  $('next-day').disabled=currentDate===lastDate;
 }
 function selectDate(date){
   for(const sheet of [$('story'),$('zone')])if(sheet.open)sheet.close();
@@ -510,6 +512,13 @@ function selectDate(date){
   if(day){timeline();openDay()}
   else {updateStats();$('places').replaceChildren();markerData=[];visits=[];visitRail.setVisits([])}
 }
+function moveDay(offset){
+  const index=viewDates.findIndex(item=>item.date===currentDate);
+  const adjacent=viewDates[index+offset];
+  if(adjacent)selectDate(adjacent.date);
+}
+$('prev-day').onclick=()=>moveDay(-1);
+$('next-day').onclick=()=>moveDay(1);
 updateDate();
 let selected='gym';
 function openZone(){

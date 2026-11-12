@@ -190,8 +190,18 @@ dialog[open] {position:absolute;inset:auto 0 0;width:100%;max-height:90%;z-index
 #route-close img{width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 4px #111a)}
 .route-footer{position:absolute;left:14px;right:14px;bottom:max(24px,var(--safe-bottom));display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
 .route-footer button,#route-actions button{pointer-events:auto}
-#date,#more-actions,#route-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 12px;background:#191724df;color:white;border:1px solid #ffffff2a;border-radius:16px;font:650 13px var(--font-ui);backdrop-filter:blur(12px);cursor:pointer}
-#date{white-space:nowrap;font-variant-numeric:tabular-nums}
+.date-pager,#more-actions,#route-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 12px;background:#191724df;color:white;border:1px solid #ffffff2a;border-radius:16px;font:650 13px var(--font-ui);backdrop-filter:blur(12px);cursor:pointer}
+.date-pager{min-width:0;padding:0;gap:0;pointer-events:auto}
+.date-pager button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border-radius:14px}
+.date-pager button:enabled:active{background:#ffffff12}
+.date-pager button:focus-visible{outline-offset:-3px}
+.day-arrow{width:44px;flex:none}
+.day-arrow::before{content:"";width:8px;height:8px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(-45deg)}
+#prev-day::before{transform:rotate(135deg)}
+.day-arrow:disabled{opacity:.3;cursor:default}
+#date{gap:5px;min-width:0;padding:0 2px;font:inherit;font-variant-numeric:tabular-nums;text-wrap:balance}
+#date img{flex:none}
+@container (max-width:350px){[data-actions="rail"] #date img{display:none}}
 #date img,#route-actions img{width:18px;height:18px;object-fit:contain}
 #footer-actions{position:relative;pointer-events:auto}
 #more-actions{width:44px;padding:0;border-radius:50%}
