@@ -1,4 +1,4 @@
-import {captureStats,paintStats} from './stats-art.js?v=blink6';
+import {captureStats,paintStats} from './stats-art.js?v=outline1';
 import {routeActionLayout} from './route-actions.js';
 import {createVisitRail,durationText} from './visit-rail.js?v=arrival1';
 import {routeCalendar} from './calendar.js?v=period2';
@@ -28,7 +28,7 @@ const requestedStats=({ticket:'chips',gauge:'profile'})[query.get('stats')] || q
 selectStats(statsButtons.find(button=>button.dataset.stats===requestedStats)?.dataset.stats || 'columns');
 for(const button of statsButtons){
   button.onclick=()=>{
-    if($('story').open)$('story').close();
+    if($('story').open)return;
     selectStats(button.dataset.stats);
     const url=new URL(location.href);
     url.searchParams.set('stats',button.dataset.stats);
@@ -37,7 +37,7 @@ for(const button of statsButtons){
 }
 const replaySeconds=15;
 const replayDuration=replaySeconds*1000;
-$('story-meta').textContent='Видео · '+replaySeconds+' секунд';
+$('story-meta').textContent='видео · '+replaySeconds+' сек.';
 let repository,records;
 try{
   repository=await openRoutes();
@@ -198,7 +198,7 @@ function drawStoryText(ctx,pos,height,unit,pinX,foot){
   ctx.save();ctx.scale(unit,unit);
   const bottom=height/unit-28,width=600/unit;
   ctx.textAlign='left';ctx.fillStyle='white';ctx.shadowColor='#121225';ctx.shadowBlur=8;
-  ctx.font='900 36px '+uiFamily;ctx.letterSpacing='-2px';
+  ctx.font=storyHeadingFont;ctx.letterSpacing='-2px';
   ctx.fillText('где я был',16,49);
   ctx.letterSpacing='0px';
   paintStats(ctx,storyStats,16,60);
@@ -445,11 +445,13 @@ function styleStats(list){
     const value=block.querySelector('dd');
     if(!value)continue;
     block.classList.toggle('map-chip',layout==='chips');
-    value.classList.toggle('sticker-number',layout==='profile' && index===1);
+    value.classList.toggle('sticker-number',layout==='outline' || (layout==='profile' && index===1));
+    const label=block.querySelector('dt');
+    label.textContent=layout==='outline'?['шаги','маршрут','пик скорости'][index]:label.dataset.fullLabel;
     if(index===0){
       const steps=Number(value.textContent.replace(/\s/g,''));
       const plural=stepPlural.select(steps);
-      block.querySelector('dt').textContent=layout==='chips'?stepLabels[plural]:'шаги';
+      if(layout==='chips')label.textContent=stepLabels[plural];
     }
     const src=layout==='chips' && index===0?'../../assets/icons/steps.png':
       layout==='profile' && index===1?'../../assets/plans/map-marker.webp':null;
@@ -463,7 +465,7 @@ function styleStats(list){
 function updateStats(){
   const blocks=(day?dayStats():[]).map(([label,value])=>{
     const block=document.createElement('div'),term=document.createElement('dt'),amount=document.createElement('dd');
-    term.textContent=label;amount.textContent=value;block.append(term,amount);return block;
+    term.dataset.fullLabel=label;term.textContent=label;amount.textContent=value;block.append(term,amount);return block;
   });
   for(const list of document.querySelectorAll('.day-stats')){
     list.replaceChildren(...blocks.map(block=>block.cloneNode(true)));
@@ -531,6 +533,9 @@ function openSheet(sheet){
   openers.set(sheet,document.activeElement);
   const previousSheet=topSheet();
   if(previousSheet)previousSheet.inert=true;
+  if(sheet===$('story')){
+    $('stats-review').inert=true;$('layout-review').inert=true;
+  }
   $('screen').inert=true;$('scrim').hidden=false;sheet.show();
   if(sheet.classList.contains('sheet')){
     $('scrim').classList.add('calendar-scrim');
@@ -540,6 +545,9 @@ function openSheet(sheet){
 }
 for(const sheet of document.querySelectorAll('dialog')){
   sheet.addEventListener('close',()=>{
+    if(sheet===$('story')){
+      $('stats-review').inert=false;$('layout-review').inert=false;
+    }
     const remaining=topSheet();
     if(remaining)remaining.inert=false;
     else{
@@ -549,17 +557,19 @@ for(const sheet of document.querySelectorAll('dialog')){
     openers.get(sheet)?.focus();
   });
   sheet.addEventListener('keydown',event=>{
-    if(event.key==='Escape'){event.preventDefault();dismissSheet(sheet);return}
+    if(event.key==='Escape'){event.preventDefault();if(sheet!==$('story'))dismissSheet(sheet);return}
     if(event.key!=='Tab')return;
     const radio=sheet.querySelector('input[type=radio]:checked') || sheet.querySelector('input[type=radio]');
     const items=[...sheet.querySelectorAll('button:not(:disabled),input')].filter(el=>
       el.offsetWidth && getComputedStyle(el).visibility==='visible' && (el.type!=='radio' || el===radio));
+    if(!items.length){event.preventDefault();return}
     const first=items[0],last=items.at(-1);
     if(event.shiftKey && (document.activeElement===first || document.activeElement===sheet)){last.focus();event.preventDefault();}
     if(!event.shiftKey && document.activeElement===last){first.focus();event.preventDefault();}
   });
 }
-$('scrim').onclick=()=>dismissSheet(topSheet());
+$('story').oncancel=e=>e.preventDefault();
+$('scrim').onclick=()=>{const sheet=topSheet();if(sheet!==$('story'))dismissSheet(sheet)};
 document.querySelectorAll('.close').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 const privacy=$('privacy'),privacyNext=$('privacy-next');
 const confirmation=$('confirm-day');
@@ -590,26 +600,27 @@ async function dismissSheet(sheet){
   await Promise.allSettled(sheet.getAnimations().map(a=>a.finished));
   sheet.close();
 }
-for(const sheet of [privacy,confirmation]){
-  const handle=sheet.querySelector('.sheet__handle');
+for(const sheet of [privacy,confirmation,$('story')]){
+  const handle=sheet===$('story')?sheet:sheet.querySelector('.sheet__handle');
   let drag=null;
   handle.onpointerdown=e=>{
-    if(e.button!==0 || !sheet.classList.contains('is-open') || savingDay)return;
+    if(e.button!==0 || !e.isPrimary || e.target.closest('button') || !sheet.classList.contains('is-open') || savingDay)return;
     handle.setPointerCapture(e.pointerId);
-    drag={y:e.clientY,time:e.timeStamp,zoom:sheet.getBoundingClientRect().width/sheet.offsetWidth};
+    drag={id:e.pointerId,x:e.clientX,y:e.clientY,time:e.timeStamp,zoom:sheet.getBoundingClientRect().width/sheet.offsetWidth};
     sheet.classList.add('is-dragging');
   };
   handle.onpointermove=e=>{
-    if(!drag)return;
+    if(!drag || e.pointerId!==drag.id)return;
     const offset=Math.max(0,(e.clientY-drag.y)/drag.zoom);
     sheet.style.transform='translateY('+offset+'px)';
   };
   handle.onpointerup=handle.onpointercancel=e=>{
-    if(!drag)return;
+    if(!drag || e.pointerId!==drag.id)return;
     const offset=Math.max(0,(e.clientY-drag.y)/drag.zoom);
     const projected=offset+offset/Math.max(1,e.timeStamp-drag.time)*180;
+    const vertical=offset>Math.abs(e.clientX-drag.x)/drag.zoom;
     drag=null;sheet.classList.remove('is-dragging');sheet.style.transform='';
-    if(e.type==='pointerup' && projected>sheet.offsetHeight*.4)dismissSheet(sheet);
+    if(e.type==='pointerup' && vertical && offset>12 && projected>Math.min(sheet.offsetHeight*.4,150))dismissSheet(sheet);
   };
   sheet.addEventListener('close',()=>{
     drag=null;sheet.style.transform='';sheet.classList.remove('is-open','is-dragging');
@@ -661,8 +672,6 @@ function animateStory(now){
   const t=Math.max(0,(now-storyStart)/replayDuration);
   draw($('preview'),recorder?Math.min(t,1):t%1,true);
   if(recorder?.state==='recording'){
-    const remaining=Math.ceil((1-t)*replayDuration/1000);
-    $('export').textContent='готовим видео · '+Math.max(0,remaining)+' с';
     if(t>=1)recorder.stop();
   }
   previewFrame=requestAnimationFrame(animateStory);
@@ -670,17 +679,17 @@ function animateStory(now){
 async function prepareVideo(){
   const session=storySession;
   const canvas=$('preview'),action=$('export');
-  action.disabled=true;
+  action.disabled=true;action.setAttribute('aria-busy','true');
   if(!window.MediaRecorder || !canvas.captureStream){
-    action.textContent='сохранение недоступно';
-    $('status').textContent='В этом браузере доступен только предпросмотр.';
+    action.removeAttribute('aria-busy');
+    $('status').textContent='в этом браузере доступен только предпросмотр.';
     return;
   }
   let stream;
   const failed=()=>{
     stream?.getTracks().forEach(t=>t.stop());
-    recorder=null;action.disabled=false;action.textContent='попробовать снова';
-    $('status').textContent='Не удалось подготовить видео.';
+    recorder=null;action.disabled=false;action.removeAttribute('aria-busy');
+    $('status').textContent='не удалось подготовить видео. нажми, чтобы попробовать снова.';
   };
   try{
     await Promise.all([brandLogo.decode(),document.fonts.load(visitTitleStyle.font,'остановка'),document.fonts.load(visitTimeStyle.font,'11:52')]);
@@ -698,14 +707,15 @@ async function prepareVideo(){
       const mime=recording.mimeType.split(';')[0];
       videoFile=new File(parts,'blink-'+day.day.replace(' ','-')+(mime.includes('mp4')?'.mp4':'.webm'),{type:mime});
       recorder=null;action.disabled=false;
-      action.textContent=navigator.canShare?.({files:[videoFile]})?'поделиться видео':'сохранить видео';
+      action.removeAttribute('aria-busy');
     };
     storyStart=performance.now();draw(canvas,0,true);recording.start();
-    action.textContent='готовим видео · '+replaySeconds+' с';
   }catch{if(session===storySession)failed()}
 }
-let storyStats;
+let storyStats,storyHeadingFont;
 $('share').onclick=()=>{
+  const heading=getComputedStyle(document.querySelector('.route-heading h1'));
+  storyHeadingFont=heading.fontWeight+' '+heading.fontSize+' '+heading.fontFamily;
   storyStats=captureStats($('summary'));
   pause();
   const canvas=$('preview'),screen=$('screen');
@@ -727,7 +737,7 @@ function download(){
 $('export').onclick=async()=>{
   if(!videoFile){$('status').textContent='';prepareVideo();return}
   if(!navigator.canShare?.({files:[videoFile]}))return download();
-  try{await navigator.share({files:[videoFile],title:'Мой маршрут в Blink'})}
+  try{await navigator.share({files:[videoFile],title:'мой маршрут в blink'})}
   catch(error){if(error.name!=='AbortError')download()}
 };
 await refreshRecords();

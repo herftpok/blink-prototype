@@ -14,12 +14,14 @@ export function captureStats(list){
     if(img)parts.push({type:'image',img,filter:getComputedStyle(img).filter,...box(img.getBoundingClientRect())});
     for(const field of block.querySelectorAll('dt,dd')){
       const style=getComputedStyle(field),range=document.createRange();
-      for(const match of field.textContent.matchAll(/[^ ]+/g)){
+      const sticker=field.classList.contains('sticker-number');
+      const words=sticker?/^.+$/g:/[^ ]+/g;
+      for(const match of field.textContent.matchAll(words)){
         range.setStart(field.firstChild,match.index);
         range.setEnd(field.firstChild,match.index+match[0].length);
         parts.push({type:'text',text:match[0],...box(range.getBoundingClientRect()),
           font:style.fontWeight+' '+style.fontSize+' '+style.fontFamily,color:style.color,
-          spacing:style.letterSpacing==='normal'?'0px':style.letterSpacing,sticker:field.classList.contains('sticker-number')});
+          spacing:style.letterSpacing==='normal'?'0px':style.letterSpacing,outline:sticker?(parseFloat(style.getPropertyValue('--sticker-outline-width')) || 3):0});
       }
     }
   }
@@ -48,9 +50,9 @@ export function paintStats(ctx,parts,x,y){
     }else{
       ctx.font=part.font;ctx.letterSpacing=part.spacing;ctx.fillStyle=part.color;
       ctx.save();
-      if(part.sticker || glass)ctx.shadowBlur=0;
-      if(part.sticker){
-        ctx.lineWidth=6;ctx.lineJoin='round';ctx.strokeStyle='white';
+      if(part.outline || glass)ctx.shadowBlur=0;
+      if(part.outline){
+        ctx.lineWidth=2*part.outline;ctx.lineJoin='round';ctx.strokeStyle='white';
         ctx.strokeText(part.text,part.x,part.y+part.h/2);
       }
       ctx.fillText(part.text,part.x,part.y+part.h/2);ctx.restore();

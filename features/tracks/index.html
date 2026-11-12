@@ -1,16 +1,17 @@
 <!doctype html>
-<html lang="ru"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101014"><link rel="preload" as="image" href="../../assets/brand/logo.png"><title>Где я был · Blink</title><link rel="stylesheet" href="../onboarding-school/font.css"><link rel="stylesheet" href="../../styles/tokens.css"><link rel="stylesheet" href="../../styles/base.css"><link rel="stylesheet" href="../../styles/components.css"><link rel="stylesheet" href="../../styles/screens/map.css"><link rel="stylesheet" href="tracks.css?v=blink6"></head>
+<html lang="ru"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101014"><link rel="preload" as="image" href="../../assets/brand/logo.png"><title>Где я был · Blink</title><link rel="stylesheet" href="../onboarding-school/font.css"><link rel="stylesheet" href="../../styles/tokens.css"><link rel="stylesheet" href="../../styles/base.css"><link rel="stylesheet" href="../../styles/components.css"><link rel="stylesheet" href="../../styles/screens/map.css"><link rel="stylesheet" href="tracks.css?v=outline1"></head>
 <body><nav id="layout-review" aria-label="Размещение действий" hidden>
-  <button type="button" data-layout="heading">Под заголовком</button>
-  <button type="button" data-layout="rail">У шкалы</button>
-  <button type="button" data-layout="menu">В меню</button>
+  <button type="button" data-layout="heading">под заголовком</button>
+  <button type="button" data-layout="rail">у шкалы</button>
+  <button type="button" data-layout="menu">в меню</button>
 </nav>
 <aside id="stats-review" aria-label="Варианты итогов дня">
-  <div class="stats-choice"><button type="button" data-stats="columns" aria-pressed="true">Колонки</button><dl class="day-stats" data-stats="columns" aria-hidden="true"></dl></div>
-  <div class="stats-choice"><button type="button" data-stats="distance" aria-pressed="false">Акцент на пути</button><dl class="day-stats" data-stats="distance" aria-hidden="true"></dl></div>
-  <div class="stats-choice"><button type="button" data-stats="rows" aria-pressed="false">Список</button><dl class="day-stats" data-stats="rows" aria-hidden="true"></dl></div>
-  <div class="stats-choice"><button type="button" data-stats="chips" aria-pressed="false">Плашки карты</button><dl class="day-stats" data-stats="chips" aria-hidden="true"></dl></div>
-  <div class="stats-choice"><button type="button" data-stats="profile" aria-pressed="false">Как в профиле</button><dl class="day-stats" data-stats="profile" aria-hidden="true"></dl></div>
+  <div class="stats-choice"><button type="button" data-stats="columns" aria-pressed="true">колонки</button><dl class="day-stats" data-stats="columns" aria-hidden="true"></dl></div>
+  <div class="stats-choice"><button type="button" data-stats="distance" aria-pressed="false">акцент на пути</button><dl class="day-stats" data-stats="distance" aria-hidden="true"></dl></div>
+  <div class="stats-choice"><button type="button" data-stats="rows" aria-pressed="false">список</button><dl class="day-stats" data-stats="rows" aria-hidden="true"></dl></div>
+  <div class="stats-choice"><button type="button" data-stats="chips" aria-pressed="false">плашки карты</button><dl class="day-stats" data-stats="chips" aria-hidden="true"></dl></div>
+  <div class="stats-choice"><button type="button" data-stats="profile" aria-pressed="false">как в профиле</button><dl class="day-stats" data-stats="profile" aria-hidden="true"></dl></div>
+  <div class="stats-choice"><button type="button" data-stats="outline" aria-pressed="false">с обводкой</button><dl class="day-stats" data-stats="outline" aria-hidden="true"></dl></div>
 </aside><div class="device"><div class="app" id="phone">
 <div class="status-bar" aria-hidden="true"><img class="status-bar__time" src="../../assets/system/status-time.png" alt=""><img class="status-bar__island" src="../../assets/system/live-activity.png" alt=""><img class="status-bar__icons" src="../../assets/system/status-icons.png" alt=""></div>
 <main id="screen" aria-label="Карта маршрута">
@@ -43,8 +44,8 @@
     <div id="footer-actions">
       <button id="more-actions" type="button" aria-label="Действия с маршрутом" aria-haspopup="menu" aria-controls="route-actions" aria-expanded="false"><span aria-hidden="true">•••</span></button>
       <div id="route-actions">
-        <button id="share" type="button" aria-label="Поделиться маршрутом"><img src="../../assets/icons/share.png" alt=""><span>Поделиться</span></button>
-        <button id="privacy-open" type="button" aria-label="Настройки приватности"><img src="../../assets/icons/privacy.png" alt=""><span>Приватность</span></button>
+        <button id="share" type="button" aria-label="Поделиться маршрутом"><img src="../../assets/icons/share.png" alt=""><span>поделиться</span></button>
+        <button id="privacy-open" type="button" aria-label="Настройки приватности"><img src="../../assets/icons/privacy.png" alt=""><span>приватность</span></button>
       </div>
     </div>
   </div>
@@ -79,11 +80,16 @@
   <button type="button" id="confirm-cancel" class="button button--ghost pressable">отмена</button>
   <p id="privacy-error" role="alert"></p>
 </dialog>
-<dialog id="story" aria-labelledby="story-title">
-  <div class="handle"></div><button class="close" aria-label="Закрыть">×</button>
-  <h2 id="story-title">поделиться маршрутом</h2>
-  <p class="story-meta" id="story-meta"></p>
-  <canvas id="preview" width="780" height="1688" aria-label="Предпросмотр видео маршрута"></canvas>
-  <button id="export" class="primary">сохранить видео</button><p id="status" role="status"></p>
+<dialog id="story" class="sheet" aria-modal="true" aria-labelledby="story-title" aria-describedby="story-meta" tabindex="-1">
+  <header class="story-heading">
+    <div class="sheet__grabber" aria-hidden="true"></div>
+    <h2 id="story-title">твой маршрут</h2>
+    <p id="story-meta">видео · 15 сек.</p>
+  </header>
+  <div class="story-film"><canvas id="preview" width="780" height="1688" aria-label="предпросмотр видео маршрута"></canvas></div>
+  <footer class="story-footer">
+    <button id="export" type="button" class="button pressable">поделиться</button>
+    <p id="status" role="status"></p>
+  </footer>
 </dialog>
-<div class="home-indicator"></div></div></div><script src="../../scripts/pin.js"></script><script src="zone-art.js?v=office1"></script><script src="data.js?v=office1"></script><script type="module" src="tracks.js?v=arrival1"></script></body></html>
+<div class="home-indicator"></div></div></div><script src="../../scripts/pin.js"></script><script src="zone-art.js?v=office1"></script><script src="data.js?v=office1"></script><script type="module" src="tracks.js?v=outline1"></script></body></html>
