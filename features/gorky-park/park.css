@@ -1,0 +1,918 @@
+/* Страница места «Парк Горького» – вебвью внутри приложения. Значения – из tokens.css;
+   свои размеры фичи собраны здесь и названы по роли. */
+.park {
+  --safe-top: max(env(safe-area-inset-top, 0px), 12px);
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+  --park-hero-height: 240px;                    /* колонны крупным планом; название лежит поверх их низа */
+  --park-hero-overlap: 78px;                    /* насколько название заходит на здание */
+  --park-avatar: 56px;                          /* лица гостей: сквиркл 56, как в списке школы */
+  --park-poster-width: 172px;                   /* афиша: на экране две карточки и край третьей */
+  --park-checkin-width: 150px;                  /* фото-карточка чекина – пропорции profile/ProfileCheckins.png */
+  --park-checkin-border: 2px;                   /* рамка 2 pt #242424, как у кнопок шапки чата */
+  --park-gallery-height: 264px;                 /* карусель фото в шторке события */
+  --park-gallery-inset: 8px;                    /* поле карусели от края шторки, как у карточки предмета в маркете */
+  --park-star: 112px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.park[data-framed=true] {
+  --safe-top: 54px;
+  --safe-bottom: 34px;
+}
+
+.park-page,
+.park-people,
+.group-chat {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+}
+
+#home:focus,
+#chat-title:focus,
+#people-title:focus,
+.park-section__title:focus {
+  outline: 0;
+}
+
+/* ── Верхняя строка: подписка и закрыть на одной линии, поверх острова ── */
+.park-page__bar {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: calc(var(--safe-top) + var(--space-4)) var(--space-12) 0 var(--gutter);
+  pointer-events: none;
+}
+
+/* Лента уходит под статус-бар и крестик в затемнение, как под шапкой чата */
+.park-page__bar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: calc(var(--safe-top) + 72px);
+  background: linear-gradient(180deg, var(--color-bg) var(--safe-top), rgba(0, 0, 0, 0) 100%);
+  opacity: 0;
+  transition: opacity var(--duration-state) ease;
+}
+
+.is-scrolled .park-page__bar::before {
+  opacity: 1;
+}
+
+.park-page__bar > * {
+  pointer-events: auto;
+}
+
+.park-page__bar .icon-button--header {
+  background: var(--color-glass-button);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+}
+
+.park-page__bar .icon {
+  --icon-size: var(--space-20);
+}
+
+.park-page__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;                            /* звезда игры выходит за край – вбок страница не едет */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding-bottom: calc(var(--safe-bottom) + var(--space-24));
+}
+
+.park-page__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Герой: колонны главного входа на фиолетово-розовом свечении, название поверх их низа ── */
+.park-hero {
+  text-align: center;
+}
+
+/* Свечение – готовый ассет market/_background_glow.png (шапка «подарить»): идёт от верха экрана */
+.park-hero__stage {
+  width: 100%;
+  height: calc(var(--safe-top) + var(--park-hero-height));
+  padding-top: var(--safe-top);
+  background: url("../../assets/market/glow-top.webp") top center / 100% auto no-repeat;
+  overflow: hidden;
+}
+
+/* Кадр шире экрана: края здания уходят за поля, низ тает в чёрном */
+.park-hero__still {
+  display: block;
+  width: 100%;
+  height: var(--park-hero-height);
+  object-fit: cover;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 45%, transparent 92%);
+          mask-image: linear-gradient(180deg, #000 45%, transparent 92%);
+}
+
+.park-hero__title {
+  position: relative;
+  margin-top: calc(-1 * var(--park-hero-overlap));
+  font: var(--type-screen-title);
+  letter-spacing: var(--tracking-title);
+}
+
+.park-hero__meta {
+  margin-top: var(--space-2);
+  padding: 0 var(--gutter);
+  color: var(--color-text-muted);
+  font: var(--type-status);
+}
+
+/* ── Вход в чат: единственная белая плашка первого экрана ── */
+.wall-card {
+  --press-scale: var(--press-scale-wide);
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  width: calc(100% - 2 * var(--gutter));
+  min-height: 68px;                              /* WallEntry школьного вебвью */
+  margin: var(--space-20) var(--gutter) 0;
+  padding: var(--space-10) var(--space-16) var(--space-10) var(--space-12);
+  border-radius: var(--radius-24);
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+  text-align: left;
+}
+
+.wall-card__art {
+  width: var(--control-44);
+  height: var(--control-44);
+  object-fit: contain;
+}
+
+.wall-card__copy {
+  display: grid;
+  flex: 1;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.wall-card strong {
+  font: var(--type-banner-title);
+}
+
+.wall-card__copy > span {
+  overflow: hidden;
+  color: var(--color-field);
+  font: var(--type-note);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wall-card__faces .face-stack__img {
+  width: var(--space-24);
+  height: var(--space-24);
+  margin-left: calc(-1 * var(--space-6));
+  border-color: var(--color-text);
+  border-width: 2px;
+}
+
+.wall-card .icon {
+  --icon-size: var(--space-16);
+}
+
+/* ── Секции ── */
+.park-section {
+  margin-top: var(--space-32);
+}
+
+.park-section__title {
+  padding: 0 var(--gutter);
+  margin-bottom: var(--space-12);
+}
+
+.park-section__empty {
+  padding: 0 var(--gutter);
+  color: var(--color-text-muted);
+  font: var(--type-status);
+}
+
+.park-wide {
+  width: calc(100% - 2 * var(--gutter));
+  margin: var(--space-16) var(--gutter) 0;
+}
+
+.button.is-done .icon {
+  --icon-size: var(--space-16);
+  color: var(--color-selected);
+}
+
+.button.is-off {
+  color: var(--color-text-muted);
+}
+
+.button .icon--checkin {
+  --icon-size: var(--space-20);
+}
+
+.park-initial {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  font: var(--type-header-name);
+}
+
+.face-stack .park-initial {
+  display: inline-grid;
+}
+
+.park-initial--small {
+  width: 18px;                                   /* размер лица в .face-stack */
+  height: 18px;
+  font: var(--type-compact-strong);
+}
+
+/* ── Кто в парке: лента лиц, последняя ячейка – «все» со стикером-глазами ── */
+.park-crowd,
+.park-afisha,
+.park-checkins {
+  display: flex;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  list-style: none;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: var(--gutter);
+}
+
+.park-crowd::-webkit-scrollbar,
+.park-afisha::-webkit-scrollbar,
+.park-checkins::-webkit-scrollbar {
+  display: none;
+}
+
+.park-crowd {
+  gap: var(--space-12);
+  padding: 0 var(--gutter);
+}
+
+.park-crowd .avatar {
+  display: block;
+}
+
+.park-crowd__item {
+  flex: none;
+  width: var(--park-avatar);
+  scroll-snap-align: start;
+}
+
+.park-crowd__name {
+  display: block;
+  margin-top: var(--space-6);
+  overflow: hidden;
+  color: var(--color-text);
+  font: var(--type-tile);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.park-crowd__all {
+  --press-scale: var(--press-scale-button);
+  display: block;
+  width: 100%;
+}
+
+.park-crowd__eyes {
+  display: block;
+  width: var(--park-avatar);
+  height: var(--park-avatar);
+  object-fit: contain;
+  transform: rotate(-8deg);
+}
+
+.park-crowd__all .park-crowd__name {
+  color: var(--color-text-muted);
+}
+
+/* ── Афиша: фото-афиши с лёгким наклоном, срок – розовой наклейкой ── */
+.park-afisha {
+  gap: var(--space-14);
+  padding: var(--space-8) var(--gutter) 0;
+}
+
+.park-afisha__item {
+  flex: none;
+  width: var(--park-poster-width);
+  scroll-snap-align: start;
+}
+
+.park-event {
+  --press-scale: var(--press-scale-wide);
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+  text-align: left;
+}
+
+.park-event__poster {
+  position: relative;
+  display: block;
+  margin-bottom: var(--space-8);
+  aspect-ratio: 3 / 4;
+  transform: rotate(var(--tilt, 0deg));
+}
+
+.park-event__photo {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-20);
+  object-fit: cover;
+  background: var(--color-surface);
+}
+
+.park-tag {
+  position: absolute;
+  top: var(--space-10);
+  left: calc(-1 * var(--space-6));
+  padding: var(--space-2) var(--space-10);
+  border-radius: var(--radius-pill);
+  background: var(--color-pink);
+  color: var(--color-text-on-light);
+  font: var(--type-season-tag);
+  font-variant-numeric: tabular-nums;
+  transform: rotate(-6deg);
+}
+
+.park-tag--news {
+  background: var(--color-text);
+}
+
+.park-event__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font: var(--type-row-title);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.park-event__meta {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font: var(--type-status);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.park-event__going {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font: var(--type-compact);
+}
+
+.park-event__going.is-mine {
+  color: var(--color-selected);
+}
+
+/* ── Игра: звезда-маскот выходит за левый край, время до следующей – розовой наклейкой ── */
+.park-game {
+  position: relative;
+  padding-top: var(--space-8);
+  overflow-x: clip;                              /* звезда уходит за правый край и не растягивает страницу */
+}
+
+.park-game__star {
+  position: absolute;
+  top: calc(-1 * var(--space-12));
+  right: calc(-1 * var(--space-20));
+  width: var(--park-star);
+  height: var(--park-star);
+  transform: rotate(14deg);
+  pointer-events: none;
+}
+
+.park-game__title,
+.park-game__text,
+.park-game__next {
+  padding: 0 var(--gutter);
+}
+
+.park-game__text {
+  max-width: 290px;                              /* текст не заходит под звезду */
+  margin-top: var(--space-6);
+  color: var(--color-text-muted);
+  font: var(--type-meta);
+  text-wrap: pretty;
+}
+
+.park-game__next {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  margin-top: var(--space-16);
+  font: var(--type-caption);
+}
+
+.park-timer {
+  padding: var(--space-2) var(--space-12);
+  border-radius: var(--radius-pill);
+  background: var(--color-pink);
+  color: var(--color-text-on-light);
+  font: var(--type-section-title);
+  font-variant-numeric: tabular-nums;
+  transform: rotate(-6deg);
+}
+
+.park-board {
+  margin-top: var(--space-16);
+  list-style: none;
+}
+
+.park-board__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-8) var(--gutter);
+}
+
+.park-board__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font: var(--type-row-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.park-board__score {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font: var(--type-folder);
+  font-variant-numeric: tabular-nums;
+}
+
+.park-board__star {
+  width: var(--space-24);
+  height: var(--space-24);
+}
+
+/* ── Чекины: ровный ряд фото-карточек в тонкой белой рамке ── */
+.park-checkins {
+  gap: var(--space-8);
+  padding: 0 var(--gutter);
+}
+
+.park-checkin {
+  position: relative;
+  flex: none;
+  width: var(--park-checkin-width);
+  aspect-ratio: 3 / 4;
+  border: var(--park-checkin-border) solid var(--color-header-button-border);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  overflow: hidden;
+  scroll-snap-align: start;
+}
+
+.park-checkin__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.park-checkin__by {
+  position: absolute;
+  inset: auto 0 var(--space-8);
+  display: flex;
+  justify-content: center;
+}
+
+.park-checkin__by .avatar__img {
+  border: 2px solid var(--color-bg);
+}
+
+/* ── О парке ── */
+.park-about__text {
+  padding: 0 var(--gutter);
+  font: var(--type-bio);
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+}
+
+.park-hours {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-10) var(--space-16);
+  margin-top: var(--space-20);
+  padding: 0 var(--gutter);
+}
+
+.park-hours dt {
+  font: var(--type-friend-name);
+}
+
+.park-hours dd {
+  color: var(--color-text-muted);
+  font: var(--type-distance);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.park-route {
+  --press-scale: var(--press-scale-wide);
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  width: 100%;
+  margin-top: var(--space-20);
+  padding: var(--space-8) var(--gutter);
+  color: var(--color-text-muted);
+  font: var(--type-label);
+  text-align: left;
+}
+
+.park-route span {
+  flex: 1;
+}
+
+.park-route .icon {
+  --icon-size: var(--space-16);
+}
+
+.park-route .icon--navigate {
+  --icon-size: 18px;                             /* как в кнопке «на карте» строки друга */
+  color: var(--color-text-dim);
+}
+
+/* ── Список гостей ── */
+.park-people__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding-bottom: var(--safe-bottom);
+}
+
+.park-people__scroll ul {
+  list-style: none;
+  margin-bottom: var(--space-24);
+}
+
+.park-person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-8) var(--gutter);
+}
+
+.park-person__info {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.park-person strong {
+  overflow: hidden;
+  font: var(--type-row-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.park-person small {
+  color: var(--color-text-muted);
+  font: var(--type-status);
+}
+
+/* ── Чат парка: шапка и композер – как в чате приложения, пузыри гостей зелёные, твои белые ── */
+.group-chat,
+.park-people {
+  animation: park-push var(--duration-screen) var(--ease-emphasized);
+}
+
+.group-chat__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-10);
+  padding: calc(var(--safe-top) + var(--space-12)) var(--gutter) var(--space-16);
+}
+
+.group-chat__head .icon {
+  --icon-size: var(--space-20);
+}
+
+.group-chat__who {
+  --press-scale: var(--press-scale-wide);
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.group-chat__avatar {
+  width: var(--avatar-header);
+  height: var(--avatar-header);
+  padding: var(--space-4);
+  border-radius: var(--radius-16);
+  background: var(--color-surface);
+  object-fit: contain;
+}
+
+.group-chat__names {
+  display: grid;
+  min-width: 0;
+  text-align: left;
+}
+
+.group-chat__who strong {
+  font: var(--type-header-name);
+}
+
+.group-chat__names span {
+  color: var(--color-text-secondary);
+  font: var(--type-status);
+}
+
+.group-chat__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.group-chat__feed {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100%;
+  padding: var(--space-16) var(--gutter);
+}
+
+.park-msg {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-8);
+  margin-top: var(--space-12);
+}
+
+.park-msg.is-continued {
+  margin-top: var(--space-2);
+}
+
+.park-msg--mine {
+  justify-content: flex-end;
+}
+
+.park-msg .avatar,
+.park-msg__gap {
+  flex: none;
+  width: var(--space-32);
+}
+
+.park-msg__body {
+  display: grid;
+  justify-items: start;
+  max-width: 85%;
+  min-width: 0;
+}
+
+.park-msg--mine .park-msg__body {
+  justify-items: end;
+}
+
+.park-msg__body .bubble {
+  max-width: 100%;
+}
+
+.park-msg__name {
+  margin: 0 var(--space-12) var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-button-small);
+}
+
+.park-msg__time {
+  margin-left: var(--space-6);
+  font: var(--type-compact);
+  font-variant-numeric: tabular-nums;
+}
+
+.group-chat__footer {
+  flex: none;
+  padding: var(--space-10) var(--gutter) calc(var(--safe-bottom) + var(--space-6));
+}
+
+.group-chat__footer .composer {
+  gap: var(--space-8);
+}
+
+.group-chat__footer .icon-button--send:disabled {
+  opacity: 0.3;
+}
+
+.group-chat__locked {
+  padding: var(--space-14) var(--space-12);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font: var(--type-caption);
+  text-align: center;
+}
+
+/* ── Шторка события и новости ── */
+.park-sheet {
+  padding-bottom: calc(var(--safe-bottom) + var(--space-8));
+}
+
+.park-sheet .sheet__title {
+  margin-top: var(--space-10);
+}
+
+.park-sheet .sheet__text {
+  margin-top: var(--space-10);
+}
+
+.park-sheet .park-wide {
+  width: 100%;
+  margin: var(--space-16) 0 0;
+}
+
+/* Карусель фото: на всю ширину шторки, как карточка предмета в маркете (market/unlimited_sticker.png).
+   Радиус вложен в шторку: 38 − 8 = 30 */
+.park-gallery {
+  position: relative;
+  margin: var(--space-16) calc(var(--park-gallery-inset) - var(--gutter)) 0;
+}
+
+.park-gallery__track {
+  display: flex;
+  height: var(--park-gallery-height);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border-radius: var(--radius-modal);
+  background: var(--color-surface);
+  list-style: none;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.park-gallery__track::-webkit-scrollbar {
+  display: none;
+}
+
+.park-gallery__slide {
+  flex: none;
+  width: 100%;
+  scroll-snap-align: start;
+}
+
+.park-gallery__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.park-gallery__sticker {
+  position: absolute;
+  right: var(--space-8);
+  bottom: calc(-1 * var(--space-24));
+  width: 88px;                                   /* стикер наклеен на нижний угол карусели и выходит за него */
+  height: 88px;
+  transform: rotate(10deg);
+  pointer-events: none;
+}
+
+.park-gallery__dots {
+  position: absolute;
+  inset: auto 0 var(--space-14);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-6);
+  pointer-events: none;
+}
+
+.park-gallery__dots[hidden] {
+  display: none;
+}
+
+.park-gallery__dots i {
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--radius-pill);
+  background: var(--color-text-dim);
+}
+
+.park-gallery__dots .is-on {
+  width: var(--space-28);
+  background: var(--color-text);
+}
+
+/* Когда – крупно рядом с наклейкой-датой; где, сколько и возраст – плашками */
+.park-facts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  margin-top: var(--space-12);
+}
+
+.park-facts__tag {
+  position: static;
+  flex: none;
+}
+
+.park-facts__when {
+  font: var(--type-folder);
+}
+
+.park-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin: var(--space-12) 0 var(--space-4);
+  list-style: none;
+}
+
+.park-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: var(--space-32);
+  padding: 0 var(--space-12);
+  border: 1px solid var(--color-chip-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-chip-fill);
+  color: var(--color-text-secondary);
+  font: var(--type-label);
+  white-space: nowrap;
+}
+
+.park-chip .icon {
+  --icon-size: var(--space-16);
+  color: var(--color-text-dim);
+}
+
+.park-chip__sticker {
+  width: var(--space-24);
+  height: var(--space-24);
+  margin-left: calc(-1 * var(--space-4));
+}
+
+/* Возраст – контурная метка без заливки */
+.park-chip--age {
+  border: 2px solid var(--color-outline);
+  background: none;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.park-sheet__going {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-top: var(--space-20);
+  min-height: var(--space-32);
+  color: var(--color-text-muted);
+  font: var(--type-status);
+}
+
+.park-sheet__faces {
+  padding-left: var(--space-8);
+}
+
+.park-sheet__faces .face-stack__img {
+  width: var(--space-32);
+  height: var(--space-32);
+  margin-left: calc(-1 * var(--space-8));
+  border-width: 2px;
+}
+
+.park-sheet [hidden] {
+  display: none;
+}
+
+@keyframes park-push {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group-chat,
+  .park-people {
+    animation: none;
+  }
+}

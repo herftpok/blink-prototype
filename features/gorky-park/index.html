@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <script type="importmap">{ "imports": { "three": "../../vendor/three/three.module.js" } }</script>
+  <title>Парк Горького · Blink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/screens/map.css">
+  <link rel="stylesheet" href="stand.css">
+</head>
+<body>
+  <main class="stand">
+    <div class="device">
+      <div class="app" id="phone" data-status="dark" data-home="dark">
+        <div class="status-bar" aria-hidden="true">
+          <img class="status-bar__time" src="../../assets/system/status-time.png" alt="">
+          <img class="status-bar__island" src="../../assets/system/live-activity.png" alt="">
+          <img class="status-bar__icons" src="../../assets/system/status-icons.png" alt="">
+        </div>
+        <section class="screen map" id="map" aria-label="карта">
+          <div class="map__canvas" id="canvas">
+            <div class="park-world" id="world">
+              <img class="park-world__tiles" src="art/park-map.svg" alt="">
+            </div>
+            <canvas id="park-gl" class="park-gl" aria-hidden="true" hidden></canvas>
+            <div class="map__pins" id="pins"></div>
+            <button type="button" class="park-zone" id="entry" aria-label="Парк Горького, открыть страницу места" aria-haspopup="dialog">
+              <img src="../../assets/gorky-park/colonnade.webp" alt="">
+            </button>
+          </div>
+          <header class="map__header">
+            <h1 class="map__city" tabindex="-1">москва</h1>
+            <p class="map__weather"><time>14:32</time><span class="map__weather-temp">☀️ <span>+19 °C</span></span></p>
+            <button class="map-chip map__steps pressable" type="button"><i class="icon icon--steps" aria-hidden="true"></i>3 482 шага · 4 место</button>
+          </header>
+          <div class="map__tools">
+            <button type="button" class="icon-button icon-button--map pressable" aria-label="места"><i class="icon icon--places"></i></button>
+            <button type="button" class="icon-button icon-button--map pressable" aria-label="пространства"><i class="icon icon--space"></i></button>
+            <button type="button" class="icon-button icon-button--map pressable" aria-label="игры"><i class="icon icon--games"></i></button>
+          </div>
+          <div class="map__actions">
+            <button type="button" class="map-button map-button--world pressable"><i class="icon icon--globe"></i>мой мир</button>
+            <button type="button" class="map-button map-button--locate pressable" id="locate" aria-label="показать, где я"><i class="icon icon--crosshair"></i></button>
+          </div>
+          <a class="park-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a>
+        </section>
+        <nav class="tabbar" id="tabs" aria-label="разделы">
+          <button class="tabbar__item pressable" type="button" aria-current="page"><i class="icon icon--pin"></i>карта</button>
+          <a class="tabbar__item pressable" href="../../index.html#/friends"><i class="icon icon--friends"></i>друзья</a>
+          <a class="tabbar__item pressable" href="../../index.html#/chats"><i class="icon icon--chat"></i>чаты</a>
+          <a class="tabbar__item pressable" href="../../index.html#/market"><i class="icon icon--market"></i>маркет</a>
+          <a class="tabbar__item pressable" href="../../index.html#/profile"><img class="tabbar__avatar" src="../../assets/people/me-cutout.webp" alt="">ты</a>
+        </nav>
+        <section class="park-web" id="web" role="dialog" aria-modal="true" aria-label="Парк Горького" hidden>
+          <iframe id="frame" title="Страница Парка Горького" src="park.html"></iframe>
+        </section>
+        <button class="ny-push" id="push" type="button" aria-live="polite" tabindex="-1">
+          <img class="ny-push__icon" src="../../assets/system/app-icon.png" alt="">
+          <span class="ny-push__body">
+            <span class="ny-push__head"><span class="ny-push__title" id="push-title"></span><span class="ny-push__time">сейчас</span></span>
+            <span class="ny-push__text" id="push-text"></span>
+          </span>
+        </button>
+        <div class="home-indicator" aria-hidden="true"></div>
+      </div>
+    </div>
+    <aside class="controls" aria-label="пульт прототипа">
+      <div class="controls__heading"><img src="../../assets/system/live-activity.png" alt="Blink"><h2>Парк Горького</h2></div>
+      <div class="controls__body">
+        <fieldset class="controls__group controls__locations"><legend>Где гость</legend>
+          <div class="controls__options">
+            <label><input type="radio" name="zone" value="far"><span>Далеко</span></label>
+            <label><input type="radio" name="zone" value="near"><span>Рядом</span></label>
+            <label><input type="radio" name="zone" value="inside" checked><span>В парке</span></label>
+          </div>
+          <p class="controls__hint" id="hint"></p>
+        </fieldset>
+        <fieldset class="controls__group controls__extra"><legend>Лови звезду</legend>
+          <div class="controls__options">
+            <button type="button" class="controls__button" id="star-drop">Уронить звезду</button>
+            <button type="button" class="controls__button" id="star-walk" disabled>Дойти до неё</button>
+            <button type="button" class="controls__button" id="star-lose" disabled>Забрала вика</button>
+          </div>
+        </fieldset>
+        <form class="controls__group controls__extra controls__cabinet" id="cabinet">
+          <h3 class="controls__legend">Кабинет парка: пуш гостям</h3>
+          <label class="controls__field"><span>Заголовок</span><input type="text" id="news-title" maxlength="60" required></label>
+          <label class="controls__field"><span>Текст</span><textarea id="news-text" rows="3" maxlength="160" required></textarea></label>
+          <div class="controls__options" role="group" aria-label="Кому отправить">
+            <label><input type="checkbox" id="aud-visited" checked><span>Были в парке</span></label>
+            <label><input type="checkbox" id="aud-near" checked><span>Сейчас рядом</span></label>
+          </div>
+          <label class="controls__check"><input type="checkbox" id="was-here" checked><span>Этот гость уже бывал в парке</span></label>
+          <button type="submit" class="controls__button controls__button--main" id="news-send">Отправить пуш</button>
+          <p class="controls__hint" id="news-hint" role="status"></p>
+        </form>
+        <div class="controls__extra controls__links">
+          <p class="controls__gesture">Колесо приближает карту. Потяни с зажатым Shift, чтобы повернуть её</p>
+          <a id="second" class="controls__second" href="?visitor=leva" target="_blank" rel="noopener">Открыть за второго посетителя ↗</a>
+          <button type="button" class="controls__second" id="reset">Сбросить стенд</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+  <script src="../../scripts/pin.js"></script>
+  <script src="art/boundary.js"></script>
+  <script src="park-data.js"></script>
+  <script src="room.js"></script>
+  <script type="module" src="stand.js"></script>
+</body>
+</html>

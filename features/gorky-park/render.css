@@ -1,0 +1,3 @@
+/* Страница-съёмка острова для tools/render_gorky.py: холст в размер шапки страницы места */
+.render { margin: 0; background: var(--color-bg); }
+.render__canvas { display: block; width: 390px; height: 240px; }

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Парк Горького · кадр острова</title>
+  <script type="importmap">{ "imports": { "three": "../../vendor/three/three.module.js" } }</script>
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="render.css">
+</head>
+<body class="render">
+  <canvas id="shot" class="render__canvas"></canvas>
+  <script type="module">
+    import { mountHero } from './park-hero.js';
+    // tools/render_gorky.py снимает этот холст в art/hero-master.png – запасной кадр шапки без WebGL.
+    // Вариант «за названием»: колонны крупным планом, края здания уходят за экран.
+    mountHero(document.getElementById('shot'), { wings: false, yaw: .3, tilt: 4, span: 45, target: [0, 11.6, 0] });
+  </script>
+</body>
+</html>

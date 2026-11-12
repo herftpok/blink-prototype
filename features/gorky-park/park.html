@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <title>Парк Горького · страница места</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/screens/chat.css">
+  <link rel="stylesheet" href="park.css">
+</head>
+<body class="park" data-framed="true">
+  <main id="home" tabindex="-1" class="park-page" aria-label="Парк Горького">
+    <div class="park-page__bar">
+      <button id="close-park" type="button" class="icon-button icon-button--header pressable" aria-label="закрыть страницу парка"><i class="icon icon--close"></i></button>
+    </div>
+    <div class="park-page__scroll" id="page-scroll">
+      <header class="park-hero">
+        <div class="park-hero__stage">
+          <img class="park-hero__still" src="../../assets/gorky-park/hero.webp" alt="">
+        </div>
+        <h1 class="park-hero__title">парк горького</h1>
+        <p class="park-hero__meta" id="address"></p>
+      </header>
+
+      <button class="wall-card pressable" type="button" id="open-chat">
+        <img src="art/school-chat.png" alt="" class="wall-card__art">
+        <span class="wall-card__copy"><strong>чат парка</strong><span id="latest"></span></span>
+        <span class="face-stack wall-card__faces" id="chat-faces" aria-hidden="true"></span>
+        <i class="icon icon--chevron" aria-hidden="true"></i>
+      </button>
+
+      <section class="park-section" aria-labelledby="visitors-title">
+        <h2 class="section-title park-section__title" id="visitors-title" tabindex="-1">сейчас в парке <span class="section-title__count" id="count"></span></h2>
+        <ul class="park-crowd" id="crowd"></ul>
+        <p class="park-section__empty" id="empty" hidden>пока никого</p>
+      </section>
+
+      <section class="park-section" aria-labelledby="afisha-title">
+        <h2 class="section-title park-section__title" id="afisha-title" tabindex="-1">афиша</h2>
+        <ul class="park-afisha" id="afisha"></ul>
+      </section>
+
+      <section class="park-section park-game" aria-labelledby="game-title">
+        <img class="park-game__star" src="../../assets/stickers/blink.webp" alt="">
+        <h2 class="section-title park-game__title" id="game-title">лови звезду</h2>
+        <p class="park-game__text">каждые 15 минут в парке падает звезда. забирает тот, кто дошёл первым.</p>
+        <p class="park-game__next" id="game-next"><span id="game-next-label">следующая через</span> <b class="park-timer" id="game-timer">04:12</b></p>
+        <ol class="park-board" id="board"></ol>
+      </section>
+
+      <section class="park-section" aria-labelledby="checkins-title">
+        <h2 class="section-title park-section__title" id="checkins-title">чекины <span class="section-title__count" id="checkins-count"></span></h2>
+        <ul class="park-checkins" id="checkins"></ul>
+        <button type="button" class="button button--primary park-wide pressable" id="checkin"><i class="icon icon--checkin" aria-hidden="true"></i><span id="checkin-label">чекин</span></button>
+      </section>
+
+      <section class="park-section park-about" aria-labelledby="about-title">
+        <h2 class="section-title park-section__title" id="about-title">о парке</h2>
+        <p class="park-about__text" id="about"></p>
+        <dl class="park-hours" id="hours"></dl>
+        <button type="button" class="park-route pressable" id="route">
+          <i class="icon icon--location" aria-hidden="true"></i><span id="route-address"></span><i class="icon icon--navigate" aria-hidden="true"></i>
+        </button>
+      </section>
+    </div>
+  </main>
+
+  <section id="people-screen" class="park-people" aria-labelledby="people-title" hidden>
+    <header class="group-chat__head">
+      <button id="people-back" class="icon-button icon-button--header pressable" type="button" aria-label="назад к парку"><i class="icon icon--back"></i></button>
+      <h2 class="group-chat__who" id="people-title" tabindex="-1"><strong>сейчас в парке</strong></h2>
+      <button id="people-close" class="icon-button icon-button--header pressable" type="button" aria-label="закрыть страницу парка"><i class="icon icon--close"></i></button>
+    </header>
+    <div class="park-people__scroll">
+      <h3 class="section-title park-section__title" id="friends-title">друзья <span class="section-title__count" id="friends-count"></span></h3>
+      <ul id="friends-list"></ul>
+      <h3 class="section-title park-section__title" id="others-title">ещё <span class="section-title__count" id="others-count"></span></h3>
+      <ul id="others-list"></ul>
+    </div>
+  </section>
+
+  <section id="chat" class="group-chat" aria-labelledby="chat-title" hidden>
+    <header class="group-chat__head">
+      <button id="back" class="icon-button icon-button--header pressable" type="button" aria-label="назад к парку"><i class="icon icon--back"></i></button>
+      <button type="button" class="group-chat__who pressable" id="show-people" aria-label="посмотреть, кто в парке">
+        <img class="group-chat__avatar" src="../../assets/gorky-park/colonnade.webp" alt="">
+        <span class="group-chat__names"><strong id="chat-title" tabindex="-1">чат парка</strong><span id="chat-count"></span></span>
+      </button>
+      <button id="close-chat" class="icon-button icon-button--header pressable" type="button" aria-label="закрыть страницу парка"><i class="icon icon--close"></i></button>
+    </header>
+    <div class="group-chat__scroll" id="chat-scroll" role="log" aria-live="polite">
+      <div class="group-chat__feed" id="messages"></div>
+    </div>
+    <footer class="group-chat__footer">
+      <p class="group-chat__locked" id="locked" role="status" hidden>писать в чат можно только из парка</p>
+      <form class="composer" id="compose">
+        <div class="composer__field">
+          <textarea class="composer__input" rows="1" maxlength="1500" id="draft" aria-label="сообщение в чат парка" placeholder="написать..."></textarea>
+        </div>
+        <button class="icon-button icon-button--field icon-button--send pressable" type="submit" id="send" aria-label="отправить сообщение" disabled><i class="icon icon--send"></i></button>
+      </form>
+    </footer>
+  </section>
+
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet park-sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1">
+    <div class="sheet__handle" id="sheet-handle">
+      <div class="sheet__grabber" aria-hidden="true"></div>
+    </div>
+    <h2 class="sheet__title" id="sheet-title"></h2>
+    <div class="park-facts">
+      <span class="park-tag park-facts__tag" id="sheet-tag"></span>
+      <strong class="park-facts__when" id="sheet-when"></strong>
+    </div>
+    <ul class="park-chips" id="sheet-chips">
+      <li class="park-chip"><i class="icon icon--location" aria-hidden="true"></i><span id="sheet-where"></span></li>
+      <li class="park-chip"><img class="park-chip__sticker" src="../../assets/stickers/money.webp" alt=""><span id="sheet-price"></span></li>
+      <li class="park-chip park-chip--age" id="sheet-age"></li>
+    </ul>
+    <p class="sheet__text" id="sheet-text"></p>
+    <div class="park-gallery">
+      <ul class="park-gallery__track" id="sheet-photos" aria-label="фото"></ul>
+      <img class="park-gallery__sticker" id="sheet-sticker" alt="">
+      <span class="park-gallery__dots" id="sheet-dots" aria-hidden="true"></span>
+    </div>
+    <p class="park-sheet__going" id="sheet-going"><span class="face-stack park-sheet__faces" id="sheet-faces"></span><span id="sheet-going-label"></span></p>
+    <button type="button" class="button button--primary park-wide pressable" id="sheet-action"></button>
+  </div>
+
+  <script src="park-data.js"></script>
+  <script src="park.js"></script>
+</body>
+</html>

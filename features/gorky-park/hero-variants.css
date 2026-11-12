@@ -1,0 +1,45 @@
+/* Варианты шапки страницы места – доска для выбора композиции, в продукт не идёт */
+.hv { overflow: auto; background: var(--color-surface-card); }
+.hv__board { display: grid; grid-template-columns: repeat(3, 390px); gap: var(--space-32) var(--space-24); justify-content: center; padding: var(--space-32) var(--space-24); }
+.hv__item { margin: 0; }
+.hv__phone { position: relative; height: 430px; overflow: hidden; border-radius: var(--radius-24) var(--radius-24) 0 0; background: var(--color-bg); }
+.hv__close { position: absolute; top: var(--space-16); right: var(--space-12); z-index: 2; background: var(--color-glass-button); }
+.hv__close .icon { --icon-size: var(--space-20); }
+.hv__hero { position: relative; display: grid; justify-items: center; text-align: center; }
+.hv__canvas { display: block; width: 100%; height: 190px; }
+.hv__chat { margin-top: var(--space-20); }
+.hv__next { padding: var(--space-32) var(--gutter) 0; }
+.hv__caption { display: grid; gap: var(--space-4); padding: var(--space-12) var(--space-4) 0; }
+.hv__caption strong { font: var(--type-row-title); }
+.hv__caption span { color: var(--color-text-muted); font: var(--type-note); }
+
+/* А – фасад по центру */
+.hv__phone--a .hv__canvas { height: 176px; margin-top: var(--space-24); }
+
+/* Б – здание уходит за правый край, текст слева поверх */
+.hv__phone--b .hv__hero { justify-items: start; text-align: left; }
+.hv__phone--b .hv__canvas { height: 210px; }
+.hv__phone--b .hv__text { margin-top: calc(-1 * var(--space-20)); padding-left: var(--gutter); }
+.hv__phone--b .park-hero__meta { padding: 0; }
+
+/* В – название на площади между крыльями */
+.hv__phone--c .hv__canvas { height: 250px; }
+.hv__phone--c .hv__text { position: absolute; inset: auto 0 var(--space-16); }
+
+/* Г – строка: здание слева, текст справа */
+.hv__phone--d .hv__hero { grid-template-columns: 132px 1fr; align-items: center; justify-items: start; padding: var(--space-24) var(--gutter) 0; text-align: left; }
+.hv__phone--d .hv__canvas { height: 96px; }
+.hv__phone--d .hv__text { padding-left: var(--space-12); }
+.hv__phone--d .park-hero__title { font: var(--type-section-title); letter-spacing: var(--tracking-section); }
+.hv__phone--d .park-hero__meta { padding: 0; }
+.hv__phone--d .hv__close { top: var(--space-28); }
+.hv__phone--d .hv__text { padding-right: 52px; }
+
+/* Д – название поверх колонн, низ здания тает */
+.hv__phone--e .hv__canvas { height: 240px; -webkit-mask-image: linear-gradient(180deg, #000 45%, transparent 92%); mask-image: linear-gradient(180deg, #000 45%, transparent 92%); }
+.hv__phone--e .hv__text { position: absolute; inset: auto 0 0; }
+
+/* Е – название сверху, панорама под ним */
+.hv__phone--f .hv__hero { padding-top: var(--space-24); }
+.hv__phone--f .hv__text { order: -1; }
+.hv__phone--f .hv__canvas { height: 150px; margin-top: var(--space-12); }

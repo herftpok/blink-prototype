@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Парк Горького · варианты шапки</title>
+  <script type="importmap">{ "imports": { "three": "../../vendor/three/three.module.js" } }</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/icons.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="park.css">
+  <link rel="stylesheet" href="hero-variants.css">
+</head>
+<body class="hv">
+  <main class="hv__board" id="board"></main>
+  <template id="card">
+    <figure class="hv__item">
+      <div class="hv__phone park">
+        <span class="icon-button icon-button--header hv__close" aria-hidden="true"><i class="icon icon--close"></i></span>
+        <header class="hv__hero">
+          <canvas class="hv__canvas"></canvas>
+          <div class="hv__text">
+            <h2 class="park-hero__title">парк горького</h2>
+            <p class="park-hero__meta">крымский вал, 9 · круглосуточно</p>
+          </div>
+        </header>
+        <div class="wall-card hv__chat">
+          <img src="art/school-chat.png" alt="" class="wall-card__art">
+          <span class="wall-card__copy"><strong>чат парка</strong><span>маша: мы у колонн, подождём вас тут</span></span>
+          <i class="icon icon--chevron" aria-hidden="true"></i>
+        </div>
+        <p class="section-title hv__next">сейчас в парке <span class="section-title__count">7</span></p>
+      </div>
+      <figcaption class="hv__caption"><strong></strong><span></span></figcaption>
+    </figure>
+  </template>
+  <script type="module">
+    import { mountHero } from './park-hero.js';
+    // Варианты композиции шапки: раскладка – модификатор .hv__phone--<id>, ракурс – параметры камеры.
+    const variants = [
+      { id: 'a', name: 'А · фасад', note: 'здание анфас без крыльев, низкая точка, название под ним',
+        view: { wings: false, yaw: 0, tilt: 7, span: 62, target: [0, 10.5, 0] } },
+      { id: 'b', name: 'Б · за край', note: 'три четверти, здание крупно и уходит за правый край, текст слева',
+        view: { wings: false, yaw: -.62, tilt: 12, span: 58, target: [9, 10, 0] } },
+      { id: 'c', name: 'В · в объятиях', note: 'вид с Крымского Вала: крылья раскрыты к зрителю, название стоит на площади между ними',
+        view: { wings: true, street: true, yaw: 0, tilt: 24, span: 96, target: [0, 2, 26] } },
+      { id: 'd', name: 'Г · строка', note: 'здание наклейкой слева, название и адрес справа – шапка в одну строку',
+        view: { wings: false, yaw: .5, tilt: 14, span: 60, target: [0, 10.5, 0] } },
+      { id: 'e', name: 'Д · за названием', note: 'колонны крупным планом уходят вниз в чёрное, название поверх них',
+        view: { wings: false, yaw: .3, tilt: 4, span: 46, target: [0, 13, 0] } },
+      { id: 'f', name: 'Е · панорама', note: 'название сверху, под ним вход с крыльями во всю ширину, концы за краями',
+        view: { wings: true, yaw: 0, tilt: 13, span: 84, target: [0, 9, -8] } }
+    ];
+    const template = document.getElementById('card'), board = document.getElementById('board');
+    for (const variant of variants) {
+      const node = template.content.cloneNode(true);
+      node.querySelector('.hv__phone').classList.add('hv__phone--' + variant.id);
+      node.querySelector('figcaption strong').textContent = variant.name;
+      node.querySelector('figcaption span').textContent = variant.note;
+      const canvas = node.querySelector('canvas');
+      board.append(node);
+      mountHero(canvas, variant.view);
+    }
+  </script>
+</body>
+</html>
