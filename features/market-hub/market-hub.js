@@ -551,9 +551,21 @@
       .map((id) => (id === "friends" ? friendsMarkup(null) : id === "deal" ? dealMarkup(null) : blockMarkup(id)))
       .join("");
 
+  // Экран раздела – только товары раздела одной сеткой, без покупок друзей и карточки скидки.
+  // Товар со скидкой здесь – обычной ячейкой, с ценой и меткой «−40%»
+  function screenMarkup(cat) {
+    const items = Object.values(ITEMS).filter((item) => inFeed(item) && inCat(item, cat)).sort((a, b) => b.rank - a.rank);
+    const c = catOf(cat);
+    return `
+      <section class="mh-list" aria-labelledby="list-title-cat">
+        <h2 class="visually-hidden" id="list-title-cat">${esc(c.title)}</h2>
+        ${grid(items, 0, false)}
+      </section>`;
+  }
+
   function renderList({ animate = false } = {}) {
     $("#list").innerHTML = sectioned() ? sectionsMarkup() : feedMarkup(S.cat, { animate });
-    if (S.screen) $("#cat-list").innerHTML = feedMarkup(S.screen, { key: "cat" });
+    if (S.screen) $("#cat-list").innerHTML = screenMarkup(S.screen);
     // в ленте по разделам плитки – навигация: активной плитки нет
     $$("#cats .mh-cat").forEach((b) => b.setAttribute("aria-pressed", String(!sectioned() && b.dataset.cat === S.cat)));
     $$("#panel-cats [data-panel-cat]").forEach((b) => b.setAttribute("aria-checked",
