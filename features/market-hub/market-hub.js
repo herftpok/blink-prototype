@@ -224,8 +224,16 @@
   // tiles – на подложке только предмет и чип, имя и цена под ней на чёрном (как в доставках продуктов)
   const LAYOUTS = { air: "без подложек", cards: "карточки с подложкой", tiles: "подложка под товаром",
     // themed – те же плитки, но подложка у каждого типа своя: подчёркивает, где товар живёт
-    themed: "подложка по типу товара" };
-  const gridClass = () => (S.layout === "themed" ? "mh-grid--tiles mh-grid--themed" : `mh-grid--${S.layout}`);
+    themed: "подложка по типу товара",
+    // shelf – витрина: блоки по разделам, стикеры и наклейки по три в ряд без имени, хвосты по два –
+    // рамки по два – без упаковок и без подложек; стили карты по два на подложке («подложка под товаром»).
+    // Чипы – прежние. Только с лентой по разделам
+    shelf: "витрина: 3 в ряд" };
+  const SHELF3 = ["stickers", "gifts"];
+  const SHELF_BARE = ["stickers", "gifts", "tails", "frames"];
+  const gridClass = (cat) => S.layout === "themed" ? "mh-grid--tiles mh-grid--themed"
+    : S.layout === "shelf" ? (SHELF_BARE.includes(cat) ? `mh-grid--shelf${SHELF3.includes(cat) ? " mh-grid--3" : ""}` : "mh-grid--tiles")
+    : `mh-grid--${S.layout}`;
   // лента: flat – все товары подряд; sections – блоки по разделам с «ещё», плитки и «ещё» открывают экран раздела
   const FEEDS = { flat: "подряд", sections: "по разделам" };
   const S = { cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null };
@@ -299,7 +307,7 @@
   function priceMarkup(item) {
     if (S.owned.has(item.id))
       return `<span class="price-chip mw-chip mw-chip--owned mh-price mh-price--owned"><span class="mw-chip__check"><i class="icon icon--check" aria-hidden="true"></i></span>у тебя</span>`;
-    if (item.vip) return `<span class="mh-price mh-price--note">только в подписке</span>`;
+    if (item.vip) return `<span class="mh-price mh-price--note">${S.layout === "shelf" ? "в подписке" : "только в подписке"}</span>`;
     if (!priceOf(item)) return '<span class="price-chip mw-chip mh-price">бесплатно</span>';
     return `<span class="price-chip price-chip--coins mw-chip mh-price"><img class="price-chip__coin" src="${A}/market/coin.png" alt="">${formatCoins(priceOf(item))}${
       offOf(item) ? `<s class="mw-chip__old mh-price__old">${formatCoins(item.price)}</s>` : ""}</span>`;
@@ -507,8 +515,8 @@
       </section>`;
   }
 
-  const grid = (items, from, animate) =>
-    items.length ? `<div class="mh-grid ${gridClass()}${animate ? " is-fresh" : ""}">${items.map((item, i) => card(item, from + i)).join("")}</div>` : "";
+  const grid = (items, from, animate, cat = null) =>
+    items.length ? `<div class="mh-grid ${gridClass(cat)}${animate ? " is-fresh" : ""}">${items.map((item, i) => card(item, from + i)).join("")}</div>` : "";
 
   // товары идут подряд, без заголовка: шесть → покупки друзей → ещё шесть → личная скидка → остальные.
   // Друзей и скидку разделяют товары – две вставки подряд не стоят
@@ -531,7 +539,8 @@
   // Блоки в порядке плиток: стикеры → хвосты → покупки друзей → наклейки → стили карты → скидка → рамки.
   // В блоке четыре лучших товара сеткой 2 × 2; слева заголовок, справа серое «ещё» текстом – экран раздела.
   // Если показаны все товары раздела, «ещё» нет. Друзей и скидку разделяют два блока товаров
-  const BLOCK = 4;
+  // в витрине у стикеров и наклеек – шесть (два ряда по три)
+  const blockSize = (id) => (S.layout === "shelf" && SHELF3.includes(id) ? 6 : 4);
   const sectioned = () => S.feed === "sections";
   function blockMarkup(id) {
     const items = ranked(id);
@@ -541,9 +550,9 @@
       <section class="mh-block" aria-labelledby="block-${id}">
         <div class="mh-head">
           <h2 class="section-title" id="block-${id}">${esc(c.title)}</h2>
-          ${items.length > BLOCK ? `<button class="mh-head__more pressable" type="button" data-open="${id}" aria-label="ещё ${esc(c.title)}">ещё<i class="icon icon--chevron" aria-hidden="true"></i></button>` : ""}
+          ${items.length > blockSize(id) ? `<button class="mh-head__more pressable" type="button" data-open="${id}" aria-label="ещё ${esc(c.title)}">ещё<i class="icon icon--chevron" aria-hidden="true"></i></button>` : ""}
         </div>
-        ${grid(items.slice(0, BLOCK), 0, false)}
+        ${grid(items.slice(0, blockSize(id)), 0, false, id)}
       </section>`;
   }
   const sectionsMarkup = () =>
@@ -559,7 +568,7 @@
     return `
       <section class="mh-list" aria-labelledby="list-title-cat">
         <h2 class="visually-hidden" id="list-title-cat">${esc(c.title)}</h2>
-        ${grid(items, 0, false)}
+        ${grid(items, 0, false, cat)}
       </section>`;
   }
 
@@ -812,6 +821,11 @@
       closeCat();
       S.feed = feed.dataset.feed;
       S.cat = null;
+      // витрина бывает только по разделам: лента подряд возвращает ячейки без подложек
+      if (S.feed === "flat" && S.layout === "shelf") {
+        S.layout = "air";
+        renderCats();
+      }
       renderList();
       $("#market-scroll").scrollTop = 0;
       return;
@@ -842,6 +856,11 @@
     const layout = e.target.closest("[data-layout]");
     if (layout) {
       S.layout = layout.dataset.layout;
+      if (S.layout === "shelf" && S.feed !== "sections") {
+        closeSheet();
+        S.feed = "sections";
+        S.cat = null;
+      }
       // в ленте карточками – предметы без упаковок, набор товаров свой: плитки категорий тоже перерисовываем
       renderCats();
       renderList();
@@ -941,6 +960,7 @@
   if (q.get("deal") === "soon") Object.assign(S, { dealEnds: Date.now() + 10000, dealMode: "soon" });
   // ?layout=cards – лента карточками с подложкой
   if (LAYOUTS[q.get("layout")]) S.layout = q.get("layout");
+  if (S.layout === "shelf") S.feed = "sections";
   renderCats();
   renderList();
   // кольца рамок собираются из текстур после загрузки – тогда перерисовываем пины в рамках

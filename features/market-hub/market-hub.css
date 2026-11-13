@@ -906,6 +906,64 @@
   text-align: center;
 }
 
+/* ── Вариант «витрина»: стикеры и наклейки по три, остальное по два ──── */
+/* Стикеры, наклейки, хвосты и рамки – ячейки «без подложек»: предмет без упаковки на чёрном, ценник-пилюля.
+   В три колонки (стикеры, наклейки) – без имени: окно 96, ценник по центру под ним.
+   Стили карты – на подложке, как в «подложке под товаром» (.mh-grid--tiles) */
+.mh-grid--shelf .mh-art.mh-art--bare {
+  max-width: 124px;
+  max-height: 118px;
+}
+
+.mh-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-24) var(--space-8);
+}
+
+.mh-grid--3 .mh-card__art {
+  height: 104px;
+}
+
+.mh-grid--3 .mh-art.mh-art--bare {
+  max-width: 96px;
+  max-height: 96px;
+}
+
+/* стикер-надпись (babe, loh) – по ширине колонки */
+.mh-grid--3 .mh-art.mh-art--wide {
+  max-width: 100%;
+}
+
+.mh-grid--3 .mh-card__name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.mh-grid--3 .mh-price {
+  margin-top: var(--space-8);
+}
+
+/* хвост в витрине – живое окно из ролика в окне ячейки, края растворены */
+.mh-grid--shelf .mh-tailclip {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  display: block;
+  width: 132px;
+  height: 124px;
+  -webkit-mask: radial-gradient(closest-side, #000 72%, transparent);
+          mask: radial-gradient(closest-side, #000 72%, transparent);
+}
+
+/* чипы – прежние (белая пилюля с часами, «−99%», VIP) на левом верхнем углу предмета */
+.mh-grid--shelf:not(.mh-grid--3) .mh-badge {
+  left: var(--space-4);
+  top: var(--space-20);
+}
+
 /* ── Лента по разделам: блоки с заголовком и «ещё» ────────────────────── */
 /* Блок – заголовок секции слева, серое «ещё» текстом справа (без капса, шеврона и подложки),
    под ними четыре товара сеткой 2 × 2 в текущей вёрстке ячеек. Между блоками 32 */
