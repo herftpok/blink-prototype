@@ -938,6 +938,7 @@
   min-height: 44px;
   margin: -14px calc(var(--space-12) * -1) -14px 0;
   padding: 0 var(--space-12);
+  gap: var(--space-2);
   color: var(--color-text-muted);
   font: var(--type-label);
   transition: color var(--duration-press) ease;
@@ -945,6 +946,11 @@
 
 .mh-head__more:active {
   color: var(--color-text);
+}
+
+/* шеврон – иконка библиотеки, цвет текста «ещё» (currentColor) */
+.mh-head__more .icon {
+  --icon-size: 13px;
 }
 
 /* экран раздела: шапка «назад + название» маркета недели, ниже лента раздела */

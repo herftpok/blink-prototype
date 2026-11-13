@@ -231,7 +231,25 @@
   const S = { cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null };
   // личная скидка – до конца суток: выдана в полночь, пропадает в следующую
   const midnight = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(); };
-  const setState = () => Object.assign(S, START, { owned: new Set(START.owned), deal: true, dealEnds: midnight() });
+  // dealMode – что выбрано на пульте для скидки: on / off / soon (кончится через 10 секунд); идёт в адрес
+  const setState = () => Object.assign(S, START, { owned: new Set(START.owned), deal: true, dealEnds: midnight(), dealMode: "on" });
+
+  // ── Всё выбранное – в адресе ──────────────────────────────────────────
+  // layout, feed, top, deal, cat (фильтр, а в ленте по разделам – открытый экран раздела) и item (открытая
+  // шторка). Значения по умолчанию в адрес не пишем; адрес заменяется, а не копится в истории
+  function syncUrl() {
+    const q = new URLSearchParams();
+    if (S.layout !== "air") q.set("layout", S.layout);
+    if (S.feed !== "flat") q.set("feed", S.feed);
+    if (S.top !== "banner") q.set("top", S.top);
+    if (S.dealMode !== "on") q.set("deal", S.dealMode);
+    const cat = S.feed === "sections" ? S.screen : S.cat;
+    if (cat) q.set("cat", cat);
+    // шторка объявлена ниже, но syncUrl зовётся только после загрузки скрипта
+    if (sheet.classList.contains("is-open") && ctx.item) q.set("item", ctx.item.id);
+    const next = `${location.pathname}${q.toString() ? `?${q}` : ""}`;
+    if (next !== `${location.pathname}${location.search}`) history.replaceState(null, "", next);
+  }
 
   // Скидка только для тебя (как в features/market-week): один товар на сутки, подобран по вкусу.
   // Пока действует – товар только в карточке скидки, в сетке его нет; в шторке – цена со скидкой
@@ -523,7 +541,7 @@
       <section class="mh-block" aria-labelledby="block-${id}">
         <div class="mh-head">
           <h2 class="section-title" id="block-${id}">${esc(c.title)}</h2>
-          ${items.length > BLOCK ? `<button class="mh-head__more pressable" type="button" data-open="${id}" aria-label="ещё ${esc(c.title)}">ещё</button>` : ""}
+          ${items.length > BLOCK ? `<button class="mh-head__more pressable" type="button" data-open="${id}" aria-label="ещё ${esc(c.title)}">ещё<i class="icon icon--chevron" aria-hidden="true"></i></button>` : ""}
         </div>
         ${grid(items.slice(0, BLOCK), 0, false)}
       </section>`;
@@ -542,11 +560,12 @@
       String(b.dataset.panelCat === ((sectioned() ? S.screen : S.cat) || ""))));
     $$("#panel-feed [data-feed]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.feed === S.feed)));
     $$("#panel-top [data-top]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.top === S.top)));
-    $$("#panel-deal [data-deal]").forEach((b) => b.setAttribute("aria-checked", String((b.dataset.deal === "on") === S.deal)));
+    $$("#panel-deal [data-deal]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.deal === S.dealMode)));
     $$("#panel-layout [data-layout]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.layout === S.layout)));
     const value = $("#feed [data-coins]");
     value.textContent = formatCoins(S.coins);
     value.closest(".coin-balance").setAttribute("aria-label", `баланс: ${formatCoins(S.coins)} монет`);
+    syncUrl();
   }
 
   // ── Экран раздела: все товары раздела, въезжает справа (как «все» в маркете недели) ─
@@ -701,6 +720,7 @@
     sheet.classList.add("is-open");
     $$(".screen, .tabbar", app).forEach((el) => (el.inert = true));
     requestAnimationFrame(() => sheet.focus({ preventScroll: true }));
+    syncUrl();
   }
 
   function closeSheet() {
@@ -711,6 +731,7 @@
     $$(".screen, .tabbar", app).forEach((el) => (el.inert = false));
     const back = ctx.opener && ctx.opener.isConnected ? ctx.opener : $(`#feed [data-item="${ctx.item.id}"]`);
     if (back) back.focus({ preventScroll: true });
+    syncUrl();
   }
 
   // жест вниз за грэббер или заголовок: шторка идёт за пальцем, закрытие – по проекции броска
@@ -802,6 +823,7 @@
     if (deal) {
       S.deal = deal.dataset.deal !== "off";
       S.dealEnds = deal.dataset.deal === "soon" ? Date.now() + 10000 : midnight();
+      S.dealMode = deal.dataset.deal;
       renderList();
       return;
     }
@@ -861,6 +883,8 @@
       el.classList.toggle("is-urgent", t.left > 0 && t.left < 60000);
     });
     if (timer && !dealOn()) {
+      // скидка кончилась на глазах – в адресе её больше нет
+      if (S.dealMode === "soon") S.dealMode = "off";
       renderList();
       if (sheet.classList.contains("is-open")) fillSheet();
     }
@@ -901,8 +925,8 @@
   if (startScreen) S.cat = null;
   // ?top=tile – vip одним из разделов; ?deal=off – скидки нет, ?deal=soon – кончится через 10 секунд
   if (TOPS[q.get("top")]) S.top = q.get("top");
-  if (q.get("deal") === "off") S.deal = false;
-  if (q.get("deal") === "soon") S.dealEnds = Date.now() + 10000;
+  if (q.get("deal") === "off") Object.assign(S, { deal: false, dealMode: "off" });
+  if (q.get("deal") === "soon") Object.assign(S, { dealEnds: Date.now() + 10000, dealMode: "soon" });
   // ?layout=cards – лента карточками с подложкой
   if (LAYOUTS[q.get("layout")]) S.layout = q.get("layout");
   renderCats();
