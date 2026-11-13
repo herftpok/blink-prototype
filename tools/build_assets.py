@@ -1176,6 +1176,106 @@ def build_pins() -> None:
         live_avatar(f"avatars/p{i}.png", OUT / "people" / f"live-{i}.webp")
 
 
+def build_market_hub() -> None:
+    """
+    Хаб маркета (features/market-hub): товары со скриншотов маркета „market/raw market items/IMG_99xx.PNG“
+    (1170 × 2532, @3x) – только без бейджей NEW и LIMITED; подарки „market/gifts/“; чипы „market chips/“.
+    Карточка на скриншоте – упаковка и ценник под ней; режем только упаковку: рамка – левый верх упаковки
+    в px @3x, высота упаковки на всех скриншотах ~463 px. Фон скриншота – чистый чёрный со звёздами:
+    cutout_on_black даёт прозрачность.
+    """
+    d = OUT / "market-hub"
+    raw = "market/raw market items/IMG_99{}.PNG"
+    # (скриншот, x0, y0, x1) в px @3x → файл. Вкладка „стикеры“ – чёрные пакеты, „подарки“ – прозрачные коробки
+    packs = {
+        "stickers": [
+            ("21", 158, 775, 517, "fan"), ("21", 644, 768, 1021, "bomb"), ("21", 153, 1396, 517, "hat"), ("21", 656, 1405, 1020, "silver"),
+            ("22", 158, 840, 517, "cry"), ("22", 644, 833, 1021, "strawberry"), ("22", 153, 1468, 517, "banana"), ("22", 656, 1470, 1015, "six"),
+            ("23", 158, 799, 517, "seven"), ("23", 644, 792, 1021, "vampire"), ("23", 153, 1427, 517, "chihuahua"), ("23", 656, 1429, 1020, "rose"),
+            ("24", 158, 855, 517, "parrot"), ("24", 644, 848, 1021, "skull"), ("24", 153, 1483, 517, "cat"), ("24", 656, 1485, 1015, "penguin"),
+        ],
+        "gifts": [
+            ("25", 153, 839, 517, "crown"), ("25", 643, 838, 1023, "chocolate"),
+            ("26", 643, 889, 1023, "coconut"), ("26", 150, 1520, 520, "leaf"),
+            ("27", 150, 757, 520, "daisy"), ("27", 153, 1387, 517, "candle"),
+        ],
+    }
+    pad = 14
+    for kind, rows in packs.items():
+        for shot, x0, y0, x1, name in rows:
+            # низ – по упаковке без поля: ниже через ~10 px начинается ценник
+            box = ((x0 - pad) / 3, (y0 - pad) / 3, (x1 + pad) / 3, (y0 + 466) / 3)
+            dest = d / kind / f"{name}.webp"
+            cutout_on_black(raw.format(shot), box, dest, width_px=300, quality=88)
+            # у правой упаковки второго ряда в угол заходит лаймовая карточка задания (x > 985, y > 1915 @3x) – стираем
+            if x0 > 600 and y0 + 466 > 1915:
+                arr = np.array(Image.open(dest).convert("RGBA")).astype(np.float32)
+                h, w = arr.shape[:2]
+                r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+                lime = (g - r > 40) & (g - b > 80)
+                lime[: int(h * 0.85), :] = False
+                lime[:, : int(w * 0.85)] = False
+                arr[lime, 3] = 0
+                save_webp(Image.fromarray(arr.astype(np.uint8), "RGBA"), dest, 88)
+    # подарки из фигмы – уже с прозрачностью: кольцо, конфета, водка, роза, туфля
+    for name, dest in [("Item (large).png", "ring"), ("Item (small)-1.png", "candy"), ("Item (small)-2.png", "bottle"),
+                       ("Item (small).png", "flower"), ("item box.png", "heel")]:
+        img = Image.fromarray(trim(rgba(f"market/gifts/{name}")).astype(np.uint8), "RGBA")
+        img = img.resize((300, round(img.height * 300 / img.width)), Image.LANCZOS)
+        save_webp(img, d / "gifts" / f"{dest}.webp", 90)
+    # предметы без упаковки – „market/clear stickers/“ (300 px) и „market/clear gifts/“ (200 px):
+    # для ленты карточками с подложкой, где упаковка лишняя. Только обрезка прозрачных полей и WebP
+    clear = {
+        "clear stickers": [
+            ("Chihu 1.png", "chihuahua"), ("Group 1321314218.png", "heart"), ("Group 1321314219.png", "brick"),
+            ("anime tyan 5 1.png", "anime"), ("coffin.png", "coffin"), ("emogirl3 1.png", "emo"),
+            ("hd_6995c82d602c9 2.png", "scoop"), ("image 499.png", "bee"), ("image 501.png", "slipper"),
+            ("okak 2 1.png", "cat"), ("penguin.png", "penguin"), ("skull 2.png", "skull"),
+            ("toothpaste 1.png", "toothpaste"), ("цвет 2.png", "grasshopper"),
+        ],
+        "clear gifts": [
+            ("Group 11.png", "loh"), ("Group 17.png", "sperm"), ("Group 9.png", "babe"), ("gnome 2.png", "gnome"),
+            ("подарки_0000_Микширование-каналов-3-копия 2.png", "kurwa"),
+            ("подарки_0001_Микширование-каналов-3-копия-3 1.png", "heart67"),
+            ("подарки_0006_Красочность-2-копия-2 1-1.png", "vip"),
+            ("подарки_0006_Красочность-2-копия-2 1-2.png", "leaf"),
+            ("подарки_0006_Красочность-2-копия-2 1.png", "coconut"),
+            ("подарки_0009_Красочность-1-копия-12 2.png", "crown"),
+            ("подарки_0012_Красочность-1-копия-10 2.png", "panties"),
+            ("подарки_0013_Красочность-1-копия-7 2.png", "chocolate"),
+        ],
+    }
+    for folder, rows in clear.items():
+        for name, dest in rows:
+            img = Image.fromarray(trim(rgba(f"market/{folder}/{name}")).astype(np.uint8), "RGBA")
+            save_webp(img, d / "clear" / folder.split()[1] / f"{dest}.webp", 90)
+    # хвосты без упаковки для карточек: bare-<имя>.webp (build_market_motion → video_crops) – окно упаковки
+    # целиком, вокруг хвоста прозрачное поле и в углу слабый след от края упаковки. Оставляем сам хвост:
+    # слабую альфу – в ноль, мелкие отдельные пятна (след угла) – прочь, поля обрезаем
+    from scipy import ndimage
+    for name in ("gold", "jelly", "paws", "crystal", "scroll", "paper"):
+        arr = np.array(Image.open(OUT / "market/tails" / f"bare-{name}.webp").convert("RGBA")).astype(np.float32)
+        solid = arr[:, :, 3] > 90
+        lab, n = ndimage.label(ndimage.binary_dilation(solid, iterations=3))
+        if n:
+            sizes = ndimage.sum(solid, lab, range(1, n + 1))
+            keep = np.isin(lab, np.where(sizes >= sizes.max() * 0.08)[0] + 1)
+            arr[~ndimage.binary_dilation(keep, iterations=2), 3] = 0
+        save_webp(Image.fromarray(trim(arr).astype(np.uint8), "RGBA"), d / "clear" / "tails" / f"{name}.webp", 90)
+    # баннер blink vip над разделами хаба: „market/ChatListBanner.png“ (1074 × 180 = 358 × 60 pt @3x) – как есть,
+    # текст запечён; в „messanger/chat list/“ под тем же именем – другой баннер (день рождения)
+    save_webp(Image.open(src("market/ChatListBanner.png")).convert("RGBA"), d / "vip-banner.webp", 90)
+    # чипы: часы – из „ещё 3 дня“ (Badge/Utility.png, 243 × 73: круг x 14–58, y 16–60),
+    # VIP и −99% – надписи-наклейки целиком
+    clock = rgba("market chips/Badge/Utility.png")[14:62, 12:60].copy()
+    lum = clock[:, :, :3].mean(axis=2)
+    clock[:, :, 3] = clock[:, :, 3] * np.clip((200 - lum) / 120, 0, 1)   # белую пилюлю под часами – прочь
+    clock[:, :, :3] = 0
+    save_png(trim(clock), d / "chips" / "clock.png")
+    save_png(trim(rgba("market chips/Frame 2131330377-1.png"), 2), d / "chips" / "vip.png")
+    save_png(trim(rgba("market chips/Frame 2131330377.png"), 2), d / "chips" / "off-99.png")
+
+
 def build_map_styles() -> None:
     """
     Стили карты (features/map-styles): картинки стилей для превью, шторки предмета и упаковки в маркете.
@@ -1504,6 +1604,7 @@ def main() -> None:
     build_aktirovka()
     build_market()
     build_market_motion()
+    build_market_hub()
     build_screens_art()
     build_system()
     build_advent_cookies()

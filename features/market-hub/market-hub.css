@@ -1,0 +1,1181 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Маркет: общий хаб товаров. Подключается после market-week.css: стенд, карточка,
+   хвост на пине и шторка предмета – оттуда. Здесь – блок категорий (референс пользователя:
+   плитки, картинка уходит за край), лента одинаковых ячеек без подложек, панель «покупки друзей»,
+   новые чипы (market chips/) и рамки пина (features/pin-styles).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Цвета чипов – цвета самой наклейки из market chips/ (как упаковки маркета – цвет предмета,
+   а не интерфейса): белая пилюля с сиреневым низом, серая подпись «в продаже» */
+.app {
+  --mh-chip-fill: linear-gradient(168deg, #ffffff 52%, #f8f8fb 76%, #bcb7ca);  /* Badge/Utility*.png */
+  --mh-chip-edge: inset 0 -1px 2px rgba(143, 139, 158, 0.55), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --mh-chip-caption: #747477;                                                   /* «в продаже» */
+  --mh-type-name: 600 14px/18px var(--font-ui);                                 /* имя товара в карточке */
+  --mh-off-fill: linear-gradient(100deg, #f1e9ff 0%, #d9c4ff 40%, #c8f1ff 75%, #ffffff 100%);  /* «−99%» (Frame 2131330377.png) */
+}
+
+/* ── Стенд: один телефон и пульт ─────────────────────────────────────── */
+
+.mh-phones {
+  grid-template-columns: 390px 240px;
+}
+
+/* пульт: кнопки групп в две колонки – стенд целиком в окне */
+#panel-cats,
+#panel-layout,
+#panel-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.mh-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* ── Баннер blink vip и блок разделов ────────────────────────────────── */
+/* Баннер – market/ChatListBanner.png как есть (358 × 60, текст запечён), масштабируется по ширине.
+   Экрана подписки в задаче нет: кнопка только отвечает на нажатие */
+.mh-vip-slot:empty {
+  display: none;
+}
+
+.mh-vip {
+  --press-scale: var(--press-scale-wide);
+  display: block;
+  width: calc(100% - var(--gutter) * 2);
+  margin: var(--space-20) var(--gutter) 0;
+}
+
+.mh-vip__img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Разделы – два ряда со своими сетками: швы рядов не совпадают ни друг с другом, ни со швом
+   двух колонок ленты. Ряд 1 – три равные плитки; ряд 2 – «стили карты» шире остальных */
+.mh-cats {
+  display: grid;
+  gap: var(--space-8);
+  margin-top: var(--space-20);
+  padding: 0 var(--gutter);
+}
+
+.mh-cats__row {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.mh-cats__row--0 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mh-cats--banner .mh-cats__row--1 { grid-template-columns: 1.4fr 1fr; }
+.mh-cats--tile .mh-cats__row--1 { grid-template-columns: 1.5fr 1.15fr 1fr; }   /* швы ~157 и ~272 pt */
+
+.mh-vip-slot:not(:empty) + .mh-cats {
+  margin-top: var(--space-12);
+}
+
+.mh-cat {
+  --press-scale: var(--press-scale-button);
+  position: relative;
+  min-width: 0;
+  height: 96px;
+  overflow: hidden;
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: left;
+  transition: background-color var(--duration-state) ease, color var(--duration-state) ease;
+}
+
+/* активная – целиком белая, название чёрное: нажатая ярче ненажатых */
+.mh-cat[aria-pressed="true"] {
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+/* название – сверху слева, одним стилем у всех; у <button> содержимое по центру высоты – поэтому абсолютом */
+.mh-cat__title {
+  position: absolute;
+  z-index: 1;
+  top: var(--space-12);
+  left: var(--space-12);
+  font: var(--type-friend-name);
+}
+
+.mh-cat__art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* стикеры: упаковка или стикер, наклонён и срезан углом плитки */
+.mh-cat__img {
+  position: absolute;
+  right: -8px;
+  bottom: -34px;
+  width: 78px;
+  max-width: none;
+  transform: rotate(9deg);
+}
+
+.mh-cat__img.mh-cat__img--bare {
+  right: -6px;
+  bottom: -12px;
+  width: 66px;
+  transform: rotate(8deg);
+}
+
+/* наклейки: корона целиком внутри плитки, за край почти не уходит */
+.mh-cat__img.mh-cat__img--gift {
+  right: 4px;
+  bottom: -4px;
+  width: 64px;
+  transform: rotate(8deg);
+}
+
+.mh-cat__img.mh-cat__img--gift.mh-cat__img--bare {
+  right: 8px;
+  bottom: 8px;
+  width: 60px;
+}
+
+/* хвосты: твой пин 52 без свечения вылетает за правый край плитки (срезан ~9 pt, лицо целое),
+   пламя тянется влево почти на всю плитку – герой плитки, а не сопло */
+.mh-cat__rider {
+  position: absolute;
+  right: 14px;
+  bottom: 4px;
+  width: 0;
+  height: 0;
+  transform: rotate(-6deg);
+}
+
+/* хвост 60 (длина 113): срез сопла уведён за правый край плитки и за пин, пламя целиком внутри */
+.mh-cat__rider .mw-rider__tail {
+  right: -20px;
+  height: 60px;
+  top: -30px;
+}
+
+/* стили карты: один снимок карты в белой рамке, крупно, наклонён и срезан углом плитки */
+.mh-cat__map {
+  position: absolute;
+  right: -14px;
+  bottom: -30px;
+  width: 150px;
+  height: 92px;
+  overflow: hidden;
+  border: 3px solid var(--color-text);
+  border-radius: var(--radius-16);
+  background: var(--color-text);
+  transform: rotate(-6deg);
+}
+
+.mh-cat__map img {
+  width: 100%;
+  height: 100%;
+  border-radius: 13px;                            /* 16 − 3 */
+  object-fit: cover;
+}
+
+.mh-cats--tile .mh-cat__map {
+  right: -12px;
+  bottom: -26px;
+  width: 118px;
+  height: 80px;
+}
+
+/* рамки: коллекция веером – мех (52) впереди, алмаз и жемчуг (36) позади, у каждого свой наклон */
+.mh-cat__pin {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.mh-cat__pin--front {
+  right: 48px;
+  bottom: 6px;
+  transform: rotate(-6deg);
+}
+
+.mh-cat__pin--left {
+  right: 86px;
+  bottom: 18px;
+  transform: rotate(-16deg);
+}
+
+.mh-cat__pin--right {
+  right: 22px;
+  bottom: 24px;
+  transform: rotate(14deg);
+}
+
+.mh-cats--tile .mh-cat__pin--left {
+  display: none;
+}
+
+/* blink vip: звезда подписки, целиком в плитке */
+.mh-cat__star {
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  width: 68px;
+  height: 68px;
+  transform: rotate(8deg);
+}
+
+.mh-cat__pin .pin,
+.mh-map__pin .pin,
+.mh-preview__pin .pin {
+  left: 0;
+  top: 0;
+}
+
+/* ── Лента: одинаковые ячейки в две колонки, без подложек ────────────── */
+/* Товары стоят на чёрном, с воздухом между рядами. Ровность держит ячейка: окно 124 pt
+   с предметом по центру, под ним имя в одну строку и цена – у всех на одной линии */
+.mh-list {
+  margin-top: var(--space-28);
+  padding: 0 var(--gutter);
+}
+
+.mh-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-28) var(--space-8);
+}
+
+.mh-card {
+  --press-scale: var(--press-scale-button);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  text-align: center;
+}
+
+.mh-card__art {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 124px;
+}
+
+/* сам предмет: чип клеится на его левый верхний угол, а не на угол ячейки */
+.mh-card__item {
+  position: relative;
+  display: block;
+}
+
+.mh-art {
+  display: block;
+  width: auto;
+  height: 118px;
+  max-width: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* ролик упаковки – на чёрном, как и лента */
+.mh-video {
+  width: auto;
+  height: 124px;
+  background: none;
+}
+
+/* стиль карты: твоя карта в этом стиле, твой пин по центру */
+.mh-map {
+  position: relative;
+  display: block;
+  width: 148px;
+  height: 112px;
+  overflow: hidden;
+  border-radius: var(--radius-20);
+}
+
+.mh-map__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mh-map__pin {
+  position: absolute;
+  left: 50%;
+  top: 68%;
+  width: 0;
+  height: 0;
+}
+
+/* рамка: твой пин в этой рамке, крупно. Окно 104 × 112 – место под пин 52 × 1.35 с кольцом */
+.mh-framepin {
+  position: relative;
+  display: block;
+  width: 104px;
+  height: 112px;
+}
+
+/* пин стоит остриём в точке left/top; размер – через его же --pin-scale */
+.mh-framepin > .pin {
+  --pin-scale: 1.35;
+  left: 50%;
+  top: 90%;
+}
+
+.mh-card__name {
+  max-width: 100%;
+  margin-top: var(--space-10);
+  color: var(--color-text);
+  font: var(--mh-type-name);
+}
+
+/* ценник – тёмная пилюля маркета (.price-chip, screens/market.css), как в исходном маркете */
+.mh-price {
+  margin-top: var(--space-6);
+  font-variant-numeric: tabular-nums;
+}
+
+/* VIP: вместо пилюли серая подпись той же высоты – ряды не прыгают */
+.mh-price--note {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  color: var(--color-text-muted);
+  font: var(--type-gift-note);
+}
+
+/* ── Вариант «карточки с подложкой» ──────────────────────────────────── */
+/* У карточки три зоны, и они не пересекаются: имя во всю ширину сверху, под ним слева ценник
+   и в левом нижнем углу чип, справа снизу – предмет (не шире 88 pt: левее стоит ценник).
+   Упаковок нет. Ряды плотные (8): карточки сами держат ритм */
+.mh-grid--cards {
+  gap: var(--space-8);
+}
+
+.mh-grid--cards .mh-card {
+  position: relative;
+  align-items: flex-start;
+  height: 148px;
+  padding: var(--space-12);
+  overflow: hidden;
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  text-align: left;
+}
+
+/* слой предмета – во всю карточку, под текстом */
+.mh-grid--cards .mh-card__art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: auto;
+  height: auto;
+}
+
+.mh-grid--cards .mh-card__item {
+  position: static;
+}
+
+/* имя – в одну строку во всю ширину: предмет начинается ниже */
+.mh-grid--cards .mh-card__name {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  margin-top: 0;
+}
+
+.mh-grid--cards .mh-price {
+  position: relative;
+  z-index: 1;
+  align-self: flex-start;
+}
+
+/* Стикеры и подарки (market/clear stickers, clear gifts): предмет без упаковки с наклоном,
+   чуть уходит за правый нижний угол. Пропорции разные (надпись 200 × 63, пингвин 300 × 300) –
+   вписываем в 88 × 100: верх предмета ниже имени, левый край правее ценника */
+.mh-grid--cards .mh-art.mh-art--bare {
+  position: absolute;
+  right: -6px;
+  bottom: -10px;
+  width: auto;
+  height: auto;
+  max-width: 88px;
+  max-height: 100px;
+  transform: rotate(8deg);
+}
+
+.mh-grid--cards .mh-card:nth-child(even) .mh-art.mh-art--bare {
+  transform: rotate(-6deg);
+}
+
+/* Хвост – живой, как в маркете: ролик упаковки (360 × 452), но в рамке только окно с хвостом –
+   x 70–296, y 160–390 px ролика; упаковка, подвес и ярлык остаются за рамкой. Фон окна в ролике
+   чёрный: «светлее из двух» растворяет его в подложке карточки. Рамка 114 × 116 в правом нижнем углу */
+.mh-tailclip {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 114px;
+  height: 116px;
+  overflow: hidden;
+  mix-blend-mode: lighten;
+  /* левый и верхний край рамки растворяются: хвост, который доходит до стенки упаковки, не режется по линейке */
+  -webkit-mask: linear-gradient(90deg, transparent, #000 16%), linear-gradient(180deg, transparent, #000 12%);
+          mask: linear-gradient(90deg, transparent, #000 16%), linear-gradient(180deg, transparent, #000 12%);
+  -webkit-mask-composite: source-in;
+          mask-composite: intersect;
+}
+
+.mh-tailclip .mh-tailclip__media {
+  position: absolute;
+  left: -31%;                                     /* 70 / 226 */
+  top: -69.6%;                                    /* 160 / 230 */
+  width: 159.3%;                                  /* 360 / 226 */
+  max-width: none;
+  height: auto;
+  aspect-ratio: auto;
+  background: none;
+  mix-blend-mode: normal;
+}
+
+/* Стиль карты – сама карта полосой во всю ширину карточки, без пина: видно стиль.
+   Поле 8, угол 12 = 20 − 8 */
+.mh-grid--cards .mh-card--styles .mh-card__item {
+  width: auto;
+}
+
+.mh-grid--cards .mh-map {
+  position: absolute;
+  left: var(--space-8);
+  right: var(--space-8);
+  bottom: var(--space-8);
+  width: auto;
+  height: 68px;
+  border-radius: var(--radius-12);
+}
+
+.mh-grid--cards .mh-map__pin {
+  display: none;
+}
+
+/* Рамка – твой пин в этой рамке, целиком, в правом нижнем углу */
+.mh-grid--cards .mh-framepin {
+  position: absolute;
+  right: var(--space-8);
+  bottom: var(--space-8);
+  width: 76px;
+  height: 76px;
+}
+
+.mh-grid--cards .mh-framepin > .pin {
+  --pin-scale: 1.15;
+  top: 92%;
+}
+
+/* чип – наклейкой в левом нижнем углу карточки, у всех в одном месте; у стиля карты – на карте */
+.mh-grid--cards .mh-badge,
+.mh-grid--cards .mh-card--styles .mh-badge,
+.mh-grid--cards .mh-card--frames .mh-badge {
+  left: var(--space-10);
+  top: auto;
+  bottom: var(--space-12);
+  transform: rotate(-4deg);
+  transform-origin: 0 50%;
+}
+
+.mh-grid--cards .mh-card--styles .mh-badge {
+  left: var(--space-14);
+  bottom: var(--space-14);
+}
+
+/* ── Вариант «подложка под товаром» ──────────────────────────────────── */
+/* На подложке только предмет и чип; имя и цена – под ней, на чёрном, слева. Упаковок нет. Плитка 132, угол 20 */
+.mh-grid--tiles {
+  gap: var(--space-20) var(--space-8);
+}
+
+.mh-grid--tiles .mh-card {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.mh-grid--tiles .mh-card__art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 132px;
+  overflow: hidden;
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+}
+
+.mh-grid--tiles .mh-card__item {
+  position: static;
+}
+
+/* предмет – крупно, с наклоном, уходит за правый нижний угол плитки (как на плитках категорий);
+   соседние наклонены в разные стороны. Чип в левом верхнем углу ложится на предмет наклейкой */
+.mh-grid--tiles .mh-art.mh-art--bare {
+  position: absolute;
+  right: -12px;
+  bottom: -18px;
+  max-width: 132px;
+  max-height: 140px;
+  transform: rotate(9deg);
+}
+
+.mh-grid--tiles .mh-card:nth-child(even) .mh-art.mh-art--bare {
+  transform: rotate(-7deg);
+}
+
+/* стикер-надпись (babe, loh, sperm, kurwa – широкая и низкая) за угол не уводим: срежется слово.
+   Стоит по центру плитки целиком */
+.mh-grid--tiles .mh-art.mh-art--bare.mh-art--wide {
+  right: 50%;
+  bottom: 50%;
+  translate: 50% 50%;
+}
+
+/* живой хвост – во всю высоту плитки, уходит за её правый и нижний край */
+.mh-grid--tiles .mh-tailclip {
+  right: -14px;
+  bottom: -16px;
+  width: 136px;
+  height: 138px;
+}
+
+/* стиль карты – карта во всю плитку, без пина */
+.mh-grid--tiles .mh-map {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+}
+
+.mh-grid--tiles .mh-map__pin {
+  display: none;
+}
+
+.mh-grid--tiles .mh-framepin {
+  width: 104px;
+  height: 104px;
+}
+
+.mh-grid--tiles .mh-framepin > .pin {
+  --pin-scale: 1.6;
+  top: 100%;
+}
+
+/* чип – в левом верхнем углу плитки, у всех в одном месте */
+.mh-grid--tiles .mh-badge,
+.mh-grid--tiles .mh-card--styles .mh-badge,
+.mh-grid--tiles .mh-card--frames .mh-badge {
+  left: var(--space-8);
+  top: var(--space-10);
+}
+
+.mh-grid--tiles .mh-card__name {
+  margin-top: var(--space-8);
+  padding-left: var(--space-4);
+}
+
+.mh-grid--tiles .mh-price--note {
+  padding-left: var(--space-4);
+}
+
+/* ── Вариант «подложка по типу товара» ───────────────────────────────── */
+/* Плитки как в «подложке под товаром», но подложка говорит, где товар живёт:
+   стикер – лист в точку (как превью стикерпака в шторке), хвост – ночная карта, подарок – на свечении
+   экрана «подарить», стиль карты – снимок в белой рамке, рамка – пин на светлой карте */
+
+/* стикеры: чёрный лист в точку с тонкой рамкой – сетка из шторки предмета (.mw-preview--dots) */
+.mh-grid--themed .mh-card--stickers .mh-card__art {
+  border: 2px solid var(--color-surface);
+  background:
+    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    var(--color-bg);
+}
+
+/* хвосты: ночная карта города (ночлеги) – хвост летит по карте. Ролик на чёрном: «светлее из двух»
+   оставляет от него только хвост, сквозь чёрное видна карта */
+.mh-grid--themed .mh-card--tails .mh-card__art {
+  background: var(--color-bg) url("../../assets/overnights/map-night.webp") 30% 22% / 260% auto no-repeat;
+}
+
+/* подарки: фиолетово-розовое свечение шапки «подарить» сверху, подарок целиком по центру – как на витрине */
+.mh-grid--themed .mh-card--gifts .mh-card__art {
+  background: var(--color-bg) url("../../assets/market/glow-top.webp") 50% 0 / 220% auto no-repeat;
+  box-shadow: inset 0 0 0 2px var(--color-surface);
+}
+
+.mh-grid--themed .mh-card--gifts .mh-art.mh-art--bare,
+.mh-grid--themed .mh-card--gifts:nth-child(even) .mh-art.mh-art--bare {
+  right: 50%;
+  bottom: 44%;
+  max-width: 116px;
+  max-height: 92px;
+  translate: 50% 50%;
+  transform: rotate(-4deg);
+}
+
+/* стили карты: снимок карты в белой рамке, как упаковка стиля в features/map-styles. Угол снимка 16 = 20 − 4 */
+.mh-grid--themed .mh-card--styles .mh-card__art {
+  background: var(--color-text);
+}
+
+.mh-grid--themed .mh-card--styles .mh-map {
+  inset: var(--space-4);
+  border-radius: var(--radius-16);
+}
+
+/* рамки: светлая карта – пин в рамке там, где его увидят друзья */
+.mh-grid--themed .mh-card--frames .mh-card__art {
+  background: var(--color-map-land) url("../../assets/market/map-tail.webp") 40% 60% / 240% auto no-repeat;
+}
+
+.mh-art.mh-art--bare {
+  width: auto;
+  height: auto;
+}
+
+/* шторка: предмет без упаковки на точках, без наклона упаковки */
+.mh-preview__bare {
+  width: auto;
+  max-width: 200px;
+  max-height: 200px;
+  transform: none;
+}
+
+/* фильтр сменился – товары появляются по очереди */
+.mh-grid.is-fresh .mh-card {
+  animation: mh-in var(--duration-screen) var(--ease-emphasized) both;
+  animation-delay: calc(min(var(--i, 0), 7) * 0.03s);
+}
+
+@keyframes mh-in {
+  from { opacity: 0; transform: translateY(10px); }
+}
+
+/* ── Чипы на предмете (market chips/) ────────────────────────────────── */
+/* одна метка, наклеена на левый верхний угол предмета, как в примерах market chips/;
+   на снимке карты – внутри снимка */
+.mh-badge {
+  position: absolute;
+  z-index: 2;
+  left: -6px;
+  top: 14px;
+  transform: rotate(-4deg);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+
+.mh-card--styles .mh-badge {
+  left: var(--space-6);
+  top: var(--space-6);
+}
+
+.mh-card--frames .mh-badge {
+  left: -18px;
+  top: var(--space-8);
+}
+
+/* «ещё 3 дня», «68 шт»; в последние двое суток – две строки: «в продаже» и часы по секундам */
+.mh-utility {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: 24px;
+  padding: 0 var(--space-8) 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--mh-chip-fill);
+  box-shadow: var(--mh-chip-edge);
+  color: var(--color-text-on-light);
+  white-space: nowrap;
+}
+
+.mh-utility--two {
+  height: 30px;
+  padding-right: var(--space-10);
+}
+
+.mh-utility__clock {
+  width: 15px;
+  height: 15px;
+}
+
+.mh-utility__text {
+  display: flex;
+  flex-direction: column;
+  font: var(--type-button-compact);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.mh-utility__text small {
+  color: var(--mh-chip-caption);
+  font: var(--type-card-link);
+  font-size: 9px;
+  line-height: 10px;
+}
+
+/* VIP – наклейка целиком (Frame 2131330377-1.png, 57 × 24 pt) */
+.mh-badge--vip {
+  width: 57px;
+  height: auto;
+}
+
+/* скидка – как «−99%» в market chips: жирные цифры с перламутром и чёрной обводкой */
+.mh-badge--off {
+  font: var(--sticker-number-font);
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+  text-shadow: var(--outline-number-black-3), 0 4px 8px rgba(0, 0, 0, 0.45);
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .mh-badge--off {
+    background: var(--mh-off-fill);
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(1.5px 0 0 var(--color-bg)) drop-shadow(-1.5px 0 0 var(--color-bg))
+            drop-shadow(0 1.5px 0 var(--color-bg)) drop-shadow(0 -1.5px 0 var(--color-bg))
+            drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  }
+}
+
+/* ── Покупки друзей: мини-карточки товара с покупателем ──────────────── */
+/* Акцент на покупке: карточка 108 × 120 (#111 и рамка 1 – как «возможные»). Зоны не пересекаются
+   по построению: предмет – в зоне x 8–100, y 8–88 (может уходить за верх и бока, ниже 88 – никогда),
+   аватарка покупателя 36 – по центру, наполовину на нижнем крае (y 102–138), между ними 11 пустого.
+   Везде сам предмет без упаковки, с лёгким наклоном через один */
+.mh-friends {
+  margin-top: 40px;
+}
+
+.mh-friends + * {
+  margin-top: 40px;
+}
+
+.mh-friends__title {
+  padding: 0 var(--gutter);
+}
+
+.mh-friends__rail {
+  display: flex;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+  padding: 0 var(--gutter);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--gutter);
+  scrollbar-width: none;
+}
+
+/* последнему в ленте – то же поле справа: у flex-ленты правый padding при прокрутке пропадает */
+.mh-friends__rail::after {
+  content: "";
+  flex: 0 0 var(--space-8);
+}
+
+.mh-friends__rail::-webkit-scrollbar {
+  display: none;
+}
+
+.mh-bought {
+  --press-scale: var(--press-scale-button);
+  position: relative;
+  display: flex;
+  flex: 0 0 108px;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+.mh-bought__card {
+  position: relative;
+  display: block;
+  width: 108px;
+  height: 120px;
+  overflow: hidden;
+  border: 1px solid var(--color-surface-raised);
+  border-radius: var(--radius-20);
+  background: var(--color-surface-card);
+}
+
+/* зона предмета: 92 × 80 от (8, 8) */
+.mh-bought__item {
+  position: absolute;
+  left: var(--space-8);
+  top: var(--space-8);
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 80px;
+  pointer-events: none;
+}
+
+.mh-bought .mh-card__item {
+  position: static;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.mh-bought .mh-art {
+  width: auto;
+  height: auto;
+  max-width: 92px;
+  max-height: 80px;
+  transform: rotate(5deg);
+}
+
+.mh-bought:nth-child(even) .mh-art {
+  transform: rotate(-5deg);
+}
+
+/* упаковка на чёрном (если у товара нет вырезки) – чёрный растворяется в карточке */
+.mh-bought .mh-art--black {
+  mix-blend-mode: lighten;
+}
+
+/* огонь: срез сопла уведён на 22 pt за правый край карточки, пламя идёт влево, наклон −8° */
+.mh-bought .mh-art.mh-art--flame,
+.mh-bought:nth-child(even) .mh-art.mh-art--flame {
+  position: absolute;
+  right: -30px;
+  top: 16px;
+  height: 60px;
+  max-width: none;
+  max-height: none;
+  transform: rotate(-8deg);
+}
+
+/* стиль карты – снимок 88 × 60 в белой рамке, наклон −6°, как на плитке раздела */
+.mh-bought .mh-map {
+  position: relative;
+  width: 88px;
+  height: 60px;
+  border: 3px solid var(--color-text);
+  border-radius: var(--radius-16);
+  background: var(--color-text);
+  transform: rotate(-6deg);
+}
+
+.mh-bought .mh-map__img {
+  border-radius: 13px;                            /* 16 − 3 */
+}
+
+/* рамка – пин 52 в рамке целиком, острие у низа зоны */
+.mh-bought .mh-framepin {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.mh-bought .mh-framepin > .pin {
+  --pin-scale: 1;
+  top: 98%;
+}
+
+.mh-bought__face {
+  position: relative;
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  border-radius: var(--radius-squircle);
+  box-shadow: 0 0 0 3px var(--color-bg);
+  object-fit: cover;
+}
+
+.mh-bought__name {
+  max-width: 100%;
+  margin-top: var(--space-4);
+  color: var(--color-text);
+  font: var(--type-gift-note);
+  text-align: center;
+}
+
+/* ── Лента по разделам: блоки с заголовком и «ещё» ────────────────────── */
+/* Блок – заголовок секции слева, серое «ещё» текстом справа (без капса, шеврона и подложки),
+   под ними четыре товара сеткой 2 × 2 в текущей вёрстке ячеек. Между блоками 32 */
+.mh-block {
+  margin-top: var(--space-32);
+}
+
+#cats + #list > .mh-block:first-child {
+  margin-top: var(--space-28);
+}
+
+.mh-block .mh-grid {
+  margin-top: var(--space-16);
+  padding: 0 var(--gutter);
+}
+
+.mh-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: 0 var(--gutter);
+}
+
+/* «ещё»: область нажатия 44, текст на линии поля экрана */
+.mh-head__more {
+  --press-scale: var(--press-scale-small);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: -14px calc(var(--space-12) * -1) -14px 0;
+  padding: 0 var(--space-12);
+  color: var(--color-text-muted);
+  font: var(--type-label);
+  transition: color var(--duration-press) ease;
+}
+
+.mh-head__more:active {
+  color: var(--color-text);
+}
+
+/* экран раздела: шапка «назад + название» маркета недели, ниже лента раздела */
+.mh-catscreen {
+  background: var(--color-bg);
+}
+
+.mh-catscreen__list > .mh-list:first-child {
+  margin-top: var(--space-24);
+}
+
+/* ── Скидка только для тебя (features/market-week, .mw-deal) ─────────── */
+/* карточка из маркета недели как есть; отступ сверху – общий 40 после друзей.
+   Предмет слева: упаковка (лента без подложек) или живое окно хвоста (ленты без упаковок) */
+.mh-deal-block {
+  margin-top: 48px;                               /* стикер «−40%» выходит за верх карточки на 18 */
+}
+
+.mh-deal-block + .mh-list {
+  margin-top: 40px;
+}
+
+.mh-deal-block .mw-deal {
+  margin-top: 0;
+}
+
+.mh-deal__art {
+  display: grid;
+  place-items: end center;
+  height: 112px;
+}
+
+.mh-deal__art .mh-card__item {
+  position: relative;
+  display: block;
+}
+
+.mh-deal__art .mh-art {
+  width: 96px;
+  height: auto;
+  transform: rotate(-4deg);
+}
+
+.mh-deal__art .mh-tailclip {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  width: 96px;
+  height: 104px;
+  margin: 0;
+}
+
+.mh-deal__art .mh-art--black {
+  mix-blend-mode: lighten;
+}
+
+/* огонь без упаковки: срез сопла – за левым нижним углом карточки скидки, пламя тянется вверх-вправо.
+   Карточку режем только слева и снизу (стикер «−40%» сверху выходит за край) */
+.mh-deal:has(.mh-art--flame) {
+  clip-path: inset(-40px -40px 0 0 round 0 0 var(--radius-24) var(--radius-24));
+}
+
+.mh-deal__art:has(.mh-art--flame),
+.mh-deal__art:has(.mh-art--flame) .mh-card__item {
+  position: static;
+}
+
+.mh-deal__art .mh-art--flame {
+  position: absolute;
+  left: -26px;
+  bottom: -22px;
+  width: 150px;
+  max-width: none;
+  transform: rotate(135deg);
+}
+
+/* ── Шторка: превью стиля и рамки ────────────────────────────────────── */
+
+.mh-preview--style {
+  height: 300px;
+  background: var(--color-surface);
+}
+
+.mh-preview__map {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mh-preview__pin {
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  width: 0;
+  height: 0;
+}
+
+/* рамку в шторке рассматривают: пин крупно, ×2.2 */
+.mh-preview__pin--big {
+  top: 72%;
+  transform: scale(2.2);
+}
+
+.mh-preview--frame .mw-preview__tiles {
+  filter: brightness(0.75);
+}
+
+/* ── Рамки пина (features/pin-styles/pin-styles.css, без стенда) ─────── */
+
+.pin__skin {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+[class*="pin--frame-"] .pin__frame {
+  background: none;
+  box-shadow: none;
+}
+
+[class*="pin--frame-"] .pin__skin--back {
+  z-index: -1;
+  inset: -6px;
+  background: var(--ring) center / 100% 100% no-repeat;
+  filter: drop-shadow(0 1px 2px rgba(27, 10, 46, 0.35));
+}
+
+[class*="pin--frame-"] .pin__photo:not(.pin__photo--flat) {
+  filter: url("#ps-trim");
+}
+
+.ps-fx {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  -webkit-mask: var(--ring) center / 100% 100% no-repeat;
+          mask: var(--ring) center / 100% 100% no-repeat;
+}
+
+.ps-shine {
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: 0;
+  width: 40%;
+  background: var(--shine, linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0)));
+  transform: translateX(-160%) rotate(25deg);
+  animation: ps-shine var(--shine-time, 4.5s) var(--ease-emphasized) infinite;
+}
+
+@keyframes ps-shine {
+  0% { transform: translateX(-160%) rotate(25deg); }
+  45%, 100% { transform: translateX(330%) rotate(25deg); }
+}
+
+.ps-spark {
+  position: absolute;
+  left: var(--sx);
+  top: var(--sy);
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  background:
+    radial-gradient(closest-side, #fff 25%, rgba(255, 255, 255, 0) 100%) center / 100% 20% no-repeat,
+    radial-gradient(closest-side, #fff 25%, rgba(255, 255, 255, 0) 100%) center / 20% 100% no-repeat;
+  opacity: 0;
+  animation: ps-spark 3.6s ease-in-out var(--sd, 0s) infinite;
+}
+
+@keyframes ps-spark {
+  0%, 60%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  72% { opacity: 1; transform: scale(1) rotate(45deg); }
+}
+
+.pin--frame-crystal { --ring: var(--ring-crystal); }
+
+.pin--frame-pearl {
+  --ring: var(--ring-pearl);
+  --shine: linear-gradient(90deg, rgba(255, 220, 240, 0), rgba(255, 235, 248, 0.7) 40%, rgba(225, 242, 255, 0.7) 60%, rgba(220, 240, 255, 0));
+  --shine-time: 6s;
+}
+
+.pin--frame-fur { --ring: var(--ring-fur); }
+
+.ps-hair {
+  position: absolute;
+  inset: 0;
+  background: var(--ring-fur-a) center / 100% 100% no-repeat;
+}
+
+.ps-hair--b {
+  background-image: var(--ring-fur-b);
+  animation: ps-fade 3.4s ease-in-out infinite alternate;
+}
+
+@keyframes ps-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.pin--frame-burnt { --ring: var(--ring-burnt); }
+
+.ps-ember {
+  position: absolute;
+  inset: 0;
+  background: var(--ring-burnt-ember) center / 100% 100% no-repeat;
+  -webkit-mask: conic-gradient(from var(--ps-angle), rgba(0, 0, 0, 0.25) 0 55%, #000 75%, rgba(0, 0, 0, 0.25) 95%);
+          mask: conic-gradient(from var(--ps-angle), rgba(0, 0, 0, 0.25) 0 55%, #000 75%, rgba(0, 0, 0, 0.25) 95%);
+  animation: ps-angle 9s linear infinite;
+}
+
+@property --ps-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes ps-angle {
+  to { --ps-angle: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mh-grid.is-fresh .mh-card,
+  .mw-deal__note.is-urgent,
+  .pin__skin * {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .mh-phones {
+    grid-template-columns: none;
+  }
+}
