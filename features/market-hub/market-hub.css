@@ -834,22 +834,8 @@
 }
 
 /* хвост в витрине – живое окно из ролика в окне ячейки, края растворены */
-.mh-grid--shelf .mh-tailclip {
-  position: relative;
-  right: auto;
-  bottom: auto;
-  display: block;
-  width: 132px;
-  height: 124px;
-  -webkit-mask: radial-gradient(closest-side, #000 72%, transparent);
-          mask: radial-gradient(closest-side, #000 72%, transparent);
-}
 
 /* чипы – прежние (белая пилюля с часами, «−99%», VIP) на левом верхнем углу предмета */
-.mh-grid--shelf:not(.mh-grid--3) .mh-badge {
-  left: var(--space-4);
-  top: var(--space-20);
-}
 
 /* ── Лента по разделам: блоки с заголовком и «ещё» ────────────────────── */
 /* Блок – заголовок секции слева, серое «ещё» текстом справа (без капса, шеврона и подложки),
@@ -1033,7 +1019,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  box-shadow: inset 0 0 0 1px var(--color-outline);
+  box-shadow: inset 0 0 0 1px var(--color-surface-raised);   /* как обводка блока покупки */
   pointer-events: none;
 }
 
@@ -1088,14 +1074,25 @@
 /* наклейка – верх профиля как в прототипе (screens/profile.css): свечение 100% × 450, герой с 96 pt,
    координаты --dx от центра и --dy от верха героя; имя на 290 pt */
 .mh-scene--profile {
-  background: var(--color-bg) url("../../assets/profile/theme-glow.webp") center top / 100% 450px no-repeat;
+  display: grid;
+  place-items: center;
+  background: var(--color-bg) url("../../assets/profile/theme-glow.webp") center top / 100% 100% no-repeat;
+}
+
+/* герой и имя – одна группа 390 × 224 по центру окна, масштаб по ширине окна (--pf-scale ставит js) */
+.mh-pf-stage {
+  position: relative;
+  flex: none;
+  width: 390px;
+  height: 224px;
+  transform: scale(var(--pf-scale, 0.88));
 }
 
 .mh-pf {
   position: absolute;
   left: 0;
   right: 0;
-  top: 40px;
+  top: 0;
   height: 194px;
 }
 
@@ -1105,9 +1102,20 @@
   top: calc(var(--dy, 0) * 1px);
 }
 
-.mh-pf__gift {
+.mh-pf__gift img {
   width: calc(var(--w) * 1px);
   opacity: 0.5;                                  /* остальные подарки приглушены – видна новая */
+  animation:
+    mh-pf-gift var(--duration-screen) var(--ease-emphasized) calc(0.08s + var(--i) * 0.04s) both,
+    mh-pf-drift calc(4s + var(--i) * 0.3s) ease-in-out calc(var(--i) * -0.7s) infinite alternate;
+}
+
+@keyframes mh-pf-gift {
+  from { opacity: 0; transform: scale(0.6); }
+}
+
+@keyframes mh-pf-drift {
+  to { translate: 0 -2px; }
 }
 
 .mh-pf__avatar {
@@ -1148,29 +1156,54 @@
   --icon-size: 19px;
 }
 
-/* новая наклейка – на месте розы, без наклона */
+/* новая наклейка – герой на месте розы: приземляется последней и парит */
 .mh-pf__new {
-  --dx: 64;
-  --dy: 6;
-  width: 88px;
-  height: 80px;
-  object-fit: contain;
-  animation: mh-pf-new 0.28s var(--ease-emphasized) both;
+  --dx: 62;
+  --dy: 0;
+  z-index: 1;
+  width: 96px;
+  height: 88px;
+  animation: mh-pf-float 3.2s ease-in-out 0.8s infinite alternate;
 }
 
-@keyframes mh-pf-new {
-  from { opacity: 0; transform: scale(1.25); }
+.mh-pf__new-art {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: mh-pf-land var(--duration-sheet) var(--ease-spring) 0.35s both;
+}
+
+@keyframes mh-pf-land {
+  from { opacity: 0; transform: scale(1.6) rotate(-14deg); }
+}
+
+@keyframes mh-pf-float {
+  from { transform: translateY(0) rotate(-2deg); }
+  to { transform: translateY(-5px) rotate(2deg); }
+}
+
+.mh-pf__avatar,
+.mh-pf__pill {
+  animation: mh-pf-rise var(--duration-screen) var(--ease-emphasized) both;
+}
+
+@keyframes mh-pf-rise {
+  from { opacity: 0; translate: 0 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mh-pf__new { animation: none; }
+  .mh-pf__new,
+  .mh-pf__new-art,
+  .mh-pf__gift img,
+  .mh-pf__avatar,
+  .mh-pf__pill { animation: none; }
 }
 
 .mh-pf__name {
   position: absolute;
   left: 0;
   right: 0;
-  top: 234px;
+  top: 194px;
   padding: 0 var(--gutter);
   font: var(--type-profile-name);
   text-align: center;
@@ -1570,4 +1603,1030 @@
 .mh-grid--3 .mh-price .price-chip__coin {
   width: 16px;
   height: 16px;
+}
+
+/* ── Экран товара по наброскам market/new item cards/ ───────────────────────
+   Столбец на весь рост: шапка → имя и описание → сцена (тянется) → маркер → кнопки. Поля 24 – по наброскам */
+.mh-item {
+  --mh-item-margin: 24px;                        /* поля экрана товара, Sticker-default.png */
+}
+
+.mh-item .mh-item__scroll {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(var(--safe-bottom) + var(--space-8));
+}
+
+.mh-item .mh-item__info {
+  padding: var(--space-14) var(--mh-item-margin) 0;
+}
+
+.mh-item .mh-item__text {
+  margin-top: var(--space-6);
+}
+
+.mh-item .mh-item__scene {
+  flex: 1 0 300px;
+  height: auto;
+  margin: var(--space-12) var(--mh-item-margin) 0;
+}
+
+.mh-item__pages {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  transform: translateX(calc(var(--page, 0) * -100%));
+  transition: transform 0.28s var(--ease-emphasized);
+}
+
+.mh-item__page {
+  position: relative;
+  flex: 0 0 100%;
+  overflow: hidden;                              /* соседняя страница не заглядывает в окно */
+}
+
+/* предмет крупно на чёрном листе в точку */
+.mh-scene__big {
+  width: 64%;
+  max-height: 70%;
+  object-fit: contain;
+}
+
+/* пейджер – чёрный язычок на нижнем крае сцены: активная – белая пилюля 32 × 8, остальные – точки 8 */
+.mh-item__pager {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-14);
+  border-radius: var(--radius-12) var(--radius-12) 0 0;
+  background: var(--color-bg);
+  transform: translateX(-50%);
+}
+
+.mh-item__dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-text-muted);
+  transition: width 0.28s var(--ease-emphasized);
+}
+
+.mh-item__dot.is-active {
+  width: 32px;
+  background: var(--color-text);
+}
+
+.mh-item__foot {
+  padding: 0 var(--mh-item-margin);
+}
+
+/* маркер состояния: полоса 12 и строка – значение белым, пояснение серым */
+.mh-mark {
+  position: relative;
+  margin-top: var(--space-16);
+  padding: 0 var(--space-16);
+}
+
+.mh-mark__track {
+  display: block;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: repeating-linear-gradient(-60deg, var(--color-surface-raised) 0 3px, transparent 3px 8px);
+  overflow: hidden;
+}
+
+.mh-mark__fill {
+  display: block;
+  width: calc(var(--share) * 100%);
+  height: 100%;
+  border-radius: inherit;
+  background: url("../../assets/market-hub/item/holo-fill.png") 0 0 / 100% 100% no-repeat;
+}
+
+.mh-mark__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  margin-top: var(--space-10);
+  color: var(--color-text-muted);
+  font: var(--type-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.mh-mark__row--center {
+  justify-content: center;
+}
+
+.mh-mark__main {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.mh-mark__row b {
+  color: var(--color-text);
+  font-weight: inherit;
+}
+
+.mh-mark__row--sale b {
+  color: var(--color-pink);
+}
+
+.mh-mark__row.is-urgent b {
+  animation: mh-tick 1s steps(2) infinite;
+}
+
+@keyframes mh-tick {
+  50% { opacity: 0.4; }
+}
+
+.mh-mark__clock {
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  -webkit-mask: url("../../assets/market-hub/chips/clock.png") center / contain no-repeat;
+          mask: url("../../assets/market-hub/chips/clock.png") center / contain no-repeat;
+}
+
+.mh-mark__main .mh-mark__clock {
+  color: var(--color-text);
+}
+
+.mh-mark__row--sale .mh-mark__clock {
+  color: var(--color-pink);
+}
+
+.mh-mark__archive,
+.mh-mark__mine {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--color-archive);
+}
+
+.mh-mark__mine {
+  gap: var(--space-4);
+  color: var(--color-selected);
+}
+
+.mh-mark__snow {
+  width: 18px;
+}
+
+/* VIP: логотип, «доступно только для подписчиков», звезда выглядывает из-за кнопки */
+.mh-mark--vip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: 0 var(--space-4);
+}
+
+.mh-mark__logo {
+  height: 35px;
+}
+
+.mh-mark__vip {
+  color: var(--color-text);
+  font: var(--type-gift-note);
+}
+
+.mh-mark__star {
+  position: absolute;
+  right: var(--space-4);
+  top: -6px;
+  width: 64px;
+}
+
+.mh-item .mh-item__buttons {
+  position: relative;
+  z-index: 1;
+  grid-template-columns: none;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+}
+
+/* белая кнопка: слева действие (при скидке – вторая строка), справа монеты и рубли */
+.mh-buy.button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-16);
+  text-align: left;
+}
+
+.mh-buy__label small {
+  display: block;
+  font: var(--type-button-small);
+}
+
+.mh-buy__price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-transform: none;
+}
+
+.mh-buy__coins {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  font: var(--type-buy-price);
+  font-variant-numeric: tabular-nums;
+}
+
+.mh-buy__coin {
+  width: 28px;
+  height: 28px;
+}
+
+.mh-buy__old {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.mh-buy__rub {
+  color: var(--color-text-muted);
+  font: var(--type-buy-rub);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mh-item__pages,
+  .mh-item__dot { transition: none; }
+  .mh-mark__row.is-urgent b { animation: none; }
+}
+
+/* ── Экран товара, раунд 2: друзья, звук, бросок, товары не за монеты, распродано ── */
+/* кнопка звука – круг 40 в левом верхнем углу окна, на всех страницах стикера */
+.mh-item__sound {
+  position: absolute;
+  left: var(--space-12);
+  top: var(--space-12);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+}
+
+.mh-item__sound-icon,
+.mh-mark__play,
+.mh-buy__ext {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  -webkit-mask: var(--mh-glyph) center / contain no-repeat;
+          mask: var(--mh-glyph) center / contain no-repeat;
+}
+
+.mh-item__sound-icon {
+  --mh-glyph: url("../../assets/market-hub/item/sound.png");
+  color: var(--color-text);
+}
+
+.mh-mark__play {
+  --mh-glyph: url("../../assets/market-hub/item/play.png");
+  width: 12px;
+  height: 12px;
+  color: var(--color-text);
+}
+
+.mh-buy__ext {
+  --mh-glyph: url("../../assets/market-hub/item/external.png");
+  width: 13px;
+  height: 13px;
+  margin-right: var(--space-8);
+}
+
+.mh-mark__main .icon--friends {
+  --icon-size: 16px;
+  color: var(--color-text);
+}
+
+.is-bounce {
+  animation: mh-bounce 0.28s var(--ease-emphasized);
+}
+
+@keyframes mh-bounce {
+  50% { scale: 1.08; }
+}
+
+/* переписка в окне – на чёрном, как чат: поля 16, сверху место под кнопку звука, снизу – над точками */
+.mh-item .mh-scene--chat {
+  justify-content: center;
+  padding: 56px var(--space-16) 32px;
+  background: var(--color-bg);
+}
+
+.mh-item .mh-scene__feed .bubble--in {
+  max-width: 75%;
+}
+
+.mh-item .mh-scene__sticker {
+  width: 120px;
+}
+
+/* бросок (Sticker-limited214124-2): стикеры серией летят из правого низа к пину лёвы и исчезают в нём */
+.mh-throw__pin {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 0;
+  height: 0;
+}
+
+.mh-throw__pin .pin {
+  left: 0;
+  top: 0;
+}
+
+.mh-throw__sticker {
+  position: absolute;
+  left: calc(50% - 32px);
+  top: calc(42% - 32px);
+  width: 64px;
+  opacity: 0;
+}
+
+.mh-item__page.is-active .mh-throw__sticker {
+  animation: mh-fly 2.6s linear calc(var(--k) * 0.16s) infinite;
+}
+
+.mh-throw__sticker--tap {
+  animation: mh-fly-once 0.6s var(--ease-emphasized) forwards;
+}
+
+.mh-item__page.is-active .mh-throw__pin {
+  animation: mh-hit 2.6s 0.5s infinite;
+}
+
+@keyframes mh-fly {
+  0% { opacity: 1; transform: translate(70px, 165px) scale(1); }
+  18% { transform: translate(52px, 60px) scale(0.55); }
+  34% { opacity: 0.85; transform: translate(0, -20px) scale(0.25); }
+  36%, 100% { opacity: 0; transform: translate(0, -20px) scale(0.25); }
+}
+
+@keyframes mh-fly-once {
+  0% { opacity: 1; transform: translate(70px, 165px) scale(1); }
+  50% { transform: translate(52px, 60px) scale(0.6); }
+  99% { opacity: 0.3; transform: translate(0, -20px) scale(0.25); }
+  100% { opacity: 0; transform: translate(0, -20px) scale(0.25); }
+}
+
+@keyframes mh-hit {
+  0%, 2% { transform: scale(1); }
+  4% { transform: scale(0.94); }
+  8%, 100% { transform: scale(1); }
+}
+
+/* партнёр: значок в левом нижнем углу карты, логотип над полосой */
+.mh-scene__partner {
+  position: absolute;
+  left: var(--space-12);
+  bottom: var(--space-12);
+  width: 48px;
+}
+
+.mh-mark__partner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-12);
+  color: var(--color-text-muted);
+  font: var(--type-gift-note);
+  text-align: right;
+}
+
+.mh-mark__partner-logo {
+  height: 24px;
+}
+
+/* засечка на конце заливки – приглашения и реклама */
+.mh-mark__fill--notch {
+  box-shadow: inset -3px 0 0 var(--color-text);
+}
+
+.mh-get.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* распроданный товар в ленте: предмет приглушён, вместо ценника «продано» */
+.mh-card--sold .mh-card__item {
+  opacity: 0.4;
+}
+
+.mh-card--sold .mh-card__name {
+  color: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mh-item__page.is-active .mh-throw__pin,
+  .mh-throw__sticker--tap,
+  .is-bounce { animation: none; }
+  /* статичный кадр из наброска – пять копий шлейфом */
+  .mh-item__page.is-active .mh-throw__sticker {
+    animation: none;
+    opacity: calc(1 - var(--k) * 0.15);
+    transform: translate(calc(70px - var(--k) * 14px), calc(165px - var(--k) * 38px)) scale(calc(1 - var(--k) * 0.18));
+  }
+}
+
+/* ── Пак стикеров: сетка 2×2 в ячейке и на первой странице, переключатель на второй и третьей ── */
+.mh-packgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4%;
+  width: 92px;                                   /* как предмет ячейки (75 × 92 у одиночного стикера) */
+  aspect-ratio: 1;
+}
+
+.mh-packgrid img,
+.mh-packbig img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.mh-packbig {
+  display: grid;
+  grid-template-columns: 128px 128px;
+  grid-auto-rows: 128px;
+  gap: var(--space-16);
+}
+
+.mh-picker {
+  position: absolute;
+  left: 50%;
+  top: var(--space-12);
+  z-index: 2;
+  display: flex;
+  gap: var(--space-8);
+  padding: var(--space-4);
+  border-radius: var(--radius-16);
+  background: var(--color-bg);
+  transform: translateX(-50%);
+}
+
+.mh-item__scene.is-map .mh-picker {
+  background: var(--color-glass-button-map, var(--color-glass-button));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+          backdrop-filter: blur(var(--blur-glass));
+}
+
+.mh-picker[hidden] {
+  display: none;
+}
+
+.mh-picker__cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--radius-12);
+  background: none;
+  transition: border-color 0.15s;
+}
+
+.mh-picker__cell::after {                       /* зона касания 48 */
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+.mh-picker__cell img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.mh-picker__cell[aria-checked="true"] {
+  border-color: var(--color-text);
+  background: var(--color-surface-raised);
+}
+
+.mh-item__scene.is-map .mh-picker__cell[aria-checked="true"] {
+  background: none;
+}
+
+.mh-picker__cell[aria-checked="true"] img {
+  width: 36px;
+  height: 36px;
+}
+
+/* у пака на страницах 2–3 место кнопки звука занимает переключатель; переписке – отступ под плашку */
+.mh-item__scene:has(.mh-picker):not(.is-first) .mh-item__sound {
+  display: none;
+}
+
+.mh-item__scene:has(.mh-picker) .mh-scene--chat {
+  padding-top: 68px;
+}
+
+/* ── Раунд 4: цена над кнопками, кнопки в ряд, чип пака над сеткой ── */
+.mh-item .mh-item__price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  min-height: 34px;
+  height: auto;
+  margin-top: var(--space-16);
+}
+
+.mh-item .mh-item__coin {
+  align-self: center;
+  width: 32px;
+  height: 32px;
+}
+
+.mh-item .mh-item__sum {
+  font: var(--type-item-price);
+  letter-spacing: var(--tracking-title);
+  font-variant-numeric: tabular-nums;
+}
+
+.mh-item .mh-item__rub {
+  color: var(--color-text-muted);
+  font: var(--type-item-rub);
+  font-variant-numeric: tabular-nums;
+}
+
+.mh-item .mh-item__off {
+  align-self: center;
+  margin-left: auto;
+}
+
+.mh-item .mh-item__buttons {
+  grid-template-columns: 1fr 1fr;
+  margin-top: var(--space-12);
+}
+
+.mh-item .mh-item__buttons--one {
+  grid-template-columns: 1fr;
+}
+
+.mh-card__item--pack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.mh-card__item--pack .mh-badge {
+  position: static;
+  margin-left: -6px;
+}
+
+
+/* окно ячейки 96 по высоте: чип 24 (с запасом на наклон 3) + 4 + сетка 64 */
+.mh-card__item--pack .mh-badge {
+  margin-top: 3px;
+}
+
+.mh-card__item--pack .mh-packgrid {
+  width: 64px;
+}
+
+.mh-grid--cards .mh-card__item--pack .mh-badge {
+  margin-top: var(--space-6);                    /* наклонённый чип не выходит за верх карточки */
+}
+
+/* наклейка, правка: ник строго по центру окна (ширина плашки у нас другая, чем в профиле, – координата
+   профиля сдвигала его вправо); свечение – как в профиле, 100% × 420, без растяжения на всё окно;
+   группа – чуть выше центра, масштаб с полями 16, чтобы крайние подарки не резались */
+.mh-scene--profile {
+  align-items: start;
+  background-size: 100% 420px;
+}
+
+.mh-pf-stage {
+  margin-top: calc(50% - 40px);
+  transform-origin: 50% 0;
+}
+
+.mh-pf .mh-pf__pill {
+  left: 50%;
+  translate: -50% 0;
+}
+
+.mh-pf .mh-pf__pill {
+  animation-name: mh-pf-rise-pill;
+}
+
+@keyframes mh-pf-rise-pill {
+  from { opacity: 0; translate: -50% 12px; }
+}
+
+/* строка цены: монеты слева, рубли – плашкой у правого края (вес строки по обе стороны), «−50%» рядом со старой ценой */
+.mh-item .mh-item__price {
+  align-items: center;
+}
+
+.mh-item .mh-item__rub {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  margin-left: auto;
+  padding: 0 var(--space-14);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--type-item-rub);
+}
+
+.mh-item .mh-item__off {
+  margin-left: var(--space-4);
+}
+
+/* ── Варианты ценника с рублями (пульт «цена») ── */
+/* «рубли под ценой» – всегда второй строкой по центру, одинаково во всех колонках */
+.mh-pricerow:has(> .mh-rub) {
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* «в одну строку» – одна тёмная пилюля: монета, цена, тонкий разделитель, рубли серым */
+.mh-price--line {
+  gap: var(--space-6);
+}
+
+.mh-pricesep {
+  width: 1px;
+  height: 14px;
+  margin: 0 var(--space-2);
+  background: var(--color-outline);
+}
+
+.mh-price--line .mh-rub {
+  font: inherit;
+}
+
+/* «пара на подложке» – светлее общая подложка, внутри пилюля монет и рубли справа */
+.mh-pricerow.mh-pricepair {
+  flex-direction: row;
+  gap: var(--space-8);
+  padding: 2px var(--space-10) 2px 2px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+}
+
+.mh-pricepair .mh-rub {
+  color: var(--color-text);
+}
+
+/* свечение растворяется в чёрном к низу окна – светлое пятно у края картинки свечения не видно */
+.mh-scene--profile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, var(--color-bg) 88%);
+  pointer-events: none;
+}
+
+.mh-pf-stage {
+  z-index: 1;
+}
+
+.mh-pricerow.mh-pricepair,
+.mh-price--line {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.mh-pricepair .mh-price {
+  padding-right: var(--space-8);
+}
+
+/* наклейка: группа героя и имени – по центру окна по обеим осям (без отступа сверху) */
+.mh-scene--profile {
+  align-items: center;
+  justify-items: center;
+}
+
+.mh-pf-stage {
+  margin-top: 0;
+  transform-origin: 50% 50%;
+}
+
+/* наклейка: группа – точно по центру окна (сетка прижимала широкую группу к левому краю),
+   масштаб считает js: по ширине подарков и высоте окна */
+.mh-pf-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: 0;
+  transform: translate(-50%, -50%) scale(var(--pf-scale, 0.88));
+}
+
+/* ── Цена по эталону (images/26): курсив, старая зачёркнута; рубли справа так же крупно, без подложки ── */
+.mh-item .mh-item__sum,
+.mh-item .mh-item__old {
+  font-style: italic;
+}
+
+.mh-item .mh-item__old {
+  font: italic 700 20px/24px var(--font-ui);   /* зачёркнутая старая цена – как на эталоне */
+  color: var(--color-text-muted);
+  text-decoration-thickness: 2px;
+}
+
+.mh-item .mh-item__rub {
+  height: auto;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: var(--type-item-price);
+  font-style: italic;
+  letter-spacing: var(--tracking-title);
+}
+
+/* ── Наклейка по эталону (images/27): без рамки, свечение растворяется в фоне экрана ── */
+.mh-item__scene:has(.mh-scene--profile) {
+  background: none;
+}
+
+.mh-item__scene:has(.mh-scene--profile)::after {
+  content: none;
+}
+
+.mh-scene--profile {
+  background: url("../../assets/profile/theme-glow.webp") center top / 100% 100% no-repeat;
+  -webkit-mask: linear-gradient(180deg, #000 55%, transparent 92%);
+          mask: linear-gradient(180deg, #000 55%, transparent 92%);
+}
+
+.mh-scene--profile::after {
+  content: none;
+}
+
+/* композиция от центра окна: вырезка 132 чуть выше середины, плашка ника под ней по центру */
+.mh-pf2 {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 0;
+  height: 0;
+}
+
+.mh-pf2 > * {
+  position: absolute;
+  max-width: none;                               /* родитель – точка 0 × 0 в центре окна */
+}
+
+.mh-pf2__me {
+  left: -66px;
+  top: -96px;
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+  animation: mh-pf-rise var(--duration-screen) var(--ease-emphasized) both;
+}
+
+.mh-pf2__rim {                                  /* светлая дуга закрывает прямой низ вырезки */
+  left: -70px;
+  top: -100px;                                   /* дуга картинки – у её низа: квадрат совпадает с вырезкой */
+  width: 140px;
+}
+
+.mh-pf2__nick {
+  left: 0;
+  top: 26px;
+  display: inline-flex;
+  align-items: center;
+  height: 41px;
+  padding: 0 var(--space-14);
+  border-radius: var(--radius-14);
+  background: var(--gradient-chip-light);
+  box-shadow: var(--shadow-chip);
+  color: var(--color-text-on-chip);
+  font: var(--type-username);
+  white-space: nowrap;
+  transform: translateX(-50%) rotate(-3deg);
+}
+
+/* пустые места под подарки – контуры звёзд */
+.mh-pf2__slot {
+  --icon-size: 28px;
+  left: calc(var(--x) * 1px - 14px);
+  top: calc(var(--y) * 1px - 14px);
+  color: var(--color-text);
+  opacity: 0.4;
+  animation: mh-pf-gift var(--duration-screen) var(--ease-emphasized) calc(0.08s + var(--i) * 0.04s) both;
+}
+
+/* новая наклейка – на месте розы справа сверху: приземляется и парит */
+.mh-pf2__new {
+  left: 72px;
+  top: -112px;
+  width: 80px;
+  height: 80px;
+  animation: mh-pf-float 3.2s ease-in-out 0.8s infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mh-pf2__me,
+  .mh-pf2__slot,
+  .mh-pf2__new { animation: none; }
+}
+
+/* блок покупки на подложке (эталон images/28): карточка #111 с обводкой, поля 10, радиус 30 = кнопка 20 + 10 */
+.mh-item__buy {
+  margin-top: var(--space-16);
+  padding: var(--space-10);
+  border: 1px solid var(--color-surface-raised);
+  border-radius: var(--radius-modal);
+  background: var(--color-surface-card);
+}
+
+.mh-item__buy .mh-item__price {
+  margin-top: 0;
+  padding: var(--space-6) var(--space-8) var(--space-4);
+}
+
+.mh-item__buy .mh-item__buttons {
+  margin-top: var(--space-10);
+}
+
+.mh-item__buy > .mh-item__buttons:first-child {
+  margin-top: 0;
+}
+
+/* название и описание – под сценой */
+.mh-item .mh-item__scene {
+  margin-top: var(--space-16);
+}
+
+.mh-item .mh-item__info {
+  padding-top: var(--space-16);
+}
+
+/* ── Порядок блоков экрана товара (пульт «экран товара») ── */
+/* подвал раскрыт: таймер и блок покупки – прямые элементы столбца, порядок задаёт order; между блоками 16 */
+.mh-item .mh-item__scroll {
+  gap: var(--space-16);
+  padding-bottom: 22px;                          /* блок цены – в 22 pt от низа экрана */
+}
+
+.mh-item .mh-item__foot {
+  display: contents;
+}
+
+.mh-item .mh-item__scene,
+.mh-item .mh-item__info,
+.mh-item .mh-mark,
+.mh-item .mh-item__buy {
+  margin-top: 0;
+}
+
+.mh-item .mh-item__info {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.mh-item .mh-item__top { order: 0; }
+.mh-item .mh-item__scene { order: 20; }
+.mh-item .mh-item__info { order: 30; }
+.mh-item .mh-mark { order: 40; }
+.mh-item .mh-item__buy { order: 90; margin-top: auto; }
+
+.mh-item[data-blocks="text"] .mh-item__info { order: 10; }
+.mh-item[data-blocks="fomo"] .mh-mark { order: 10; }
+.mh-item[data-blocks="under"] .mh-mark { order: 25; }
+
+/* поля контента 16, таймер – во всю ширину, как остальные блоки */
+.mh-item {
+  --mh-item-margin: var(--gutter);
+}
+
+.mh-item .mh-mark {
+  margin-left: var(--mh-item-margin);
+  margin-right: var(--mh-item-margin);
+  padding: 0;
+}
+
+.mh-item .mh-item__buy {
+  margin-left: var(--mh-item-margin);
+  margin-right: var(--mh-item-margin);
+}
+
+/* пульт хаба: групп одиннадцать – зазор между ними 16, чтобы стенд помещался в окно */
+.panel {
+  gap: var(--space-12);
+}
+
+/* пак в ячейке – веером: четыре стикера 60 внахлёст, с поворотом от центра; привидение – спереди */
+.mh-packgrid {
+  position: relative;
+  display: block;
+  width: 124px;
+  height: 66px;
+  aspect-ratio: auto;
+}
+
+.mh-card__item--pack .mh-packgrid {
+  width: 124px;
+}
+
+.mh-packgrid img {
+  position: absolute;
+  top: 4px;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  filter: drop-shadow(var(--shadow-chip));
+}
+
+.mh-packgrid img:nth-child(1) { left: 0; transform: rotate(-16deg) translateY(6px); }
+.mh-packgrid img:nth-child(2) { left: 22px; transform: rotate(-6deg); z-index: 1; }
+.mh-packgrid img:nth-child(3) { left: 42px; transform: rotate(5deg); z-index: 3; }
+.mh-packgrid img:nth-child(4) { left: 64px; transform: rotate(16deg) translateY(6px); z-index: 2; }
+
+.mh-grid--3 .mh-card__item--pack .mh-packgrid {
+  width: 100px;
+  transform: scale(0.82);
+  transform-origin: 0 0;
+}
+
+/* чип срока – по содержимому: у узкого предмета (гном 52) абсолютный чип иначе сжимался и резал часы */
+.mh-utility {
+  width: max-content;
+}
+
+/* веер пака не сжимается до ширины окна предмета */
+.mh-card__item--pack {
+  width: max-content;
+}
+
+.mh-card__item--pack .mh-packgrid {
+  flex: none;
+}
+
+/* веер крупнее: стикеры 70, шаг 24 */
+.mh-packgrid,
+.mh-card__item--pack .mh-packgrid {
+  width: 142px;
+  height: 72px;
+}
+
+.mh-packgrid img {
+  top: 0;
+  width: 70px;
+  height: 70px;
+}
+
+.mh-packgrid img:nth-child(2) { left: 24px; }
+.mh-packgrid img:nth-child(3) { left: 48px; }
+.mh-packgrid img:nth-child(4) { left: 72px; }
+
+/* VIP-блок из макета (vip_button.png, @3x → 537 × 542 pt): кнопка в нём 342 × 56 на (94, 127);
+   картинка сдвинута так, чтобы запечённая кнопка легла под настоящую */
+.mh-vipblock {
+  position: relative;
+  order: 90;
+  width: 342px;
+  margin: auto auto 0;
+  padding-top: 72px;                             /* логотип, текст и звезда над кнопкой */
+}
+
+.mh-vipblock__art {
+  position: absolute;
+  left: -94px;
+  top: -55px;                                    /* 72 − 127 */
+  width: 537px;
+  max-width: none;
+  pointer-events: none;
+}
+
+.mh-vipblock__btn {
+  position: relative;
+  width: 100%;
+}
+
+.mh-item .mh-item__scroll {
+  overflow-x: hidden;
+}
+
+/* кнопка звука – квадрат 40 со скруглением 12, как «назад» в шапке */
+.mh-item__sound {
+  border-radius: var(--radius-12);
 }

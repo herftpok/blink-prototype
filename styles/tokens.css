@@ -65,6 +65,7 @@
   --color-sticker-unit: #808080;                      /* „мин“, „км/ч“ под числом на пине (pin/*.png) */
 
   /* ── Смысловые акценты ─────────────────────────────────────────────── */
+  --color-archive: #ffe421;                    /* „в архиве“ со снежинкой на экране товара (market/new item cards/Tail-archieve.png) */
   --color-selected: #adff58;                   /* „выбрано“ в коллекции маркета: галочка и подпись (market_full_screen.png) */
   /* маркет: градиенты с эталонов market/*.png */
   --gradient-market-backdrop: linear-gradient(90deg, #e1a0ff 0%, #a0e8ff 100%);   /* фон над шторками маркета (choose_recipient.png) */
@@ -147,6 +148,8 @@
   --type-gift-option: 600 14.5px/18px var(--font-ui);       /* „отправить анонимно“, трекинг +0.02em */
   --type-comment-label: 600 14px/17px var(--font-text);     /* „коммент к подарку“ */
   --type-comment: 500 17px/22px var(--font-text);           /* текст коммента и плейсхолдер */
+  --type-item-price: 700 28px/34px var(--font-ui);          /* цена над кнопками на экране товара маркета */
+  --type-item-rub: 600 17px/22px var(--font-ui);            /* «≈ 15 000 ₽» рядом с ценой на экране товара */
   --type-item-text: 500 15px/20px var(--font-text);         /* описание предмета в шторке маркета (market/unlimited_sticker.png) */
   --type-season-title: 800 38px/40px var(--font-ui);        /* заголовок сезонного баннера маркета („хэллоуин“), трекинг −0.03em */
   --type-season-tag: 700 15px/20px var(--font-ui);          /* срок на розовой наклейке баннера („до 31.10“) */

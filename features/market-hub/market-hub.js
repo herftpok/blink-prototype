@@ -199,6 +199,29 @@
     vasya: { name: "вася", photo: `${A}/people/photo-5.webp`, live: `${A}/people/live-5.webp` },
     natashka: { name: "наташка", photo: `${A}/people/photo-1.webp`, live: `${A}/people/live-1.webp` },
   };
+  // товары не за монеты (наброски Sticker-invite, Sticker-ad, Tail-partner) и распроданные (Sticker-archieve)
+  Object.assign(ITEMS.chihuahua, { friends: 20 });
+  Object.assign(ITEMS.bee, { get: "invite", goal: 10, done: 1 });
+  Object.assign(ITEMS.paws, { get: "invite", goal: 10, done: 4 });
+  Object.assign(ITEMS.brick, { get: "ad", goal: 10, done: 3 });
+  Object.assign(ITEMS.paper, { get: "ad", goal: 10, done: 7 });
+  Object.assign(ITEMS.scroll, { get: "partner", partner: "дринкит", ends: T0 + 30 * D_ });
+  Object.assign(ITEMS.hat, { stock: { left: 0, total: 100 }, rank: 2, friends: 20 });
+  Object.assign(ITEMS.gold, { stock: { left: 0, total: 100 }, rank: 1, friends: 6 });
+  ITEMS.spooky = {
+    id: "spooky", cat: "stickers", name: "жутко весело", text: "этот пак оживает по ночам…",
+    bare: "market/sticker-ghost.webp", pack: "market/sticker-ghost.webp", price: 1500, rank: 90, friends: 20,
+    stock: { left: 42, total: 120 },
+    set: [
+      { id: "zombie", name: "зомби", src: "market/sticker-zombie.webp", sound: "bzz", chat: ["ты как после контрольной?", "я так же"] },
+      { id: "bat", name: "летучая мышь", src: "market/sticker-bat.webp", sound: "yap", chat: ["выходи гулять, уже стемнело", "так и знал, что ты не спишь"] },
+      { id: "ghost", name: "привидение", src: "market/sticker-ghost.webp", sound: "bulk", chat: ["ты как после вчерашнего?💀", "ахахахах, узнаю себя"] },
+      { id: "pumpkin", name: "тыква", src: "market/sticker-pumpkin.webp", sound: "boom", chat: ["я покрасился в рыжий", "очень смешно"] },
+    ],
+  };
+  const isSold = (item) => !!item.stock && item.stock.left <= 0;
+  const GET_NOTE = { invite: "за задание", ad: "за рекламу", partner: "от партнёра" };
+
   const ME = { name: "ты", live: `${A}/people/live-1.webp`, online: true, speed: 25 };
   const ME_HD = { ...ME, live: `${A}/people/live-hd-1.webp` };
 
@@ -212,23 +235,30 @@
     // shelf – витрина: блоки по разделам, стикеры и наклейки по три в ряд без имени, хвосты по два –
     // рамки по два – без упаковок и без подложек; стили карты по два на подложке («подложка под товаром»).
     // Чипы – прежние. Только с лентой по разделам
-    shelf: "витрина: 3 в ряд" };
-  const SHELF3 = ["stickers", "gifts"];
-  const SHELF_BARE = ["stickers", "gifts", "tails", "frames"];
+    shelf: "витрина: 3 в ряд", shelf2: "витрина: 2 в ряд" };
+  // витрина: стикеры и наклейки по три в ряд; «витрина 2 в ряд» – те же блоки, но сетка 2 × 2
+  const SHELF3_CATS = ["stickers", "gifts"];
+  const SHELF3 = { includes: (cat) => S.layout === "shelf" && SHELF3_CATS.includes(cat) };
+  const SHELF_BARE = ["stickers", "gifts"];
   const gridClass = (cat) => S.layout === "themed" ? "mh-grid--tiles mh-grid--themed"
-    : S.layout === "shelf" ? (SHELF_BARE.includes(cat) ? `mh-grid--shelf${SHELF3.includes(cat) ? " mh-grid--3" : ""}` : "mh-grid--tiles")
+    : S.layout.startsWith("shelf") ? (SHELF_BARE.includes(cat) ? `mh-grid--shelf${SHELF3.includes(cat) ? " mh-grid--3" : ""}`
+      : ["tails", "frames"].includes(cat) ? "mh-grid--tiles mh-grid--themed" : "mh-grid--tiles")
     : `mh-grid--${S.layout}`;
   // лента: flat – все товары подряд; sections – блоки по разделам с «ещё», плитки и «ещё» открывают экран раздела
   const FEEDS = { flat: "подряд", sections: "по разделам" };
+  // порядок блоков экрана товара: картинка, текст (имя и описание), таймер (FOMO-маркер), блок покупки всегда внизу
+  const ORDERS = { photo: "фото ↑", text: "текст ↑", fomo: "таймер ↑", under: "таймер ↓" };
   // цена: coins – только монеты; rub – монеты и рубли.
   // курс от продукта: 1 монета = 10 ₽
-  const PRICES = { coins: "монеты", rub: "монеты и рубли" };
+  // варианты ценника с рублями: rub – рубли строкой под пилюлей, line – одна плашка «монеты | ≈ рубли»,
+  // pair – общая подложка: пилюля монет и рубли второй половиной
+  const PRICES = { coins: "монеты", rub: "₽ ниже", line: "₽ строкой", pair: "₽ парой" };
   const RUB_PER_COIN = 10;
   const formatRub = (coins) => {
     const n = Math.round(coins * RUB_PER_COIN);
-    return `${n >= 10000 ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ") : n} ₽`;
+    return `≈\u00a0${n >= 10000 ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ") : n} ₽`;
   };
-  const S = { cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null, price: "coins" };
+  const S = { order: "photo", cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null, price: "coins" };
   // личная скидка – до конца суток: выдана в полночь, пропадает в следующую
   const midnight = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(); };
   // dealMode – что выбрано на пульте для скидки: on / off / soon (кончится через 10 секунд); идёт в адрес
@@ -241,6 +271,7 @@
     const q = new URLSearchParams();
     if (S.layout !== "air") q.set("layout", S.layout);
     if (S.feed !== "flat") q.set("feed", S.feed);
+    if (S.order !== "photo") q.set("order", S.order);
     if (S.top !== "banner") q.set("top", S.top);
     if (S.dealMode !== "on") q.set("deal", S.dealMode);
     if (S.price !== "coins") q.set("price", S.price);
@@ -280,7 +311,7 @@
   // ── Чипы на упаковке (market chips/) ──────────────────────────────────
   // одна метка на карточку, по важности: VIP → скидка → срок → тираж. Купленное – без меток
   function badge(item) {
-    if (S.owned.has(item.id)) return "";
+    if (S.owned.has(item.id) || isSold(item)) return "";
     if (item.vip) return `<img class="mh-badge mh-badge--vip" src="${H}/chips/vip.png" alt="">`;
     if (offOf(item)) return `<span class="mh-badge mh-badge--off mh-off" aria-hidden="true">−${offOf(item)}%</span>`;
     if (item.ends) {
@@ -301,27 +332,36 @@
   // единственная белая в ленте. В режиме «монеты и рубли» под ней серым цена в рублях; у бесплатного,
   // VIP и купленного строка пустая, но место держит – ряды не прыгают
   function priceMarkup(item) {
-    return `<span class="mh-pricebox"><span class="mh-pricerow">${chipMarkup(item)}${rubMarkup(item)}</span></span>`;
+    const rub = rubMarkup(item);
+    if (rub && S.price === "line") {
+      // монеты и рубли в одной пилюле через тонкий разделитель
+      const chip = chipMarkup(item).replace(/<\/span>$/, `<i class="mh-pricesep" aria-hidden="true"></i>${rub}</span>`);
+      return `<span class="mh-pricebox"><span class="mh-pricerow">${chip.replace("mh-price\"", "mh-price mh-price--line\"")}</span></span>`;
+    }
+    if (rub && S.price === "pair") return `<span class="mh-pricebox"><span class="mh-pricerow mh-pricepair">${chipMarkup(item)}${rub}</span></span>`;
+    return `<span class="mh-pricebox"><span class="mh-pricerow">${chipMarkup(item)}${rub}</span></span>`;
   }
 
   function chipMarkup(item) {
     if (S.owned.has(item.id))
       return `<span class="price-chip mw-chip mw-chip--owned mh-price mh-price--owned"><span class="mw-chip__check"><i class="icon icon--check" aria-hidden="true"></i></span>у тебя</span>`;
-    if (item.vip) return `<span class="mh-price mh-price--note">${S.layout === "shelf" ? "в подписке" : "только в подписке"}</span>`;
+    if (isSold(item)) return '<span class="mh-price mh-price--note">продано</span>';
+    if (item.get) return `<span class="mh-price mh-price--note">${GET_NOTE[item.get]}</span>`;
+    if (item.vip) return `<span class="mh-price mh-price--note">${S.layout.startsWith("shelf") ? "в подписке" : "только в подписке"}</span>`;
     if (!priceOf(item)) return '<span class="price-chip mw-chip mh-price">бесплатно</span>';
     const old = offOf(item) ? `<s class="mw-chip__old mh-price__old">${formatCoins(item.price)}</s>` : "";
     return `<span class="price-chip price-chip--coins mw-chip mh-price"><img class="price-chip__coin" src="${A}/market/coin.png" alt="">${formatCoins(priceOf(item))}${old}</span>`;
   }
 
   function rubMarkup(item) {
-    if (S.price !== "rub") return "";
-    const paid = !S.owned.has(item.id) && !item.vip && priceOf(item);
+    if (S.price === "coins") return "";
+    const paid = !S.owned.has(item.id) && !item.vip && !item.get && !isSold(item) && priceOf(item);
     return paid ? `<span class="mh-rub">${formatRub(priceOf(item))}</span>` : "";
   }
 
   function label(item) {
     const kind = catOf(item.cat).kind;
-    const rub = S.price === "rub" && !S.owned.has(item.id) && !item.vip && priceOf(item) ? `, ${formatRub(priceOf(item)).replace("₽", "рублей")}` : "";
+    const rub = S.price !== "coins" && !S.owned.has(item.id) && !item.vip && priceOf(item) ? `, ${formatRub(priceOf(item)).replace("≈", "примерно").replace("₽", "рублей")}` : "";
     const price = S.owned.has(item.id) ? "уже у тебя"
       : item.vip ? "только в подписке blink vip"
       : !priceOf(item) ? "бесплатно"
@@ -372,6 +412,8 @@
   // deal – карточка личной скидки. Огонь в скидке – сам хвост без упаковки (tails/rocket):
   // его ролик – упаковка целиком, окно хвоста из неё в маленьком размере не читается
   function artMarkup(item, { live = true, deal = false } = {}) {
+    if (item.set)
+      return `<span class="mh-packgrid" aria-hidden="true">${item.set.map((p) => `<img src="${A}/${p.src}" alt="">`).join("")}</span>`;
     if (item.cat === "styles")
       return `
         <span class="mh-map" aria-hidden="true">
@@ -400,9 +442,9 @@
   // Ячейка – одна на все категории, без подложки: окно с предметом и чипом, имя, цена. Вся ячейка – кнопка
   function card(item, i) {
     return `
-      <button class="mh-card mh-card--${item.cat} pressable" type="button" data-item="${item.id}" style="--i:${i}"
+      <button class="mh-card mh-card--${item.cat}${isSold(item) ? " mh-card--sold" : ""} pressable" type="button" data-item="${item.id}" style="--i:${i}"
               aria-label="${esc(label(item))}">
-        <span class="mh-card__art"><span class="mh-card__item">${artMarkup(item)}${badge(item)}</span></span>
+        <span class="mh-card__art"><span class="mh-card__item${item.set ? " mh-card__item--pack" : ""}">${item.set ? badge(item) + artMarkup(item) : artMarkup(item) + badge(item)}</span></span>
         <span class="mh-card__name ellipsis" aria-hidden="true">${esc(item.name)}</span>
         ${priceMarkup(item)}
       </button>`;
@@ -517,7 +559,7 @@
   // В блоке четыре лучших товара сеткой 2 × 2; слева заголовок, справа серое «ещё» текстом – экран раздела.
   // Если показаны все товары раздела, «ещё» нет. Друзей и скидку разделяют два блока товаров
   // в витрине у стикеров и наклеек – шесть (два ряда по три)
-  const blockSize = (id) => (S.layout === "shelf" && SHELF3.includes(id) ? 6 : 4);
+  const blockSize = (id) => (S.layout.startsWith("shelf") && SHELF3.includes(id) ? 6 : 4);
   const sectioned = () => S.feed === "sections";
   function blockMarkup(id) {
     const items = ranked(id);
@@ -557,9 +599,11 @@
     $$("#panel-cats [data-panel-cat]").forEach((b) => b.setAttribute("aria-checked",
       String(b.dataset.panelCat === ((sectioned() ? S.screen : S.cat) || ""))));
     $$("#panel-feed [data-feed]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.feed === S.feed)));
+    $$("#panel-order [data-order]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.order === S.order)));
+    $("#screen-item").dataset.blocks = S.order;
     $$("#panel-price [data-price]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.price === S.price)));
     // строка рублей под ценником – в карточках с подложкой полосе карты стиля нужно меньше высоты
-    app.classList.toggle("mh-rub-on", S.price === "rub");
+    app.classList.toggle("mh-rub-on", S.price !== "coins");
     $$("#panel-top [data-top]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.top === S.top)));
     $$("#panel-deal [data-deal]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.deal === S.dealMode)));
     $$("#panel-layout [data-layout]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.layout === S.layout)));
@@ -633,10 +677,10 @@
             </button>
           </div>
         </header>
-        <div class="mh-item__scene" data-scene aria-hidden="true"></div>
+        <div class="mh-item__scene" data-scene></div>
         <div class="mh-item__info" data-info></div>
+        <div class="mh-item__foot" data-bottom></div>
       </div>
-      <footer class="mh-item__bottom" data-bottom></footer>
     </section>
     <div class="mh-gift-backdrop" data-gift-backdrop></div>
     <div class="sheet mh-gift-sheet" data-recipients role="dialog" aria-modal="true" aria-labelledby="gift-to-title" tabindex="-1"></div>
@@ -691,20 +735,18 @@
           <span class="mh-scene__pin mh-scene__pin--big">${framedPin(item.frame, { ...ME_HD, online: false })}</span>
         </div>`;
     if (item.cat === "gifts") {
-      // наклейка – верх твоего профиля как в прототипе: свечение, вырезка, ник, подарки вокруг
-      // приглушены, новая наклейка – на месте розы (или на своём, если уже есть в профиле)
       const me = window.BLINK_DATA.me;
-      const gifts = me.gifts.filter((g) => g.dx !== 68).map((g) =>
-        `<img class="mh-pf__gift" src="../../${g.src}" alt="" style="--dx:${g.dx};--dy:${g.dy};--w:${g.w}">`).join("");
+      const slots = [[-104, -44], [-142, 22], [-104, 86], [104, 86], [142, 22]]
+        .map(([x, y], k) => `<i class="mh-pf2__slot icon icon--badge-star" style="--x:${x};--y:${y};--i:${k}" aria-hidden="true"></i>`).join("");
       return `
         <div class="mh-scene mh-scene--profile">
-          <div class="mh-pf">
-            ${gifts}
-            <img class="mh-pf__avatar" src="../../${me.cutout}" alt="">
-            <span class="mh-pf__pill"><span class="mh-pf__share"><i class="icon icon--share"></i></span>${esc(me.username)}</span>
-            <img class="mh-pf__new" src="${bareArt(item)}" alt="">
+          <div class="mh-pf2">
+            ${slots}
+            <img class="mh-pf2__me" src="../../${me.cutout}" alt="">
+            <img class="mh-pf2__rim" src="${A}/friends/rim-offline.png" alt="">
+            <span class="mh-pf2__nick">${esc(me.username)}</span>
+            <span class="mh-pf2__new"><img class="mh-pf__new-art" src="${bareArt(item)}" alt=""></span>
           </div>
-          <p class="mh-pf__name">${esc(me.name)}</p>
         </div>`;
     }
     // стикер – в переписке с лёвой: он пишет, ты отвечаешь стикером, он отвечает
@@ -723,67 +765,233 @@
     return `<div class="mh-scene mh-scene--dots"><img class="mh-scene__pack" src="${bareArt(item)}" alt=""></div>`;
   }
 
-  // срок словами: скидка, когда уходит; тираж – полосой; VIP – только в подписке
-  function leaveText(item) {
-    if (item.vip) return "только в подписке blink vip";
-    if (dealFor(item)) return `скидка −${DEAL.off}% только для тебя – до конца дня`;
-    if (item.ends) {
+  // ── Экран товара по наброскам market/new item cards/ ───────────────────
+  // сцена – страницы: предмет крупно и где он живёт; хвост и рамка – на светлой и тёмной карте
+  function scenePages(item) {
+    const one = sceneMarkup(item);
+    const big = (src) => `<div class="mh-scene mh-scene--dots"><img class="mh-scene__big" src="${src}" alt=""></div>`;
+    const dark = (html) => html.replace(`${A}/market/map-tail.webp`, `${A}/map-styles/standard-dark.webp`);
+    if (item.cat === "tails" || item.cat === "frames") return [one, dark(one)];
+    if (item.cat === "styles" && item.style === "winter-light") return [one, one.replace("winter-light.webp", "winter-dark.webp")];
+    if (item.set) {
+      const cur = item.set[ctx.pick];
+      return [`<div class="mh-scene mh-scene--dots"><span class="mh-packbig">${item.set.map((p, k) =>
+        `<img src="${A}/${p.src}" alt="" data-pick-art="${k}">`).join("")}</span></div>`, chatScene(cur.chat, `${A}/${cur.src}`), throwScene(`${A}/${cur.src}`)];
+    }
+    if (item.cat === "stickers" && item.bare && STICKER_CHAT[item.id]) return [big(`${A}/${item.bare}`), one, throwScene(`${A}/${item.bare}`)];
+    return [one];
+  }
+
+  // стикер брошен в друга на карте: летит от тебя по дуге и прилипает к пину лёвы (механика widgets/poop.html)
+  // бросок по наброску Sticker-limited214124-2: стикеры серией летят от тебя (крупно, правый низ) к пину лёвы
+  // дома и исчезают в нём; нажатие по карте – ещё один стикер со звуком
+  function throwScene(src) {
+    const f = FRIENDS.lyova;
+    const pin = window.BlinkPin.markup({ name: f.name, photo: f.live, size: 52, state: "home", online: true, minutes: 22, tag: "span", assets: A });
+    return `
+      <div class="mh-scene mh-scene--map mh-scene--throw" data-throw>
+        <img class="mh-scene__tiles" src="${A}/market/map-tail.webp" alt="">
+        <span class="mh-throw__pin">${pin}</span>
+        ${[0, 1, 2, 3, 4].map((k) => `<img class="mh-throw__sticker" src="${src}" alt="" style="--k:${k}" data-throw-art>`).join("")}
+      </div>`;
+  }
+
+  function chatScene(chat, src) {
+    return `
+      <div class="mh-scene mh-scene--chat">
+        <div class="mw-chat-feed mh-scene__feed">
+          <div class="message-row message-row--in"><div class="bubble bubble--in" data-chat="0">${esc(chat[0])}</div></div>
+          <div class="message-row message-row--out"><div class="bubble bubble--sticker"><img class="mh-scene__sticker" src="${src}" alt="" data-chat-art></div></div>
+          <div class="message-row message-row--in"><div class="bubble bubble--in" data-chat="1">${esc(chat[1])}</div></div>
+        </div>
+      </div>`;
+  }
+
+  // переключатель стикеров пака: страницы 2 и 3, выбор меняет стикер в переписке и бросаемый
+  function pickerMarkup(item) {
+    return `<div class="mh-picker" role="radiogroup" aria-label="стикер из пака" data-picker>${item.set.map((p, k) =>
+      `<button class="mh-picker__cell pressable" type="button" role="radio" data-pick="${k}" aria-label="${p.name}"><img src="${A}/${p.src}" alt=""></button>`).join("")}</div>`;
+  }
+
+  function pick(k, sound = true) {
+    const item = ctx.item;
+    const n = item.set.length;
+    ctx.pick = (k + n) % n;
+    const cur = item.set[ctx.pick];
+    $$("[data-pick]", sheet).forEach((b, i) => {
+      b.setAttribute("aria-checked", String(i === ctx.pick));
+      b.tabIndex = i === ctx.pick ? 0 : -1;
+    });
+    $$("[data-chat]", sheet).forEach((el) => { el.textContent = cur.chat[Number(el.dataset.chat)]; });
+    $$("[data-chat-art], [data-throw-art]", sheet).forEach((img) => { img.src = `${A}/${cur.src}`; });
+    if (sound) playSound(item, cur.sound);
+  }
+
+  function throwOne(scene) {
+    if ($$(".mh-throw__sticker--tap", scene).length >= 8) return;
+    const src = $("[data-throw-art]", scene).src;
+    scene.insertAdjacentHTML("beforeend", `<img class="mh-throw__sticker mh-throw__sticker--tap" src="${src}" alt="">`);
+    const img = scene.lastElementChild;
+    img.addEventListener("animationend", () => img.remove());
+    playSound(ctx.item, ctx.item.set ? ctx.item.set[ctx.pick].sound : undefined);
+  }
+
+  // звук стикера – синтез Web Audio, без файлов: четыре тембра
+  const SOUNDS = { chihuahua: "yap", cat: "yap", brick: "boom", slipper: "boom", coffin: "boom", skullSilver: "boom", skull: "boom", bee: "bzz" };
+  let audio = null;
+  function playSound(item, forced) {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const t = audio.currentTime;
+    const tone = (type, f0, f1, start, dur, vol) => {
+      const o = audio.createOscillator();
+      const g = audio.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(f0, t + start);
+      o.frequency.exponentialRampToValueAtTime(f1, t + start + dur);
+      g.gain.setValueAtTime(vol, t + start);
+      g.gain.exponentialRampToValueAtTime(0.001, t + start + dur);
+      o.connect(g).connect(audio.destination);
+      o.start(t + start);
+      o.stop(t + start + dur);
+    };
+    const kind = forced || SOUNDS[item.id];
+    if (kind === "yap") { tone("square", 1400, 900, 0, 0.08, 0.1); tone("square", 1500, 1000, 0.12, 0.09, 0.1); }
+    else if (kind === "boom") tone("sine", 160, 45, 0, 0.3, 0.5);
+    else if (kind === "bzz") tone("sawtooth", 220, 250, 0, 0.28, 0.08);
+    else tone("sine", 700, 180, 0, 0.22, 0.3);
+    // стикер на открытой странице подпрыгивает
+    const art = $(".mh-item__page.is-active .mh-packbig [data-pick-art='" + (ctx.pick || 0) + "'], .mh-item__page.is-active .mh-scene__big, .mh-item__page.is-active .mh-scene__sticker, .mh-item__page.is-active .mh-throw__sticker, .mh-item__page.is-active .mh-scene__pack", sheet);
+    if (art) { art.classList.remove("is-bounce"); void art.offsetWidth; art.classList.add("is-bounce"); }
+  }
+
+  const hms = (ends) => {
+    const sec = Math.max(0, Math.ceil((ends - Date.now()) / 1000));
+    return `${pad(Math.floor(sec / 3600))}:${pad(Math.floor((sec % 3600) / 60))}:${pad(sec % 60)}`;
+  };
+  const saleEnds = (item) => (dealFor(item) ? S.dealEnds : item.ends || midnight());
+  const ARCHIVE_SPAN = 14 * D_;                    // полоса срока: полная – две недели до архива
+
+  // маркер состояния – один на экран: полоса и строка «значение белым, пояснение серым»
+  function markerMarkup(item) {
+    const owned = S.owned.has(item.id);
+    const bar = (share) => `<span class="mh-mark__track"><span class="mh-mark__fill" style="--share:${share}"></span></span>`;
+    const row = (main, right = "") => `<p class="mh-mark__row"><span class="mh-mark__main">${main}</span>${right}</p>`;
+    const clock = '<i class="mh-mark__clock" aria-hidden="true"></i>';
+    const mine = '<span class="mh-mark__mine"><i class="icon icon--check" aria-hidden="true"></i>в коллекции</span>';
+    if (isSold(item))
+      return `<div class="mh-mark">${bar(0)}${row(`<b>${item.stock.total} / ${item.stock.total} шт</b> продано`,
+        owned ? mine : '<span class="mh-mark__archive">в архиве<img class="mh-mark__snow" src="' + H + '/item/snowflake.png" alt=""></span>')}</div>`;
+    if (item.get === "invite" || item.get === "ad") {
+      const icon = item.get === "invite" ? '<i class="icon icon--friends" aria-hidden="true"></i>' : '<i class="mh-mark__play" aria-hidden="true"></i>';
+      const what = item.get === "invite" ? "друзей приглашено" : "просмотров рекламы";
+      return `<div class="mh-mark">${bar(item.done / item.goal).replace("mh-mark__fill", "mh-mark__fill mh-mark__fill--notch")}${row(`${icon}<b>${item.done} / ${item.goal}</b> ${what}`)}</div>`;
+    }
+    if (item.get === "partner") {
       const days = Math.floor((item.ends - Date.now()) / D_);
-      return days < 1 ? "уходит сегодня" : days === 1 ? "уходит завтра" : `уходит через ${days} ${plural(days, "день", "дня", "дней")}`;
+      return `<div class="mh-mark"><p class="mh-mark__partner"><img class="mh-mark__partner-logo" src="${H}/item/partner-drinkit.png" alt="${esc(item.partner)}">
+        <span>ништяки<br>от наших друзей</span></p>${bar(1)}${row(`${clock}<b>${days} ${plural(days, "день", "дня", "дней")}</b> до попадания в архив`)}</div>`;
+    }
+    if (item.vip && !owned)
+      return `<div class="mh-mark mh-mark--vip"><img class="mh-mark__logo" src="${H}/item/vip-logo.png" alt="blink vip">
+        <span class="mh-mark__vip">доступно только<br>для подписчиков</span><img class="mh-mark__star" src="${A}/market/vip-star.png" alt=""></div>`;
+    if (item.stock && item.stock.left <= 0)
+      return `<div class="mh-mark">${bar(0)}${row(`<b>${item.stock.total} / ${item.stock.total} шт</b> продано`,
+        owned ? mine : '<span class="mh-mark__archive">в архиве<img class="mh-mark__snow" src="' + H + '/item/snowflake.png" alt=""></span>')}</div>`;
+    if (owned)
+      return `<div class="mh-mark">${item.stock ? bar(item.stock.left / item.stock.total) : ""}${
+        item.stock ? row(`<b>${item.stock.left} / ${item.stock.total}</b> ещё в продаже`, mine) : `<p class="mh-mark__row mh-mark__row--center">${mine}</p>`}</div>`;
+    if (offOf(item))
+      return `<div class="mh-mark"><p class="mh-mark__row mh-mark__row--center mh-mark__row--sale">${clock}<b data-tick="${saleEnds(item)}">${hms(saleEnds(item))}</b> до конца распродажи</p></div>`;
+    if (item.stock)
+      return `<div class="mh-mark">${bar(item.stock.left / item.stock.total)}${row(`<b>${item.stock.left} / ${item.stock.total}</b> ещё в продаже`)}</div>`;
+    if (item.ends) {
+      const left = item.ends - Date.now();
+      const days = Math.floor(left / D_);
+      const value = days >= 1 ? `<b>${days} ${plural(days, "день", "дня", "дней")}</b>` : `<b data-tick="${item.ends}">${hms(item.ends)}</b>`;
+      return `<div class="mh-mark">${bar(Math.min(1, left / ARCHIVE_SPAN))}${row(`${clock}${value} до попадания в архив`)}</div>`;
     }
     return "";
   }
 
-  // чип над названием – срок, тираж или VIP; скидка видна в цене. Не на сцене: в переписке
-  // и на карте он ложился бы на сообщения и пин
-  function sceneChip(item) {
-    if (S.owned.has(item.id) || offOf(item)) return "";
-    const b = badge(item);
-    return b ? `<span class="mh-item__chip">${b}</span>` : "";
+  // строка цены над кнопками: монета 32, цена 28/700, при скидке старая зачёркнута, рубли «≈ 15 000 ₽», «−50%» у края
+  function priceRow(item) {
+    const price = priceOf(item);
+    const off = offOf(item);
+    if (!price) return '<div class="mh-item__price"><span class="mh-item__sum">бесплатно</span></div>';
+    const aria = `${formatCoins(price)} ${plural(price, "монета", "монеты", "монет")}, ${formatRub(price).replace("≈", "примерно").replace("₽", "рублей")}`;
+    return `<div class="mh-item__price" role="img" aria-label="${aria}"><img class="mh-item__coin" src="${A}/market/coin.png" alt="">
+      <span class="mh-item__sum">${formatCoins(price)}</span>${off ? `<s class="mh-item__old">${formatCoins(item.price)}</s>` : ""}
+      <span class="mh-item__rub">${formatRub(price)}</span></div>`;
   }
 
   function bottomMarkup(item) {
     const owned = S.owned.has(item.id);
-    const soldOut = item.stock && item.stock.left <= 0;
-    if (item.vip)
-      return `<button class="button button--primary mh-item__wide pressable" type="button">в blink vip</button>`;
-    const off = offOf(item);
-    const price = priceOf(item);
-    const priceRow = `
-      <div class="mh-item__price">
-        <span class="mh-item__pill">${price ? `<img class="mh-item__coin" src="${A}/market/coin.png" alt="">
-          <span class="mh-item__sum">${formatCoins(price)}</span>${off ? `<s class="mh-item__old">${formatCoins(item.price)}</s>` : ""}`
-          : `<span class="mh-item__sum">бесплатно</span>`}</span>
-        ${S.price === "rub" && price ? `<span class="mh-item__rub">${formatRub(price)}</span>` : ""}
-        ${off ? `<span class="mh-off mh-item__off" aria-hidden="true">−${off}%</span>` : ""}
-      </div>`;
-    // наклейку чаще дарят – у неё «подарить» главная кнопка
-    const giftFirst = item.cat === "gifts";
-    const giftBtn = `<button class="button ${giftFirst ? "button--primary" : "button--secondary"} pressable" type="button" data-gift${soldOut ? " disabled" : ""}>подарить</button>`;
-    const buyBtn = owned
-      ? `<button class="button button--secondary mh-item__owned" type="button" disabled><i class="icon icon--check" aria-hidden="true"></i>у тебя</button>`
-      : `<button class="button ${giftFirst ? "button--secondary" : "button--primary"} pressable" type="button" data-buy${soldOut ? " disabled" : ""}>${price ? "купить" : "забрать"}</button>`;
-    return `${priceRow}<div class="mh-item__buttons">${giftBtn}${buyBtn}</div>`;
+    const marker = markerMarkup(item);
+    const btn = (kind, attr, text) => `<button class="button button--${kind} pressable" type="button" ${attr}>${text}</button>`;
+    // блок покупки – подложка (эталон images/28): строка цены и кнопки
+    const row = (...b) => `<div class="mh-item__buttons${b.length === 1 ? " mh-item__buttons--one" : ""}">${b.join("")}</div>`;
+    const box = (...x) => `<div class="mh-item__buy">${x.join("")}</div>`;
+    // VIP – готовый блок из макета (buttons/vip_button.png): свечение, логотип, текст и звезда картинкой,
+    // поверх запечённой кнопки – настоящая того же размера
+    if (item.vip && !owned)
+      return `<div class="mh-vipblock"><img class="mh-vipblock__art" src="${H}/item/vip-block.webp" alt="">
+        <span class="visually-hidden">доступно только для подписчиков</span>
+        <button class="button button--primary mh-vipblock__btn pressable" type="button" data-vip>получить с blink vip</button></div>`;
+    if (isSold(item)) return marker;                                  // архив: кнопок нет
+    if (item.get) {
+      const text = { invite: "пригласить друзей", ad: "посмотреть и получить", partner: '<i class="mh-buy__ext" aria-hidden="true"></i>посмотреть предложение' }[item.get];
+      return marker + box(row(`<button class="button button--primary mh-get pressable" type="button" data-get>${text}</button>`));
+    }
+    if (owned) return marker + box(priceRow(item), row(btn("primary", "data-gift", "подарить")));
+    return marker + box(priceRow(item), row(btn("secondary", "data-gift", "подарить"), btn("primary", "data-buy", priceOf(item) ? "купить" : "забрать")));
+  }
+
+  function fitProfile() {
+    const scene = $("[data-scene]", sheet);
+    // подарки занимают 380 pt по ширине (кепка −190 … сердце +187), группа с именем – 224 по высоте
+    if (scene) scene.style.setProperty("--pf-scale", Math.min((scene.clientWidth - 16) / 380, (scene.clientHeight - 48) / 224, 1.3));
+  }
+  window.addEventListener("resize", () => ctx.open && fitProfile());
+
+  function setPage(i) {
+    const pages = $("[data-pages]", sheet);
+    if (!pages) return;
+    const n = pages.children.length;
+    ctx.page = Math.max(0, Math.min(n - 1, i));
+    pages.style.setProperty("--page", ctx.page);
+    [...pages.children].forEach((p, k) => p.classList.toggle("is-active", k === ctx.page));
+    const scene = $("[data-scene]", sheet);
+    scene.classList.toggle("is-first", ctx.page === 0);
+    scene.classList.toggle("is-map", !!$(".mh-item__page.is-active .mh-scene--map", sheet));
+    const picker = $("[data-picker]", sheet);
+    if (picker) picker.hidden = ctx.page === 0;
+    $$("[data-page]", sheet).forEach((b, k) => {
+      b.classList.toggle("is-active", k === ctx.page);
+      b.setAttribute("aria-selected", String(k === ctx.page));
+    });
   }
 
   function fillSheet() {
     const item = ctx.item;
-    const leave = leaveText(item);
-    $("[data-scene]", sheet).innerHTML = sceneMarkup(item);
+    const pages = scenePages(item);
+    $("[data-scene]", sheet).innerHTML = `
+      <div class="mh-item__pages" data-pages aria-hidden="true">${pages.map((p) => `<div class="mh-item__page">${p}</div>`).join("")}</div>
+      ${pages.length > 1 ? `<div class="mh-item__pager" role="tablist" aria-label="виды товара">${pages.map((_, k) =>
+        `<button class="mh-item__dot" type="button" role="tab" data-page="${k}" aria-label="вид ${k + 1} из ${pages.length}"></button>`).join("")}</div>` : ""}`;
+    if (item.cat === "stickers")
+      $("[data-scene]", sheet).insertAdjacentHTML("beforeend", `<button class="mh-item__sound pressable" type="button" data-sound aria-label="${item.set ? "звук пака" : "звук стикера"}"><i class="mh-item__sound-icon" aria-hidden="true"></i></button>`);
+    if (item.set) {
+      $("[data-scene]", sheet).insertAdjacentHTML("beforeend", pickerMarkup(item));
+      pick(ctx.pick, false);
+    }
+    setPage(ctx.page || 0);
+    fitProfile();
     $("[data-info]", sheet).innerHTML = `
-      ${sceneChip(item)}
-      <h1 class="mh-item__title ellipsis" id="item-title">${item.cat === "stickers" ? `«${esc(item.name)}»` : esc(item.name)}</h1>
+      <h1 class="mh-item__title ellipsis" id="item-title">${esc(item.name)}</h1>
       <p class="mh-item__text">${esc(item.text)}</p>
-      ${leave ? `<p class="mh-item__leave">${leave}</p>` : ""}
-      ${item.stock && !S.owned.has(item.id) ? `
-        <div class="mw-sheet__stock mh-item__stock" role="img" aria-label="осталось ${item.stock.left} из ${item.stock.total}">
-          <div class="mw-sheet__stock-bar"><div class="mw-sheet__stock-fill" style="--share:${item.stock.left / item.stock.total}"></div></div>
-          <p class="mw-sheet__stock-meta"><span>осталось на&nbsp;складе</span><span><span class="mw-sheet__stock-count">${item.stock.left}</span><span class="mw-sheet__stock-total">/${item.stock.total}</span></span></p>
-        </div>` : ""}`;
+`;
     $("[data-bottom]", sheet).innerHTML = bottomMarkup(item);
     $("[data-item-coins]", sheet).textContent = formatCoins(S.coins);
-    // переписка – на чёрном, без окна; остальные сцены – в окне-рамке
-    $("[data-scene]", sheet).classList.toggle("mh-item__scene--bare", !!$(".mh-scene--chat", sheet));
     delete app.dataset.status;
   }
 
@@ -791,6 +999,8 @@
     ctx.item = ITEMS[id];
     ctx.opener = opener;
     ctx.open = true;
+    ctx.page = 0;
+    ctx.pick = ITEMS[id].set ? 2 : 0;
     fillSheet();
     $(".mh-item__scroll", sheet).scrollTop = 0;
     sheet.hidden = false;
@@ -915,7 +1125,7 @@
         <button class="button button--primary gift-cta pressable" type="button" data-send>
           подарить
           <span class="gift-cta__sum">${price ? `<img class="gift-cta__coin" src="${A}/market/coin.png" alt="">${formatCoins(price)}${
-            S.price === "rub" ? ` · ${formatRub(price)}` : ""}` : "бесплатно"}</span>
+            S.price !== "coins" ? ` · ${formatRub(price)}` : ""}` : "бесплатно"}</span>
         </button>
       </div>`;
     giftEl.recipients.classList.remove("is-open");
@@ -953,6 +1163,18 @@
 
   sheet.addEventListener("click", (e) => {
     if (e.target.closest("[data-item-back]")) return closeSheet();
+    if (e.target.closest("[data-sound]")) {
+      if (!ctx.item.set) return playSound(ctx.item);
+      return ctx.item.set.forEach((p, k) => setTimeout(() => { ctx.pick = k; playSound(ctx.item, p.sound); }, k * 280));
+    }
+    const cell = e.target.closest("[data-pick]");
+    if (cell) return pick(Number(cell.dataset.pick));
+    const art = e.target.closest("[data-pick-art]");
+    if (art) return pick(Number(art.dataset.pickArt));
+    const thrown = e.target.closest("[data-throw]");
+    if (thrown) return throwOne(thrown);
+    const dot = e.target.closest("[data-page]");
+    if (dot) return setPage(Number(dot.dataset.page));
     if (e.target.closest("[data-buy]")) return buy();
     if (e.target.closest("[data-gift]")) return openRecipients();
   });
@@ -995,6 +1217,15 @@
       else closeCat();
       return;
     }
+    const order = e.target.closest("[data-order]");
+    if (order) {
+      S.order = order.dataset.order;
+      renderList();
+      // показать сразу: если экран товара закрыт – открыть стикер с таймером
+      if (!ctx.open) openSheet("chihuahua", null);
+      syncUrl();
+      return;
+    }
     const feed = e.target.closest("[data-feed]");
     if (feed) {
       closeSheet();
@@ -1002,7 +1233,7 @@
       S.feed = feed.dataset.feed;
       S.cat = null;
       // витрина бывает только по разделам: лента подряд возвращает ячейки без подложек
-      if (S.feed === "flat" && S.layout === "shelf") {
+      if (S.feed === "flat" && S.layout.startsWith("shelf")) {
         S.layout = "air";
         renderCats();
       }
@@ -1043,7 +1274,7 @@
     const layout = e.target.closest("[data-layout]");
     if (layout) {
       S.layout = layout.dataset.layout;
-      if (S.layout === "shelf" && S.feed !== "sections") {
+      if (S.layout.startsWith("shelf") && S.feed !== "sections") {
         closeSheet();
         S.feed = "sections";
         S.cat = null;
@@ -1074,6 +1305,9 @@
   $("#panel-cats").innerHTML = [{ id: "", title: "все товары" }, ...CATS]
     .map((c) => `<button class="panel__button pressable" type="button" role="radio" data-panel-cat="${c.id}">${esc(c.title)}</button>`)
     .join("");
+  $("#panel-order").innerHTML = Object.entries(ORDERS)
+    .map(([id, title]) => `<button class="panel__button pressable" type="button" role="radio" data-order="${id}">${esc(title)}</button>`)
+    .join("");
   $("#panel-feed").innerHTML = Object.entries(FEEDS)
     .map(([id, title]) => `<button class="panel__button pressable" type="button" role="radio" data-feed="${id}">${esc(title)}</button>`)
     .join("");
@@ -1088,7 +1322,30 @@
     .join("");
 
   // ── Сроки по секундам ─────────────────────────────────────────────────
+  let swipeX = null;
+  sheet.addEventListener("pointerdown", (e) => { if (e.target.closest("[data-scene]")) swipeX = e.clientX; });
+  sheet.addEventListener("pointerup", (e) => {
+    if (swipeX === null) return;
+    const dx = e.clientX - swipeX;
+    swipeX = null;
+    if (Math.abs(dx) > 40) setPage((ctx.page || 0) + (dx < 0 ? 1 : -1));
+  });
+  sheet.addEventListener("keydown", (e) => {
+    if (e.target.closest("[data-picker]")) {
+      const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+      if (step) { e.preventDefault(); pick(ctx.pick + step); $(`[data-pick="${ctx.pick}"]`, sheet).focus(); }
+      if (e.key === "Home" || e.key === "End") { e.preventDefault(); pick(e.key === "Home" ? 0 : ctx.item.set.length - 1); $(`[data-pick="${ctx.pick}"]`, sheet).focus(); }
+      return;
+    }
+    if (e.key === "ArrowRight") setPage((ctx.page || 0) + 1);
+    if (e.key === "ArrowLeft") setPage((ctx.page || 0) - 1);
+  });
   setInterval(() => {
+    $$("#screen-item [data-tick]").forEach((el) => {
+      const t = hms(Number(el.dataset.tick));
+      if (el.textContent !== t) el.textContent = t;
+      el.closest(".mh-mark__row").classList.toggle("is-urgent", Number(el.dataset.tick) - Date.now() < 60000);
+    });
     $$("#list [data-ends], #cat-list [data-ends]").forEach((el) => {
       const t = leftText(Number(el.dataset.ends));
       const b = el.querySelector("[data-left]");
@@ -1151,9 +1408,10 @@
   if (q.get("deal") === "soon") Object.assign(S, { dealEnds: Date.now() + 10000, dealMode: "soon" });
   // ?layout=cards – лента карточками с подложкой
   if (LAYOUTS[q.get("layout")]) S.layout = q.get("layout");
-  if (S.layout === "shelf") S.feed = "sections";
+  if (S.layout.startsWith("shelf")) S.feed = "sections";
   // ?price=rub – цена в монетах и рублях
   if (PRICES[q.get("price")]) S.price = q.get("price");
+  if (ORDERS[q.get("order")]) S.order = q.get("order");
   renderCats();
   renderList();
   // кольца рамок собираются из текстур после загрузки – тогда перерисовываем пины в рамках
