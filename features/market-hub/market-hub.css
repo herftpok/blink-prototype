@@ -332,10 +332,42 @@
   font: var(--mh-type-name);
 }
 
-/* ценник – тёмная пилюля маркета (.price-chip, screens/market.css), как в исходном маркете */
-.mh-price {
+/* ценник – тёмная пилюля маркета (.price-chip, screens/market.css), как в исходном маркете.
+   Блок цены: строка «пилюля + старая цена зачёркнутой справа», под ней – рубли серым */
+.mh-pricebox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin-top: var(--space-6);
+}
+
+.mh-pricerow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.mh-price {
+  margin-top: 0;
   font-variant-numeric: tabular-nums;
+}
+
+/* скидка: старая цена зачёркнутой внутри той же тёмной пилюли (как .mw-chip__old маркета недели) */
+.mh-price__old {
+  font-variant-numeric: tabular-nums;
+}
+
+/* рубли – в той же строке справа от пилюли, серым; у бесплатного, VIP и купленного их нет */
+.mh-rub {
+  color: var(--color-text-muted);
+  font: var(--type-gift-note);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mh-pricerow {
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 /* VIP: вместо пилюли серая подпись той же высоты – ряды не прыгают */
@@ -387,10 +419,11 @@
   margin-top: 0;
 }
 
-.mh-grid--cards .mh-price {
+.mh-grid--cards .mh-pricebox {
   position: relative;
   z-index: 1;
   align-self: flex-start;
+  align-items: flex-start;
 }
 
 /* Стикеры и подарки (market/clear stickers, clear gifts): предмет без упаковки с наклоном,
@@ -728,10 +761,19 @@
   height: auto;
 }
 
-/* скидка – как «−99%» в market chips: жирные цифры с перламутром и чёрной обводкой */
-.mh-badge--off {
-  font: var(--sticker-number-font);
+.mh-badge.mh-badge--off {
+  transform: rotate(-8deg);
+}
+
+.mh-grid--3 .mh-off {
   font-size: 24px;
+}
+
+/* скидка – как «−99%» в market chips: жирные цифры с перламутром и чёрной обводкой. Один язык
+   скидки везде: метка на ячейке (30, в три колонки – 24), личная скидка (40), экран товара (30) */
+.mh-off {
+  font: var(--sticker-number-font);
+  font-size: 30px;
   line-height: 1;
   letter-spacing: -0.03em;
   color: var(--color-text);
@@ -739,7 +781,7 @@
 }
 
 @supports (background-clip: text) or (-webkit-background-clip: text) {
-  .mh-badge--off {
+  .mh-off {
     background: var(--mh-off-fill);
     -webkit-background-clip: text;
             background-clip: text;
@@ -749,161 +791,6 @@
             drop-shadow(0 1.5px 0 var(--color-bg)) drop-shadow(0 -1.5px 0 var(--color-bg))
             drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
   }
-}
-
-/* ── Покупки друзей: мини-карточки товара с покупателем ──────────────── */
-/* Акцент на покупке: карточка 108 × 120 (#111 и рамка 1 – как «возможные»). Зоны не пересекаются
-   по построению: предмет – в зоне x 8–100, y 8–88 (может уходить за верх и бока, ниже 88 – никогда),
-   аватарка покупателя 36 – по центру, наполовину на нижнем крае (y 102–138), между ними 11 пустого.
-   Везде сам предмет без упаковки, с лёгким наклоном через один */
-.mh-friends {
-  margin-top: 40px;
-}
-
-.mh-friends + * {
-  margin-top: 40px;
-}
-
-.mh-friends__title {
-  padding: 0 var(--gutter);
-}
-
-.mh-friends__rail {
-  display: flex;
-  gap: var(--space-8);
-  margin-top: var(--space-16);
-  padding: 0 var(--gutter);
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding: 0 var(--gutter);
-  scrollbar-width: none;
-}
-
-/* последнему в ленте – то же поле справа: у flex-ленты правый padding при прокрутке пропадает */
-.mh-friends__rail::after {
-  content: "";
-  flex: 0 0 var(--space-8);
-}
-
-.mh-friends__rail::-webkit-scrollbar {
-  display: none;
-}
-
-.mh-bought {
-  --press-scale: var(--press-scale-button);
-  position: relative;
-  display: flex;
-  flex: 0 0 108px;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-  scroll-snap-align: start;
-}
-
-.mh-bought__card {
-  position: relative;
-  display: block;
-  width: 108px;
-  height: 120px;
-  overflow: hidden;
-  border: 1px solid var(--color-surface-raised);
-  border-radius: var(--radius-20);
-  background: var(--color-surface-card);
-}
-
-/* зона предмета: 92 × 80 от (8, 8) */
-.mh-bought__item {
-  position: absolute;
-  left: var(--space-8);
-  top: var(--space-8);
-  display: grid;
-  place-items: center;
-  width: 92px;
-  height: 80px;
-  pointer-events: none;
-}
-
-.mh-bought .mh-card__item {
-  position: static;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-}
-
-.mh-bought .mh-art {
-  width: auto;
-  height: auto;
-  max-width: 92px;
-  max-height: 80px;
-  transform: rotate(5deg);
-}
-
-.mh-bought:nth-child(even) .mh-art {
-  transform: rotate(-5deg);
-}
-
-/* упаковка на чёрном (если у товара нет вырезки) – чёрный растворяется в карточке */
-.mh-bought .mh-art--black {
-  mix-blend-mode: lighten;
-}
-
-/* огонь: срез сопла уведён на 22 pt за правый край карточки, пламя идёт влево, наклон −8° */
-.mh-bought .mh-art.mh-art--flame,
-.mh-bought:nth-child(even) .mh-art.mh-art--flame {
-  position: absolute;
-  right: -30px;
-  top: 16px;
-  height: 60px;
-  max-width: none;
-  max-height: none;
-  transform: rotate(-8deg);
-}
-
-/* стиль карты – снимок 88 × 60 в белой рамке, наклон −6°, как на плитке раздела */
-.mh-bought .mh-map {
-  position: relative;
-  width: 88px;
-  height: 60px;
-  border: 3px solid var(--color-text);
-  border-radius: var(--radius-16);
-  background: var(--color-text);
-  transform: rotate(-6deg);
-}
-
-.mh-bought .mh-map__img {
-  border-radius: 13px;                            /* 16 − 3 */
-}
-
-/* рамка – пин 52 в рамке целиком, острие у низа зоны */
-.mh-bought .mh-framepin {
-  position: relative;
-  width: 80px;
-  height: 80px;
-}
-
-.mh-bought .mh-framepin > .pin {
-  --pin-scale: 1;
-  top: 98%;
-}
-
-.mh-bought__face {
-  position: relative;
-  z-index: 1;
-  width: 36px;
-  height: 36px;
-  margin-top: -18px;
-  border-radius: var(--radius-squircle);
-  box-shadow: 0 0 0 3px var(--color-bg);
-  object-fit: cover;
-}
-
-.mh-bought__name {
-  max-width: 100%;
-  margin-top: var(--space-4);
-  color: var(--color-text);
-  font: var(--type-gift-note);
-  text-align: center;
 }
 
 /* ── Вариант «витрина»: стикеры и наклейки по три, остальное по два ──── */
@@ -942,7 +829,7 @@
   clip-path: inset(50%);
 }
 
-.mh-grid--3 .mh-price {
+.mh-grid--3 .mh-pricebox {
   margin-top: var(--space-8);
 }
 
@@ -1021,6 +908,15 @@
 }
 
 /* ── Скидка только для тебя (features/market-week, .mw-deal) ─────────── */
+.mh-deal__off.mh-off {
+  top: -22px;
+  font-size: 40px;
+}
+
+.mh-deal .mh-pricebox {
+  align-items: flex-start;
+  margin-top: 0;
+}
 /* карточка из маркета недели как есть; отступ сверху – общий 40 после друзей.
    Предмет слева: упаковка (лента без подложек) или живое окно хвоста (ленты без упаковок) */
 .mh-deal-block {
@@ -1083,6 +979,410 @@
   width: 150px;
   max-width: none;
   transform: rotate(135deg);
+}
+
+/* ── Экран товара на весь рост ───────────────────────────────────────── */
+/* Сцена «где вещь живёт» во весь край (0–440, низ растворяется в чёрном), поверх – «назад» и баланс;
+   ниже имя 28, описание, срок розовым или склад; снизу – цена и «подарить» / «купить».
+   Выше таб-бара: экран товара закрывает весь телефон */
+.mh-item {
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+}
+
+.mh-item:focus {
+  outline: none;
+}
+
+.mh-item__scroll {
+  flex: 1;
+  padding-bottom: 170px;                          /* нижний блок: 12 + 40 + 12 + кнопка 56 + 8 + safe-bottom 34 + запас */
+}
+
+/* шапка – строка маркета в потоке (как .mw-all__head экрана раздела): «назад» по ДС, баланс с плюсом */
+.mh-item__scroll {
+  position: relative;
+}
+
+.mh-item__top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(var(--safe-top) + 12px) var(--gutter) 0;
+}
+
+.mh-item__coins.coin-balance {
+  margin-top: 0;
+}
+
+/* сцена – окно 358 × 320 под шапкой: r24, волосок обводки поверх картинки */
+.mh-item__scene {
+  position: relative;
+  height: 320px;
+  margin: var(--space-16) var(--gutter) 0;
+  border-radius: var(--radius-24);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.mh-item__scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--color-outline);
+  pointer-events: none;
+}
+
+/* переписка – без окна, сообщения на чёрном */
+.mh-item__scene--bare {
+  background: none;
+}
+
+.mh-item__scene--bare::after {
+  content: none;
+}
+
+.mh-scene {
+  position: absolute;
+  inset: 0;
+}
+
+.mh-scene__tiles {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* хвост и пин – крупно (камера приближена), правее центра */
+.mh-scene__rider,
+.mh-scene__pin {
+  position: absolute;
+  left: 60%;
+  top: 64%;
+  width: 0;
+  height: 0;
+  transform: scale(1.5);
+}
+
+.mh-scene__rider .mw-rider .pin,
+.mh-scene__pin .pin {
+  left: 0;
+  top: 0;
+}
+
+.mh-scene__pin {
+  left: 50%;
+  top: 66%;
+  transform: scale(1.4);
+}
+
+.mh-scene__pin--big {
+  top: 74%;
+  transform: scale(2.2);
+}
+
+/* наклейка – верх профиля как в прототипе (screens/profile.css): свечение 100% × 450, герой с 96 pt,
+   координаты --dx от центра и --dy от верха героя; имя на 290 pt */
+.mh-scene--profile {
+  background: var(--color-bg) url("../../assets/profile/theme-glow.webp") center top / 100% 450px no-repeat;
+}
+
+.mh-pf {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 40px;
+  height: 194px;
+}
+
+.mh-pf > * {
+  position: absolute;
+  left: calc(50% + var(--dx, 0) * 1px);
+  top: calc(var(--dy, 0) * 1px);
+}
+
+.mh-pf__gift {
+  width: calc(var(--w) * 1px);
+  opacity: 0.5;                                  /* остальные подарки приглушены – видна новая */
+}
+
+.mh-pf__avatar {
+  --dx: -75;
+  --dy: 30;
+  width: 132px;
+  height: 132px;
+}
+
+.mh-pf__pill {                                   /* .username-pill профиля */
+  --dx: -68.7;
+  --dy: 143.8;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: 41px;
+  padding: 0 var(--space-12) 0 var(--space-2);
+  border-radius: var(--radius-14);
+  background: var(--gradient-chip-light);
+  box-shadow: var(--shadow-chip);
+  color: var(--color-text-on-chip);
+  font: var(--type-username);
+  transform: rotate(-3deg);
+}
+
+.mh-pf__share {                                  /* .share-button профиля */
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-outline);
+  border-radius: 11px;
+  background: var(--gradient-share-button);
+  color: var(--color-text);
+}
+
+.mh-pf__share .icon {
+  --icon-size: 19px;
+}
+
+/* новая наклейка – на месте розы, без наклона */
+.mh-pf__new {
+  --dx: 64;
+  --dy: 6;
+  width: 88px;
+  height: 80px;
+  object-fit: contain;
+  animation: mh-pf-new 0.28s var(--ease-emphasized) both;
+}
+
+@keyframes mh-pf-new {
+  from { opacity: 0; transform: scale(1.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mh-pf__new { animation: none; }
+}
+
+.mh-pf__name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 234px;
+  padding: 0 var(--gutter);
+  font: var(--type-profile-name);
+  text-align: center;
+}
+
+/* стикер – переписка с лёвой: шапка собеседника, входящий, твой стикер, входящий */
+.mh-scene--chat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0;
+}
+
+.mh-scene__feed .message-row {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.mh-scene__feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.mh-scene__sticker {
+  width: 148px;
+  height: auto;
+  transform: rotate(-6deg);
+}
+
+/* стикер без вырезки – упаковка на точках */
+.mh-scene--dots {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle, var(--color-surface-raised) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    var(--color-bg);
+}
+
+.mh-scene__pack {
+  width: 170px;
+  transform: rotate(-4deg);
+}
+
+/* чип срока, тиража или VIP – над названием */
+.mh-item__chip {
+  display: block;
+  margin-bottom: var(--space-12);
+}
+
+.mh-item__chip .mh-badge {
+  position: static;
+  display: inline-flex;
+}
+
+.mh-item__info {
+  padding: var(--space-16) var(--gutter) 0;
+}
+
+.mh-item__title {
+  font: var(--type-sheet-title);
+}
+
+.mh-item__text {
+  margin-top: var(--space-8);
+  color: var(--color-text-muted);
+  font: var(--type-item-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mh-item__leave {
+  margin-top: var(--space-12);
+  color: var(--color-pink);
+  font: var(--type-caption);
+}
+
+.mh-item__stock {
+  margin-top: var(--space-16);
+}
+
+/* нижний блок: над ним 24 pt затухания; цена – пилюля 40, рубли справа от неё, «−50%» у края; кнопки */
+.mh-item__bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: var(--space-12) var(--gutter) calc(var(--safe-bottom) + var(--space-8));
+  background: var(--color-bg);
+}
+
+.mh-item__bottom::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 24px;
+  background: linear-gradient(180deg, transparent, var(--color-bg));
+  pointer-events: none;
+}
+
+.mh-item__price {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  height: 40px;
+}
+
+.mh-item__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: 40px;
+  padding: 0 var(--space-14) 0 var(--space-6);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+.mh-item__coin {
+  width: 28px;
+  height: 28px;
+}
+
+.mh-item__sum {
+  font: var(--type-coin-balance);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.mh-item__old {
+  color: var(--color-text-muted);
+  font: var(--type-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.mh-item__rub {
+  color: var(--color-text-muted);
+  font: var(--type-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.mh-item__off {
+  margin-left: auto;
+  transform: rotate(-8deg);
+}
+
+.mh-item__buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+  margin-top: var(--space-12);
+}
+
+.mh-item__buttons .button,
+.mh-item__wide {
+  width: 100%;
+}
+
+.mh-item__owned .icon {
+  --icon-size: 18px;
+}
+
+.mh-item__owned:disabled {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+/* карточка подарка: рамка и стиль карты – не картинкой */
+.gift-card__art.mh-gift-pin {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.mh-gift-pin > .pin {
+  --pin-scale: 2;
+  left: 50%;
+  top: 80%;
+}
+
+.gift-card__art.mh-gift-map {
+  flex: none;
+  width: 200px;
+  height: 140px;
+  border: 4px solid var(--color-text);
+  border-radius: var(--radius-20);
+  object-fit: cover;
+}
+
+.mh-gift-sent__art {
+  display: grid;
+  place-items: center;
+  height: 140px;
+}
+
+.mh-gift-sent__art .gift-card__art {
+  max-height: 140px;
+}
+
+/* пин в рамке: у обёртки своя высота – пин стоит остриём у её низа и не залезает на заголовок */
+.mh-gift-sent__art .mh-gift-pin {
+  width: 140px;
+  height: 140px;
+}
+
+.mh-gift-sent__art .mh-gift-pin > .pin {
+  --pin-scale: 1.8;
+  top: 96%;
 }
 
 /* ── Шторка: превью стиля и рамки ────────────────────────────────────── */
@@ -1242,4 +1542,32 @@
   .mh-phones {
     grid-template-columns: none;
   }
+}
+
+/* в вёрстках с подложкой под товаром цена и рубли – по левому краю, как имя */
+.mh-grid--tiles .mh-pricebox {
+  align-items: flex-start;
+}
+
+.mh-grid--tiles .mh-pricerow,
+.mh-grid--cards .mh-pricerow,
+.mh-grid--themed .mh-pricerow,
+.mh-deal .mh-pricerow {
+  justify-content: flex-start;
+}
+
+/* витрина в три колонки: пилюля компактнее, чтобы «1 000 · 10 000 ₽» влезало строкой */
+.mh-grid--3 .mh-pricerow {
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.mh-grid--3 .mh-price.price-chip--coins {
+  height: 24px;
+  font: var(--type-gift-note);
+}
+
+.mh-grid--3 .mh-price .price-chip__coin {
+  width: 16px;
+  height: 16px;
 }

@@ -19,6 +19,7 @@
   <!-- карточка, ценник, хвост на пине и шторка предмета – из маркета недели -->
   <link rel="stylesheet" href="../market-week/market-week.css">
   <link rel="stylesheet" href="market-hub.css">
+  <link rel="stylesheet" href="gift.css">
 </head>
 <body>
 <div class="stage">
@@ -65,6 +66,7 @@
           <!-- экран раздела: «ещё» у блока и плитка в ленте по разделам, въезжает справа -->
           <section class="screen screen--push market mh-catscreen" id="screen-cat" aria-labelledby="cat-title" hidden>
             <div class="screen__scroll" id="cat-scroll">
+              <div class="market__glow" aria-hidden="true"><img class="market__ring" src="../../assets/market/ring.webp" alt=""></div>
               <header class="mw-all__head">
                 <button class="icon-button icon-button--header pressable" type="button" data-act="back" aria-label="назад">
                   <i class="icon icon--back" aria-hidden="true"></i>
@@ -96,6 +98,10 @@
       <div class="panel__group" role="radiogroup" aria-labelledby="panel-feed-title">
         <p class="panel__label caps-label" id="panel-feed-title">лента</p>
         <div id="panel-feed" class="panel__row"></div>
+      </div>
+      <div class="panel__group" role="radiogroup" aria-labelledby="panel-price-title">
+        <p class="panel__label caps-label" id="panel-price-title">цена</p>
+        <div id="panel-price" class="panel__row"></div>
       </div>
       <div class="panel__group" role="radiogroup" aria-labelledby="panel-layout-title">
         <p class="panel__label caps-label" id="panel-layout-title">товары</p>
@@ -129,6 +135,7 @@
   </filter>
 </svg>
 
+<script src="../../scripts/data.js"></script>
 <script src="../../scripts/pin.js"></script>
 <script src="../../scripts/particles.js"></script>
 <script src="../../scripts/market.js"></script>
