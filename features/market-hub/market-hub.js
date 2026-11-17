@@ -258,7 +258,7 @@
     const n = Math.round(coins * RUB_PER_COIN);
     return `≈\u00a0${n >= 10000 ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ") : n} ₽`;
   };
-  const S = { order: "photo", cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null, price: "coins" };
+  const S = { catTab: "sale", order: "photo", cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null, price: "coins" };
   // личная скидка – до конца суток: выдана в полночь, пропадает в следующую
   const midnight = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(); };
   // dealMode – что выбрано на пульте для скидки: on / off / soon (кончится через 10 секунд); идёт в адрес
@@ -482,10 +482,30 @@
     }
   }
 
+  // компактная лента (stand-010): при прокрутке вверх под закреплённой шапкой выезжают категории таблетками
+  // с горизонтальным скроллом; вниз – уходят. Нажатие – как на плитку
+  function renderCompact() {
+    $("#compact").innerHTML = shownCats().map((c) =>
+      `<button class="mh-compact__pill pressable" type="button" data-cat="${c.id}" aria-pressed="${S.cat === c.id}">${esc(c.title)}</button>`).join("");
+  }
+
+  function scrollBehavior(scroller, onMove) {
+    let last = scroller.scrollTop;
+    scroller.addEventListener("scroll", () => {
+      const y = scroller.scrollTop;
+      const d = y - last;
+      if (Math.abs(d) < 3 && y > 0) return;
+      onMove(y, d > 0 ? "down" : "up");
+      last = y;
+    }, { passive: true });
+  }
+
   function renderCats() {
+    renderCompact();
     $("#vip").innerHTML = S.top === "banner"
       ? `<button class="mh-vip pressable" type="button" aria-label="blink vip – тебя будет видно везде">
-           <img class="mh-vip__img" src="${H}/vip-banner.webp" alt="">
+           <img class="mh-vip__img" src="${H}/vip-banner-nostar.webp" alt="">
+           <img class="mh-vip__star" src="${A}/market/vip-star.png" alt="">
          </button>`
       : "";
     $("#cats").className = `mh-cats mh-cats--${S.top}`;
@@ -581,8 +601,20 @@
 
   // Экран раздела – только товары раздела одной сеткой, без покупок друзей и карточки скидки.
   // Товар со скидкой здесь – обычной ячейкой, с ценой и меткой «−40%»
+  const CAT_TABS = { sale: "в продаже", owned: "в коллекции", archive: "архив" };
+  const tabOf = (item) => (S.owned.has(item.id) ? "owned" : isSold(item) ? "archive" : "sale");
+  function catTabs(cat) {
+    const all = Object.values(ITEMS).filter((item) => inFeed(item) && inCat(item, cat));
+    $("#cat-tabs").innerHTML = Object.entries(CAT_TABS).map(([id, title]) => `
+      <button class="mh-cattab pressable" type="button" role="tab" data-cat-tab="${id}" aria-selected="${id === S.catTab}">
+        ${title}<span class="mh-cattab__count">${all.filter((item) => tabOf(item) === id).length}</span></button>`).join("");
+    $("#cat-descriptor").textContent = ` ${CAT_TABS[S.catTab]}`;
+  }
+
   function screenMarkup(cat) {
-    const items = Object.values(ITEMS).filter((item) => inFeed(item) && inCat(item, cat)).sort((a, b) => b.rank - a.rank);
+    catTabs(cat);
+    const items = Object.values(ITEMS).filter((item) => inFeed(item) && inCat(item, cat) && tabOf(item) === S.catTab).sort((a, b) => b.rank - a.rank);
+    if (!items.length) return `<p class="mh-catscreen__empty">${S.catTab === "owned" ? "здесь появится то, что купишь" : "в архиве пока пусто"}</p>`;
     const c = catOf(cat);
     return `
       <section class="mh-list" aria-labelledby="list-title-cat">
@@ -620,9 +652,12 @@
     catOpener = opener;
     S.screen = id;
     $("#cat-title").textContent = catOf(id).title;
+    S.catTab = "sale";
+    catScreen.classList.remove("is-compact");
     $("#cat-scroll").scrollTop = 0;
     renderList();
     catScreen.hidden = false;
+    catScreen.style.setProperty("--mh-cathead", `${$(".mh-cathead").offsetHeight}px`);
     requestAnimationFrame(() => {
       catScreen.classList.add("is-open");
       app.classList.add("has-push");
@@ -1217,6 +1252,12 @@
       else closeCat();
       return;
     }
+    const catTab = e.target.closest("[data-cat-tab]");
+    if (catTab) {
+      S.catTab = catTab.dataset.catTab;
+      $("#cat-list").innerHTML = screenMarkup(S.screen);
+      return;
+    }
     const order = e.target.closest("[data-order]");
     if (order) {
       S.order = order.dataset.order;
@@ -1320,6 +1361,25 @@
   $("#panel-layout").innerHTML = Object.entries(LAYOUTS)
     .map(([id, title]) => `<button class="panel__button pressable" type="button" role="radio" data-layout="${id}">${esc(title)}</button>`)
     .join("");
+
+  // ── Шапки при прокрутке ────────────────────────────────────────────────
+  const marketScreen = $("#screen-market");
+  // высоты закреплённых шапок – под ними встают компактная лента и вкладки раздела
+  const measureHeads = () => {
+    marketScreen.style.setProperty("--mh-head", `${$(".market__header").offsetHeight}px`);
+    catScreen.style.setProperty("--mh-cathead", `${$(".mh-cathead").offsetHeight}px`);
+  };
+  measureHeads();
+  window.addEventListener("resize", measureHeads);
+  scrollBehavior($("#market-scroll"), (y, dir) => {
+    const catsBottom = $("#cats").offsetTop + $("#cats").offsetHeight - $(".market__header").offsetHeight;
+    marketScreen.classList.toggle("is-scrolled", y > 4);
+    marketScreen.classList.toggle("is-compact", dir === "up" && y > catsBottom);
+  });
+  scrollBehavior($("#cat-scroll"), (y, dir) => {
+    catScreen.classList.toggle("is-scrolled", y > 4);
+    catScreen.classList.toggle("is-compact", dir === "down" && y > 40);
+  });
 
   // ── Сроки по секундам ─────────────────────────────────────────────────
   let swipeX = null;

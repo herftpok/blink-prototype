@@ -46,7 +46,7 @@
             <div class="screen__scroll" id="market-scroll">
               <div class="market__content mw-feed mh-feed" id="feed">
                 <div class="market__glow" aria-hidden="true"><img class="market__ring" src="../../assets/market/ring.webp" alt=""></div>
-                <header class="market__header">
+                <header class="market__header mh-sticky">
                   <h1 class="screen-title">маркет</h1>
                   <div class="coin-balance">
                     <img class="coin-balance__coin" src="../../assets/market/coin.png" alt="">
@@ -61,18 +61,20 @@
                 <div id="list"></div>
               </div>
             </div>
+            <nav class="mh-compact" id="compact" aria-label="категории"></nav>
           </section>
 
           <!-- экран раздела: «ещё» у блока и плитка в ленте по разделам, въезжает справа -->
           <section class="screen screen--push market mh-catscreen" id="screen-cat" aria-labelledby="cat-title" hidden>
             <div class="screen__scroll" id="cat-scroll">
               <div class="market__glow" aria-hidden="true"><img class="market__ring" src="../../assets/market/ring.webp" alt=""></div>
-              <header class="mw-all__head">
+              <header class="mw-all__head mh-sticky mh-cathead">
                 <button class="icon-button icon-button--header pressable" type="button" data-act="back" aria-label="назад">
                   <i class="icon icon--back" aria-hidden="true"></i>
                 </button>
-                <h1 class="screen-title" id="cat-title"></h1>
+                <h1 class="screen-title mh-cathead__title"><span id="cat-title"></span><span class="mh-cathead__desc" id="cat-descriptor"></span></h1>
               </header>
+              <div class="mh-cattabs" id="cat-tabs" role="tablist" aria-label="что показать"></div>
               <div class="mw-feed mh-feed mh-catscreen__list" id="cat-list"></div>
             </div>
           </section>

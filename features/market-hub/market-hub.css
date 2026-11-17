@@ -2630,3 +2630,192 @@
 .mh-item__sound {
   border-radius: var(--radius-12);
 }
+
+/* баннер vip: звезда живая – анимированный market/vip-star.png (как в плитке «vip в разделах»)
+   на месте запечённой (центр 9.2% / 47% баннера 1074 × 180) */
+.mh-vip {
+  position: relative;
+}
+
+.mh-vip__star {
+  position: absolute;
+  left: calc(9.2% - 9.5%);
+  top: 50%;
+  width: 19%;
+  height: auto;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* ── Шапки при прокрутке (по stand-010-new-market) ──
+   лента: шапка «маркет» с балансом закреплена; вниз – тонкая линия под ней; вверх (ниже плиток) – под шапкой
+   выезжает компактная лента категорий таблетками с горизонтальным скроллом */
+.mh-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding-bottom: var(--space-10);
+  background: var(--color-bg);
+  box-shadow: 0 1px 0 transparent;
+  transition: box-shadow var(--duration-screen);
+}
+
+.is-scrolled > .screen__scroll .mh-sticky,
+.is-scrolled .mh-sticky {
+  box-shadow: 0 1px 0 var(--color-surface-raised);
+}
+
+.mh-compact {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--mh-head, 104px);
+  z-index: 4;
+  display: flex;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--gutter) var(--space-10);
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--color-bg);
+  box-shadow: 0 1px 0 var(--color-surface-raised);
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+  transition: transform var(--duration-screen) var(--ease-emphasized), opacity var(--duration-screen);
+}
+
+.mh-compact::-webkit-scrollbar {
+  display: none;
+}
+
+.is-compact > .mh-compact {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.mh-compact__pill {
+  flex: none;
+  height: 34px;
+  padding: 0 var(--space-14);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--type-label);
+}
+
+.mh-compact__pill[aria-pressed="true"] {
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+/* экран раздела: «← стикеры», под ним вкладки «в продаже 24 · в коллекции 12 · архив 8»;
+   вниз – вкладки уходят, к заголовку добавляется серое «в продаже»; вверх – вкладки возвращаются */
+.mh-cathead {
+  padding-bottom: var(--space-12);
+}
+
+.mh-cathead__desc {
+  color: var(--color-text-muted);
+  opacity: 0;
+  transition: opacity var(--duration-screen);
+}
+
+.is-compact .mh-cathead__desc {
+  opacity: 1;
+}
+
+.mh-cattabs {
+  position: sticky;
+  top: var(--mh-cathead, 104px);
+  z-index: 4;
+  display: flex;
+  gap: var(--space-16);
+  padding: var(--space-4) var(--gutter) var(--space-12);
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--color-bg);
+  transition: transform var(--duration-screen) var(--ease-emphasized), opacity var(--duration-screen);
+}
+
+.mh-cattabs::-webkit-scrollbar {
+  display: none;
+}
+
+.is-compact .mh-cattabs {
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
+.mh-cattab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-6);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: var(--type-label);
+}
+
+.mh-cattab[aria-selected="true"] {
+  color: var(--color-text);
+}
+
+.mh-cattab__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font: var(--type-gift-note);
+  font-variant-numeric: tabular-nums;
+}
+
+.mh-catscreen__empty {
+  padding: var(--space-32) var(--gutter);
+  color: var(--color-text-muted);
+  font: var(--type-label);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mh-compact,
+  .mh-cattabs { transition: none; }
+}
+
+/* наверху шапка прозрачная – видно кольцо-свечение маркета; чёрная – только после начала прокрутки */
+.mh-sticky {
+  background: transparent;
+  transition: box-shadow var(--duration-screen), background-color var(--duration-screen);
+}
+
+.is-scrolled .mh-sticky {
+  background: var(--color-bg);
+}
+
+/* заголовок раздела в шапке – как в stand-010: строкой рядом с «назад», без переноса */
+.mh-cathead__title {
+  min-width: 0;
+  overflow: hidden;
+  font: var(--type-coin-balance);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* вкладки раздела крупнее – 17/600 */
+.mh-cattab {
+  font: var(--type-item-rub);
+}
+
+/* звезда баннера vip чуть меньше */
+.mh-vip__star {
+  left: calc(9.2% - 8.25%);
+  width: 16.5%;
+}
