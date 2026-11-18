@@ -3255,3 +3255,100 @@
   right: var(--space-12);
   border: 1.5px solid var(--color-outline);
 }
+
+/* ── вариант «цена в кнопке» (?buy=row): подарок квадратом 56 с иконкой, «купить» с ценой внутри;
+   зачёркнутая цена – правее новой, рубли под ними ── */
+.mh-buyrow {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.mh-buyrow__gift.button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  padding: 0;
+}
+
+.mh-buyrow__gift-ic {
+  width: 24px;
+  height: 24px;
+  background: var(--color-text);
+  -webkit-mask: url("../../assets/market-hub/item/gift-lucide.svg") center / contain no-repeat;
+          mask: url("../../assets/market-hub/item/gift-lucide.svg") center / contain no-repeat;
+}
+
+.mh-buyin.button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 0 var(--space-16) 0 var(--space-20);
+}
+
+.mh-buyin__price {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  text-transform: none;
+}
+
+.mh-buyin__coin {
+  width: 28px;
+  height: 28px;
+}
+
+.mh-buyin__col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.mh-buyin__line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-6);
+}
+
+.mh-buyin__sum {
+  color: var(--color-text-on-light);
+  font: italic 700 22px/24px var(--font-ui);
+  letter-spacing: var(--tracking-title);
+  font-variant-numeric: tabular-nums;
+}
+
+.mh-buyin__old {
+  order: 1;                                      /* зачёркнутая – правее новой цены */
+  color: var(--color-text-muted);
+  font: italic 700 14px/16px var(--font-ui);
+}
+
+.mh-buyin__rub {
+  color: var(--color-text-muted);
+  font: var(--type-gift-note);
+  font-variant-numeric: tabular-nums;
+}
+
+/* «цена в кнопке», правки: монета – на одной линии с ценой, а не по центру столбика с рублями;
+   без серой подложки блока покупки – кнопкам вся ширина */
+.mh-buyin__price {
+  align-items: flex-start;
+}
+
+.mh-buyin__coin {
+  width: 24px;
+  height: 24px;
+}
+
+.mh-item__buy:has(.mh-buyrow) {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/* «цена в кнопке»: подарок – справа от «купить» */
+.mh-buyrow__gift.button {
+  order: 1;
+}

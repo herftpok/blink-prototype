@@ -267,7 +267,7 @@
     const n = Math.round(coins * RUB_PER_COIN);
     return `≈\u00a0${n >= 10000 ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ") : n} ₽`;
   };
-  const S = { stickers: "old", catTab: "sale", order: "photo", cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null, price: "coins" };
+  const S = { buy: "split", stickers: "old", catTab: "sale", order: "photo", cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null, price: "coins" };
   // личная скидка – до конца суток: выдана в полночь, пропадает в следующую
   const midnight = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(); };
   // dealMode – что выбрано на пульте для скидки: on / off / soon (кончится через 10 секунд); идёт в адрес
@@ -282,6 +282,7 @@
     if (S.feed !== "flat") q.set("feed", S.feed);
     if (S.order !== "photo") q.set("order", S.order);
     if (S.stickers === "new") q.set("stickers", "new");
+    if (S.buy === "row") q.set("buy", "row");
     if (S.top !== "banner") q.set("top", S.top);
     if (S.dealMode !== "on") q.set("deal", S.dealMode);
     if (S.price !== "coins") q.set("price", S.price);
@@ -687,6 +688,7 @@
     $$("#panel-feed [data-feed]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.feed === S.feed)));
     $$("#panel-order [data-order]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.order === S.order)));
     $("[data-act='stickers']").setAttribute("aria-pressed", String(S.stickers === "new"));
+    $("[data-act='buy']").setAttribute("aria-pressed", String(S.buy === "row"));
     $("#screen-item").dataset.blocks = S.order;
     $$("#panel-price [data-price]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.price === S.price)));
     // строка рублей под ценником – в карточках с подложкой полосе карты стиля нужно меньше высоты
@@ -1038,6 +1040,18 @@
     if (item.get) {
       const text = { invite: "пригласить друзей", ad: "посмотреть и получить", partner: '<i class="mh-buy__ext" aria-hidden="true"></i>посмотреть предложение' }[item.get];
       return marker + box(row(`<button class="button button--primary mh-get pressable" type="button" data-get>${text}</button>`));
+    }
+    if (S.buy === "row" && !owned) {
+      const price = priceOf(item);
+      const off = offOf(item);
+      const inner = price
+        ? `<span class="mh-buyin__price"><img class="mh-buyin__coin" src="${A}/market/coin.png" alt="">
+            <span class="mh-buyin__col"><span class="mh-buyin__line"><span class="mh-buyin__sum">${formatCoins(price)}</span>${
+              off ? `<s class="mh-buyin__old">${formatCoins(item.price)}</s>` : ""}</span><span class="mh-buyin__rub">${formatRub(price)}</span></span></span>`
+        : '<span class="mh-buyin__sum">бесплатно</span>';
+      return marker + box(`<div class="mh-buyrow">
+        <button class="button button--secondary mh-buyrow__gift pressable" type="button" data-gift aria-label="подарить"><i class="mh-buyrow__gift-ic" aria-hidden="true"></i></button>
+        <button class="button button--primary mh-buyin pressable" type="button" data-buy><span>${price ? "купить" : "забрать"}</span>${inner}</button></div>`);
     }
     if (owned) return marker + box(priceRow(item), row(btn("primary", "data-gift", "подарить")));
     return marker + box(priceRow(item), row(btn("secondary", "data-gift", "подарить"), btn("primary", "data-buy", priceOf(item) ? "купить" : "забрать")));
@@ -1462,6 +1476,12 @@
       renderList();
       return;
     }
+    if (e.target.closest("[data-act='buy']")) {
+      S.buy = S.buy === "row" ? "split" : "row";
+      if (ctx.open) fillSheet();
+      syncUrl();
+      return;
+    }
     if (e.target.closest("[data-act='stickers']")) {
       S.stickers = S.stickers === "new" ? "old" : "new";
       renderList();
@@ -1626,6 +1646,7 @@
   if (PRICES[q.get("price")]) S.price = q.get("price");
   if (ORDERS[q.get("order")]) S.order = q.get("order");
   if (q.get("stickers") === "new") S.stickers = "new";
+  if (q.get("buy") === "row") S.buy = "row";
   renderCats();
   renderList();
   // кольца рамок собираются из текстур после загрузки – тогда перерисовываем пины в рамках
