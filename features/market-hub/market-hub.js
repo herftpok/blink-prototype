@@ -188,8 +188,8 @@
   // что есть в ленте: карточками – всё, у чего есть предмет без упаковки; упаковками – всё, у чего есть упаковка.
   // Стили карты и рамки упаковок не имеют – они в обеих лентах
   const bareMode = () => S.layout !== "air";
-  const inFeed = (item) =>
-    item.cat === "styles" || item.cat === "frames" || Boolean(bareMode() ? item.bare : item.art || item.pack);
+  const inFeed = (item) => (!item.ref || S.stickers === "new") && (
+    item.cat === "styles" || item.cat === "frames" || Boolean(bareMode() || item.ref ? item.bare : item.art || item.pack));
 
   // Друзья – пак людей из avatars/, имена как в соседних фичах
   const FRIENDS = {
@@ -219,6 +219,15 @@
       { id: "pumpkin", name: "тыква", src: "market/sticker-pumpkin.webp", sound: "boom", chat: ["я покрасился в рыжий", "очень смешно"] },
     ],
   };
+  // стикеры с эталонных карточек market/new sticker cards/ – только в варианте «новые стикеры» (ref: true)
+  const NSC = `market-hub/item`;
+  Object.assign(ITEMS, {
+    serious: { id: "serious", ref: true, cat: "stickers", name: "серьёзный", bare: `${NSC}/nsc-serious.webp`, price: 10, rank: 97, friends: 3, text: "когда шутки кончились" },
+    eggs: { id: "eggs", ref: true, cat: "stickers", name: "золотые яйца", bare: `${NSC}/nsc-eggs.webp`, price: 1000, off: 99, rank: 99, friends: 7, text: "редкость, которой не жалко поделиться" },
+    tears: { id: "tears", ref: true, cat: "stickers", name: "слёзы счастья", bare: `${NSC}/nsc-tears.webp`, price: 10, rank: 95, friends: 2, ends: T0 + 23 * H_ + 42 * 60000 + 2000, text: "когда очень смешно и немного грустно" },
+    croc: { id: "croc", ref: true, cat: "stickers", name: "крокодил", bare: `${NSC}/nsc-croc.webp`, price: 10, rank: 96, friends: 5, stock: { left: 2680, total: 5000 }, text: "зубастая улыбка на любой ответ" },
+    glitter: { id: "glitter", ref: true, cat: "stickers", name: "блёстки", bare: `${NSC}/nsc-glitter.webp`, price: 0, vip: true, rank: 98, friends: 4, text: "сияешь даже без настроения" },
+  });
   const isSold = (item) => !!item.stock && item.stock.left <= 0;
   const GET_NOTE = { invite: "за задание", ad: "за рекламу", partner: "от партнёра" };
 
@@ -452,8 +461,8 @@
     else if (isSold(item)) top = '<span class="mh-scard__big mh-scard__big--muted">продано</span>';
     else if (item.vip) top = `<img class="mh-scard__vip" src="${H}/item/sticker-vip.png" alt="vip">`;
     else if (offOf(item)) top = `<span class="mh-scard__off">−${offOf(item)}%</span>`;
-    else if (item.stock) top = `<span class="mh-scard__big">${formatCoins(item.stock.left)}<small>шт</small></span>`;
-    else if (item.ends) top = `<span class="mh-scard__big" data-ends="${item.ends}"><b data-left>${leftText(item.ends).text}</b></span>`;
+    else if (item.stock) top = `<span class="mh-scard__big">${String(item.stock.left).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0")}<small>шт</small></span>`;
+    else if (item.ends) top = `<span class="mh-scard__big" data-ends="${item.ends}" data-short><b data-left>${leftText(item.ends).text.replace("ещё ", "")}</b></span>`;
     const price = S.owned.has(item.id) ? '<span class="mh-scard__note">у тебя</span>'
       : isSold(item) ? ""
       : item.vip ? '<span class="mh-scard__note">забери<br>в подписке</span>'
@@ -470,11 +479,15 @@
       </button>`;
   }
 
+  // новые ячейки – только вырезки и паки (упаковки не берём), по рекомендованности
+  const cutStickers = () => [...Object.values(ITEMS).filter((item) => item.ref),
+    ...Object.values(ITEMS).filter((item) => item.cat === "stickers" && !item.ref && (item.bare || item.set) && !isSold(item)).sort((a, b) => b.rank - a.rank)];
+
   // последняя ячейка блока стикеров в новых карточках – «все стикеры» с числом, ведёт на экран раздела
   const allStickersCard = (n) => `
       <button class="mh-card mh-scard mh-scard--all pressable" type="button" data-open="stickers" aria-label="все стикеры, ${n}">
-        <span class="mh-scard__allbox" aria-hidden="true"><span class="mh-scard__alln">${n}</span></span>
-        <i class="mh-scard__arrow" aria-hidden="true"></i>
+        <span class="mh-scard__alln" aria-hidden="true">${n}</span>
+        <i class="icon icon--back mh-scard__arrow" aria-hidden="true"></i>
         <span class="mh-scard__note" aria-hidden="true">все<br>стикеры</span>
       </button>`;
 
@@ -631,7 +644,7 @@
           ${items.length > blockSize(id) ? `<button class="mh-head__more pressable" type="button" data-open="${id}" aria-label="ещё ${esc(c.title)}">ещё<i class="icon icon--chevron" aria-hidden="true"></i></button>` : ""}
         </div>
         ${S.stickers === "new" && id === "stickers"
-          ? grid(items.slice(0, blockSize(id) - 1), 0, false, id).replace(/<\/div>$/, `${allStickersCard(items.length)}</div>`)
+          ? `<div class="mh-grid mh-grid--scards">${cutStickers().slice(0, 5).map((item, i) => card(item, i)).join("")}${allStickersCard(cutStickers().length)}</div>`
           : grid(items.slice(0, blockSize(id)), 0, false, id)}
       </section>`;
   }
@@ -772,6 +785,11 @@
 
   // переписка для стикеров: что пишет лёва до стикера и что отвечает после
   const STICKER_CHAT = {
+    serious: ["ты съел мой торт?", "я жду объяснений"],
+    eggs: ["у меня для тебя сюрприз", "это лучшее, что со мной было"],
+    tears: ["я сдал на пятёрку", "горжусь"],
+    croc: ["кто там опять улыбается?", "угадай"],
+    glitter: ["как ты так сияешь?", "секрет"],
     chihuahua: ["ну пожалуйста", "ладно, уговорила"],
     cat: ["ты опять не спишь?", "кто бы говорил"],
     penguin: ["завтра контрольная", "всё понятно"],
@@ -1543,7 +1561,8 @@
     $$("#list [data-ends], #cat-list [data-ends]").forEach((el) => {
       const t = leftText(Number(el.dataset.ends));
       const b = el.querySelector("[data-left]");
-      if (b.textContent !== t.text) b.textContent = t.text;
+      const text = "short" in el.dataset ? t.text.replace("ещё ", "") : t.text;   // в узкой ячейке стикера – без «ещё»
+      if (b.textContent !== text) b.textContent = text;
     });
     // личная скидка: секунды идут, в последнюю минуту строка стучит, на нуле карточка уходит – товар
     // возвращается в сетку по обычной цене

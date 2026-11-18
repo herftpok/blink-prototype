@@ -3109,3 +3109,149 @@
   width: 120%;
   filter: blur(30px) saturate(1.6) brightness(1.1);
 }
+
+/* ── Новые ячейки стикеров по эталону (images/37): три в ряд, фон – Item/Category.png ── */
+.mh-grid--scards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-8);
+  padding: 0 var(--gutter);
+}
+
+.mh-scard {
+  border-radius: var(--radius-20);
+  background: var(--color-bg) url("../../assets/market-hub/item/sticker-cell.png") center / 100% 100% no-repeat;
+}
+
+/* свечение – плотно за стикером, его цвета */
+.mh-scard__glow {
+  inset: 14% 12% 20%;
+  opacity: 0.9;
+}
+
+.mh-scard__glow img {
+  width: 78%;
+  filter: blur(14px) saturate(1.5);
+}
+
+.mh-scard__item {
+  inset: 18% 8% 22%;
+}
+
+.mh-scard__top {
+  left: var(--space-8);
+  top: var(--space-8);
+}
+
+/* метки и цена – мельче, белым, без жирной обводки */
+.mh-scard__big {
+  font: italic 800 17px/20px var(--font-ui);
+  -webkit-text-stroke: 0;
+  text-shadow: 0 1px 6px var(--color-bg);
+}
+
+.mh-scard__big small {
+  font-size: 11px;
+}
+
+.mh-scard__off {
+  width: 58px;
+  height: 36px;
+  font: 800 14px/16px var(--font-ui);
+}
+
+.mh-scard__vip {
+  width: 52px;
+}
+
+.mh-scard__bottom {
+  bottom: var(--space-8);
+}
+
+.mh-scard__price img {
+  width: 22px;
+  height: 22px;
+}
+
+.mh-scard__sum {
+  font: 600 18px/22px var(--font-ui);
+  -webkit-text-stroke: 0;
+}
+
+.mh-scard__old {
+  font: 600 12px/14px var(--font-ui);
+}
+
+.mh-scard__note {
+  padding: 0 var(--space-8);
+  font: var(--type-gift-note);
+}
+
+/* «все стикеры»: число курсивом справа сверху, стрелка по центру, подпись слева внизу */
+.mh-scard--all {
+  background-color: var(--color-bg);
+}
+
+.mh-scard__alln {
+  position: absolute;
+  right: var(--space-10);
+  top: var(--space-8);
+  font: italic 800 22px/26px var(--font-ui);
+}
+
+.mh-scard__arrow.icon {
+  --icon-size: 26px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  color: var(--color-text);
+  -webkit-mask: var(--icon) center / contain no-repeat;
+          mask: var(--icon) center / contain no-repeat;
+  transform: translate(-50%, -50%) scaleX(-1);  /* «назад» зеркально – стрелка вперёд */
+}
+
+/* эталонные стикеры: свечение уже в картинке – своё размытое свечение не нужно; вырезка во всю ширину */
+.mh-scard:has(.mh-scard__art[src*="nsc-"]) .mh-scard__glow {
+  display: none;
+}
+
+.mh-scard__item:has(img[src*="nsc-"]) {
+  inset: 14% 0 18%;
+}
+
+/* метка срока в узкой ячейке: «3 дня» без «ещё», часы – с последних суток */
+.mh-scard__big {
+  font-size: 16px;
+}
+
+/* стикеры из исходников (маркет/Item/): свечение – размытая копия той же картинки под стикером */
+.mh-scard:has(.mh-scard__art[src*="nsc-"]) .mh-scard__glow {
+  display: grid;
+  inset: 18% 8% 22%;
+  opacity: 0.85;
+}
+
+.mh-scard:has(.mh-scard__art[src*="nsc-"]) .mh-scard__glow img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: blur(18px) saturate(1.6);
+}
+
+.mh-scard__item:has(img[src*="nsc-"]) {
+  inset: 18% 8% 22%;
+}
+
+.mh-scard__item:has(img[src*="nsc-"]),
+.mh-scard:has(.mh-scard__art[src*="nsc-"]) .mh-scard__glow {
+  inset: 15% 4% 20%;
+}
+
+/* кнопка play – в правом нижнем углу окна, обводка тёмно-серая, чтобы читалась на тёмной сцене */
+.mh-item__sound {
+  left: auto;
+  right: var(--space-12);
+  border: 1.5px solid var(--color-outline);
+}
