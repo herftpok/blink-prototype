@@ -258,7 +258,7 @@
     const n = Math.round(coins * RUB_PER_COIN);
     return `≈\u00a0${n >= 10000 ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ") : n} ₽`;
   };
-  const S = { catTab: "sale", order: "photo", cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null, price: "coins" };
+  const S = { stickers: "old", catTab: "sale", order: "photo", cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null, price: "coins" };
   // личная скидка – до конца суток: выдана в полночь, пропадает в следующую
   const midnight = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(); };
   // dealMode – что выбрано на пульте для скидки: on / off / soon (кончится через 10 секунд); идёт в адрес
@@ -272,6 +272,7 @@
     if (S.layout !== "air") q.set("layout", S.layout);
     if (S.feed !== "flat") q.set("feed", S.feed);
     if (S.order !== "photo") q.set("order", S.order);
+    if (S.stickers === "new") q.set("stickers", "new");
     if (S.top !== "banner") q.set("top", S.top);
     if (S.dealMode !== "on") q.set("deal", S.dealMode);
     if (S.price !== "coins") q.set("price", S.price);
@@ -440,7 +441,45 @@
   }
 
   // Ячейка – одна на все категории, без подложки: окно с предметом и чипом, имя, цена. Вся ячейка – кнопка
+  // новые ячейки стикеров (market/new sticker cards/): тёмная карточка, за стикером – размытое свечение его же
+  // картинки, сверху крупная метка (скидка звездой, тираж, срок, VIP), снизу цена монетой с обводкой
+  function stickerCard(item, i) {
+    const src = item.bare ? `${A}/${item.bare}` : item.pack ? `${A}/${item.pack}` : `${H}/${item.art}.webp`;
+    const art = item.set ? artMarkup(item) : `<img class="mh-scard__art" src="${src}" alt="">`;
+    const glow = item.set ? `${A}/${item.set[2].src}` : src;
+    let top = "";
+    if (S.owned.has(item.id)) top = "";
+    else if (isSold(item)) top = '<span class="mh-scard__big mh-scard__big--muted">продано</span>';
+    else if (item.vip) top = `<img class="mh-scard__vip" src="${H}/item/sticker-vip.png" alt="vip">`;
+    else if (offOf(item)) top = `<span class="mh-scard__off">−${offOf(item)}%</span>`;
+    else if (item.stock) top = `<span class="mh-scard__big">${formatCoins(item.stock.left)}<small>шт</small></span>`;
+    else if (item.ends) top = `<span class="mh-scard__big" data-ends="${item.ends}"><b data-left>${leftText(item.ends).text}</b></span>`;
+    const price = S.owned.has(item.id) ? '<span class="mh-scard__note">у тебя</span>'
+      : isSold(item) ? ""
+      : item.vip ? '<span class="mh-scard__note">забери<br>в подписке</span>'
+      : item.get ? `<span class="mh-scard__note">${GET_NOTE[item.get]}</span>`
+      : !priceOf(item) ? '<span class="mh-scard__sum">бесплатно</span>'
+      : `<span class="mh-scard__price"><img src="${A}/market/coin.png" alt=""><span class="mh-scard__sum">${formatCoins(priceOf(item))}</span>${offOf(item) ? `<s class="mh-scard__old">${formatCoins(item.price)}</s>` : ""}</span>`;
+    return `
+      <button class="mh-card mh-card--stickers mh-scard${isSold(item) ? " mh-card--sold" : ""}${item.vip ? " mh-scard--vip" : ""} pressable" type="button" data-item="${item.id}" style="--i:${i}"
+              aria-label="${esc(label(item))}">
+        <span class="mh-scard__glow" aria-hidden="true"><img src="${glow}" alt=""></span>
+        <span class="mh-scard__item" aria-hidden="true">${art}</span>
+        <span class="mh-scard__top" aria-hidden="true">${top}</span>
+        <span class="mh-scard__bottom" aria-hidden="true">${price}</span>
+      </button>`;
+  }
+
+  // последняя ячейка блока стикеров в новых карточках – «все стикеры» с числом, ведёт на экран раздела
+  const allStickersCard = (n) => `
+      <button class="mh-card mh-scard mh-scard--all pressable" type="button" data-open="stickers" aria-label="все стикеры, ${n}">
+        <span class="mh-scard__allbox" aria-hidden="true"><span class="mh-scard__alln">${n}</span></span>
+        <i class="mh-scard__arrow" aria-hidden="true"></i>
+        <span class="mh-scard__note" aria-hidden="true">все<br>стикеры</span>
+      </button>`;
+
   function card(item, i) {
+    if (S.stickers === "new" && item.cat === "stickers") return stickerCard(item, i);
     return `
       <button class="mh-card mh-card--${item.cat}${isSold(item) ? " mh-card--sold" : ""} pressable" type="button" data-item="${item.id}" style="--i:${i}"
               aria-label="${esc(label(item))}">
@@ -591,7 +630,9 @@
           <h2 class="section-title" id="block-${id}">${esc(c.title)}</h2>
           ${items.length > blockSize(id) ? `<button class="mh-head__more pressable" type="button" data-open="${id}" aria-label="ещё ${esc(c.title)}">ещё<i class="icon icon--chevron" aria-hidden="true"></i></button>` : ""}
         </div>
-        ${grid(items.slice(0, blockSize(id)), 0, false, id)}
+        ${S.stickers === "new" && id === "stickers"
+          ? grid(items.slice(0, blockSize(id) - 1), 0, false, id).replace(/<\/div>$/, `${allStickersCard(items.length)}</div>`)
+          : grid(items.slice(0, blockSize(id)), 0, false, id)}
       </section>`;
   }
   const sectionsMarkup = () =>
@@ -608,7 +649,7 @@
     $("#cat-tabs").innerHTML = Object.entries(CAT_TABS).map(([id, title]) => `
       <button class="mh-cattab pressable" type="button" role="tab" data-cat-tab="${id}" aria-selected="${id === S.catTab}">
         ${title}<span class="mh-cattab__count">${all.filter((item) => tabOf(item) === id).length}</span></button>`).join("");
-    $("#cat-descriptor").textContent = ` ${CAT_TABS[S.catTab]}`;
+    $("#cat-descriptor").textContent = "";
   }
 
   function screenMarkup(cat) {
@@ -632,6 +673,7 @@
       String(b.dataset.panelCat === ((sectioned() ? S.screen : S.cat) || ""))));
     $$("#panel-feed [data-feed]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.feed === S.feed)));
     $$("#panel-order [data-order]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.order === S.order)));
+    $("[data-act='stickers']").setAttribute("aria-pressed", String(S.stickers === "new"));
     $("#screen-item").dataset.blocks = S.order;
     $$("#panel-price [data-price]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.price === S.price)));
     // строка рублей под ценником – в карточках с подложкой полосе карты стиля нужно меньше высоты
@@ -717,6 +759,8 @@
         <div class="mh-item__foot" data-bottom></div>
       </div>
     </section>
+    <div class="mh-type-backdrop" data-type-backdrop data-type-close></div>
+    <div class="sheet mh-typesheet" data-type-sheet role="dialog" aria-modal="true" aria-labelledby="type-title" tabindex="-1"></div>
     <div class="mh-gift-backdrop" data-gift-backdrop></div>
     <div class="sheet mh-gift-sheet" data-recipients role="dialog" aria-modal="true" aria-labelledby="gift-to-title" tabindex="-1"></div>
     <section class="mh-gift-confirm" data-confirm role="dialog" aria-modal="true" aria-labelledby="gift-title" tabindex="-1"></section>
@@ -988,6 +1032,76 @@
   }
   window.addEventListener("resize", () => ctx.open && fitProfile());
 
+  // что за товар: тег у названия и шторка с объяснением и той же демонстрацией, что на сцене
+  const TYPE_INFO = {
+    stickers: { tag: "стикер", title: "стикер", text: "Отправляй в чатах и кидай в друзей на карте. Остаётся у тебя навсегда." },
+    pack: { tag: "пак стикеров", title: "пак стикеров", text: "Несколько стикеров одной покупкой. Каждый можно отправить в чат или кинуть в друга на карте." },
+    tails: { tag: "хвост", title: "хвост", text: "Тянется за твоим пином, когда ты в пути. Его видят все друзья на карте." },
+    gifts: { tag: "наклейка", title: "наклейка", text: "Клеится в твой профиль рядом с аватаркой. Её видят все, кто к тебе заходит." },
+    styles: { tag: "стиль карты", title: "стиль карты", text: "Меняет, как выглядит карта. Видишь только ты, друзья остаются на своих картах." },
+    frames: { tag: "рамка", title: "рамка", text: "Обводит твой пин на карте. Её видят все друзья." },
+  };
+  const typeKey = (item) => (item.set ? "pack" : item.cat);
+  const typeSheet = $("[data-type-sheet]", app);
+  function openTypeInfo() {
+    const item = ctx.item;
+    const info = TYPE_INFO[typeKey(item)];
+    const demo = item.cat === "stickers" ? throwScene(`${A}/${item.set ? item.set[ctx.pick].src : item.bare || item.pack}`) : sceneMarkup(item);
+    typeSheet.innerHTML = `
+      <div class="sheet__handle" data-type-close><div class="sheet__grabber"></div></div>
+      <div class="mh-typesheet__demo"><div class="mh-item__page is-active">${demo}</div></div>
+      <h2 class="sheet__title" id="type-title">${info.title}</h2>
+      <p class="mh-typesheet__text">${info.text}</p>`;
+    $("[data-type-backdrop]", app).classList.add("is-open");
+    typeSheet.classList.add("is-open");
+    typeSheet.focus({ preventScroll: true });
+    stopAuto();
+  }
+  function closeTypeInfo() {
+    if (!typeSheet.classList.contains("is-open")) return false;
+    typeSheet.classList.remove("is-open");
+    $("[data-type-backdrop]", app).classList.remove("is-open");
+    return true;
+  }
+
+  const AUTO_MS = 3000;
+  let autoTimer = null;
+  function stopAuto() {
+    clearInterval(autoTimer);
+    autoTimer = null;
+    sheet.classList.remove("is-auto");
+  }
+  function startAuto() {
+    stopAuto();
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const n = $$("[data-page]", sheet).length;
+    const item = ctx.item;
+    if (n < 2 && !item.set) return;
+    sheet.classList.add("is-auto");
+    let picked = 0;
+    autoTimer = setInterval(() => {
+      if (!ctx.open) return stopAuto();
+      const kind = $(".mh-item__page.is-active .mh-scene", sheet);
+      const packPage = item.set && kind && (kind.classList.contains("mh-scene--chat") || kind.classList.contains("mh-scene--throw"));
+      if (packPage && picked < item.set.length - 1) {
+        picked += 1;
+        pick(ctx.pick + 1, false);
+        restartTick();
+        return;
+      }
+      picked = 0;
+      setPage(((ctx.page || 0) + 1) % Math.max(n, 1));
+    }, AUTO_MS);
+  }
+  // счётчик: у активной точки полоса заполняется за 3 s – видно, что листается само
+  function restartTick() {
+    const dot = $(".mh-item__dot.is-active", sheet);
+    if (!dot) return;
+    dot.classList.remove("is-ticking");
+    void dot.offsetWidth;
+    dot.classList.add("is-ticking");
+  }
+
   function setPage(i) {
     const pages = $("[data-pages]", sheet);
     if (!pages) return;
@@ -1004,6 +1118,7 @@
       b.classList.toggle("is-active", k === ctx.page);
       b.setAttribute("aria-selected", String(k === ctx.page));
     });
+    restartTick();
   }
 
   function fillSheet() {
@@ -1014,15 +1129,17 @@
       ${pages.length > 1 ? `<div class="mh-item__pager" role="tablist" aria-label="виды товара">${pages.map((_, k) =>
         `<button class="mh-item__dot" type="button" role="tab" data-page="${k}" aria-label="вид ${k + 1} из ${pages.length}"></button>`).join("")}</div>` : ""}`;
     if (item.cat === "stickers")
-      $("[data-scene]", sheet).insertAdjacentHTML("beforeend", `<button class="mh-item__sound pressable" type="button" data-sound aria-label="${item.set ? "звук пака" : "звук стикера"}"><i class="mh-item__sound-icon" aria-hidden="true"></i></button>`);
+      $("[data-scene]", sheet).insertAdjacentHTML("beforeend", `<button class="mh-item__sound pressable" type="button" data-sound aria-label="${item.set ? "звук пака" : "звук стикера"}"><i class="mh-item__play" aria-hidden="true"></i></button>`);
     if (item.set) {
       $("[data-scene]", sheet).insertAdjacentHTML("beforeend", pickerMarkup(item));
       pick(ctx.pick, false);
     }
     setPage(ctx.page || 0);
     fitProfile();
+    startAuto();
     $("[data-info]", sheet).innerHTML = `
-      <h1 class="mh-item__title ellipsis" id="item-title">${esc(item.name)}</h1>
+      <div class="mh-item__titlerow"><h1 class="mh-item__title ellipsis" id="item-title">${esc(item.name)}</h1>
+        <button class="mh-type pressable" type="button" data-type-info>${TYPE_INFO[typeKey(item)].tag}</button></div>
       <p class="mh-item__text">${esc(item.text)}</p>
 `;
     $("[data-bottom]", sheet).innerHTML = bottomMarkup(item);
@@ -1051,6 +1168,7 @@
 
   function closeSheet() {
     if (!ctx.open) return;
+    stopAuto();
     ctx.open = false;
     closeGift();
     sheet.classList.remove("is-open");
@@ -1198,6 +1316,7 @@
 
   sheet.addEventListener("click", (e) => {
     if (e.target.closest("[data-item-back]")) return closeSheet();
+    if (e.target.closest("[data-type-info]")) return openTypeInfo();
     if (e.target.closest("[data-sound]")) {
       if (!ctx.item.set) return playSound(ctx.item);
       return ctx.item.set.forEach((p, k) => setTimeout(() => { ctx.pick = k; playSound(ctx.item, p.sound); }, k * 280));
@@ -1325,6 +1444,12 @@
       renderList();
       return;
     }
+    if (e.target.closest("[data-act='stickers']")) {
+      S.stickers = S.stickers === "new" ? "old" : "new";
+      renderList();
+      syncUrl();
+      return;
+    }
     if (e.target.closest("[data-act='reset']")) {
       closeSheet();
       closeCat();
@@ -1334,9 +1459,14 @@
     }
   });
 
+  // шторка «что это»: закрывается нажатием мимо, за грэббер и Esc
+  $("[data-type-backdrop]", app).addEventListener("click", closeTypeInfo);
+  typeSheet.addEventListener("click", (e) => { if (e.target.closest("[data-type-close]")) closeTypeInfo(); });
+
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     // сначала подарок, потом экран товара, потом экран раздела
+    if (closeTypeInfo()) return;
     if (giftOpen()) closeGift();
     else if (sheet.classList.contains("is-open")) closeSheet();
     else closeCat();
@@ -1383,7 +1513,11 @@
 
   // ── Сроки по секундам ─────────────────────────────────────────────────
   let swipeX = null;
-  sheet.addEventListener("pointerdown", (e) => { if (e.target.closest("[data-scene]")) swipeX = e.clientX; });
+  sheet.addEventListener("pointerdown", (e) => {
+    if (!e.target.closest("[data-scene]")) return;
+    swipeX = e.clientX;
+    stopAuto();                                    // взял в руки – листает сам
+  });
   sheet.addEventListener("pointerup", (e) => {
     if (swipeX === null) return;
     const dx = e.clientX - swipeX;
@@ -1472,6 +1606,7 @@
   // ?price=rub – цена в монетах и рублях
   if (PRICES[q.get("price")]) S.price = q.get("price");
   if (ORDERS[q.get("order")]) S.order = q.get("order");
+  if (q.get("stickers") === "new") S.stickers = "new";
   renderCats();
   renderList();
   // кольца рамок собираются из текстур после загрузки – тогда перерисовываем пины в рамках

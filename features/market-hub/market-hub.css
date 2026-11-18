@@ -2819,3 +2819,293 @@
   left: calc(9.2% - 8.25%);
   width: 16.5%;
 }
+
+/* ── Раунд: play, автопролистывание, цена 1A, тег типа, новые ячейки стикеров ── */
+
+/* кнопка звука – play в левом нижнем углу окна (пейджер – по центру низа) */
+.mh-item__sound {
+  top: auto;
+  bottom: var(--space-12);
+}
+
+.mh-item__play {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;                              /* оптический центр треугольника */
+  background: var(--color-text);
+  -webkit-mask: url("../../assets/market-hub/item/play.png") center / contain no-repeat;
+          mask: url("../../assets/market-hub/item/play.png") center / contain no-repeat;
+}
+
+/* счётчик при автопролистывании: активная пилюля заполняется слева направо за 3 s */
+.is-auto .mh-item__dot.is-active {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-text-muted);
+}
+
+.is-auto .mh-item__dot.is-active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-text);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+.is-auto .mh-item__dot.is-ticking::after {
+  animation: mh-dot-fill 3s linear forwards;
+}
+
+@keyframes mh-dot-fill {
+  to { transform: scaleX(1); }
+}
+
+/* цена 1A: монета, цена курсивом, старая зачёркнута, рубли серым мельче сразу за ценой */
+.mh-item .mh-item__price .mh-item__rub {
+  margin-left: 0;
+  color: var(--color-text-muted);
+  font: var(--type-item-rub);
+  font-style: normal;
+  letter-spacing: 0;
+}
+
+/* тег типа товара у названия */
+.mh-item__titlerow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  min-width: 0;
+}
+
+.mh-item__titlerow .mh-item__title {
+  min-width: 0;
+}
+
+.mh-type {
+  flex: none;
+  height: 26px;
+  padding: 0 var(--space-10);
+  border: 1px solid var(--color-surface-raised);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font: var(--type-gift-note);
+  white-space: nowrap;
+}
+
+/* шторка «что это»: та же демонстрация, что на сцене, заголовок и текст */
+.mh-type-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: var(--color-scrim);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-screen), visibility 0s linear var(--duration-screen);
+}
+
+.mh-type-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--duration-screen), visibility 0s;
+}
+
+.mh-typesheet {
+  z-index: 61;
+  gap: var(--space-12);
+}
+
+.mh-typesheet__demo {
+  position: relative;
+  height: 220px;
+  border-radius: var(--radius-24);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.mh-typesheet__demo .mh-item__page {
+  position: absolute;
+  inset: 0;
+}
+
+.mh-typesheet__text {
+  color: var(--color-text-muted);
+  font: var(--type-item-text);
+}
+
+/* ── новые ячейки стикеров (market/new sticker cards/, @2x: 183 × 262) ── */
+.mh-scard {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 366 / 525;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-24);
+  background: var(--color-surface-card);
+  overflow: hidden;
+  text-align: left;
+}
+
+.mh-scard__glow {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0.75;
+}
+
+.mh-scard__glow img {
+  width: 90%;
+  filter: blur(26px) saturate(1.4);
+}
+
+.mh-scard__item {
+  position: absolute;
+  inset: 18% 10% 22%;
+  display: grid;
+  place-items: center;
+}
+
+.mh-scard__art {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.mh-scard__top {
+  position: absolute;
+  left: var(--space-10);
+  top: var(--space-8);
+}
+
+.mh-scard__bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--space-10);
+  display: flex;
+  justify-content: center;
+}
+
+/* крупные цифры с чёрной обводкой – как на эталоне */
+.mh-scard__big,
+.mh-scard__sum,
+.mh-scard__off {
+  font: italic 800 26px/30px var(--font-ui);
+  color: var(--color-text);
+  -webkit-text-stroke: 5px var(--color-bg);
+  paint-order: stroke fill;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mh-scard__big small {
+  margin-left: 2px;
+  color: var(--color-text-muted);
+  font-size: 15px;
+}
+
+.mh-scard__big--muted {
+  color: var(--color-text-muted);
+}
+
+.mh-scard__off {
+  display: inline-grid;
+  place-items: center;
+  width: 93px;
+  height: 57px;
+  background: url("../../assets/market-hub/item/sticker-off.png") center / contain no-repeat;
+  color: var(--color-text-on-light);
+  -webkit-text-stroke: 0;
+  font-size: 22px;
+  transform: rotate(-6deg);
+}
+
+.mh-scard__vip {
+  width: 81px;
+}
+
+.mh-scard__price {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mh-scard__price img {
+  width: 30px;
+  height: 30px;
+}
+
+.mh-scard__sum {
+  font-style: normal;
+}
+
+.mh-scard__old {
+  margin-left: var(--space-4);
+  color: var(--color-text-muted);
+  font: 700 15px/18px var(--font-ui);
+}
+
+.mh-scard__note {
+  align-self: flex-end;
+  padding: 0 var(--space-12);
+  color: var(--color-text);
+  font: var(--type-label);
+}
+
+.mh-scard--vip .mh-scard__bottom {
+  justify-content: flex-start;
+}
+
+/* «все стикеры»: чёрное окно с числом, стрелка ↗, подпись слева внизу */
+.mh-scard--all {
+  background: var(--color-surface);
+}
+
+.mh-scard__allbox {
+  position: absolute;
+  inset: 16% 12% 30%;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-14);
+  background: var(--color-bg);
+}
+
+.mh-scard__alln {
+  font: italic 800 34px/38px var(--font-ui);
+}
+
+.mh-scard__arrow {
+  position: absolute;
+  right: var(--space-12);
+  top: var(--space-12);
+  width: 20px;
+  height: 20px;
+  background: var(--color-text);
+  -webkit-mask: url("../../assets/market-hub/item/external.png") center / contain no-repeat;
+          mask: url("../../assets/market-hub/item/external.png") center / contain no-repeat;
+}
+
+.mh-scard--all .mh-scard__note {
+  position: absolute;
+  left: 0;
+  bottom: var(--space-12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-auto .mh-item__dot.is-ticking::after { animation: none; }
+}
+
+/* свечение ячейки стикера заметнее – как на эталоне */
+.mh-scard__glow {
+  opacity: 1;
+}
+
+.mh-scard__glow img {
+  width: 120%;
+  filter: blur(30px) saturate(1.6) brightness(1.1);
+}

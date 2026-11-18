@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Blink – варианты ценника на экране товара</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <style>
+    /* эскиз вариантов: блок покупки экрана товара (подложка, цена, кнопки) – монеты и рубли рядом */
+    body { background: var(--color-bg); color: var(--color-text); }
+    .pv { display: grid; grid-template-columns: repeat(3, 390px); gap: 32px 40px; justify-content: center; padding: 40px 24px 60px; }
+    .pv__head { grid-column: 1 / -1; text-align: center; font: var(--type-sheet-title); }
+    .pv__case { display: flex; flex-direction: column; gap: 10px; }
+    .pv__label { color: var(--color-text-muted); font: var(--type-label); }
+    .pv__label b { color: var(--color-text); font-weight: inherit; }
+    .pv__screen { width: 390px; padding: 0 16px; }
+
+    .buy { padding: 10px; border: 1px solid var(--color-surface-raised); border-radius: var(--radius-modal); background: var(--color-surface-card); }
+    .buy + .buy { margin-top: 12px; }
+    .row { display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 6px 8px 4px; }
+    .coin { width: 32px; height: 32px; }
+    .sum { font: var(--type-item-price); font-style: italic; letter-spacing: var(--tracking-title); font-variant-numeric: tabular-nums; }
+    .old { color: var(--color-text-muted); font: italic 700 20px/24px var(--font-ui); text-decoration-thickness: 2px; }
+    .rub { color: var(--color-text-muted); font: var(--type-item-rub); font-variant-numeric: tabular-nums; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+
+    /* B – рубли такого же кегля, но серые; разделитель – точка */
+    .v-b .rub { font: var(--type-item-price); font-style: italic; letter-spacing: var(--tracking-title); }
+    .v-b .dot { color: var(--color-text-muted); font: var(--type-item-price); }
+    /* C – рубли плашкой сразу за ценой */
+    .v-c .rub { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: var(--radius-pill); background: var(--color-surface-raised); color: var(--color-text); }
+    /* D – всё по центру над кнопками */
+    .v-d .row { justify-content: center; }
+    /* E – тонкий вертикальный разделитель */
+    .v-e .sep { width: 1px; height: 22px; margin: 0 6px; background: var(--color-outline); }
+    .v-e .rub { color: var(--color-text); }
+    /* F – рубли мелко над старой ценой (столбик справа от числа) */
+    .v-f .stack { display: flex; flex-direction: column; gap: 0; }
+    .v-f .stack .rub { font: var(--type-gift-note); }
+    .v-f .stack .old { font-size: 15px; line-height: 18px; }
+    /* серия 2: цена справа столбиком (монета, число, под ним рубли), слева – чем заполнить место */
+    .row2 { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 62px; padding: 4px 8px 2px; }
+    .price2 { display: flex; align-items: center; gap: 8px; }
+    .price2__col { display: flex; flex-direction: column; align-items: flex-end; }
+    .price2 .sum { font-size: 34px; line-height: 38px; }
+    .price2 .rub { font: var(--type-label); }
+    .price2 .old { font-size: 17px; line-height: 20px; margin: 0 6px 0 4px; }
+    .left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .left__art { width: 52px; height: 52px; object-fit: contain; }
+    .left__title { font: var(--type-label); color: var(--color-text); }
+    .left__sub { font: var(--type-gift-note); color: var(--color-text-muted); }
+    .left__off { font: italic 800 28px/30px var(--font-ui); color: var(--color-pink); }
+    .left__chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; margin-top: 4px; padding: 0 12px 0 6px; border-radius: var(--radius-pill); background: var(--color-surface-raised); font: var(--type-gift-note); }
+    .left__chip img { width: 20px; height: 20px; }
+    .left__clock { width: 14px; height: 14px; margin-left: 4px; background: currentColor; -webkit-mask: url("../../assets/market-hub/chips/clock.png") center / contain no-repeat; mask: url("../../assets/market-hub/chips/clock.png") center / contain no-repeat; }
+    /* серия 3: одна строка */
+    .row3 { display: flex; align-items: center; gap: 8px; }
+    .price3 { padding: 0 6px; }
+    .price3 .sum { font-size: 28px; line-height: 32px; }
+    .price3 .rub { font: var(--type-gift-note); }
+    .buy3 { flex: 1; min-width: 0; }
+    .buy3--price { display: flex; align-items: center; gap: 8px; }
+    .buy3--price .button { flex: 1; }
+    .gift-sq { flex: none; width: 56px; padding: 0; display: grid; place-items: center; }
+    /* иконка подарка – lucide gift (ISC), маской белым */
+    .gift-ic { width: 24px; height: 24px; background: var(--color-text); -webkit-mask: url("../../assets/market-hub/item/gift-lucide.svg") center / contain no-repeat; mask: url("../../assets/market-hub/item/gift-lucide.svg") center / contain no-repeat; }
+    .buyin { display: flex; align-items: center; justify-content: space-between; padding: 0 12px 0 20px; text-transform: none; }
+    .buyin > span:first-child { text-transform: uppercase; }
+    .buyin__price { display: flex; align-items: center; gap: 6px; }
+    .buyin .coin { width: 26px; height: 26px; }
+    .buyin .sum { font-size: 22px; line-height: 24px; color: var(--color-text-on-light); }
+    .buyin .rub { font: var(--type-gift-note); color: var(--color-text-muted); }
+    .buyin .old { font-size: 14px; line-height: 16px; margin: 0 5px 0 2px; }
+    .buyin .price2__col { align-items: flex-end; }
+    .pv__sub { grid-column: 1 / -1; text-align: center; font: var(--type-label); color: var(--color-text-muted); margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <main class="pv">
+    <h1 class="pv__head">ценник: монеты и рубли рядом</h1>
+  </main>
+  <script>
+    const coin = '<img class="coin" src="../../assets/market/coin.png" alt="">';
+    const btns = '<div class="buttons"><button class="button button--secondary" type="button">подарить</button><button class="button button--primary" type="button">купить</button></div>';
+    // две цены: обычная и со скидкой – видно, как вариант держит старую цену
+    const cases = [
+      ["a", "<b>A.</b> Рубли серым сразу за ценой, мельче", (old) => `${coin}<span class="sum">300</span>${old ? '<s class="old">500</s>' : ""}<span class="rub">≈ 3000 ₽</span>`],
+      ["b", "<b>B.</b> Одним кеглем через точку: монеты белым, рубли серым", (old) => `${coin}<span class="sum">300</span>${old ? '<s class="old">500</s>' : ""}<span class="dot">·</span><span class="rub">≈ 3000 ₽</span>`],
+      ["c", "<b>C.</b> Рубли плашкой сразу за ценой", (old) => `${coin}<span class="sum">300</span>${old ? '<s class="old">500</s>' : ""}<span class="rub">≈ 3000 ₽</span>`],
+      ["d", "<b>D.</b> Как A, но вся строка по центру над кнопками", (old) => `${coin}<span class="sum">300</span>${old ? '<s class="old">500</s>' : ""}<span class="rub">≈ 3000 ₽</span>`],
+      ["e", "<b>E.</b> Тонкий разделитель, рубли белым", (old) => `${coin}<span class="sum">300</span>${old ? '<s class="old">500</s>' : ""}<i class="sep"></i><span class="rub">≈ 3000 ₽</span>`],
+      ["f", "<b>F.</b> Столбиком справа от числа: старая цена и рубли", (old) => `${coin}<span class="sum">300</span><span class="stack">${old ? '<s class="old">500</s>' : ""}<span class="rub">≈ 3000 ₽</span></span>`],
+    ];
+    // серия 2 (сверху): цена справа столбиком – монета, число, под ним рубли; слева – чем заполнить место
+    const price2 = (old) => `<span class="price2">${coin}<span class="price2__col"><span>${old ? '<s class="old">500</s>' : ""}<span class="sum">300</span></span><span class="rub">≈ 3000 ₽</span></span></span>`;
+    const art = '<img class="left__art" src="../../assets/market-hub/clear/stickers/chihuahua.webp" alt="">';
+    const cases2 = [
+      ["g", "<b>G.</b> Слева – сам товар: миниатюра и имя", () => `<span class="left">${art}<span><span class="left__title">чихуахуа</span><br><span class="left__sub">стикер</span></span></span>`],
+      ["h", "<b>H.</b> Слева – баланс: сколько останется после покупки", () => `<span class="left"><span><span class="left__sub">останется</span><br><span class="left__chip"><img src="../../assets/market/coin.png" alt="">54 700</span></span></span>`],
+      ["i", "<b>I.</b> Слева – выгода: скидка крупно (без скидки – «навсегда твой»)", (old) => old ? `<span class="left"><span><span class="left__off">−40%</span><br><span class="left__sub">экономия 200</span></span></span>` : `<span class="left"><span><span class="left__title">навсегда твой</span><br><span class="left__sub">без подписки</span></span></span>`],
+      ["j", "<b>J.</b> Слева – срочность: срок или тираж плашкой", () => `<span class="left"><span class="left__chip"><i class="left__clock"></i>ещё 3 дня</span></span>`],
+    ];
+    const section = (label, inner) => `<section class="pv__case"><p class="pv__label">${label}</p><div class="pv__screen">${inner}</div></section>`;
+    const html2 = cases2.map(([id, label, left]) => section(label,
+      `<div class="buy"><div class="row2">${left(false)}${price2(false)}</div>${btns}</div>
+       <div class="buy"><div class="row2">${left(true)}${price2(true)}</div>${btns}</div>`)).join("");
+    const html1 = cases.map(([id, label, row]) => `
+      <section class="pv__case v-${id}">
+        <p class="pv__label">${label}</p>
+        <div class="pv__screen">
+          <div class="buy"><div class="row">${row(false)}</div>${btns}</div>
+          <div class="buy"><div class="row">${row(true)}</div>${btns}</div>
+        </div>
+      </section>`).join("");
+    // серия 3: одна строка – цена, «купить» и «подарить» квадратной кнопкой с 3D-подарком
+    const giftBtn = '<button class="button button--secondary gift-sq" type="button" aria-label="подарить"><i class="gift-ic" aria-hidden="true"></i></button>';
+    const price3 = (old) => `<span class="price2 price3">${coin}<span class="price2__col"><span>${old ? '<s class="old">500</s>' : ""}<span class="sum">300</span></span><span class="rub">≈ 3000 ₽</span></span></span>`;
+    const buy = '<button class="button button--primary buy3" type="button">купить</button>';
+    // цена внутри белой кнопки: слева «купить», справа монета, число и рубли
+    const buyIn = (old) => `<button class="button button--primary buy3 buyin" type="button"><span>купить</span><span class="buyin__price">${coin}<span class="price2__col"><span>${old ? '<s class="old">500</s>' : ""}<span class="sum">300</span></span><span class="rub">≈ 3000 ₽</span></span></span></button>`;
+    const cases3 = [
+      ["o", "<b>O.</b> Цена внутри «купить» · подарок справа", (old) => `${buyIn(old)}${giftBtn}`],
+      ["p", "<b>P.</b> Подарок слева · цена внутри «купить»", (old) => `${giftBtn}${buyIn(old)}`],
+      ["l", "<b>L.</b> Цена · купить · подарок", (old) => `${price3(old)}${buy}${giftBtn}`],
+      ["m", "<b>M.</b> Цена · подарок · купить", (old) => `${price3(old)}${giftBtn}${buy}`],
+      ["n", "<b>N.</b> Подарок · купить на всю ширину, цена внутри строки слева", (old) => `${giftBtn}<span class="buy3 buy3--price">${price3(old)}<button class="button button--primary" type="button">купить</button></span>`],
+    ];
+    const html3 = cases3.map(([id, label, row]) => section(label,
+      `<div class="buy"><div class="row3">${row(false)}</div></div>
+       <div class="buy"><div class="row3">${row(true)}</div></div>`)).join("");
+    document.querySelector(".pv").insertAdjacentHTML("beforeend",
+      `<h2 class="pv__sub">серия 3 – в одной строке цена, «купить» и подарок иконкой</h2>${html3}`);
+    document.querySelector(".pv").insertAdjacentHTML("beforeend",
+      `<h2 class="pv__sub">серия 2 – цена справа, слева чем-то заполнено</h2>${html2}<h2 class="pv__sub">серия 1 – монеты и рубли рядом</h2>${html1}`);
+  </script>
+</body>
+</html>
