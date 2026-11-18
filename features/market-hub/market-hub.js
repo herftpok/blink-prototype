@@ -987,8 +987,7 @@
     }
     if (item.get === "partner") {
       const days = Math.floor((item.ends - Date.now()) / D_);
-      return `<div class="mh-mark"><p class="mh-mark__partner"><img class="mh-mark__partner-logo" src="${H}/item/partner-drinkit.png" alt="${esc(item.partner)}">
-        <span>ништяки<br>от наших друзей</span></p>${bar(1)}${row(`${clock}<b>${days} ${plural(days, "день", "дня", "дней")}</b> до попадания в архив`)}</div>`;
+      return `<div class="mh-mark">${bar(1)}${row(`${clock}<b>${days} ${plural(days, "день", "дня", "дней")}</b> до попадания в архив`)}</div>`;
     }
     if (item.vip && !owned)
       return `<div class="mh-mark mh-mark--vip"><img class="mh-mark__logo" src="${H}/item/vip-logo.png" alt="blink vip">
@@ -1045,8 +1044,8 @@
       const price = priceOf(item);
       const off = offOf(item);
       const inner = price
-        ? `<span class="mh-buyin__price"><img class="mh-buyin__coin" src="${A}/market/coin.png" alt="">
-            <span class="mh-buyin__col"><span class="mh-buyin__line"><span class="mh-buyin__sum">${formatCoins(price)}</span>${
+        ? `<span class="mh-buyin__price">
+            <span class="mh-buyin__col"><span class="mh-buyin__line"><img class="mh-buyin__coin" src="${A}/market/coin.png" alt=""><span class="mh-buyin__sum">${formatCoins(price)}</span>${
               off ? `<s class="mh-buyin__old">${formatCoins(item.price)}</s>` : ""}</span><span class="mh-buyin__rub">${formatRub(price)}</span></span></span>`
         : '<span class="mh-buyin__sum">бесплатно</span>';
       return marker + box(`<div class="mh-buyrow">
@@ -1171,7 +1170,8 @@
     startAuto();
     $("[data-info]", sheet).innerHTML = `
       <div class="mh-item__titlerow"><h1 class="mh-item__title ellipsis" id="item-title">${esc(item.name)}</h1>
-        <button class="mh-type pressable" type="button" data-type-info>${TYPE_INFO[typeKey(item)].tag}</button></div>
+        <button class="mh-type pressable" type="button" data-type-info>${TYPE_INFO[typeKey(item)].tag}</button>${
+          item.get === "partner" ? '<span class="mh-type mh-type--partner">партнёрский</span>' : ""}</div>
       <p class="mh-item__text">${esc(item.text)}</p>
 `;
     $("[data-bottom]", sheet).innerHTML = bottomMarkup(item);

@@ -3352,3 +3352,36 @@
 .mh-buyrow__gift.button {
   order: 1;
 }
+
+/* партнёрский товар – тег рядом с типом */
+.mh-type--partner {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text);
+}
+
+/* монета вплотную к цене (в одной строке с числом) */
+.mh-buyin__line {
+  align-items: center;
+}
+
+/* «забери в подписке» – с полями и внутри ячейки */
+.mh-scard--vip .mh-scard__bottom {
+  left: var(--space-10);
+  right: var(--space-10);
+  bottom: var(--space-10);
+}
+
+.mh-scard--vip .mh-scard__note {
+  padding: 0;
+  font: 600 12px/14px var(--font-ui);
+}
+
+/* свечение стикеров слабее */
+.mh-scard:has(.mh-scard__art[src*="nsc-"]) .mh-scard__glow {
+  opacity: 0.5;
+}
+
+.mh-scard:has(.mh-scard__art[src*="nsc-"]) .mh-scard__glow img {
+  filter: blur(14px) saturate(1.3);
+}
