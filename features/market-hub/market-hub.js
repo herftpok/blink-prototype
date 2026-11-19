@@ -188,7 +188,7 @@
   // что есть в ленте: карточками – всё, у чего есть предмет без упаковки; упаковками – всё, у чего есть упаковка.
   // Стили карты и рамки упаковок не имеют – они в обеих лентах
   const bareMode = () => S.layout !== "air";
-  const inFeed = (item) => (!item.ref || S.stickers === "new") && (
+  const inFeed = (item) => (!item.ref || S.stickers === "new" || S.lesha) && (
     item.cat === "styles" || item.cat === "frames" || Boolean(bareMode() || item.ref ? item.bare : item.art || item.pack));
 
   // Друзья – пак людей из avatars/, имена как в соседних фичах
@@ -235,6 +235,14 @@
   const ME_HD = { ...ME, live: `${A}/people/live-hd-1.webp` };
 
   const START = { cat: null, coins: 55000, owned: [] };
+  const LOW_COINS = 1400;                          // «мало монет» на стенде: пак за 1 500 → «не хватает 100», как в not_enough.png
+  const PACKS = [
+    { coins: 10, rub: 100 }, { coins: 30, rub: 285 }, { coins: 50, rub: 450 }, { coins: 100, rub: 850, popular: true },
+    { coins: 300, rub: 2400 }, { coins: 500, rub: 3750 }, { coins: 1000, rub: 7000 },
+  ];
+  const packBase = (p) => p.coins * RUB_PER_COIN;
+  const packOff = (p) => Math.round((1 - p.rub / packBase(p)) * 100);
+  const rubText = (n) => `${n >= 1000 ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0") : n}\u00a0₽`;
   // вёрстка ленты товаров: air – на чёрном, без подложек; cards – классическая: у каждого товара
   // своя карточка-подложка, имя и ценник слева
   // tiles – на подложке только предмет и чип, имя и цена под ней на чёрном (как в доставках продуктов)
@@ -267,7 +275,7 @@
     const n = Math.round(coins * RUB_PER_COIN);
     return `≈\u00a0${n >= 10000 ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ") : n} ₽`;
   };
-  const S = { buy: "split", stickers: "old", catTab: "sale", order: "photo", cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null, price: "coins" };
+  const S = { lesha: false, low: false, buy: "split", stickers: "old", catTab: "sale", order: "photo", cat: null, coins: 0, owned: new Set(), layout: "air", top: "banner", deal: true, dealEnds: 0, feed: "flat", screen: null, price: "coins" };
   // личная скидка – до конца суток: выдана в полночь, пропадает в следующую
   const midnight = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(); };
   // dealMode – что выбрано на пульте для скидки: on / off / soon (кончится через 10 секунд); идёт в адрес
@@ -283,6 +291,8 @@
     if (S.order !== "photo") q.set("order", S.order);
     if (S.stickers === "new") q.set("stickers", "new");
     if (S.buy === "row") q.set("buy", "row");
+    if (S.low) q.set("coins", "low");
+    if (S.lesha) q.set("lesha", "1");
     if (S.top !== "banner") q.set("top", S.top);
     if (S.dealMode !== "on") q.set("deal", S.dealMode);
     if (S.price !== "coins") q.set("price", S.price);
@@ -455,13 +465,13 @@
   // картинки, сверху крупная метка (скидка звездой, тираж, срок, VIP), снизу цена монетой с обводкой
   function stickerCard(item, i) {
     const src = item.bare ? `${A}/${item.bare}` : item.pack ? `${A}/${item.pack}` : `${H}/${item.art}.webp`;
-    const art = item.set ? artMarkup(item) : `<img class="mh-scard__art" src="${src}" alt="">`;
+    const art = item.set ? artMarkup(item) : item.cat === "styles" || (S.lesha && item.cat === "tails") ? "" : `<img class="mh-scard__art" src="${src}" alt="">`;
     const glow = item.set ? `${A}/${item.set[2].src}` : src;
     let top = "";
     if (S.owned.has(item.id)) top = "";
     else if (isSold(item)) top = '<span class="mh-scard__big mh-scard__big--muted">продано</span>';
     else if (item.vip) top = `<img class="mh-scard__vip" src="${H}/item/sticker-vip.png" alt="vip">`;
-    else if (offOf(item)) top = `<span class="mh-scard__off">−${offOf(item)}%</span>`;
+    else if (offOf(item)) top = S.lesha ? `<span class="mh-off mh-scard__perl">−${offOf(item)}%</span>` : `<span class="mh-scard__off">−${offOf(item)}%</span>`;
     else if (item.stock) top = `<span class="mh-scard__big">${String(item.stock.left).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0")}<small>шт</small></span>`;
     else if (item.ends) top = `<span class="mh-scard__big" data-ends="${item.ends}" data-short><b data-left>${leftText(item.ends).text.replace("ещё ", "")}</b></span>`;
     const price = S.owned.has(item.id) ? '<span class="mh-scard__note">у тебя</span>'
@@ -492,7 +502,23 @@
         <span class="mh-scard__note" aria-hidden="true">все<br>стикеры</span>
       </button>`;
 
+  function leshaTail(item, i) {
+    const art = `${A}/${item.follower || item.bare || item.tail}`;
+    return stickerCard(item, i)
+      .replace('<span class="mh-scard__glow" aria-hidden="true">', '<span class="mh-ltail" aria-hidden="true"><span class="mh-ltail__pin"><img class="mh-ltail__art" src="' + art + '" alt=""><img class="mh-ltail__me" src="' + A + '/people/live-hd-1.webp" alt=""></span></span><span class="mh-scard__glow mh-hidden" aria-hidden="true">')
+      .replace("mh-card--stickers", "mh-card--tails mh-scard--tail");
+  }
+  function leshaStyle(item, i) {
+    return stickerCard(item, i)
+      .replace('<span class="mh-scard__glow" aria-hidden="true">', `<span class="mh-lmap" aria-hidden="true"><img src="${styleThumb(item)}" alt="" style="object-position:${item.focus}"></span><span class="mh-scard__glow mh-hidden" aria-hidden="true">`)
+      .replace("mh-card--stickers", "mh-card--styles mh-scard--style");
+  }
+
   function card(item, i) {
+    if (S.lesha && item.cat === "tails") return leshaTail(item, i);
+    if (S.lesha && item.cat === "styles") return leshaStyle(item, i);
+    if (S.lesha && (item.cat === "stickers" || item.cat === "gifts"))
+      return stickerCard(item, i).replace("mh-card--stickers", `mh-card--${item.cat}`);
     if (S.stickers === "new" && item.cat === "stickers") return stickerCard(item, i);
     return `
       <button class="mh-card mh-card--${item.cat}${isSold(item) ? " mh-card--sold" : ""} pressable" type="button" data-item="${item.id}" style="--i:${i}"
@@ -538,8 +564,12 @@
   // компактная лента (stand-010): при прокрутке вверх под закреплённой шапкой выезжают категории таблетками
   // с горизонтальным скроллом; вниз – уходят. Нажатие – как на плитку
   function renderCompact() {
-    $("#compact").innerHTML = shownCats().map((c) =>
-      `<button class="mh-compact__pill pressable" type="button" data-cat="${c.id}" aria-pressed="${S.cat === c.id}">${esc(c.title)}</button>`).join("");
+    const thumb = { stickers: `${A}/${ITEMS.chihuahua.bare}`, tails: `${A}/${ITEMS.jelly.follower}`, gifts: `${A}/${ITEMS.crown.bare || "market-hub/clear/gifts/crown.webp"}`,
+      styles: styleThumb(ITEMS.minecraft), frames: `${A}/people/live-hd-1.webp`, vip: `${A}/market/vip-star.png` };
+    const cats = S.lesha ? [...CATS.filter((c) => !c.onlyTile), { id: "vip", title: "Blink VIP" }] : shownCats();
+    $("#compact").innerHTML = cats.map((c) =>
+      `<button class="mh-compact__pill${S.lesha ? ` mh-compact__pill--l mh-compact__pill--${c.id}` : ""} pressable" type="button" ${S.lesha ? `data-open="${c.id === "vip" ? "stickers" : c.id}"` : `data-cat="${c.id}"`} aria-pressed="${S.cat === c.id}">${
+        S.lesha ? `<img class="mh-compact__thumb" src="${thumb[c.id]}" alt="">` : ""}${esc(c.title)}</button>`).join("");
   }
 
   function scrollBehavior(scroller, onMove) {
@@ -669,6 +699,10 @@
   function screenMarkup(cat) {
     catTabs(cat);
     const items = Object.values(ITEMS).filter((item) => inFeed(item) && inCat(item, cat) && tabOf(item) === S.catTab).sort((a, b) => b.rank - a.rank);
+    if (S.lesha && items.length) {
+      const cols = cat === "stickers" || cat === "gifts" ? 3 : 2;
+      return `<div class="mh-grid mh-lgrid mh-lgrid--${cols}">${items.map((item, i) => card(item, i)).join("")}</div>`;
+    }
     if (!items.length) return `<p class="mh-catscreen__empty">${S.catTab === "owned" ? "здесь появится то, что купишь" : "в архиве пока пусто"}</p>`;
     const c = catOf(cat);
     return `
@@ -678,8 +712,38 @@
       </section>`;
   }
 
+  // ── «от Лёши» (stand-010-new-market): разделы с заголовком и описанием, ячейки по типу, последняя – «все N»
+  const LESHA = [
+    ["stickers", "стикеры", "отправляй в\u00a0чат или закидывай ими друзей на\u00a0карте", 3],
+    ["tails", "хвосты", "выбирай хвост и\u00a0оставляй яркий след, когда двигаешься по\u00a0карте", 2],
+    ["gifts", "наклейки", "собирай наклейки и\u00a0украшай свой профиль и\u00a0профили друзей", 3],
+    ["styles", "стили карты", "меняй стиль карты и\u00a0смотри на\u00a0мир по‑новому", 2],
+  ];
+  const leshaItems = (cat) => {
+    const all = Object.values(ITEMS).filter((item) => inFeed(item) && item.cat === cat && !isSold(item) && !dealFor(item));
+    const ok = cat === "stickers" ? all.filter((item) => item.bare || item.set) : cat === "tails" ? all.filter((item) => item.follower || item.bare) : all.filter((item) => cat === "styles" || item.bare);
+    return [...ok.filter((item) => item.ref), ...ok.filter((item) => !item.ref).sort((a, b) => b.rank - a.rank)];
+  };
+  const leshaAll = (cat, n) => `
+      <button class="mh-card mh-scard mh-scard--all pressable" type="button" data-open="${cat}" aria-label="все ${catOf(cat).title}, ${n}">
+        <span class="mh-scard__alln" aria-hidden="true">${n}</span>
+        <span class="mh-scard__note" aria-hidden="true">все<br>${catOf(cat).title}</span>
+      </button>`;
+  function leshaFeed() {
+    return LESHA.map(([id, title, text, cols]) => {
+      const items = leshaItems(id);
+      if (!items.length) return "";
+      const shown = items.slice(0, cols === 3 ? 5 : 5);
+      return `
+        <section class="mh-lblock" aria-labelledby="lblock-${id}">
+          <h2 class="mh-lblock__title" id="lblock-${id}">${title}<span class="mh-lblock__text">${text}</span></h2>
+          <div class="mh-grid mh-lgrid mh-lgrid--${cols}">${shown.map((item, i) => card(item, i)).join("")}${leshaAll(id, items.length)}</div>
+        </section>`;
+    }).join("");
+  }
+
   function renderList({ animate = false } = {}) {
-    $("#list").innerHTML = sectioned() ? sectionsMarkup() : feedMarkup(S.cat, { animate });
+    $("#list").innerHTML = S.lesha ? leshaFeed() : sectioned() ? sectionsMarkup() : feedMarkup(S.cat, { animate });
     if (S.screen) $("#cat-list").innerHTML = screenMarkup(S.screen);
     // в ленте по разделам плитки – навигация: активной плитки нет
     $$("#cats .mh-cat").forEach((b) => b.setAttribute("aria-pressed", String(!sectioned() && b.dataset.cat === S.cat)));
@@ -689,6 +753,9 @@
     $$("#panel-order [data-order]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.order === S.order)));
     $("[data-act='stickers']").setAttribute("aria-pressed", String(S.stickers === "new"));
     $("[data-act='buy']").setAttribute("aria-pressed", String(S.buy === "row"));
+    $("[data-act='low']").setAttribute("aria-pressed", String(S.low));
+    $("[data-act='lesha']").setAttribute("aria-pressed", String(S.lesha));
+    app.classList.toggle("is-lesha", S.lesha);
     $("#screen-item").dataset.blocks = S.order;
     $$("#panel-price [data-price]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.price === S.price)));
     // строка рублей под ценником – в карточках с подложкой полосе карты стиля нужно меньше высоты
@@ -774,6 +841,10 @@
         <div class="mh-item__foot" data-bottom></div>
       </div>
     </section>
+    <div class="mh-short-backdrop" data-short-backdrop></div>
+    <div class="mh-short" data-short role="dialog" aria-modal="true" aria-labelledby="short-title" tabindex="-1"></div>
+    <div class="mh-packs-backdrop" data-packs-backdrop></div>
+    <div class="sheet sheet--stacked mh-packs" data-packs role="dialog" aria-modal="true" aria-labelledby="packs-title" tabindex="-1"></div>
     <div class="mh-type-backdrop" data-type-backdrop data-type-close></div>
     <div class="sheet mh-typesheet" data-type-sheet role="dialog" aria-modal="true" aria-labelledby="type-title" tabindex="-1"></div>
     <div class="mh-gift-backdrop" data-gift-backdrop></div>
@@ -1220,12 +1291,119 @@
   function buy() {
     const item = ctx.item;
     const price = item.vip ? 0 : priceOf(item);
-    if (S.owned.has(item.id) || S.coins < price) return;
+    if (S.owned.has(item.id)) return;
+    if (S.coins < price) return openShort("buy");
     S.coins -= price;
     S.owned.add(item.id);
     fillSheet();
     renderList();
   }
+
+  // ── Не хватает монет: карточка снизу с двумя пакетами, «ещё пакеты» – экран всех пакетов ──
+  const short = { mode: null };
+  const shortEl = $("[data-short]", app);
+  const packsEl = $("[data-packs]", app);
+  const refreshCoins = () => {
+    $$("[data-coins], [data-item-coins]").forEach((el) => { el.textContent = formatCoins(S.coins); });
+  };
+  const need = () => Math.max(0, priceOf(ctx.item) - S.coins);
+  // минимальный – самый маленький пакет, которого хватает; «побольше» – следующий по лесенке; сначала побольше
+  function suggest(n) {
+    const i = PACKS.findIndex((p) => p.coins >= n);
+    if (i < 0) return [PACKS[PACKS.length - 1]];
+    return PACKS[i + 1] ? [PACKS[i + 1], PACKS[i]] : [PACKS[i]];
+  }
+  const pile = (p) => {
+    const n = p.coins >= 500 ? 3 : p.coins >= 100 ? 2 : 1;
+    return `<span class="coin-pack__pile coin-pack__pile--${n}">${(`<img src="${H}/item/coin-pile.png" alt="">`).repeat(n)}</span>`;
+  };
+  function packRow(p, { main = false, note = "", dim = false } = {}) {
+    const off = packOff(p);
+    return `
+      <div class="coin-pack${p.popular && !note ? " coin-pack--popular" : ""}${dim ? " coin-pack--dim" : ""}">
+        <span class="coin-pack__art">${pile(p)}${off ? `<span class="mh-off coin-pack__off" aria-hidden="true">−${off}%</span>` : ""}</span>
+        <span class="coin-pack__info"><span class="coin-pack__coins">${rubText(p.coins).replace("\u00a0₽", "")}</span>${note ? `<span class="coin-pack__note">${note}</span>` : ""}</span>
+        <button class="coin-pack__buy${main ? " coin-pack__buy--main" : ""} pressable" type="button" data-pack="${p.coins}"
+                aria-label="${formatCoins(p.coins)} ${plural(p.coins, "монета", "монеты", "монет")} за ${p.rub} рублей${off ? `, без скидки ${packBase(p)}` : ""}">
+          ${rubText(p.rub)}${off ? `<s class="coin-pack__old">${rubText(packBase(p)).replace("\u00a0₽", "")}</s>` : ""}</button>
+        ${p.popular && !note ? '<span class="coin-pack__flag" aria-hidden="true">берут чаще всего</span>' : ""}
+      </div>`;
+  }
+  function shortMarkup() {
+    const item = ctx.item;
+    const n = need();
+    const art = `<span class="mh-short__art">${artMarkup(item, { live: false })}</span>`;
+    const price = `<span class="price-chip price-chip--coins mw-chip mh-short__price"><img class="price-chip__coin" src="${A}/market/coin.png" alt="">${formatCoins(priceOf(item))}</span>`;
+    if (!n)
+      return `<div class="mh-short__handle" data-short-close></div>
+        <h2 class="mh-short__title" id="short-title">теперь хватает</h2>${art}${price}
+        <button class="button button--primary mh-short__cta pressable" type="button" data-short-go>${short.mode === "gift" ? "подарить" : "купить"}</button>`;
+    const packs = suggest(n);
+    const note = (p) => (p.coins === n ? "ровно на покупку" : p.coins > n ? `останется ${formatCoins(p.coins - n)}` : `не хватит ещё ${formatCoins(n - p.coins)}`);
+    return `<div class="mh-short__handle" data-short-close></div>
+      <h2 class="mh-short__title" id="short-title">не хватает ${formatCoins(n)}\u00a0${plural(n, "блинкоина", "блинкоинов", "блинкоинов")}</h2>${art}${price}
+      <div class="mh-short__packs">${packs.map((p, k) => packRow(p, { main: k === 0, note: note(p) })).join("")}</div>
+      <button class="button button--ghost mh-short__more pressable" type="button" data-packs-open>ещё пакеты</button>`;
+  }
+  function openShort(mode) {
+    short.mode = mode;
+    shortEl.innerHTML = shortMarkup();
+    $("[data-short-backdrop]", app).classList.add("is-open");
+    shortEl.classList.add("is-open");
+    shortEl.focus({ preventScroll: true });
+    sheet.inert = true;
+  }
+  function closeShort() {
+    if (!shortEl.classList.contains("is-open")) return false;
+    shortEl.classList.remove("is-open");
+    $("[data-short-backdrop]", app).classList.remove("is-open");
+    sheet.inert = giftOpen();
+    short.mode = null;
+    return true;
+  }
+  function openPacks() {
+    const ctxItem = short.mode && ctx.item;
+    const n = ctxItem ? need() : 0;
+    packsEl.innerHTML = `
+      <div class="sheet__handle" data-packs-close><div class="sheet__grabber"></div>
+        <h2 class="mh-packs__title" id="packs-title">купить блинкоины</h2>
+        <p class="mh-packs__sub">${n ? `не хватает ${formatCoins(n)} на «${esc(ctxItem.name)}»` : "монеты для покупки предметов"}</p></div>
+      <div class="mh-packs__list">${PACKS.map((p) => packRow(p, { main: p.popular, dim: n > 0 && p.coins < n })).join("")}</div>
+      <button class="button button--ghost mh-packs__restore pressable" type="button">восстановить покупки</button>`;
+    $("[data-packs-backdrop]", app).classList.add("is-open");
+    packsEl.classList.add("is-open");
+    packsEl.focus({ preventScroll: true });
+  }
+  function closePacks() {
+    if (!packsEl.classList.contains("is-open")) return false;
+    packsEl.classList.remove("is-open");
+    $("[data-packs-backdrop]", app).classList.remove("is-open");
+    return true;
+  }
+  // оплата пакета (системный лист Apple – вне задачи): баланс растёт, карточка меняется на месте
+  function payPack(coins, btn) {
+    S.coins += coins;
+    refreshCoins();
+    if (btn) btn.classList.add("is-paid");
+    const fromSheet = btn && btn.closest("[data-packs]");
+    setTimeout(() => {
+      if (fromSheet) closePacks();
+      if (shortEl.classList.contains("is-open")) shortEl.innerHTML = shortMarkup();
+    }, fromSheet ? 700 : 0);
+  }
+  app.addEventListener("click", (e) => {
+    const pack = e.target.closest("[data-pack]");
+    if (pack) return payPack(Number(pack.dataset.pack), pack);
+    if (e.target.closest("[data-packs-open]")) return openPacks();
+    if (e.target.closest(".coin-balance__add")) return openPacks();
+    if (e.target.closest("[data-packs-close], [data-packs-backdrop]")) return closePacks();
+    if (e.target.closest("[data-short-close], [data-short-backdrop]")) return closeShort();
+    if (e.target.closest("[data-short-go]")) {
+      const mode = short.mode;
+      closeShort();
+      return mode === "gift" ? sendGift() : buy();
+    }
+  });
 
   // ── Подарок: «кому подаришь?» → «подарить» → «подарок отправлен!» (эталоны market/*) ─
   const giftEl = { backdrop: $("[data-gift-backdrop]", app), recipients: $("[data-recipients]", app), confirm: $("[data-confirm]", app), sent: $("[data-sent]", app) };
@@ -1321,7 +1499,7 @@
   function sendGift() {
     const item = ctx.item;
     const price = priceOf(item);
-    if (S.coins < price) return;
+    if (S.coins < price) return openShort("gift");
     S.coins -= price;
     if (item.stock && item.stock.left > 0) item.stock.left -= 1;
     const p = FRIENDS[gift.to];
@@ -1476,6 +1654,25 @@
       renderList();
       return;
     }
+    if (e.target.closest("[data-act='lesha']")) {
+      S.lesha = !S.lesha;
+      closeSheet();
+      closeCat();
+      S.cat = null;
+      renderCats();
+      renderList();
+      syncUrl();
+      return;
+    }
+    if (e.target.closest("[data-act='low']")) {
+      S.low = !S.low;
+      // «мало монет» и обратно: возвращаем баланс, который был до переключения
+      if (S.low) { S.prevCoins = S.coins; S.coins = LOW_COINS; } else S.coins = S.prevCoins ?? START.coins;
+      refreshCoins();
+      renderList();
+      syncUrl();
+      return;
+    }
     if (e.target.closest("[data-act='buy']")) {
       S.buy = S.buy === "row" ? "split" : "row";
       if (ctx.open) fillSheet();
@@ -1504,6 +1701,8 @@
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     // сначала подарок, потом экран товара, потом экран раздела
+    if (closePacks()) return;
+    if (closeShort()) return;
     if (closeTypeInfo()) return;
     if (giftOpen()) closeGift();
     else if (sheet.classList.contains("is-open")) closeSheet();
@@ -1647,6 +1846,8 @@
   if (ORDERS[q.get("order")]) S.order = q.get("order");
   if (q.get("stickers") === "new") S.stickers = "new";
   if (q.get("buy") === "row") S.buy = "row";
+  if (q.get("lesha") === "1") S.lesha = true;
+  if (q.get("coins") === "low") Object.assign(S, { low: true, coins: LOW_COINS });
   renderCats();
   renderList();
   // кольца рамок собираются из текстур после загрузки – тогда перерисовываем пины в рамках

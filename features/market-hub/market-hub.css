@@ -3385,3 +3385,416 @@
 .mh-scard:has(.mh-scard__art[src*="nsc-"]) .mh-scard__glow img {
   filter: blur(14px) saturate(1.3);
 }
+
+/* ── Пейволл: карточка «не хватает» и экран пакетов (market/not_enough.png, pricing.png) ── */
+.mh-short-backdrop,
+.mh-packs-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 170;
+  background: var(--gradient-market-backdrop);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-screen), visibility 0s linear var(--duration-screen);
+}
+
+.mh-packs-backdrop {
+  z-index: 172;
+  background: var(--color-scrim);
+}
+
+.mh-short-backdrop.is-open,
+.mh-packs-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--duration-screen), visibility 0s;
+}
+
+/* карточка снизу с полями (как «подарок отправлен!»): r30, поля 10, ряды r20 */
+.mh-short {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: var(--safe-bottom);
+  z-index: 171;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 var(--space-10) var(--space-10);
+  border-radius: var(--radius-modal);
+  background: var(--color-bg);
+  transform: translateY(calc(100% + var(--safe-bottom) + var(--space-24)));
+  visibility: hidden;
+  transition: transform var(--duration-sheet) var(--ease-emphasized), visibility 0s linear var(--duration-sheet);
+}
+
+.mh-short.is-open {
+  transform: none;
+  visibility: visible;
+  transition: transform var(--duration-sheet) var(--ease-emphasized), visibility 0s;
+}
+
+.mh-short:focus {
+  outline: none;
+}
+
+.mh-short__handle {
+  align-self: stretch;
+  height: 22px;
+  cursor: grab;
+}
+
+.mh-short__title {
+  font: var(--type-gift-title);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.mh-short__art {
+  display: grid;
+  place-items: center;
+  height: 112px;
+  margin-top: var(--space-12);
+  transform: rotate(-4deg);
+}
+
+.mh-short__art .mh-art,
+.mh-short__art img {
+  max-height: 112px;
+  width: auto;
+}
+
+.mh-short__art .mh-packgrid {
+  transform: scale(1.1);
+}
+
+.mh-short__price {
+  position: relative;
+  margin-top: calc(var(--space-12) * -1);
+}
+
+.mh-short__packs {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+}
+
+.mh-short__more.button,
+.mh-short__cta.button {
+  align-self: stretch;
+  margin-top: var(--space-8);
+}
+
+.mh-short__cta.button {
+  margin-top: var(--space-16);
+}
+
+/* ряд пакета: кучка монет со скидкой, число, кнопка-цена с зачёркнутой ценой без скидки */
+.coin-pack {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  height: 64px;
+  padding: 0 var(--space-12) 0 var(--space-8);
+  border-radius: var(--radius-20);
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.coin-pack--popular {
+  box-shadow: inset 0 0 0 2px var(--color-text);
+}
+
+.coin-pack__art {
+  position: relative;
+  flex: none;
+  width: 56px;
+  height: 48px;
+}
+
+.coin-pack__pile img {
+  position: absolute;
+  width: 44px;
+}
+
+.coin-pack__pile img:nth-child(1) { left: 6px; top: 4px; }
+.coin-pack__pile--2 img:nth-child(1) { left: 0; top: 8px; }
+.coin-pack__pile--2 img:nth-child(2) { left: 12px; top: 0; }
+.coin-pack__pile--3 img:nth-child(1) { left: 0; top: 10px; }
+.coin-pack__pile--3 img:nth-child(2) { left: 10px; top: 0; }
+.coin-pack__pile--3 img:nth-child(3) { left: 16px; top: 12px; }
+
+.coin-pack__off {
+  position: absolute;
+  left: -4px;
+  top: -6px;
+  z-index: 1;
+  font-size: 13px;
+  transform: rotate(-8deg);
+}
+
+.coin-pack__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.coin-pack__coins {
+  font: var(--type-coin-balance);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.coin-pack--dim .coin-pack__coins {
+  color: var(--color-text-muted);
+}
+
+.coin-pack__note {
+  color: var(--color-text-muted);
+  font: var(--type-gift-note);
+}
+
+.coin-pack__buy {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-6);
+  min-width: 96px;
+  height: 40px;
+  padding: 0 var(--space-14);
+  align-content: center;
+  border: 0;
+  border-radius: var(--radius-12);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font: var(--type-label);
+  line-height: 40px;
+  font-variant-numeric: tabular-nums;
+}
+
+.coin-pack__buy--main {
+  background: var(--color-text);
+  color: var(--color-text-on-light);
+}
+
+.coin-pack__old {
+  color: var(--color-text-muted);
+  font: var(--type-gift-note);
+}
+
+.coin-pack__buy.is-paid {
+  background: var(--color-selected);
+  color: var(--color-text-on-light);
+}
+
+.coin-pack__flag {
+  position: absolute;
+  right: var(--space-12);
+  top: -10px;
+  padding: 2px var(--space-8);
+  border-radius: var(--radius-pill);
+  background: var(--color-pink);
+  color: var(--color-text-on-light);
+  font: 700 12px/16px var(--font-ui);
+  transform: rotate(-4deg);
+}
+
+/* экран пакетов – шторка поверх карточки, верх на 56.7, как «кому подаришь?» */
+.mh-packs {
+  top: 56.7px;
+  z-index: 173;
+  max-height: none;
+}
+
+.mh-packs__title {
+  font: var(--type-sheet-title);
+}
+
+.mh-packs__sub {
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font: var(--type-item-text);
+}
+
+.mh-packs__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-20);
+}
+
+.mh-packs__restore.button {
+  margin-top: auto;
+}
+
+/* ── «от Лёши» (stand-010-new-market.vercel.app) ── */
+.mh-hidden {
+  display: none;
+}
+
+/* разделы: заголовок 24/600 по центру, под ним описание серым */
+.mh-lblock {
+  padding-top: var(--space-24);
+}
+
+.mh-lblock__title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  padding: 0 var(--space-24) var(--space-16);
+  font: 600 24px/29px var(--font-ui);
+  text-align: center;
+}
+
+.mh-lblock__text {
+  color: var(--color-text-muted);
+  font: var(--type-gift-note);
+  text-wrap: balance;
+}
+
+.mh-lgrid {
+  display: grid;
+  gap: var(--space-6);
+  padding: 0 var(--gutter);
+}
+
+.mh-lgrid--3 { grid-template-columns: repeat(3, 1fr); }
+.mh-lgrid--2 { grid-template-columns: repeat(2, 1fr); }
+
+.mh-lgrid--2 .mh-scard {
+  aspect-ratio: 175 / 158;
+}
+
+/* хвост: ночная карта, твой пин у правого края, хвост тянется влево (правка: left −120, top −40, h130) */
+.mh-ltail,
+.mh-lmap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.mh-ltail {
+  background: var(--color-bg) url("../../assets/overnights/map-night.webp") 30% 22% / 260% auto no-repeat;
+}
+
+.mh-ltail__pin {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  width: 72px;
+  height: 72px;
+  transform: translateY(-50%);
+}
+
+.mh-ltail__me {
+  position: relative;
+  z-index: 1;
+  width: 72px;
+  height: 72px;
+  border: 3px solid var(--color-text);
+  border-radius: 22px;
+  object-fit: cover;
+  background: var(--color-text);
+}
+
+.mh-ltail__art {
+  position: absolute;
+  left: -120px;
+  top: -40px;
+  height: 130px;
+  width: auto;
+  max-width: none;
+  object-fit: contain;
+  transform: rotate(-90deg);
+}
+
+.mh-lmap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mh-scard--tail .mh-scard__top,
+.mh-scard--tail .mh-scard__bottom,
+.mh-scard--style .mh-scard__top,
+.mh-scard--style .mh-scard__bottom {
+  z-index: 2;
+}
+
+.mh-scard--tail .mh-scard__bottom,
+.mh-scard--style .mh-scard__bottom {
+  justify-content: flex-start;
+  left: var(--space-10);
+}
+
+/* скидка – прежний перламутровый бейдж */
+.mh-scard__perl {
+  display: inline-block;
+  font-size: 22px;
+  transform: rotate(-8deg);
+}
+
+/* «все N»: число по центру, подпись слева внизу */
+.is-lesha .mh-scard--all .mh-scard__alln {
+  right: 0;
+  left: 0;
+  top: 38%;
+  text-align: center;
+  font-size: 34px;
+}
+
+/* компактная лента: таблетки 38 с картинкой раздела, мягкий светлый край; VIP – с перламутровым свечением */
+.mh-compact__pill--l {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  height: 38px;
+  padding: 0 var(--space-12) 0 var(--space-4);
+  border: 1px solid var(--color-surface);
+  border-radius: var(--radius-16);
+  background: var(--color-bg);
+  box-shadow: inset 0 -4px 20px rgba(255, 255, 255, 0.3);
+  font: 700 13px/16px var(--font-ui);
+}
+
+.mh-compact__thumb {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-12);
+  object-fit: cover;
+}
+
+.mh-compact__pill--vip {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: radial-gradient(ellipse at 70% 120%, #9e92c4 0%, transparent 65%), #282934;
+}
+
+/* экран раздела: вкладки 20/500, счётчик в пилюле */
+.is-lesha .mh-cattab {
+  font: 500 20px/24px var(--font-ui);
+}
+
+.is-lesha .mh-cattab__count {
+  height: 22px;
+  padding: 0 var(--space-8);
+  border-radius: var(--radius-16);
+  background: rgba(255, 255, 255, 0.1);
+  font: 600 15px/20px var(--font-text);
+}
+
+/* шапка экрана товара – новый градиент: тёмное малиновое свечение сверху вместо жёлтого кольца */
+.is-lesha .mh-item .market__glow {
+  height: 180px;
+  background: radial-gradient(ellipse 80% 100% at 50% 0%, rgba(120, 40, 110, 0.75) 0%, rgba(60, 20, 60, 0.35) 45%, transparent 100%);
+}
+
+.is-lesha .mh-item .market__ring {
+  display: none;
+}
