@@ -188,8 +188,8 @@
   // что есть в ленте: карточками – всё, у чего есть предмет без упаковки; упаковками – всё, у чего есть упаковка.
   // Стили карты и рамки упаковок не имеют – они в обеих лентах
   const bareMode = () => S.layout !== "air";
-  const inFeed = (item) => (!item.ref || S.stickers === "new" || S.lesha) && (
-    item.cat === "styles" || item.cat === "frames" || Boolean(bareMode() || item.ref ? item.bare : item.art || item.pack));
+  const inFeed = (item) => (!item.ref || S.stickers === "new" || S.lesha) && (!item.lesha || S.lesha) && (
+    item.cat === "styles" || item.cat === "frames" || Boolean(bareMode() || item.ref || item.lesha ? item.bare : item.art || item.pack));
 
   // Друзья – пак людей из avatars/, имена как в соседних фичах
   const FRIENDS = {
@@ -228,6 +228,16 @@
     croc: { id: "croc", ref: true, cat: "stickers", name: "крокодил", bare: `${NSC}/nsc-croc.webp`, price: 10, rank: 96, friends: 5, stock: { left: 2680, total: 5000 }, text: "зубастая улыбка на любой ответ" },
     glitter: { id: "glitter", ref: true, cat: "stickers", name: "блёстки", bare: `${NSC}/nsc-glitter.webp`, price: 0, vip: true, rank: 98, friends: 4, text: "сияешь даже без настроения" },
   });
+  const LZ = "market-hub/lesha";
+  Object.assign(ITEMS, {
+    ldaisy: { id: "ldaisy", lesha: true, cat: "gifts", name: "ромашка", bare: `${LZ}/decal-1.webp`, price: 20, off: 30, rank: 99, friends: 4, text: "любит – не любит" },
+    lring: { id: "lring", lesha: true, cat: "gifts", name: "кольцо", bare: `${LZ}/decal-2.webp`, price: 19, rank: 98, friends: 2, text: "почти предложение" },
+    lbunny: { id: "lbunny", lesha: true, cat: "gifts", name: "ушки", bare: `${LZ}/decal-3.webp`, price: 6, rank: 97, friends: 6, stock: { left: 2680, total: 5000 }, text: "на любой профиль" },
+    lhen: { id: "lhen", lesha: true, cat: "gifts", name: "петух", bare: `${LZ}/decal-4.webp`, price: 11, rank: 96, friends: 1, ends: T0 + 23 * H_ + 41 * 60000, text: "кто рано встаёт" },
+    lcandle: { id: "lcandle", lesha: true, cat: "gifts", name: "свеча", bare: `${LZ}/decal-5.webp`, price: 16, rank: 95, friends: 3, text: "для тёплого вечера" },
+  });
+  // снимки стилей карты со стенда
+  const LESHA_STYLE = { gta: "style-gta", minecraft: "style-minecraft", potter: "style-potter", "winter-light": "style-winter" };
   const isSold = (item) => !!item.stock && item.stock.left <= 0;
   const GET_NOTE = { invite: "за задание", ad: "за рекламу", partner: "от партнёра" };
 
@@ -465,7 +475,7 @@
   // картинки, сверху крупная метка (скидка звездой, тираж, срок, VIP), снизу цена монетой с обводкой
   function stickerCard(item, i) {
     const src = item.bare ? `${A}/${item.bare}` : item.pack ? `${A}/${item.pack}` : `${H}/${item.art}.webp`;
-    const art = item.set ? artMarkup(item) : item.cat === "styles" || (S.lesha && item.cat === "tails") ? "" : `<img class="mh-scard__art" src="${src}" alt="">`;
+    const art = item.set ? artMarkup(item) : item.cat === "styles" || (S.lesha && (item.cat === "tails" || item.cat === "frames")) ? "" : `<img class="mh-scard__art" src="${src}" alt="">`;
     const glow = item.set ? `${A}/${item.set[2].src}` : src;
     let top = "";
     if (S.owned.has(item.id)) top = "";
@@ -479,7 +489,7 @@
       : item.vip ? '<span class="mh-scard__note">забери<br>в подписке</span>'
       : item.get ? `<span class="mh-scard__note">${GET_NOTE[item.get]}</span>`
       : !priceOf(item) ? '<span class="mh-scard__sum">бесплатно</span>'
-      : `<span class="mh-scard__price"><img src="${A}/market/coin.png" alt=""><span class="mh-scard__sum">${formatCoins(priceOf(item))}</span>${offOf(item) ? `<s class="mh-scard__old">${formatCoins(item.price)}</s>` : ""}</span>`;
+      : `<span class="mh-scard__price"><img src="${S.lesha ? `${A}/${LZ}/coin.svg` : `${A}/market/coin.png`}" alt=""><span class="mh-scard__sum">${formatCoins(priceOf(item))}</span>${offOf(item) ? `<s class="mh-scard__old">${formatCoins(item.price)}</s>` : ""}</span>`;
     return `
       <button class="mh-card mh-card--stickers mh-scard${isSold(item) ? " mh-card--sold" : ""}${item.vip ? " mh-scard--vip" : ""} pressable" type="button" data-item="${item.id}" style="--i:${i}"
               aria-label="${esc(label(item))}">
@@ -505,18 +515,33 @@
   function leshaTail(item, i) {
     const art = `${A}/${item.follower || item.bare || item.tail}`;
     return stickerCard(item, i)
-      .replace('<span class="mh-scard__glow" aria-hidden="true">', '<span class="mh-ltail" aria-hidden="true"><span class="mh-ltail__pin"><img class="mh-ltail__art" src="' + art + '" alt=""><img class="mh-ltail__me" src="' + A + '/people/live-hd-1.webp" alt=""></span></span><span class="mh-scard__glow mh-hidden" aria-hidden="true">')
+      .replace('<span class="mh-scard__glow" aria-hidden="true">', `<span class="mh-ltail" aria-hidden="true"><img class="mh-ltail__map" src="${A}/${LZ}/map-clean.webp" alt="">
+        <span class="mh-ltail__pin"><img class="mh-ltail__art" src="${art}" alt=""><img class="mh-ltail__spark" src="${A}/${LZ}/sparkles.webp" alt="">
+          <span class="mh-ltail__base"></span><span class="mh-ltail__mask"><img class="mh-ltail__me" src="${A}/${LZ}/pin-avatar.webp" alt=""></span></span></span><span class="mh-scard__glow mh-hidden" aria-hidden="true">`)
+      // у хвостов «за задание» и т. п. не пишем – цена монетами, как у остальных
+      .replace(/<span class="mh-scard__note">[^<]*<\/span>/, `<span class="mh-scard__price"><img src="${A}/${LZ}/coin.svg" alt=""><span class="mh-scard__sum">${formatCoins(item.price)}</span></span>`)
       .replace("mh-card--stickers", "mh-card--tails mh-scard--tail");
   }
+  // рамка: та же ячейка, что у хвоста (карта стенда), пин в рамке по центру и чуть выше середины
+  function leshaFrame(item, i) {
+    const me = { ...SELF, live: `${A}/${LZ}/pin-avatar.webp` };
+    return stickerCard(item, i)
+      .replace('<span class="mh-scard__glow" aria-hidden="true">', `<span class="mh-ltail" aria-hidden="true"><img class="mh-ltail__map" src="${A}/${LZ}/map-clean.webp" alt="">
+        <span class="mh-lframe">${framedPin(item.frame, me)}</span></span><span class="mh-scard__glow mh-hidden" aria-hidden="true">`)
+      .replace(/<span class="mh-scard__note">[^<]*<\/span>/, item.vip ? "$&" : `<span class="mh-scard__price"><img src="${A}/${LZ}/coin.svg" alt=""><span class="mh-scard__sum">${formatCoins(item.price)}</span></span>`)
+      .replace("mh-card--stickers", "mh-card--frames mh-scard--tail");
+  }
+
   function leshaStyle(item, i) {
     return stickerCard(item, i)
-      .replace('<span class="mh-scard__glow" aria-hidden="true">', `<span class="mh-lmap" aria-hidden="true"><img src="${styleThumb(item)}" alt="" style="object-position:${item.focus}"></span><span class="mh-scard__glow mh-hidden" aria-hidden="true">`)
+      .replace('<span class="mh-scard__glow" aria-hidden="true">', `<span class="mh-lmap" aria-hidden="true"><img src="${LESHA_STYLE[item.style] ? `${A}/${LZ}/${LESHA_STYLE[item.style]}.webp` : `${A}/${LZ}/map-clean.webp`}" alt=""></span><span class="mh-scard__glow mh-hidden" aria-hidden="true">`)
       .replace("mh-card--stickers", "mh-card--styles mh-scard--style");
   }
 
   function card(item, i) {
     if (S.lesha && item.cat === "tails") return leshaTail(item, i);
     if (S.lesha && item.cat === "styles") return leshaStyle(item, i);
+    if (S.lesha && item.cat === "frames") return leshaFrame(item, i);
     if (S.lesha && (item.cat === "stickers" || item.cat === "gifts"))
       return stickerCard(item, i).replace("mh-card--stickers", `mh-card--${item.cat}`);
     if (S.stickers === "new" && item.cat === "stickers") return stickerCard(item, i);
@@ -564,12 +589,22 @@
   // компактная лента (stand-010): при прокрутке вверх под закреплённой шапкой выезжают категории таблетками
   // с горизонтальным скроллом; вниз – уходят. Нажатие – как на плитку
   function renderCompact() {
-    const thumb = { stickers: `${A}/${ITEMS.chihuahua.bare}`, tails: `${A}/${ITEMS.jelly.follower}`, gifts: `${A}/${ITEMS.crown.bare || "market-hub/clear/gifts/crown.webp"}`,
-      styles: styleThumb(ITEMS.minecraft), frames: `${A}/people/live-hd-1.webp`, vip: `${A}/market/vip-star.png` };
-    const cats = S.lesha ? [...CATS.filter((c) => !c.onlyTile), { id: "vip", title: "Blink VIP" }] : shownCats();
-    $("#compact").innerHTML = cats.map((c) =>
-      `<button class="mh-compact__pill${S.lesha ? ` mh-compact__pill--l mh-compact__pill--${c.id}` : ""} pressable" type="button" ${S.lesha ? `data-open="${c.id === "vip" ? "stickers" : c.id}"` : `data-cat="${c.id}"`} aria-pressed="${S.cat === c.id}">${
-        S.lesha ? `<img class="mh-compact__thumb" src="${thumb[c.id]}" alt="">` : ""}${esc(c.title)}</button>`).join("");
+    if (S.lesha) {
+      // компактная лента стенда (compactDesigns): стикеры, наклейки, стили карты, хвосты и Blink VIP
+      const L = `${A}/${LZ}`;
+      const items = [
+        ["stickers", "стикеры", `<img class="mh-cmp__single" style="--art-size:41.709px" src="${L}/compact-sticker.webp" alt="">`],
+        ["gifts", "наклейки", `<img class="mh-cmp__single" style="--art-size:36.834px" src="${L}/compact-gift.webp" alt="">`],
+        ["styles", "стили карты", `<span class="mh-cmp__card mh-cmp__card--back"><img src="${L}/compact-map-back.webp" alt=""></span><span class="mh-cmp__card mh-cmp__card--front"><img src="${L}/compact-map-front.webp" alt=""></span>`],
+        ["tails", "хвосты", `<span class="mh-cmp__tail"><img src="${L}/compact-tail.webp" alt=""></span>`],
+      ];
+      $("#compact").innerHTML = items.map(([id, name, art]) =>
+        `<button class="mh-cmp mh-cmp--${id} pressable" type="button" data-open="${id}"><span class="mh-cmp__art" aria-hidden="true">${art}</span><span class="mh-cmp__label">${name}</span></button>`).join("")
+        + `<button class="mh-cmp mh-cmp--vip pressable" type="button" data-open="stickers">Blink VIP<img src="${L}/vip-star.png" alt=""></button>`;
+      return;
+    }
+    $("#compact").innerHTML = shownCats().map((c) =>
+      `<button class="mh-compact__pill pressable" type="button" data-cat="${c.id}" aria-pressed="${S.cat === c.id}">${esc(c.title)}</button>`).join("");
   }
 
   function scrollBehavior(scroller, onMove) {
@@ -718,11 +753,13 @@
     ["tails", "хвосты", "выбирай хвост и\u00a0оставляй яркий след, когда двигаешься по\u00a0карте", 2],
     ["gifts", "наклейки", "собирай наклейки и\u00a0украшай свой профиль и\u00a0профили друзей", 3],
     ["styles", "стили карты", "меняй стиль карты и\u00a0смотри на\u00a0мир по‑новому", 2],
+    ["frames", "рамки", "обводи свой пин и\u00a0выделяйся среди друзей на\u00a0карте", 2],
   ];
   const leshaItems = (cat) => {
     const all = Object.values(ITEMS).filter((item) => inFeed(item) && item.cat === cat && !isSold(item) && !dealFor(item));
-    const ok = cat === "stickers" ? all.filter((item) => item.bare || item.set) : cat === "tails" ? all.filter((item) => item.follower || item.bare) : all.filter((item) => cat === "styles" || item.bare);
-    return [...ok.filter((item) => item.ref), ...ok.filter((item) => !item.ref).sort((a, b) => b.rank - a.rank)];
+    const ok = cat === "stickers" ? all.filter((item) => item.bare || item.set) : cat === "tails" ? all.filter((item) => item.follower || item.bare)
+      : cat === "gifts" ? all.filter((item) => item.lesha) : all;
+    return [...ok.filter((item) => item.ref || item.lesha), ...ok.filter((item) => !item.ref && !item.lesha).sort((a, b) => b.rank - a.rank)];
   };
   const leshaAll = (cat, n) => `
       <button class="mh-card mh-scard mh-scard--all pressable" type="button" data-open="${cat}" aria-label="все ${catOf(cat).title}, ${n}">
@@ -736,7 +773,7 @@
       const shown = items.slice(0, cols === 3 ? 5 : 5);
       return `
         <section class="mh-lblock" aria-labelledby="lblock-${id}">
-          <h2 class="mh-lblock__title" id="lblock-${id}">${title}<span class="mh-lblock__text">${text}</span></h2>
+          <h2 class="mh-lblock__title" id="lblock-${id}"><button class="mh-lblock__link pressable" type="button" data-open="${id}">${title}</button><span class="mh-lblock__text">${text}</span></h2>
           <div class="mh-grid mh-lgrid mh-lgrid--${cols}">${shown.map((item, i) => card(item, i)).join("")}${leshaAll(id, items.length)}</div>
         </section>`;
     }).join("");

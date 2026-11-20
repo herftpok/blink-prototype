@@ -3798,3 +3798,277 @@
 .is-lesha .mh-item .market__ring {
   display: none;
 }
+
+/* ── «от Лёши», правки по стенду ── */
+/* заголовок раздела – слово в белой рамке 1, r8, наклон −3° (category-link стенда) */
+.mh-lblock__link {
+  padding: var(--space-4) var(--space-8);
+  border: 0;                                     /* у стенда рамка 0 – только наклон */
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  transform: rotate(-3deg);
+}
+
+/* свечение шапки стенда (header-glow/glow.svg) – у ленты, экрана раздела и экрана товара */
+.is-lesha .market__glow {
+  height: 140px;
+  overflow: hidden;
+}
+
+.is-lesha .market__glow::before {
+  content: "";
+  position: absolute;
+  left: calc(50% - 355.48px);
+  top: -574.25px;
+  width: 779.625px;
+  height: 714.535px;
+  background: url("../../assets/market-hub/lesha/glow.svg") no-repeat;
+  pointer-events: none;
+}
+
+.is-lesha .market__ring,
+.is-lesha .mh-item .market__ring {
+  display: none;
+}
+
+.is-lesha .mh-item .market__glow {
+  background: none;
+}
+
+/* хвост: карта стенда, пин 51% высоты справа, хвост влево (left −120, top −40, h130, −90°) */
+.mh-ltail {
+  background: var(--color-bg);
+  container-type: size;
+}
+
+.mh-ltail__map {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 308%;
+  max-width: none;
+  transform: translateX(-50%);
+}
+
+.mh-ltail__pin {
+  right: auto;
+  left: calc(50% + 35cqw);
+  top: calc(50% + 6px);
+  width: 51cqh;
+  height: 51cqh;
+  transform: translate(-50%, -50%);
+}
+
+.mh-ltail__base {
+  position: absolute;
+  inset: 0;
+  border-radius: 40.4%;
+  background: var(--color-text);
+  box-shadow: 0 1.7px 8.6px #1c0a2e66;
+}
+
+.mh-ltail__mask {
+  position: absolute;
+  left: 6.3%;
+  bottom: 5.5%;
+  width: 88.5%;
+  height: 115.4%;
+  border-radius: 30.8% / 23.7%;
+  overflow: hidden;
+}
+
+.mh-ltail .mh-ltail__me {
+  position: absolute;
+  left: -15.2%;
+  top: 0;
+  width: 130.4%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  object-fit: cover;
+}
+
+.mh-ltail__spark {
+  position: absolute;
+  left: -12.5%;
+  top: -12.5%;
+  width: 125%;
+  height: 125%;
+}
+
+.mh-ltail__art {
+  left: -120px;
+  top: -40px;
+  height: 130px;
+}
+
+/* наклейки – без свечения, как decal-card стенда */
+.is-lesha .mh-card--gifts .mh-scard__glow {
+  display: none;
+}
+
+.is-lesha .mh-card--gifts .mh-scard__item {
+  inset: 18% 12% 24%;
+}
+
+/* стили карты – снимок на всю ячейку */
+.mh-lmap img {
+  object-position: center;
+}
+
+/* «от Лёши»: шапка – тёмное малиновое свечение, как на стенде (вместо яркого glow.svg) */
+.is-lesha .market__glow::before {
+  content: none;
+}
+
+.is-lesha .market__glow {
+  height: 120px;
+  background: radial-gradient(ellipse 70% 100% at 62% 0%, rgba(150, 70, 140, 0.6) 0%, rgba(80, 30, 75, 0.35) 45%, transparent 85%);
+}
+
+.is-lesha .coin-balance {
+  background: var(--color-surface);
+  -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+}
+
+/* цена и метки в ячейках – как sticker-price / sticker-meta стенда */
+.is-lesha .mh-scard__price img {
+  width: 24px;
+  height: 24px;
+  margin-right: -2px;
+}
+
+.is-lesha .mh-scard__sum {
+  font: italic 700 24px/1.12 var(--font-ui);
+  color: var(--color-text);
+  -webkit-text-stroke: 6px var(--color-bg);
+  paint-order: stroke fill;
+}
+
+.is-lesha .mh-scard__old {
+  align-self: flex-start;
+  margin-left: var(--space-4);
+  color: var(--color-text);
+  font: 600 13px/normal var(--font-ui);
+}
+
+.is-lesha .mh-scard__top {
+  left: var(--space-12);
+  top: var(--space-12);
+}
+
+.is-lesha .mh-scard__big {
+  font: italic 700 16px/18px var(--font-ui);
+  color: var(--color-text);
+  -webkit-text-stroke: 5px var(--color-bg);
+  paint-order: stroke fill;
+  text-shadow: none;
+}
+
+.is-lesha .mh-scard__big small {
+  margin-left: 2px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.is-lesha .mh-scard__bottom {
+  bottom: var(--space-12);
+}
+
+.is-lesha .mh-scard--tail .mh-scard__bottom,
+.is-lesha .mh-scard--style .mh-scard__bottom {
+  left: 0;
+  justify-content: center;
+}
+
+/* компактная лента стенда (compact-designed): стеклянная таблетка 38, r16, картинка 40 выходит за край */
+.is-lesha .mh-compact { gap: var(--space-4); }
+.mh-cmp { position: relative; display: flex; flex: 0 0 auto; align-items: center; min-width: max-content; height: 38px; padding: 0; border: 1px solid #171717; border-radius: var(--radius-16); background: rgba(0, 0, 0, 0.01); box-shadow: inset 0 -4px 20px rgba(255, 255, 255, 0.3); color: var(--color-text); font: 700 13px/normal var(--font-ui); white-space: nowrap; overflow: visible; }
+.mh-cmp--stickers { width: 104px; }
+.mh-cmp--gifts { width: 112px; }
+.mh-cmp--styles { width: 88px; }
+.mh-cmp--tails { width: 95px; }
+.mh-cmp__art { position: relative; flex: 0 0 40px; width: 40px; height: 40px; transform: scale(1.15); }
+.mh-cmp__single { position: absolute; left: 50%; top: 28%; width: var(--art-size, 40px); height: var(--art-size, 40px); max-width: none; object-fit: contain; transform: translate(-50%, -50%) rotate(-8deg) scale(-1, -1); }
+.mh-cmp__card { position: absolute; overflow: hidden; border: 1px solid #000; border-radius: 8px; }
+.mh-cmp__card--back { width: 27.264px; height: 37.11px; left: 9.16px; top: -3px; transform: rotate(5.21deg); }
+.mh-cmp__card--back img { width: 100%; height: 100%; object-fit: cover; }
+.mh-cmp__card--front { width: 25.557px; height: 34.786px; left: 4.37px; top: 4.49px; transform: rotate(-5.31deg); }
+.mh-cmp__card--front img { position: absolute; left: -53.24%; top: -26.53%; width: 239.81%; height: 153.06%; max-width: none; }
+.mh-cmp__tail { position: absolute; left: 0; top: -16px; width: 36.502px; height: 55.969px; transform: rotate(156.53deg); -webkit-mask: url("../../assets/market-hub/lesha/tail-mask.svg") center / 100% 100% no-repeat; mask: url("../../assets/market-hub/lesha/tail-mask.svg") center / 100% 100% no-repeat; }
+.mh-cmp__tail img { display: block; width: 36.502px; height: 55.969px; }
+.mh-cmp__label { margin: 0 12px 0 4px; }
+.mh-cmp--vip { gap: 4px; width: auto; padding: 0 18px 0 10px; border: 1px solid rgba(255, 255, 255, 0.25); background: radial-gradient(ellipse at 70% 120%, #9e92c4 0%, transparent 65%), radial-gradient(ellipse at 95% 35%, #7f89a4 0%, transparent 58%), #282934; box-shadow: none; }
+.mh-cmp--vip img { width: 24px; height: 24px; object-fit: contain; }
+.is-lesha .mh-scard__price img { width: 26px; height: 26px; }
+
+/* хвост уходит под пин: правый край (низ картинки до поворота) растворяется, хвост ближе к пину */
+.mh-ltail__art {
+  left: -112px;
+  -webkit-mask: linear-gradient(to bottom, #000 62%, transparent 92%);
+          mask: linear-gradient(to bottom, #000 62%, transparent 92%);
+}
+
+.mh-ltail__pin {
+  z-index: 1;
+}
+
+/* без растворения: край хвоста заходит под белую подложку пина и прячется */
+.mh-ltail__art {
+  left: -92px;
+  -webkit-mask: none;
+          mask: none;
+}
+
+/* картинки таблеток – без переворота (базовое правило стенда: поворот 10°) */
+.mh-cmp__single {
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(10deg);
+}
+
+/* «забери в подписке» – как sticker-caption стенда: SF 600 13, белым с чёрной обводкой, по центру */
+.is-lesha .mh-scard--vip .mh-scard__bottom {
+  left: 0;
+  right: 0;
+  justify-content: center;
+}
+
+.is-lesha .mh-scard__note {
+  align-self: auto;
+  padding: 0;
+  color: var(--color-text);
+  font: 600 13px/15px var(--font-text);
+  text-align: center;
+  -webkit-text-stroke: 4px var(--color-bg);
+  paint-order: stroke fill;
+}
+
+.is-lesha .mh-scard--all .mh-scard__note {
+  left: var(--space-12);
+  text-align: left;
+  -webkit-text-stroke: 0;
+}
+
+/* рамка в ячейке «от Лёши» – пин по центру, чуть выше середины (под ним цена) */
+.mh-lframe {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 0;
+  height: 0;
+  transform: scale(1.5);
+}
+
+.mh-lframe .pin {
+  left: 0;
+  top: 0;
+}
+
+.mh-lframe {
+  top: 66%;
+}
