@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Blink – варианты блока разделов маркета</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <style>
+    /* эскиз: блок разделов для варианта «от Лёши» – стиль плитки стенда (стекло, свет снизу), товар крупно и не под текстом */
+    body { background: var(--color-bg); color: var(--color-text); }
+    .tv { display: grid; grid-template-columns: repeat(3, 390px); gap: 40px; justify-content: center; padding: 40px 24px 60px; }
+    .tv__head { grid-column: 1 / -1; text-align: center; font: var(--type-sheet-title); }
+    .tv__label { color: var(--color-text-muted); font: var(--type-label); margin-bottom: 10px; }
+    .tv__label b { color: var(--color-text); font-weight: inherit; }
+    .tv__screen { width: 390px; padding: 16px; border-radius: 24px; outline: 1px solid var(--color-surface); }
+
+    /* плитка стенда: почти прозрачная, тёмная рамка, мягкий светлый край снизу */
+    .t { position: relative; overflow: hidden; border: 1px solid #171717; border-radius: 20px; background: #0b0b0b; box-shadow: inset 0 -4px 20px rgba(255, 255, 255, 0.3); }
+    .t__name { position: absolute; z-index: 2; font: 700 15px/18px var(--font-ui); }
+    .t img { position: absolute; max-width: none; }
+    .row { display: grid; gap: 8px; }
+    .row + .row { margin-top: 8px; }
+    .r3 { grid-template-columns: repeat(3, 1fr); }
+    .r2 { grid-template-columns: 1.3fr 1fr; }
+
+    /* A – подпись внизу слева, товар крупно в верхних двух третях */
+    .a .t { height: 112px; }
+    .a .t__name { left: 12px; bottom: 10px; }
+    .a .r2 .t { height: 104px; }
+
+    /* B – товар выходит за верх плитки, подпись по центру внизу */
+    .b { padding-top: 34px; }
+    .b .t { height: 92px; overflow: visible; }
+    .b .t__name { left: 0; right: 0; bottom: 10px; text-align: center; }
+    .b .row + .row { margin-top: 40px; }
+
+    /* C – подпись сверху слева мелко, товар крупно снизу справа и обрезан краем плитки */
+    .c .t { height: 118px; }
+    .c .t__name { left: 12px; top: 10px; font-size: 14px; }
+
+    /* D – все пять в один ряд-веер крупных карточек 2 + 3 разной высоты */
+    .d .r2 { grid-template-columns: 1fr 1fr; }
+    .d .r2 .t { height: 128px; }
+    .d .r3 .t { height: 96px; }
+    .d .t__name { left: 12px; bottom: 10px; }
+    .d .r3 .t__name { font-size: 13px; }
+    .d .r3 img { transform-origin: 50% 0; scale: 0.82; }
+  </style>
+</head>
+<body>
+  <main class="tv"><h1 class="tv__head">блок разделов – варианты</h1></main>
+  <script>
+    const A = "../../assets", L = `${A}/market-hub/lesha`;
+    // картинки стенда + наши вырезки; позиции подобраны так, чтобы товар был крупным и не лез под подпись
+    const img = (src, css) => `<img src="${src}" alt="" style="${css}">`;
+    const tiles = {
+      stickers: (k) => img(`${L}/compact-sticker.webp`, k === "b" ? "left:50%;top:-34px;width:96px;transform:translateX(-50%) rotate(-8deg)" : k === "c" ? "right:-14px;bottom:-14px;width:96px;transform:rotate(-8deg)" : "left:50%;top:-6px;width:84px;transform:translateX(-50%) rotate(-8deg)"),
+      gifts: (k) => img(`${L}/compact-gift.webp`, k === "b" ? "left:50%;top:-30px;width:88px;transform:translateX(-50%)" : k === "c" ? "right:-10px;bottom:-12px;width:88px" : "left:50%;top:-2px;width:76px;transform:translateX(-50%)"),
+      tails: (k) => img(`${A}/market/tails/bare-jelly.webp`, k === "b" ? "left:50%;top:-40px;width:96px;transform:translateX(-50%) rotate(-12deg)" : k === "c" ? "right:-18px;bottom:-22px;width:100px;transform:rotate(-12deg)" : "left:50%;top:-14px;width:84px;transform:translateX(-50%) rotate(-12deg)"),
+      styles: (k) => `${img(`${L}/compact-map-back.webp`, k === "b" ? "left:50%;top:-30px;width:70px;border-radius:12px;transform:translateX(-30%) rotate(8deg)" : k === "c" ? "right:20px;bottom:-24px;width:76px;border-radius:12px;transform:rotate(8deg)" : "left:50%;top:6px;width:64px;border-radius:12px;transform:translateX(-20%) rotate(8deg)")}${img(`${L}/style-minecraft.webp`, k === "b" ? "left:50%;top:-22px;width:74px;height:94px;object-fit:cover;border-radius:12px;border:1px solid #000;transform:translateX(-80%) rotate(-6deg)" : k === "c" ? "right:-10px;bottom:-30px;width:80px;height:100px;object-fit:cover;border-radius:12px;border:1px solid #000;transform:rotate(-6deg)" : "left:50%;top:10px;width:66px;height:80px;object-fit:cover;border-radius:12px;border:1px solid #000;transform:translateX(-85%) rotate(-6deg)")}`,
+      frames: (k) => img(`${L}/pin-avatar.webp`, k === "b" ? "left:50%;top:-28px;width:84px;border-radius:26px;border:4px solid #fff;transform:translateX(-50%) rotate(4deg)" : k === "c" ? "right:-10px;bottom:-14px;width:84px;border-radius:26px;border:4px solid #fff;transform:rotate(4deg)" : "left:50%;top:4px;width:70px;border-radius:22px;border:4px solid #fff;transform:translateX(-50%) rotate(4deg)"),
+    };
+    const names = { stickers: "стикеры", tails: "хвосты", gifts: "наклейки", styles: "стили карты", frames: "рамки" };
+    const tile = (id, k) => `<div class="t"><span class="t__name">${names[id]}</span>${tiles[id](k)}</div>`;
+    const block = (k, top, bottom, topCls = "r3", bottomCls = "r2") =>
+      `<div class="row ${topCls}">${top.map((id) => tile(id, k)).join("")}</div><div class="row ${bottomCls}">${bottom.map((id) => tile(id, k)).join("")}</div>`;
+    const cases = [
+      ["a", "<b>A.</b> Подпись внизу слева, товар крупно в верхней части плитки", block("a", ["stickers", "tails", "gifts"], ["styles", "frames"])],
+      ["b", "<b>B.</b> Товар выходит за верх плитки, подпись по центру внизу", block("b", ["stickers", "tails", "gifts"], ["styles", "frames"])],
+      ["c", "<b>C.</b> Подпись сверху мелко, товар крупно в правом нижнем углу, обрезан краем", block("c", ["stickers", "tails", "gifts"], ["styles", "frames"])],
+      ["d", "<b>D.</b> Две крупные плитки сверху, три снизу", block("d", ["stickers", "tails"], ["gifts", "styles", "frames"], "r2", "r3")],
+    ];
+    document.querySelector(".tv").insertAdjacentHTML("beforeend", cases.map(([k, label, body]) =>
+      `<section><p class="tv__label">${label}</p><div class="tv__screen ${k}">${body}</div></section>`).join(""));
+  </script>
+</body>
+</html>

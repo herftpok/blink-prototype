@@ -770,10 +770,10 @@
     return LESHA.map(([id, title, text, cols]) => {
       const items = leshaItems(id);
       if (!items.length) return "";
-      const shown = items.slice(0, cols === 3 ? 5 : 5);
+      const shown = items.slice(0, cols === 3 ? 5 : id === "tails" ? 5 : 3);   // стили и рамки: три товара, «все» – четвёртая
       return `
         <section class="mh-lblock" aria-labelledby="lblock-${id}">
-          <h2 class="mh-lblock__title" id="lblock-${id}"><button class="mh-lblock__link pressable" type="button" data-open="${id}">${title}</button><span class="mh-lblock__text">${text}</span></h2>
+          <h2 class="mh-lblock__title" id="lblock-${id}"><button class="mh-lblock__link pressable" type="button" data-open="${id}">${title}</button></h2>
           <div class="mh-grid mh-lgrid mh-lgrid--${cols}">${shown.map((item, i) => card(item, i)).join("")}${leshaAll(id, items.length)}</div>
         </section>`;
     }).join("");

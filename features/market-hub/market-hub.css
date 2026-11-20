@@ -4072,3 +4072,40 @@
 .mh-lframe {
   top: 66%;
 }
+
+/* «от Лёши», правки: без тега типа на экране товара; заголовки разделов без наклона, по левому краю */
+.is-lesha .mh-item__titlerow .mh-type {
+  display: none;
+}
+
+.is-lesha .mh-lblock__title {
+  align-items: flex-start;
+  padding: 0 var(--gutter) var(--space-16);
+  text-align: left;
+}
+
+.is-lesha .mh-lblock__link {
+  padding: 0;
+  transform: none;
+}
+
+/* «от Лёши», правки: пин рамки меньше; без линий у шапки и компактной ленты; цена в ячейке мельче */
+.mh-lframe {
+  transform: scale(1.2);
+}
+
+.is-lesha .mh-sticky,
+.is-lesha .is-scrolled .mh-sticky,
+.is-lesha .mh-compact {
+  box-shadow: none;
+}
+
+.is-lesha .mh-scard__sum {
+  font-size: 20px;
+  -webkit-text-stroke-width: 5px;
+}
+
+.is-lesha .mh-scard__price img {
+  width: 22px;
+  height: 22px;
+}
