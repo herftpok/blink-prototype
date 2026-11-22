@@ -1,0 +1,18 @@
+/* Вкладка «алгоритм хваталки»: документ для разработки в стиле стенда */
+.algo-stage {justify-content:flex-start;}
+.algo {width:100%;max-width:760px;display:grid;gap:var(--space-24);padding-bottom:var(--space-32);}
+.algo__section {padding:var(--space-20);border-radius:var(--radius-20);background:var(--color-surface-raised);}
+.algo__section h2 {font:var(--type-stat-label);margin-bottom:var(--space-12);}
+.algo__section h3 {font:var(--type-friend-name);margin:var(--space-20) 0 var(--space-8);}
+.algo__table {width:100%;border-collapse:collapse;font:var(--type-label);}
+.algo__table th,.algo__table td {padding:var(--space-8) var(--space-10);text-align:left;vertical-align:top;border-bottom:1px solid var(--color-divider);}
+.algo__table tbody th {width:34%;color:var(--color-text-muted);font-weight:600;}
+.algo__table--grid thead th {color:var(--color-text-muted);font:var(--type-gift-note);}
+.algo__note {margin-top:var(--space-12);font:var(--type-label);color:var(--color-text-secondary);}
+.algo__steps,.algo__list {display:grid;gap:var(--space-8);padding-left:var(--space-20);font:var(--type-label);color:var(--color-text-secondary);}
+.algo__steps b {color:var(--color-text);}
+.algo code {font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em;}
+.algo__code {margin-top:var(--space-12);padding:var(--space-16);overflow-x:auto;border-radius:var(--radius-16);background:var(--color-bg);font:500 13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-text-secondary);}
+.algo__note--top {margin:0 0 var(--space-12);}
+.algo__list {margin-top:var(--space-12);}
+.algo__table td:first-child {font-weight:700;}

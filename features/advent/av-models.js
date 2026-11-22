@@ -708,6 +708,47 @@ export function headphones() {
   return g;
 }
 
+/** Смартфон – пример приза розыгрыша за билетики */
+export function smartphone() {
+  const body = mesh(roundedBox(1.0, 2.0, 0.14, 0.16, 4), toy(0xd9dce6, { roughness: 0.18, metalness: 0.4 }));
+  const screen = mesh(roundedBox(0.9, 1.88, 0.02, 0.12, 4), toy(0x0c1022, { roughness: 0.08, clearcoat: 1 }));
+  screen.position.z = 0.075;
+  const glow1 = mesh(roundedBox(0.7, 0.7, 0.01, 0.2, 3), toy(PAL.hotPink, { roughness: 0.3 }));
+  glow1.position.set(-0.05, 0.25, 0.088);
+  const glow2 = mesh(roundedBox(0.5, 0.5, 0.01, 0.16, 3), toy(PAL.cyan, { roughness: 0.3 }));
+  glow2.position.set(0.12, -0.35, 0.09);
+  const island = mesh(roundedBox(0.28, 0.08, 0.01, 0.04, 2), toy(0x000000, { roughness: 0.4 }));
+  island.position.set(0, 0.84, 0.092);
+  const cam = mesh(roundedBox(0.42, 0.42, 0.06, 0.1, 3), toy(0xc7cad4, { roughness: 0.25, metalness: 0.4 }));
+  cam.position.set(-0.22, 0.7, -0.09);
+  const g = group(body, screen, glow1, glow2, island, cam);
+  g.rotation.set(0.12, -0.42, 0.14);
+  return g;
+}
+
+/** Ноутбук – пример приза розыгрыша за билетики */
+export function laptop() {
+  const metal = toy(0xc9ccd6, { roughness: 0.2, metalness: 0.45 });
+  const base = mesh(roundedBox(2.2, 0.08, 1.5, 0.06, 3), metal);
+  const pad = mesh(roundedBox(0.7, 0.01, 0.45, 0.04, 2), toy(0xb8bbc6, { roughness: 0.3 }));
+  pad.position.set(0, 0.045, 0.42);
+  const keys = mesh(roundedBox(1.9, 0.01, 0.62, 0.03, 2), toy(0x1b1d26, { roughness: 0.5 }));
+  keys.position.set(0, 0.045, -0.2);
+  const lid = new THREE.Group();
+  const shell = mesh(roundedBox(2.2, 1.45, 0.06, 0.06, 3), metal);
+  shell.position.y = 0.725;
+  const screen = mesh(roundedBox(2.0, 1.28, 0.01, 0.04, 2), toy(0x0c1022, { roughness: 0.08, clearcoat: 1 }));
+  screen.position.set(0, 0.73, 0.035);
+  const wall = mesh(roundedBox(1.2, 0.7, 0.01, 0.1, 3), toy(PAL.violet, { roughness: 0.3 }));
+  wall.position.set(0, 0.73, 0.042);
+  lid.add(shell, screen, wall);
+  lid.position.z = -0.72;
+  lid.rotation.x = -0.32;
+  const g = group(base, pad, keys, lid);
+  g.rotation.set(0.38, -0.55, 0.02);
+  return g;
+}
+
 /** Снежная полка: длинный сугроб, на нём стоят предметы ряда календаря */
 export function snowLedge({ width = 8, seed = 6 } = {}) {
   const R = rng(seed);
@@ -1211,6 +1252,8 @@ export const CATALOG = {
   ticket: () => ticket(),
   gamepad: () => gamepad(),
   headphones: () => headphones(),
+  smartphone: () => smartphone(),
+  laptop: () => laptop(),
   mound: { make: () => mound(), size: [900, 300], pad: 0.52 },
   cookie: () => fortuneCookie3({ groove: 0.62, beta: 1.6 }),
   "cookie-left": () => fortuneCookie3({ groove: 0.62, beta: 1.6, part: "left" }),

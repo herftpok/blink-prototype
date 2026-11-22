@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- прототип на GitHub Pages не индексируется: страницы не для поиска -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>Blink – адвент: алгоритм хваталки</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="advent.css">
+  <link rel="stylesheet" href="av-v3.css">
+  <link rel="stylesheet" href="algorithm.css">
+</head>
+<body>
+<div class="stage algo-stage">
+  <header class="stage__head">
+    <h1 class="stage__title">алгоритм хваталки</h1>
+    <p class="stage__lead">как выбирается приз в одной попытке. Источник – раздел 4 документа «контент, задания, призы и&nbsp;правила»</p>
+    <nav class="stage__tabs" aria-label="разделы стенда">
+      <a class="stage__tab" href="index.html">прототип</a>
+      <a class="stage__tab is-active" href="algorithm.html" aria-current="page">алгоритм хваталки</a>
+      <a class="stage__tab" href="states.html">сценарии</a>
+    </nav>
+  </header>
+
+  <main class="algo">
+    <section class="algo__section">
+      <h2>Что лежит в хваталке</h2>
+      <table class="algo__table algo__table--grid">
+        <thead><tr><th>группа</th><th>что</th><th>сколько</th><th>повторы</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>стикер</td><td>4</td><td>нет</td></tr>
+          <tr><td>A</td><td>хвост</td><td>2</td><td>нет</td></tr>
+          <tr><td>S</td><td>главный стикер</td><td>2</td><td>нет</td></tr>
+          <tr><td>S</td><td>главный хвост</td><td>2</td><td>нет</td></tr>
+          <tr><td>S</td><td>Blink VIP на&nbsp;год</td><td>1</td><td>нет</td></tr>
+          <tr><td>B</td><td>билетики: 25, 50, 75 или 100</td><td>–</td><td>да</td></tr>
+        </tbody>
+      </table>
+      <p class="algo__note">Одна попытка стоит 100 монеток и даёт ровно одну награду. За ивент у пользователя 18 попыток. Все 6 предметов A он обязан получить за эти 18 попыток, S – как повезёт.</p>
+    </section>
+
+    <section class="algo__section">
+      <h2>Вероятности обычной попытки</h2>
+      <p class="algo__note algo__note--top">Сначала выбирается группа, потом приз внутри неё.</p>
+      <table class="algo__table algo__table--grid">
+        <thead><tr><th>группа</th><th>шанс группы</th><th>внутри группы</th><th>шанс конкретного приза</th></tr></thead>
+        <tbody>
+          <tr><td>B</td><td>74,46%</td><td>25 – 20%, 50 – 45%, 75 – 25%, 100 – 10%</td><td>25 – 14,89%, 50 – 33,51%, 75 – 18,62%, 100 – 7,45%</td></tr>
+          <tr><td>A</td><td>25%</td><td>поровну между ещё не полученными</td><td>6 осталось – по 4,17%, 3 осталось – по 8,33%, 1 осталось – 25%</td></tr>
+          <tr><td>S</td><td>0,54%</td><td>по весам ещё не полученных</td><td>каждый главный стикер и хвост – 0,13%, VIP – 0,02%</td></tr>
+        </tbody>
+      </table>
+      <ul class="algo__list">
+        <li>Полученный предмет A или S больше не выпадает. Его вес делится между оставшимися в той же группе.</li>
+        <li>Собраны все A – их 25% уходят в B: дальше B 99,46%, S 0,54%.</li>
+        <li>Собраны все S – их 0,54% тоже уходят в B.</li>
+      </ul>
+    </section>
+
+    <section class="algo__section">
+      <h2>Гаранты: когда случайность не работает</h2>
+      <ol class="algo__steps">
+        <li><b>Добор A.</b> Недостающих A столько же, сколько осталось попыток до 18-й, считая текущую, – выдаём A без розыгрыша. Например, не хватает 2 A, осталось 2 попытки – обе дадут A. S на таких попытках не выпадает.</li>
+        <li><b>Первая попытка.</b> Если выпали билетики – меняем их на A.</li>
+        <li><b>Серия билетиков.</b> Пока A не собраны, подряд может выпасть не больше 3 раз B. На следующей попытке B меняется на A. Выпали A или S – счётчик серии обнуляется.</li>
+      </ol>
+      <p class="algo__note">Выпавший S никогда не меняется на A и не отменяет обязанность выдать все 6 A. Гарант не добавляет вторую награду, а заменяет билетики на предмет. После сбора всех A гаранты 2 и 3 больше не нужны.</p>
+    </section>
+
+    <section class="algo__section">
+      <h2>Псевдокод</h2>
+      <pre class="algo__code"><code>// состояние пользователя
+attempt   = 0          // сколько попыток уже сделано
+collected = []         // полученные предметы A и S
+bStreak   = 0          // сколько раз подряд выпали билетики
+
+function spin():
+    attempt   = attempt + 1
+    missingA  = все A, которых нет в collected
+    missingS  = все S, которых нет в collected
+    slotsLeft = 18 - attempt + 1          // оставшиеся попытки, считая эту
+
+    // 1. добор A
+    if missingA не пуст and size(missingA) >= slotsLeft:
+        group = A
+
+    else:
+        // 2. случайная группа
+        weightA = missingA не пуст ? 25    : 0
+        weightS = missingS не пуст ? 0.54  : 0
+        weightB = 100 - weightA - weightS
+        group   = random_by_weight({ B: weightB, A: weightA, S: weightS })
+
+        // 3. первая попытка и серия билетиков
+        if group == B and missingA не пуст and (attempt == 1 or bStreak >= 3):
+            group = A
+
+    // 4. приз внутри группы
+    if group == A:
+        prize = random_equal(missingA)
+    if group == S:
+        prize = random_by_weight(missingS)   // стикер 0.13, хвост 0.13, VIP 0.02
+    if group == B:
+        prize = random_by_weight({ 25: 20, 50: 45, 75: 25, 100: 10 })
+
+    // 5. запомнить
+    if group == B:
+        bStreak = bStreak + 1
+        начислить prize билетиков
+    else:
+        bStreak = 0
+        добавить prize в collected
+
+    return prize</code></pre>
+      <p class="algo__note"><code>random_by_weight</code> – выбор с вероятностью, пропорциональной весу. <code>random_equal</code> – равновероятный выбор из списка. Если попыток станет больше 18, тот же код работает: к 18-й все A уже собраны, добор не срабатывает.</p>
+    </section>
+  </main>
+</div>
+</body>
+</html>

@@ -14,5 +14,4 @@
 .av-wallet {display:flex;align-items:center;justify-content:flex-end;gap:var(--space-6);justify-self:end;min-width:0;}
 .av-wallet .av-balance {min-height:var(--control-44);height:var(--control-44);gap:var(--space-4);padding-inline:var(--space-8);}
 .av-wallet .av-balance__value {font:var(--type-counter);}
-.av[data-phase="home"] #screen-home .av-wallet .av-balance--tickets {visibility:visible;pointer-events:auto;}
 .ex-arcade__footer .button>.icon {--icon-size:var(--space-16);margin-left:var(--space-8);}

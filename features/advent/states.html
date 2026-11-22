@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="dark">
-  <title>Blink – новый год: все экраны</title>
+  <title>Blink – адвент: как работает ивент</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap">
@@ -17,13 +17,16 @@
   <link rel="stylesheet" href="states.css">
 </head>
 <body>
-<!-- Раскладка: все новогодние экраны с номерами. Снимки – tools/shoot_advent.py,
-     список и подписи – states.js; каждая карточка открывает живой стенд в этом состоянии -->
+<!-- Сценарии адвента: флоу по порядку, шаги со снимками. Данные – states.js, снимки – tools/shoot_advent.py -->
 <main class="board">
   <header class="board__head">
-    <h1 class="board__title">новый год</h1>
-    <p class="board__lead">все новогодние экраны по&nbsp;порядку. экран открывает живой стенд в&nbsp;этом состоянии</p>
-    <a class="button button--primary board__stand pressable" href="index.html">открыть стенд</a>
+    <h1 class="board__title">как работает адвент</h1>
+    <p class="board__lead">14–31 декабря каждый день открывается статистика за 2026 и задание. За задания – монетки, монетки тратятся в хваталке, билетики из хваталки – шансы в розыгрыше. Ниже 8 сценариев по порядку, любой экран открывает живой прототип</p>
+    <nav class="board__tabs" aria-label="разделы стенда">
+      <a class="board__tab" href="index.html">прототип</a>
+      <a class="board__tab" href="algorithm.html">алгоритм хваталки</a>
+      <a class="board__tab is-active" href="states.html" aria-current="page">сценарии</a>
+    </nav>
   </header>
   <div data-board></div>
 </main>

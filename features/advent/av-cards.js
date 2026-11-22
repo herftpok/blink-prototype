@@ -239,28 +239,6 @@
     </header>`;
     const logo = ctx.story ? `<img class="avc-logo" src="${ctx.ASSETS}/brand/logo.png" alt="blink">` : "";
 
-    if (day.prediction) {
-      // печенье с предсказанием: целое → «разломить» → половинки в стороны, выезжает бумажка
-      const i = ctx.D.DAYS.indexOf(day);
-      const cracked = ctx.story || ctx.S.days[i]?.cracked;
-      const c = day.cookie;
-      return `<article class="avc avc--prediction${cracked ? " is-cracked" : ""}${ctx.story ? " avc--story" : ""}" aria-labelledby="stat-title">
-        <img class="avc__glow" src="${ctx.src(day.obj)}" alt="">
-        ${logo}${head}
-        <h1 class="visually-hidden" id="stat-title">предсказание на 2027</h1>
-        <button class="avc-cookie pressable" type="button" data-act="crack" aria-label="разломить печенье" ${cracked ? "disabled" : ""}>
-          <img class="avc-cookie__whole" src="${ctx.src(day.obj)}" alt="">
-          <img class="avc-cookie__half avc-cookie__half--left" src="renders/fortune-cookie-broken.webp" alt="">
-          <img class="avc-cookie__half avc-cookie__half--right" src="renders/fortune-cookie-broken.webp" alt="">
-          ${[0, 1, 2, 3, 4, 5, 6, 7].map((k) => `<span class="avc-crumb" style="--k:${k}"></span>`).join("")}
-        </button>
-        <div class="avc-paper" aria-live="polite">
-          <p class="avc-paper__kicker">в 2027</p>
-          <p class="avc-paper__text">${day.prediction}</p>
-        </div>
-      </article>`;
-    }
-
     const empty = ctx.S.empty;
     const st = empty ? day.empty : day.stat;
     let body = "";
@@ -302,19 +280,5 @@
     });
   }
 
-  /** Разломить печенье: дрожит, трескается, половинки разлетаются, бумажка разворачивается */
-  function crack(root, onDone) {
-    const card = root.querySelector(".avc--prediction");
-    if (!card || card.classList.contains("is-cracked") || card.classList.contains("is-cracking")) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    card.classList.add("is-cracking");
-    setTimeout(() => {
-      card.classList.remove("is-cracking");
-      card.classList.add("is-cracked", "is-breaking");
-      card.querySelector(".avc-cookie").disabled = true;
-      onDone?.();
-    }, reduced ? 0 : 520);
-  }
-
-  window.AV_CARDS = { render, enter, crack };
+  window.AV_CARDS = { render, enter };
 })();

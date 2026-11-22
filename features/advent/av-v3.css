@@ -1,0 +1,168 @@
+/* Адвент v3 (22.11.2026): без экранов дня, января и гирлянды.
+   Предметы на столе купе, лента дат на главной и в статистике, заглушка будущего дня, розыгрыш слотами.
+   Координаты предметов – доли сцены .ex-cabin (390 × 726 pt): столешница x 18–82 %, y 57–74 %. */
+
+/* вкладки стенда: прототип · алгоритм · все экраны */
+.stage__tabs {display:flex;justify-content:center;gap:var(--space-6);margin-top:var(--space-12);}
+.stage__tab {padding:var(--space-6) var(--space-12);border-radius:var(--radius-pill);font:var(--type-map-chip-strong);color:var(--color-text-muted);background:var(--color-surface-raised);}
+.stage__tab.is-active {background:var(--color-text);color:var(--color-text-on-light);}
+@media (hover:hover) {.stage__tab:not(.is-active):hover {color:var(--color-text);}}
+
+/* интерфейс под сценой начинается чуть выше: лента и два задания помещаются в первый экран */
+:root {--journey-interface-overlap:23cqh;}
+.av-home-tasks {padding:0 var(--gutter);}
+
+/* ── предметы на столе ───────────────────────────────────────────────── */
+.v3-prop {position:absolute;z-index:1;display:block;padding:0;--press-scale:var(--press-scale-button);filter:drop-shadow(var(--shadow-sticker-hit));}
+.v3-prop__img {display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;}
+/* автомат 120 × 180: центр x 62 %, низ на y 69 % сцены – стоит на ближней половине стола */
+.v3-prop--machine {left:calc(62% - 60px);top:calc(69% - 180px);width:120px;height:180px;}
+/* игрушки на дне витрины: стекло – x 18–82 %, y 18–55 % вырезки */
+.v3-prop__toys {position:absolute;left:22%;right:22%;top:38%;height:14%;display:flex;align-items:flex-end;justify-content:center;pointer-events:none;}
+.v3-prop__toys img {width:36%;margin:0 -6%;object-fit:contain;}
+.v3-prop__toys img:nth-child(2) {transform:translateY(-12%) rotate(-8deg);}
+.v3-prop__toys img:nth-child(3) {transform:rotate(10deg);}
+/* билет 112 × 63: центр x 33 %, y 67 %, лежит под наклоном */
+.v3-prop--ticket {left:calc(33% - 56px);top:calc(67% - 31px);width:112px;height:63px;transform:rotate(-8deg);}
+.v3-prop--ticket:active {transform:rotate(-8deg) scale(var(--press-scale-button));}
+
+/* ── лента дней: колесо ──────────────────────────────────────────────
+   Ячейки одной ширины 52 pt – в ленте 7 дней. --wheel-scale и --wheel-alpha считает advent.js
+   по расстоянию до центра на каждом кадре прокрутки, ширина ячеек не меняется.
+   Нативной прокрутки и инерции нет – лентой управляет advent.js (makeStrip): едет под пальцем,
+   отпустил – встаёт на ближайший день, быстрый взмах – ровно на один день. Дальние дни – нажатием
+   на видимую дату, «к сегодня» или свайпом карточек. */
+.v3-strip {position:relative;height:52px;overflow:hidden;scrollbar-width:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;}
+.v3-strip::-webkit-scrollbar {display:none;}
+.v3-strip__track {display:flex;align-items:center;height:100%;width:max-content;padding-inline:var(--cell,120px);}
+.v3-day {position:relative;flex:0 0 var(--cell,120px);width:var(--cell,120px);height:52px;padding:0;white-space:nowrap;font:var(--type-section-title);color:var(--journey-cream);font-variant-numeric:tabular-nums;--press-scale:var(--press-scale-button);}
+.v3-day__num {position:relative;display:inline-block;transform:scale(var(--wheel-scale,.58));opacity:var(--wheel-alpha,.5);transition:color var(--duration-press) ease;}
+.v3-day.is-future .v3-day__num {color:var(--journey-muted);}
+/* месяц – только у выбранного дня, по центру: «22 декабря» */
+.v3-day__month {display:none;}
+.v3-day.is-selected .v3-day__month {display:inline;}
+/* невыполненное задание в дне – только на главной */
+.v3-day__dot {position:absolute;top:-2px;right:-9px;width:6px;height:6px;border-radius:var(--radius-pill);background:var(--journey-brass);}
+.v3-strip-box {position:relative;margin:0 calc(-1 * var(--gutter)) var(--space-8);}
+/* заголовок над лентой несёт месяц: «задания на 25 декабря»; «к сегодня» – когда ушли от сегодня */
+.v3-tasks-head {display:flex;align-items:center;justify-content:space-between;gap:var(--space-12);min-height:44px;}
+.v3-tasks-head .av-home-tasks__title {margin:0;}
+.v3-today-chip {flex-shrink:0;min-height:36px;padding:0 var(--space-12);border-radius:var(--radius-pill);border:1px solid var(--journey-border);background:var(--journey-glass);font:var(--type-map-chip-strong);color:var(--journey-cream);--press-scale:var(--press-scale-button);}
+.v3-today-chip[hidden] {display:none;}
+/* свайп по карточкам и по статистике листает дни, вертикальная прокрутка остаётся за браузером */
+#home-task-list,#stat-card {touch-action:pan-y;}
+
+/* ── задания: будущий день и «уточняется» ────────────────────────────── */
+.av-tasks.is-future .av-task {opacity:.5;}
+.av-tasks.is-future .av-task--memory {opacity:.6;border-color:var(--journey-border);background:var(--journey-glass);}
+.av-task.is-tbd {background:transparent;}
+.av-task__reward--muted {display:inline-flex;align-items:center;justify-content:center;gap:var(--space-6);min-width:94px;min-height:44px;color:var(--journey-muted);font:var(--type-caption);}
+.av-task__reward--muted .av-task__flake {opacity:.6;}
+
+/* ── статистика: лента вместо плашки даты ────────────────────────────── */
+.v3-stat-top {position:absolute;top:calc(var(--safe-top) + var(--space-12));left:var(--gutter);right:var(--gutter);z-index:6;display:grid;grid-template-columns:minmax(0,1fr) 46px;align-items:center;gap:var(--space-8);}
+.v3-stat-top .av-close {position:static;}
+.v3-strip--stat {height:46px;}
+.av-stat__card > .avc {padding-top:calc(var(--safe-top) + var(--space-12) + 46px + var(--space-6));}
+.av-stat__card .avc-head__date {display:none;}
+.av-stat__card .avc-head {height:24px;padding-right:var(--gutter);}
+.av-stat__footer[hidden] {display:none;}
+
+/* заглушка будущего дня */
+.v3-locked {position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-12);padding:calc(var(--safe-top) + 80px) var(--gutter) calc(var(--safe-bottom) + var(--space-24));text-align:center;}
+.v3-locked__art {position:relative;width:220px;height:220px;margin-bottom:var(--space-12);transform:rotate(-6deg);}
+.v3-locked__ice {width:100%;height:100%;object-fit:contain;}
+.v3-locked__num {position:absolute;inset:0;display:grid;place-items:center;opacity:.9;transform:scale(2.2);}
+.v3-locked__title {font:var(--type-section-title);}
+.v3-locked__text {font:var(--type-distance);color:var(--journey-muted);}
+.v3-locked__cta {position:absolute;left:var(--gutter);right:var(--gutter);bottom:calc(var(--safe-bottom) + var(--space-8));}
+
+/* ── хваталка: результат и правила ───────────────────────────────────── */
+.v3-result .ex-result__prize.is-ticket {width:70%;left:15%;top:18%;height:48%;transform:rotate(-8deg);}
+.v3-result h4 {margin-top:var(--space-8);}
+.v3-result__note {font:var(--type-distance);color:var(--journey-muted);}
+.v3-tier {display:inline-block;padding:3px var(--space-10) 4px;border-radius:var(--radius-pill);font:var(--type-gift-note);background:var(--color-surface-raised);color:var(--color-text);}
+.v3-tier--A {background:var(--color-text);color:var(--color-text-on-light);}
+.v3-tier--S {background:var(--gradient-holo);color:var(--color-text-on-light);}
+.v3-rules {display:grid;gap:var(--space-12);padding:var(--space-16) 0 var(--space-24);font:var(--type-label);color:var(--color-text-secondary);}
+.v3-rules p:first-child {color:var(--color-text);}
+.v3-nominals {display:flex;gap:var(--space-8);list-style:none;margin:var(--space-12) 0 var(--space-24);padding:0;}
+.v3-nominals li {flex:1;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);padding:var(--space-12) 0;border-radius:var(--radius-16);background:var(--journey-glass);border:1px solid var(--journey-border);font:var(--type-counter);}
+.v3-nominals img {width:44px;height:26px;object-fit:contain;}
+
+/* ── розыгрыш: три приза, цена слота в билетиках ─────────────────────── */
+.v3-draw {padding:var(--space-8) var(--gutter) calc(var(--safe-bottom) + var(--space-24));}
+.v3-draw__when {font:var(--type-distance);color:var(--journey-muted);text-align:center;}
+.v3-draw__prizes {display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-8);margin-top:var(--space-16);}
+.v3-draw__prize {position:relative;display:flex;flex-direction:column;align-items:center;gap:var(--space-4);padding:var(--space-12) var(--space-6);border:1px solid var(--journey-border);border-radius:var(--radius-20);background:var(--journey-glass);--press-scale:var(--press-scale-button);}
+.v3-draw__prize.is-selected {border-color:var(--journey-brass);background:var(--journey-panel);}
+.v3-draw__art {width:84px;height:84px;object-fit:contain;}
+.v3-draw__title {font:var(--type-friend-name);}
+.v3-draw__mine {position:absolute;top:var(--space-6);right:var(--space-6);display:inline-flex;align-items:center;gap:var(--space-2);padding:2px var(--space-6);border-radius:var(--radius-pill);background:var(--journey-cream);color:var(--journey-navy);font:var(--type-gift-note);}
+.v3-draw__mine img {width:18px;height:11px;object-fit:contain;}
+.v3-draw__panel {display:flex;flex-direction:column;gap:var(--space-12);margin-top:var(--space-16);padding:var(--space-16);border:1px solid var(--journey-border);border-radius:var(--radius-20);background:var(--journey-glass);}
+.v3-draw__chance {font:var(--type-label);text-align:center;}
+.v3-draw__panel .avd-put {margin-top:0;}
+.v3-draw__panel .avd-step {background:var(--journey-panel);}
+/* контактная тень: предметы стоят на столе, а не висят */
+.v3-prop::before {content:"";position:absolute;left:8%;right:8%;bottom:-6%;height:14%;border-radius:50%;background:radial-gradient(closest-side,rgb(0 0 0 / .55),transparent);z-index:-1;pointer-events:none;}
+.v3-prop--machine::before {bottom:-4%;height:10%;}
+.ex-result.v3-result {padding-top:calc(var(--safe-top) + 72px);}
+/* выбранный приз крупно: размытая копия за ним – атмосфера, как у карточек статистики */
+.v3-draw__hero {position:relative;height:200px;margin:0 0 var(--space-8);}
+.v3-draw__hero-img,.v3-draw__hero-glow {position:absolute;left:50%;top:0;width:200px;height:200px;margin-left:-100px;object-fit:contain;}
+.v3-draw__hero-glow {filter:blur(60px) saturate(2);opacity:.5;}
+.av-home-tasks__title {margin-bottom:var(--space-8);font:var(--type-section-title);letter-spacing:var(--tracking-section);}
+
+/* ── экскурсия первого входа ─────────────────────────────────────────
+   Окно подсветки – прозрачный прямоугольник с огромной тенью: тень и есть затемнение, окно переезжает
+   между элементами (left/top/size – единственное исключение из «только transform»: окно меняет форму). */
+.v3-tour {position:absolute;inset:0;z-index:40;}
+.v3-tour[hidden] {display:none;}
+.v3-tour__hole {position:absolute;box-shadow:0 0 0 200vmax rgb(6 10 20 / .78);border:1.5px solid var(--journey-brass);transition:left .42s var(--ease-emphasized),top .42s var(--ease-emphasized),width .42s var(--ease-emphasized),height .42s var(--ease-emphasized),border-radius .42s var(--ease-emphasized);pointer-events:none;}
+.v3-tour__hole.is-instant {transition:none;}
+.v3-tour__hole::after {content:"";position:absolute;inset:-6px;border-radius:inherit;border:1.5px solid var(--journey-brass);opacity:0;animation:v3-tour-pulse 1.8s ease-out infinite;}
+.v3-tour__tip {position:absolute;left:var(--gutter);right:var(--gutter);padding:var(--space-16);border-radius:var(--radius-20);background:var(--journey-panel);border:1px solid var(--journey-border);box-shadow:0 12px 32px rgb(0 0 0 / .45);}
+.v3-tour__title {font:var(--type-stat-label);color:var(--journey-cream);}
+.v3-tour__text {margin-top:var(--space-6);font:var(--type-distance);color:var(--journey-muted);text-wrap:pretty;}
+.v3-tour__foot {display:flex;align-items:center;gap:var(--space-8);margin-top:var(--space-16);}
+.v3-tour__dots {display:flex;gap:var(--space-4);margin-right:auto;}
+.v3-tour__dots span {width:6px;height:6px;border-radius:var(--radius-pill);background:var(--journey-border);transition:width var(--duration-state) ease,background var(--duration-state) ease;}
+.v3-tour__dots span.is-on {width:16px;background:var(--journey-brass);}
+.v3-tour__skip {min-height:44px;padding:0 var(--space-8);font:var(--type-map-chip-strong);color:var(--journey-muted);--press-scale:var(--press-scale-button);}
+.v3-tour__next {width:auto;min-width:120px;padding:0 var(--space-20);}
+@keyframes v3-tour-pulse {0% {opacity:.8;transform:scale(1);}100% {opacity:0;transform:scale(1.06);}}
+@media (prefers-reduced-motion:reduce) {.v3-tour__hole {transition:none;}.v3-tour__hole::after {animation:none;}}
+.v3-strip--stat .v3-day {font:var(--type-friend-name);}
+
+/* главная не прокручивается по вертикали: сцена, лента и два задания помещаются в экран.
+   На низких телефонах (SE, 667) сцена купе ниже, чтобы задания не уходили за край */
+.av-home__scroll {overflow:hidden;overscroll-behavior:none;}
+@media (max-height:740px) {.av .ex-cabin {height:74cqh;min-height:0;}}
+
+/* «получить монеты» привёл к дню: невыполненные карточки один раз вспыхивают рамкой */
+.av-task.is-hint {animation:v3-hint 1.2s var(--ease-emphasized) 2;}
+@keyframes v3-hint {0%,100% {border-color:var(--journey-border);}40% {border-color:var(--journey-brass);box-shadow:0 0 0 3px rgb(217 182 123 / .25);}}
+
+/* ── после ивента: календарь всех дней и итоги розыгрыша ───────────── */
+.av[data-ended] .av-wallet,.av[data-ended] .v3-prop--machine {display:none;}
+.v3-after[hidden] {display:none;}
+.v3-cal {display:grid;grid-template-columns:repeat(6,1fr);gap:var(--space-6);margin-top:var(--space-10);}
+.v3-cal__day {display:flex;flex-direction:column;align-items:center;gap:var(--space-2);padding:var(--space-6) 0;border:1px solid var(--journey-border);border-radius:var(--radius-14);background:var(--journey-glass);--press-scale:var(--press-scale-button);}
+.v3-cal__art {display:block;width:40px;height:40px;}
+.v3-cal__art img,.v3-cal__art .v3-cal__obj {width:100%;height:100%;object-fit:contain;}
+.v3-cal__art .av-fan {position:relative;display:block;width:100%;height:100%;}
+.v3-cal__art .av-fan__img {position:absolute;width:70%;height:70%;object-fit:contain;}
+.v3-cal__date {font:var(--type-caption);color:var(--journey-cream);}
+.v3-results__body {display:flex;flex-direction:column;align-items:center;gap:var(--space-12);padding:0 var(--gutter) calc(var(--safe-bottom) + var(--space-8));text-align:center;}
+.v3-results__art {width:160px;height:160px;object-fit:contain;}
+.v3-results__art--ticket {width:180px;height:110px;transform:rotate(-8deg);}
+.v3-results__title {font:var(--type-section-title);}
+.v3-results__text {font:var(--type-distance);color:var(--journey-muted);}
+.v3-results__list {align-self:stretch;list-style:none;margin:0;padding:0 var(--space-16);border:1px solid var(--journey-border);border-radius:var(--radius-20);background:var(--journey-glass);text-align:left;}
+.v3-results__list li {display:flex;align-items:center;gap:var(--space-12);min-height:56px;border-bottom:1px solid var(--journey-border);font:var(--type-friend-name);}
+.v3-results__list li:last-child {border-bottom:0;}
+.v3-results__list img {width:36px;height:36px;object-fit:contain;}
+.v3-results__list span {flex:1;}
+.v3-results__list b {font:var(--type-map-chip);color:var(--journey-muted);}
+.v3-results__body .button {align-self:stretch;margin-top:var(--space-8);}
